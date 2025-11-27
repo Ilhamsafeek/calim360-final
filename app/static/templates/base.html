@@ -1,0 +1,2648 @@
+<!-- Base Template - Modern Google-like Design -->
+<!-- File: app/static/templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CALIM 360{% endblock %} - Contract Lifecycle Management</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/static/assets/favicon.ico">
+
+    <!-- Tabler Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.34.0/tabler-icons.min.css">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Modal Center CSS -->
+    <link rel="stylesheet" href="/app/static/css/modal-center.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Base Styles -->
+    <style>
+        /* CSS Variables */
+        :root {
+            --primary-color: #2762cb;
+            --secondary-color: #73B4E0;
+            --text-color: #333;
+            --text-muted: #666;
+            --border-color: #e9ecef;
+            --background-light: #f8f9fa;
+            --success-color: #28a745;
+            --warning-color: #856404;
+            --warning-bg: #fff3cd;
+            --success-bg: #d4edda;
+            --info-bg: #d1ecf1;
+            --info-color: #0c5460;
+            --danger-color: #dc3545;
+            --sidebar-width: 260px;
+            --header-height: 64px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Reset & Base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-color);
+            background: var(--background-light);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Main Layout */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Modern Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: #e4e8f3;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 1000;
+            transition: var(--transition);
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .sidebar.collapsed {
+            width: 72px;
+        }
+
+        /* Sidebar Header */
+        .sidebar-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            height: var(--header-height);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            /* width: 100px; */
+
+            /* background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); */
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.025em;
+        }
+
+        .sidebar.collapsed .logo-text {
+            display: none;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-section-title {
+            padding: 0.5rem 1.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            transition: var(--transition);
+        }
+
+        .sidebar.collapsed .nav-section-title {
+            opacity: 0;
+            height: 0;
+            padding: 0;
+        }
+
+        .nav-item {
+            position: relative;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            padding: 0.75rem 1.25rem;
+            color: var(--text-color);
+            text-decoration: none;
+            transition: var(--transition);
+            position: relative;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background: var(--background-light);
+            color: var(--primary-color);
+        }
+
+        .nav-link.active {
+            background: rgba(39, 98, 203, 0.08);
+            color: var(--primary-color);
+        }
+
+        .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--primary-color);
+        }
+
+        /* Navigation Dropdown Styles */
+        .nav-dropdown-toggle {
+            position: relative;
+        }
+
+        .nav-arrow {
+            margin-left: auto;
+            font-size: 1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-dropdown-toggle.active .nav-arrow {
+            transform: rotate(180deg);
+        }
+
+        .nav-dropdown {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        .nav-dropdown.show {
+            max-height: 500px;
+        }
+
+        .nav-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.625rem 0.25rem 0.625rem 3rem;
+            color: var(--text-color);
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            font-size: 0.875rem;
+            margin: 0.25rem 0.75rem;
+            border-radius: 8px;
+        }
+
+        .nav-dropdown-item:hover {
+            background: var(--background-light);
+            color: var(--primary-color);
+            transform: translateX(2px);
+        }
+
+        .nav-dropdown-item.active {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(39, 98, 203, 0.25);
+            padding-left: 1.5rem;
+        }
+
+        .nav-dropdown-item.active::after {
+            content: '';
+            position: absolute;
+            right: -0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 8px solid var(--secondary-color);
+            opacity: 0.6;
+        }
+
+        .nav-dropdown-item.active i {
+            color: white;
+            font-size: 1rem;
+        }
+
+        .nav-dropdown-item i {
+            font-size: 1rem;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .nav-dropdown-item span:not(.nav-badge) {
+            flex: 1;
+            color: inherit;
+            font-size: 0.875rem;
+        }
+
+        .nav-dropdown-item.active span:not(.nav-badge) {
+            color: white;
+            font-size: 0.875rem;
+        }
+
+        .nav-dropdown-item .nav-badge {
+            margin-left: auto;
+            padding: 0.125rem 0.5rem;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .nav-dropdown-item.active .nav-badge {
+            background: white;
+            color: var(--primary-color);
+            font-size: 0.7rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transform: scale(1.05);
+        }
+
+        @keyframes slideInActive {
+            from {
+                opacity: 0;
+                transform: translateX(-10px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        .nav-dropdown-item.active {
+            animation: slideInActive 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes subtlePulse {
+
+            0%,
+            100% {
+                box-shadow: 0 4px 12px rgba(39, 98, 203, 0.25);
+            }
+
+            50% {
+                box-shadow: 0 6px 16px rgba(39, 98, 203, 0.35);
+            }
+        }
+
+        .nav-dropdown-item.active {
+            animation: slideInActive 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), subtlePulse 2s ease-in-out infinite 0.5s;
+        }
+
+        .nav-dropdown-item:hover:not(.active) {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .nav-dropdown-item.active:hover {
+            background: linear-gradient(135deg, #1e4fb3, #5a9fcd);
+            transform: translateX(0) scale(1.02);
+            box-shadow: 0 6px 16px rgba(39, 98, 203, 0.35);
+        }
+
+        .sidebar.collapsed .nav-dropdown {
+            display: none;
+        }
+
+        .sidebar.collapsed .nav-arrow {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .nav-dropdown-item {
+                padding-left: 2.5rem;
+                margin: 0.25rem 0.5rem;
+                font-size: 0.875rem;
+            }
+
+            .nav-dropdown-item.active {
+                padding-left: 2rem;
+                font-size: 0.875rem;
+            }
+
+            .nav-dropdown-item.active::after {
+                display: none;
+            }
+        }
+
+        .nav-dropdown-item:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        .nav-dropdown-item.active:focus {
+            outline: 2px solid white;
+        }
+
+        .nav-dropdown-item * {
+            transition: inherit;
+        }
+
+        .nav-dropdown-item.active {
+            position: relative;
+            box-shadow: 0 4px 12px rgba(39, 98, 203, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .nav-text {
+            font-size: 0.925rem;
+            transition: var(--transition);
+        }
+
+        .sidebar.collapsed .nav-text {
+            display: none;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            padding: 0.125rem 0.5rem;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .sidebar.collapsed .nav-badge {
+            display: none;
+        }
+
+        /* Sidebar Footer */
+        .sidebar-footer {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .toggle-btn {
+            width: 100%;
+            padding: 0.625rem;
+            background: var(--background-light);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .toggle-btn:hover {
+            background: white;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .sidebar.collapsed .toggle-btn span {
+            display: none;
+        }
+
+        /* Main Content Area */
+        .main-wrapper {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+        }
+
+        .sidebar.collapsed+.main-wrapper {
+            margin-left: 72px;
+        }
+
+        /* Modern Header */
+        .header {
+            background: #e4e8f3;
+            border-bottom: 1px solid var(--border-color);
+            height: var(--header-height);
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-content {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Search Bar */
+        .header-search {
+            flex: 1;
+            max-width: 600px;
+            margin: 0 2rem;
+        }
+
+        .search-wrapper {
+            position: relative;
+        }
+
+        .global-search {
+            width: 100%;
+            padding: 0.625rem 1rem 0.625rem 2.75rem;
+            background: var(--background-light);
+            border: 1px solid transparent;
+            border-radius: 24px;
+            font-size: 0.925rem;
+            transition: var(--transition);
+        }
+
+        .global-search:focus {
+            outline: none;
+            background: white;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1.125rem;
+        }
+
+        /* Header Actions */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-btn {
+            position: relative;
+            padding: 0.5rem;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-btn:hover {
+            background: var(--background-light);
+            color: var(--text-color);
+        }
+
+        .header-btn i {
+            font-size: 1.25rem;
+        }
+
+        .notification-dot {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            width: 8px;
+            height: 8px;
+            background: var(--danger-color);
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        /* User Menu - FIXED */
+        .user-menu {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            margin-left: 0.5rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            user-select: none;
+        }
+
+        .user-menu:hover {
+            background: var(--background-light);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .user-role {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Content Area */
+        .content {
+            flex: 1;
+            background: var(--background-light);
+        }
+
+        /* Breadcrumbs */
+        .breadcrumbs {
+            padding: 1rem 2rem;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .breadcrumb-item {
+            color: var(--text-muted);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb-item:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-item.active {
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        /* Utility Classes */
+        .btn {
+            padding: 0.625rem 1.25rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1e4fb3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(39, 98, 203, 0.25);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--background-light);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        /* Dropdown Menu - FIXED */
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 0.5rem);
+            right: 0;
+            margin-top: 0.5rem;
+            min-width: 240px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: var(--transition);
+            z-index: 1100;
+        }
+
+        .dropdown-menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            padding: 0.625rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-color);
+            text-decoration: none;
+            transition: background 0.2s;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .dropdown-item:hover {
+            background: var(--background-light);
+        }
+
+        .dropdown-item:active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .dropdown-item:active i {
+            color: white;
+        }
+
+        .dropdown-item i {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 0.5rem 0;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 2000;
+        }
+
+        .toast {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 300px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast-success {
+            border-left: 3px solid var(--success-color);
+        }
+
+        .toast-error {
+            border-left: 3px solid var(--danger-color);
+        }
+
+        .toast-warning {
+            border-left: 3px solid var(--warning-color);
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            display: none;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .main-wrapper {
+                margin-left: 0;
+            }
+
+            .header-search {
+                display: none;
+            }
+
+            .user-info {
+                display: none;
+            }
+        }
+
+        /* Chatbot Styles */
+        .chatbot-button {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(39, 98, 203, 0.35);
+            transition: var(--transition);
+            z-index: 998;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 4px 12px rgba(39, 98, 203, 0.35);
+            }
+
+            50% {
+                box-shadow: 0 4px 20px rgba(39, 98, 203, 0.5);
+            }
+
+            100% {
+                box-shadow: 0 4px 12px rgba(39, 98, 203, 0.35);
+            }
+        }
+
+        .chatbot-button:hover {
+            transform: scale(1.1);
+            animation: none;
+        }
+
+        .chatbot-button i {
+            font-size: 1.5rem;
+        }
+
+        .chatbot-indicator {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 16px;
+            height: 16px;
+            background: var(--success-color);
+            border: 3px solid white;
+            border-radius: 50%;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* Chatbot Window */
+        .chatbot-window {
+            position: fixed;
+            bottom: 6rem;
+            right: 2rem;
+            width: 380px;
+            height: 600px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            display: none;
+            flex-direction: column;
+            z-index: 999;
+            animation: slideUp 0.3s ease;
+        }
+
+        .chatbot-window.show {
+            display: flex;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .chatbot-header {
+            padding: 1.25rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 16px 16px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chatbot-header-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .chatbot-avatar {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chatbot-title {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chatbot-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .chatbot-status {
+            font-size: 0.75rem;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #4caf50;
+            border-radius: 50%;
+            animation: blink 1.5s infinite;
+        }
+
+        .chatbot-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chatbot-action-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .chatbot-action-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .chatbot-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            background: var(--background-light);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            display: flex;
+            gap: 0.75rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: var(--secondary-color);
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 0.75rem 1rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .message.user .message-content {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .message-text {
+            font-size: 0.925rem;
+            line-height: 1.5;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            opacity: 0.6;
+            margin-top: 0.25rem;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 0.25rem;
+            padding: 0.75rem 1rem;
+            background: white;
+            border-radius: 12px;
+            width: fit-content;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+                opacity: 0.5;
+            }
+
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        .chatbot-quick-actions {
+            padding: 1rem;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .quick-action-chip {
+            padding: 0.5rem 0.875rem;
+            background: var(--background-light);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            font-size: 0.875rem;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .quick-action-chip:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .chatbot-input {
+            padding: 1rem;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            border-radius: 0 0 16px 16px;
+        }
+
+        .chatbot-input-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .chatbot-input-field {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            font-size: 0.925rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .chatbot-input-field:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
+        }
+
+        .chatbot-input-actions {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .chatbot-input-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .chatbot-input-btn:hover {
+            background: var(--background-light);
+            color: var(--primary-color);
+        }
+
+        .chatbot-send-btn {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .chatbot-send-btn:hover {
+            background: #1e4fb3;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 480px) {
+            .chatbot-window {
+                width: calc(100vw - 2rem);
+                height: calc(100vh - 8rem);
+                right: 1rem;
+                bottom: 5rem;
+            }
+        }
+
+        /* Notification Dropdown Styles */
+        .notifications-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            width: 420px;
+            max-height: 520px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: var(--transition);
+            z-index: 1100;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .notifications-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .notifications-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .notifications-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .notifications-badge {
+            padding: 0.125rem 0.375rem;
+            background: var(--danger-color);
+            color: white;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .notifications-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .notifications-action-btn {
+            padding: 0.375rem 0.625rem;
+            background: transparent;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .notifications-action-btn:hover {
+            background: rgba(39, 98, 203, 0.08);
+        }
+
+        .notifications-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 1rem;
+        }
+
+        .notification-tab {
+            flex: 1;
+            padding: 0.75rem 0.5rem;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .notification-tab:hover {
+            color: var(--text-color);
+        }
+
+        .notification-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .notifications-list {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 360px;
+        }
+
+        .notification-item {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .notification-item:hover {
+            background: var(--background-light);
+        }
+
+        .notification-item.unread {
+            background: rgba(39, 98, 203, 0.02);
+        }
+
+        .notification-item.unread::before {
+            content: '';
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            background: var(--primary-color);
+            border-radius: 50%;
+        }
+
+        .notification-content {
+            display: flex;
+            gap: 0.875rem;
+        }
+
+        .notification-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .notification-icon.contract {
+            background: rgba(39, 98, 203, 0.1);
+            color: var(--primary-color);
+        }
+
+        .notification-icon.approval {
+            background: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
+        }
+
+        .notification-icon.warning {
+            background: var(--warning-bg);
+            color: var(--warning-color);
+        }
+
+        .notification-icon.info {
+            background: var(--info-bg);
+            color: var(--info-color);
+        }
+
+        .notification-details {
+            flex: 1;
+        }
+
+        .notification-message {
+            font-size: 0.875rem;
+            color: var(--text-color);
+            line-height: 1.4;
+        }
+
+        .notification-message strong {
+            font-weight: 600;
+        }
+
+        .notification-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.25rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .notification-time {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .notifications-footer {
+            padding: 0.75rem;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .view-all-btn {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .view-all-btn:hover {
+            text-decoration: underline;
+        }
+
+        /* Language Dropdown Styles */
+        .language-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            width: 200px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: var(--transition);
+            z-index: 1100;
+            padding: 0.5rem;
+        }
+
+        .language-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .language-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .language-option:hover {
+            background: var(--background-light);
+        }
+
+        .language-option.active {
+            background: rgba(39, 98, 203, 0.08);
+            color: var(--primary-color);
+        }
+
+        .language-flag {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .language-name {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .language-check {
+            margin-left: auto;
+            color: var(--primary-color);
+            display: none;
+        }
+
+        .language-option.active .language-check {
+            display: block;
+        }
+
+        /* Position relative for dropdown containers */
+        .header-btn-container {
+            position: relative;
+        }
+
+        /* Empty State */
+        .empty-notifications {
+            padding: 3rem 1.5rem;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            opacity: 0.3;
+            margin-bottom: 1rem;
+        }
+
+        .empty-text {
+            font-size: 0.875rem;
+        }
+
+
+        #sidebarLogo img {
+    content: url('/app/static/img/logo/contriq-logo.png');
+    width: 110px;
+    transition: all 0.3s ease;
+}
+
+.sidebar-collapsed #sidebarLogo {
+    padding-left: 0px !important;
+}
+
+.sidebar-collapsed #sidebarLogo img {
+    content: url('/app/static/img/logo/contriq-icon.png');
+    width: 40px;
+}
+    </style>
+
+    <!-- Block for additional CSS from child templates -->
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="/dashboard" class="logo-container">
+                    <div class="logo-icon" id="sidebarLogo" style="padding-left:45px">
+                        <img src="/app/static/img/logo/contriq-logo.png" alt="CALIM 360 Logo" width="110px">
+                    </div>
+                    <!-- <span class="logo-text">CALIM 360</span> -->
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <!-- Main Navigation -->
+                <div class="nav-section">
+                    <!-- <div class="nav-section-title">Main</div> -->
+                    <div class="nav-item">
+                        <a href="/" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                            <i class="ti ti-dashboard nav-icon"></i>
+                            <span class="nav-text">Dashboard</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link nav-dropdown-toggle"
+                            onclick="toggleNavDropdown(event, 'contractsDropdown')">
+                            <i class="ti ti-file-text nav-icon"></i>
+                            <span class="nav-text">Contracts</span>
+                            <i class="ti ti-chevron-down nav-arrow"></i>
+                        </a>
+                        <div class="nav-dropdown" id="contractsDropdown">
+                            <a href="/contracts?module=drafting" class="nav-dropdown-item" data-module="drafting">
+                                <i class="ti ti-file-pencil"></i>
+                                <span>Contract Drafting</span>
+                            </a>
+                            <a href="/contracts?module=negotiation" class="nav-dropdown-item" data-module="negotiation">
+                                <i class="ti ti-message-circle"></i>
+                                <span>Contract Negotiation</span>
+                            </a>
+                            <a href="/contracts?module=operations" class="nav-dropdown-item" data-module="operations">
+                                <i class="ti ti-briefcase"></i>
+                                <span>Contract Operations</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="nav-item">
+                        <a href="/projects" class="nav-link">
+                            <i class="ti ti-folder nav-icon"></i>
+                            <span class="nav-text">Projects</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="/reports" class="nav-link">
+                            <i class="ti ti-chart-bar nav-icon"></i>
+                            <span class="nav-text">Reports</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Expert & Support -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Expert Support</div>
+                    <div class="nav-item">
+                        <a href="/ask-expert" class="nav-link">
+                            <i class="ti ti-user-question nav-icon"></i>
+                            <span class="nav-text">Ask an Expert</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="/expert-directory" class="nav-link">
+                            <i class="ti ti-users-group nav-icon"></i>
+                            <span class="nav-text">Expert Directory</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="/consultations" class="nav-link">
+                            <i class="ti ti-calendar-event nav-icon"></i>
+                            <span class="nav-text">My Consultations</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Add this in the sidebar navigation, under Settings section -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Administration</div>
+                    <div class="nav-item">
+                        <a href="/users" class="nav-link" id="nav-users">
+                            <i class="ti ti-users nav-icon"></i>
+                            <span class="nav-text">Users</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="/settings" class="nav-link">
+                            <i class="ti ti-settings nav-icon"></i>
+                            <span class="nav-text">Settings</span>
+                        </a>
+                    </div>
+                </div>
+
+
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="toggle-btn" onclick="toggleSidebar()">
+                    <i class="ti ti-layout-sidebar-left-collapse"></i>
+                    <span>Collapse</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-wrapper">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-content">
+                    <!-- Mobile Menu Toggle -->
+                    <button class="header-btn mobile-menu-btn" onclick="toggleSidebar()">
+                        <i class="ti ti-menu-2"></i>
+                    </button>
+
+                    <!-- Search -->
+                    <div class="header-search">
+                        <div class="search-wrapper">
+                            <i class="ti ti-search search-icon"></i>
+                            <input type="text" class="global-search"
+                                placeholder="Search contracts, projects, or parties...">
+                        </div>
+                    </div>
+
+                    <!-- Header Actions -->
+                    <div class="header-actions">
+                        <!-- Language Toggle -->
+                        <div class="header-btn-container">
+                            <button class="header-btn" title="Language" onclick="toggleLanguage(event)">
+                                <i class="ti ti-language"></i>
+                            </button>
+
+                            <!-- Language Dropdown -->
+                            <div class="language-dropdown" id="languageDropdown">
+                                <div class="language-option active" onclick="selectLanguage('en')">
+                                    <span class="language-flag">🇬🇧</span>
+                                    <span class="language-name">English</span>
+                                    <i class="ti ti-check language-check"></i>
+                                </div>
+                                <div class="language-option" onclick="selectLanguage('ar')">
+                                    <span class="language-flag">🇶🇦</span>
+                                    <span class="language-name">العربية</span>
+                                    <i class="ti ti-check language-check"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notifications -->
+                        <div class="header-btn-container">
+                            <!-- <button class="header-btn" onclick="toggleNotifications(event)">
+                                <i class="ti ti-bell"></i>
+                                <span class="notification-dot" id="notificationDot"></span>
+                            </button> -->
+
+                            <!-- Notifications Dropdown -->
+                            <div class="notifications-dropdown" id="notificationsDropdown">
+                                <div class="notifications-header">
+                                    <div class="notifications-title">
+                                        Notifications
+                                        <span class="notifications-badge" id="notificationCount">5</span>
+                                    </div>
+                                    <div class="notifications-actions">
+                                        <button class="notifications-action-btn" onclick="markAllAsRead()">
+                                            Mark all as read
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="notifications-tabs">
+                                    <button class="notification-tab active"
+                                        onclick="switchNotificationTab(this, 'all')">
+                                        All
+                                    </button>
+                                    <button class="notification-tab" onclick="switchNotificationTab(this, 'contracts')">
+                                        Contracts
+                                    </button>
+                                    <button class="notification-tab" onclick="switchNotificationTab(this, 'approvals')">
+                                        Approvals
+                                    </button>
+                                    <button class="notification-tab" onclick="switchNotificationTab(this, 'alerts')">
+                                        Alerts
+                                    </button>
+                                </div>
+
+                                <div class="notifications-list" id="notificationsList">
+                                    <!-- Sample notifications will be loaded here -->
+                                </div>
+
+                                <div class="notifications-footer">
+                                    <a href="/notifications" class="view-all-btn">View all notifications</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Messages -->
+                        <button class="header-btn" onclick="window.location.href='/expert-directory'">
+                            <i class="ti ti-message"></i>
+                        </button>
+
+                        <!-- User Menu - UPDATED STRUCTURE -->
+                        <div class="header-btn-container">
+                            <div class="user-menu" onclick="toggleUserMenu(event)">
+                                <div class="user-avatar">{{ user.avatar_initial if user else 'U' }}</div>
+                                <div class="user-info">
+                                    <div class="user-name">{{ user.full_name if user else 'Guest User' }}</div>
+                                    <div class="user-role">{{ user.user_type|title if user else 'User' }}</div>
+                                </div>
+                                <i class="ti ti-chevron-down"></i>
+                            </div>
+
+                            <!-- User Dropdown -->
+                            <div class="dropdown-menu" id="userDropdown">
+                                <a href="/settings" class="dropdown-item">
+                                    <i class="ti ti-settings"></i>
+                                    <span>Settings</span>
+                                </a>
+                                <a href="/master-workflow" class="dropdown-item">
+                                    <i class="ti ti-settings-automation"></i>
+                                    <span>Master Workflow</span>
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a href="#" class="dropdown-item" onclick="logout(event); return false;">
+                                    <i class="ti ti-logout"></i>
+                                    <span>Logout</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Breadcrumbs (Optional) -->
+            {% block breadcrumbs %}{% endblock %}
+
+            <!-- Main Content -->
+            <div class="content">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Chatbot Button & Window -->
+    <div class="chatbot-container">
+        <!-- Floating Chatbot Button -->
+        <button class="chatbot-button" id="chatbotButton" onclick="toggleChatbot()" title="AI Assistant">
+            <i class="ti ti-message-chatbot"></i>
+            <span class="chatbot-indicator"></span>
+        </button>
+
+        <!-- Chatbot Window -->
+        <div class="chatbot-window" id="chatbotWindow">
+            <!-- Header -->
+            <div class="chatbot-header">
+                <div class="chatbot-header-info">
+                    <div class="chatbot-avatar">
+                        <i class="ti ti-robot"></i>
+                    </div>
+                    <div class="chatbot-title">
+                        <div class="chatbot-name">CLM AI Assistant</div>
+                        <div class="chatbot-status">
+                            <span class="status-dot"></span>
+                            Online - Ready to help
+                        </div>
+                    </div>
+                </div>
+                <div class="chatbot-actions">
+                    <button class="chatbot-action-btn" onclick="minimizeChatbot()">
+                        <i class="ti ti-minus"></i>
+                    </button>
+                    <button class="chatbot-action-btn" onclick="closeChatbot()">
+                        <i class="ti ti-x"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Messages Area -->
+            <div class="chatbot-messages" id="chatbotMessages">
+                <!-- Welcome Message -->
+                <div class="message">
+                    <div class="message-avatar">AI</div>
+                    <div class="message-content">
+                        <div class="message-text">
+                            👋 Hello! I'm your CLM AI Assistant. I can help you with:
+                            <ul style="margin: 0.5rem 0 0 1rem; padding: 0;">
+                                <li>Contract drafting and analysis</li>
+                                <li>Clause recommendations</li>
+                                <li>Workflow guidance</li>
+                                <li>Risk assessment</li>
+                                <li>General CLM questions</li>
+                            </ul>
+                        </div>
+                        <div class="message-time">Just now</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="chatbot-quick-actions" id="quickActions">
+                <button class="quick-action-chip" onclick="sendQuickMessage('Help with contract drafting')">
+                    Contract Drafting
+                </button>
+                <button class="quick-action-chip" onclick="sendQuickMessage('Analyze a clause')">
+                    Analyze Clause
+                </button>
+                <button class="quick-action-chip" onclick="sendQuickMessage('Risk assessment')">
+                    Risk Assessment
+                </button>
+                <button class="quick-action-chip" onclick="sendQuickMessage('Connect with expert')">
+                    Ask Expert
+                </button>
+            </div>
+
+            <!-- Input Area -->
+            <div class="chatbot-input">
+                <div class="chatbot-input-group">
+                    <input type="text" class="chatbot-input-field" id="chatbotInput" placeholder="Type your message..."
+                        onkeypress="handleChatKeyPress(event)">
+                    <div class="chatbot-input-actions">
+                        <button class="chatbot-input-btn" onclick="attachFile()" title="Attach file">
+                            <i class="ti ti-paperclip"></i>
+                        </button>
+                        <button class="chatbot-input-btn chatbot-send-btn" onclick="sendMessage()" title="Send message">
+                            <i class="ti ti-send"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- UPDATED: Removed mock chatbot responses, ready for API integration -->
+    <!-- File: app/static/templates/base.html -->
+
+    <!-- In the <script> section, replace the chatbot functions with: -->
+
+    <script>
+        // ============================================
+        // CHATBOT FUNCTIONS - UPDATED FOR API INTEGRATION
+        // ============================================
+        let chatbotOpen = false;
+        let currentSessionId = null;
+        let conversationHistory = [];
+
+        function toggleChatbot() {
+            const chatWindow = document.getElementById('chatbotWindow');
+            chatbotOpen = !chatbotOpen;
+
+            if (chatbotOpen) {
+                chatWindow.classList.add('show');
+                document.getElementById('chatbotInput').focus();
+                document.querySelector('.chatbot-indicator').style.display = 'none';
+
+                // Create session if not exists
+                if (!currentSessionId) {
+                    createChatSession();
+                }
+            } else {
+                chatWindow.classList.remove('show');
+            }
+        }
+
+        function closeChatbot() {
+            document.getElementById('chatbotWindow').classList.remove('show');
+            chatbotOpen = false;
+        }
+
+        function minimizeChatbot() {
+            closeChatbot();
+        }
+
+        async function createChatSession() {
+            try {
+                const response = await fetch('/api/v1/chatbot/sessions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    },
+                    body: JSON.stringify({
+                        subject: 'AI Chatbot Consultation'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentSessionId = data.session_id;
+                    console.log('✅ Chat session created:', data.session_code);
+                } else {
+                    console.error('Failed to create chat session');
+                }
+            } catch (error) {
+                console.error('❌ Session creation error:', error);
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatbotInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Add user message to UI
+            addMessage(message, 'user');
+            input.value = '';
+            document.getElementById('quickActions').style.display = 'none';
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            try {
+                // Call chatbot API
+                const response = await fetch('/api/v1/chatbot/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    },
+                    body: JSON.stringify({
+                        query: message,
+                        tone: 'formal', // Can be made dynamic with a selector
+                        language: currentLanguage || 'en',
+                        session_id: currentSessionId
+                    })
+                });
+
+                removeTypingIndicator();
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Add AI response
+                    addMessage(data.response, 'ai', {
+                        confidence: data.confidence_score,
+                        variants: data.variants,
+                        tokens: data.tokens_used
+                    });
+
+                    // Store in conversation history
+                    conversationHistory.push({
+                        role: 'user',
+                        content: message
+                    });
+                    conversationHistory.push({
+                        role: 'assistant',
+                        content: data.response
+                    });
+                } else {
+                    removeTypingIndicator();
+                    addMessage('I apologize, but I encountered an error processing your request. Please try again.', 'ai', { error: true });
+                }
+            } catch (error) {
+                console.error('❌ Chatbot error:', error);
+                removeTypingIndicator();
+                addMessage('Connection error. Please check your internet connection and try again.', 'ai', { error: true });
+            }
+        }
+
+        function sendQuickMessage(message) {
+            document.getElementById('chatbotInput').value = message;
+            sendMessage();
+        }
+
+        function addMessage(text, sender, metadata = {}) {
+            const messagesContainer = document.getElementById('chatbotMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender === 'user' ? 'user' : ''}`;
+
+            const avatar = sender === 'user' ? 'U' : 'AI';
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            // Add confidence badge for AI responses
+            let confidenceBadge = '';
+            if (metadata.confidence && sender === 'ai') {
+                const confidencePercent = Math.round(metadata.confidence * 100);
+                const confidenceColor = confidencePercent >= 90 ? '#10b981' :
+                    confidencePercent >= 70 ? '#f59e0b' : '#ef4444';
+                confidenceBadge = `
+                <div style="display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; font-size: 11px;">
+                    <i class="ti ti-brain" style="color: ${confidenceColor}; font-size: 14px;"></i>
+                    <span style="color: ${confidenceColor}; font-weight: 600;">${confidencePercent}%</span>
+                </div>
+            `;
+            }
+
+            messageDiv.innerHTML = `
+            <div class="message-avatar">${avatar}</div>
+            <div class="message-content">
+                <div class="message-text">${text}</div>
+                <div class="message-time">
+                    ${time}
+                    ${confidenceBadge}
+                </div>
+            </div>
+        `;
+
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const messagesContainer = document.getElementById('chatbotMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message';
+            typingDiv.id = 'typingIndicator';
+
+            typingDiv.innerHTML = `
+            <div class="message-avatar">AI</div>
+            <div class="typing-indicator">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+            </div>
+        `;
+
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) indicator.remove();
+        }
+
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function attachFile() {
+            showToast('File attachment feature coming soon', 'info');
+        }
+
+        function getAuthToken() {
+            // Get JWT token from localStorage
+            return localStorage.getItem('access_token') || '';
+        }
+
+        // Initialize chatbot on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Chatbot initialization happens on first toggle
+            console.log('✅ Chatbot ready');
+        });
+
+        // ============================================
+// SIDEBAR FUNCTIONS - CORRECTED
+// ============================================
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    
+    sidebar.classList.toggle('collapsed');
+    sidebar.classList.toggle('sidebar-collapsed'); // Add this line
+    
+    localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+}
+
+// Load sidebar preference - CORRECTED
+window.addEventListener('DOMContentLoaded', () => {
+    const collapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    const sidebar = document.getElementById('sidebar');
+    
+    if (collapsed) {
+        sidebar.classList.add('collapsed');
+        sidebar.classList.add('sidebar-collapsed'); // Add this line
+    }
+});
+
+        // ============================================
+        // USER MENU DROPDOWN - FIXED
+        // ============================================
+        function toggleUserMenu(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+
+            const dropdown = document.getElementById('userDropdown');
+            const isOpen = dropdown.classList.contains('show');
+
+            // Close all other dropdowns
+            document.getElementById('notificationsDropdown')?.classList.remove('show');
+            document.getElementById('languageDropdown')?.classList.remove('show');
+
+            // Toggle user dropdown
+            if (isOpen) {
+                dropdown.classList.remove('show');
+            } else {
+                dropdown.classList.add('show');
+            }
+        }
+
+        // ============================================
+        // LOGOUT FUNCTION - FIXED
+        // ============================================
+        function logout(event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            if (confirm('Are you sure you want to logout?')) {
+                showLoading();
+
+                // Clear localStorage
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user_data');
+                localStorage.removeItem('sidebarCollapsed');
+                localStorage.removeItem('dropdownStates');
+
+                // Optional: Call logout API
+                fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                }).catch(err => console.error('Logout API error:', err));
+
+                // Redirect to login after short delay
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 300);
+            }
+        }
+
+        // ============================================
+        // TOAST NOTIFICATIONS
+        // ============================================
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+
+            const icon = type === 'success' ? 'check-circle' :
+                type === 'error' ? 'alert-circle' :
+                    type === 'info' ? 'info-circle' :
+                        'alert-triangle';
+
+            toast.innerHTML = `
+            <i class="ti ti-${icon}"></i>
+            <span>${message}</span>
+        `;
+
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        // ============================================
+        // LOADING OVERLAY
+        // ============================================
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('show');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('show');
+        }
+
+        // ============================================
+        // GLOBAL SEARCH
+        // ============================================
+        document.querySelector('.global-search')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const query = e.target.value;
+                if (query) {
+                    window.location.href = `/search?q=${encodeURIComponent(query)}`;
+                }
+            }
+        });
+
+        // ============================================
+        // KEYBOARD SHORTCUTS
+        // ============================================
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+K or Cmd+K for search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                document.querySelector('.global-search')?.focus();
+            }
+
+            // Ctrl+/ or Cmd+/ for chatbot
+            if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+                e.preventDefault();
+                toggleChatbot();
+            }
+        });
+
+        // ============================================
+        // NOTIFICATIONS - KEEP EXISTING CODE
+        // ============================================
+        const notificationsData = {
+            all: [
+                {
+                    id: 1,
+                    type: 'contract',
+                    message: '<strong>New contract</strong> "Service Agreement Q4-2025" has been created and assigned to you',
+                    time: '5 minutes ago',
+                    unread: true,
+                    icon: 'ti-file-text'
+                },
+                {
+                    id: 2,
+                    type: 'approval',
+                    message: '<strong>Contract approved</strong> by Sarah Johnson for "Maintenance Contract 2025"',
+                    time: '1 hour ago',
+                    unread: true,
+                    icon: 'ti-checkbox'
+                },
+                {
+                    id: 3,
+                    type: 'warning',
+                    message: '<strong>Deadline approaching</strong> for "Supply Agreement" - 2 days remaining',
+                    time: '2 hours ago',
+                    unread: true,
+                    icon: 'ti-alert-triangle'
+                },
+                {
+                    id: 4,
+                    type: 'info',
+                    message: '<strong>AI Analysis complete</strong> for "Partnership Agreement" with 3 risk flags',
+                    time: '3 hours ago',
+                    unread: false,
+                    icon: 'ti-brain'
+                },
+                {
+                    id: 5,
+                    type: 'contract',
+                    message: '<strong>Negotiation started</strong> with ABC Corp for "Master Service Agreement"',
+                    time: 'Yesterday',
+                    unread: false,
+                    icon: 'ti-message-circle'
+                }
+            ],
+            contracts: [],
+            approvals: [],
+            alerts: []
+        };
+
+        function initializeNotifications() {
+            notificationsData.all.forEach(notif => {
+                if (notif.type === 'contract') {
+                    notificationsData.contracts.push(notif);
+                } else if (notif.type === 'approval') {
+                    notificationsData.approvals.push(notif);
+                } else if (notif.type === 'warning' || notif.type === 'info') {
+                    notificationsData.alerts.push(notif);
+                }
+            });
+
+            loadNotifications('all');
+            updateNotificationCount();
+        }
+
+        function loadNotifications(category) {
+            const notificationsList = document.getElementById('notificationsList');
+            const notifications = notificationsData[category];
+
+            if (notifications.length === 0) {
+                notificationsList.innerHTML = `
+                <div class="empty-notifications">
+                    <i class="ti ti-bell-off empty-icon"></i>
+                    <div class="empty-text">No ${category} notifications</div>
+                </div>
+            `;
+                return;
+            }
+
+            notificationsList.innerHTML = notifications.map(notif => `
+            <div class="notification-item ${notif.unread ? 'unread' : ''}" onclick="handleNotificationClick(${notif.id})">
+                <div class="notification-content">
+                    <div class="notification-icon ${notif.type}">
+                        <i class="ti ${notif.icon}"></i>
+                    </div>
+                    <div class="notification-details">
+                        <div class="notification-message">${notif.message}</div>
+                        <div class="notification-meta">
+                            <span class="notification-time">
+                                <i class="ti ti-clock"></i>
+                                ${notif.time}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        }
+
+        function switchNotificationTab(tabElement, category) {
+            document.querySelectorAll('.notification-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            tabElement.classList.add('active');
+            loadNotifications(category);
+        }
+
+        function handleNotificationClick(notificationId) {
+            const notification = notificationsData.all.find(n => n.id === notificationId);
+            if (notification) {
+                notification.unread = false;
+                updateNotificationCount();
+            }
+            console.log('Notification clicked:', notificationId);
+        }
+
+        function markAllAsRead() {
+            notificationsData.all.forEach(notif => {
+                notif.unread = false;
+            });
+
+            const activeTab = document.querySelector('.notification-tab.active');
+            const category = activeTab.textContent.trim().toLowerCase();
+            loadNotifications(category);
+            updateNotificationCount();
+            showToast('All notifications marked as read', 'success');
+        }
+
+        function updateNotificationCount() {
+            const unreadCount = notificationsData.all.filter(n => n.unread).length;
+            const countBadge = document.getElementById('notificationCount');
+            const notificationDot = document.getElementById('notificationDot');
+
+            if (unreadCount > 0) {
+                countBadge.textContent = unreadCount;
+                countBadge.style.display = 'inline-block';
+                notificationDot.style.display = 'block';
+            } else {
+                countBadge.style.display = 'none';
+                notificationDot.style.display = 'none';
+            }
+        }
+
+        function toggleNotifications(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('notificationsDropdown');
+            const isOpen = dropdown.classList.contains('show');
+
+            closeAllDropdowns();
+
+            if (!isOpen) {
+                dropdown.classList.add('show');
+            }
+        }
+
+        // ============================================
+        // LANGUAGE FUNCTIONS
+        // ============================================
+        let currentLanguage = 'en';
+
+        function toggleLanguage(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('languageDropdown');
+            const isOpen = dropdown.classList.contains('show');
+
+            closeAllDropdowns();
+
+            if (!isOpen) {
+                dropdown.classList.add('show');
+            }
+        }
+
+        function selectLanguage(lang) {
+            currentLanguage = lang;
+
+            document.querySelectorAll('.language-option').forEach(option => {
+                option.classList.remove('active');
+            });
+
+            event.target.closest('.language-option').classList.add('active');
+            localStorage.setItem('preferredLanguage', lang);
+
+            if (lang === 'ar') {
+                document.body.setAttribute('dir', 'rtl');
+                showToast('تم تغيير اللغة إلى العربية', 'success');
+            } else {
+                document.body.setAttribute('dir', 'ltr');
+                showToast('Language changed to English', 'success');
+            }
+
+            closeAllDropdowns();
+        }
+
+        // ============================================
+        // CLOSE ALL DROPDOWNS
+        // ============================================
+        function closeAllDropdowns() {
+            document.getElementById('notificationsDropdown')?.classList.remove('show');
+            document.getElementById('languageDropdown')?.classList.remove('show');
+            document.getElementById('userDropdown')?.classList.remove('show');
+        }
+
+        // ============================================
+        // NAVIGATION DROPDOWN FUNCTIONS
+        // ============================================
+        function saveDropdownState(dropdownId, isOpen) {
+            const dropdownStates = JSON.parse(localStorage.getItem('dropdownStates') || '{}');
+            dropdownStates[dropdownId] = isOpen;
+            localStorage.setItem('dropdownStates', JSON.stringify(dropdownStates));
+        }
+
+        function loadDropdownStates() {
+            const dropdownStates = JSON.parse(localStorage.getItem('dropdownStates') || '{}');
+
+            Object.keys(dropdownStates).forEach(dropdownId => {
+                if (dropdownStates[dropdownId]) {
+                    const dropdown = document.getElementById(dropdownId);
+                    const toggle = dropdown?.previousElementSibling;
+
+                    if (dropdown) {
+                        dropdown.classList.add('show');
+                    }
+                    if (toggle) {
+                        toggle.classList.add('active');
+                    }
+                }
+            });
+        }
+
+        function toggleNavDropdown(event, dropdownId) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const dropdown = document.getElementById(dropdownId);
+            const toggle = event.currentTarget;
+            const isCurrentlyOpen = dropdown.classList.contains('show');
+
+            document.querySelectorAll('.nav-dropdown').forEach(d => {
+                if (d.id !== dropdownId) {
+                    d.classList.remove('show');
+                    const otherToggle = d.previousElementSibling;
+                    if (otherToggle) {
+                        otherToggle.classList.remove('active');
+                    }
+                }
+            });
+
+            if (isCurrentlyOpen) {
+                dropdown.classList.remove('show');
+                toggle.classList.remove('active');
+                saveDropdownState(dropdownId, false);
+            } else {
+                dropdown.classList.add('show');
+                toggle.classList.add('active');
+                saveDropdownState(dropdownId, true);
+            }
+        }
+
+        function setActiveSidebarModule() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const module = urlParams.get('module');
+            const currentPath = window.location.pathname;
+
+            if (currentPath === '/contracts') {
+                const contractsDropdown = document.getElementById('contractsDropdown');
+                const contractsToggle = contractsDropdown?.previousElementSibling;
+
+                if (contractsDropdown) {
+                    contractsDropdown.classList.add('show');
+                    saveDropdownState('contractsDropdown', true);
+                }
+                if (contractsToggle) {
+                    contractsToggle.classList.add('active');
+                }
+
+                if (module) {
+                    document.querySelectorAll('.nav-dropdown-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+
+                    const activeItem = document.querySelector(`.nav-dropdown-item[data-module="${module}"]`);
+                    if (activeItem) {
+                        activeItem.classList.add('active');
+                    }
+                }
+            } else if (module) {
+                document.querySelectorAll('.nav-dropdown-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+
+                const activeItem = document.querySelector(`.nav-dropdown-item[data-module="${module}"]`);
+                if (activeItem) {
+                    activeItem.classList.add('active');
+                    const dropdown = activeItem.closest('.nav-dropdown');
+                    if (dropdown) {
+                        dropdown.classList.add('show');
+                        const toggle = dropdown.previousElementSibling;
+                        if (toggle) {
+                            toggle.classList.add('active');
+                        }
+                        saveDropdownState(dropdown.id, true);
+                    }
+                }
+            }
+        }
+
+        // ============================================
+        // DOCUMENT READY & EVENT LISTENERS
+        // ============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load saved dropdown states
+            loadDropdownStates();
+
+            // Set active module
+            setActiveSidebarModule();
+
+            // Initialize notifications
+            initializeNotifications();
+
+            // Load language preference
+            const savedLanguage = localStorage.getItem('preferredLanguage') || 'en';
+            if (savedLanguage !== currentLanguage) {
+                currentLanguage = savedLanguage;
+            }
+
+            // Prevent dropdown from closing when clicking items
+            document.querySelectorAll('.nav-dropdown-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    const dropdown = e.target.closest('.nav-dropdown');
+                    if (dropdown) {
+                        dropdown.classList.add('show');
+                        const toggle = dropdown.previousElementSibling;
+                        if (toggle) {
+                            toggle.classList.add('active');
+                        }
+                        saveDropdownState(dropdown.id, true);
+                    }
+                });
+            });
+
+            // User dropdown items - allow navigation
+            document.querySelectorAll('#userDropdown .dropdown-item:not([onclick*="logout"])').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    setTimeout(() => {
+                        document.getElementById('userDropdown')?.classList.remove('show');
+                    }, 100);
+                });
+            });
+        });
+
+        // ============================================
+        // CLOSE DROPDOWNS ON OUTSIDE CLICK - UPDATED
+        // ============================================
+        document.addEventListener('click', (e) => {
+            // User dropdown
+            if (!e.target.closest('.user-menu') && !e.target.closest('#userDropdown')) {
+                document.getElementById('userDropdown')?.classList.remove('show');
+            }
+
+            // Notifications dropdown
+            if (!e.target.closest('[onclick*="toggleNotifications"]') &&
+                !e.target.closest('#notificationsDropdown')) {
+                document.getElementById('notificationsDropdown')?.classList.remove('show');
+            }
+
+            // Language dropdown
+            if (!e.target.closest('[onclick*="toggleLanguage"]') &&
+                !e.target.closest('#languageDropdown')) {
+                document.getElementById('languageDropdown')?.classList.remove('show');
+            }
+
+            // Navigation dropdowns (but keep contracts dropdown open on contracts page)
+            const currentPath = window.location.pathname;
+            if (!e.target.closest('.nav-dropdown-toggle') &&
+                !e.target.closest('.nav-dropdown') &&
+                !e.target.closest('.nav-dropdown-item')) {
+
+                document.querySelectorAll('.nav-dropdown').forEach(dropdown => {
+                    const isContractsPage = currentPath === '/contracts';
+                    const isContractsDropdown = dropdown.id === 'contractsDropdown';
+
+                    if (!isContractsPage || !isContractsDropdown) {
+                        dropdown.classList.remove('show');
+                        const toggle = dropdown.previousElementSibling;
+                        if (toggle) {
+                            toggle.classList.remove('active');
+                        }
+                        saveDropdownState(dropdown.id, false);
+                    }
+                });
+            }
+        });
+    </script>
+
+    <!-- Page Specific Scripts -->
+    {% block extra_js %}
+    <script src="/static/js/common/auth.js"></script>
+    {% endblock %}
+</body>
+
+</html>

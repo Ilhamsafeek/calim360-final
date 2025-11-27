@@ -1,0 +1,1006 @@
+<!-- SCR-052 - Audit Trail Screen -->
+<!-- File: app/static/templates/screens/reports/SCR_052_audit_trail.html -->
+{% extends "base.html" %}
+
+{% block title %}Audit Trail{% endblock %}
+
+{% block head %}
+<style>
+    :root {
+        --primary-color: #2762cb;
+        --secondary-color: #73B4E0;
+        --text-color: #333;
+        --text-muted: #666;
+        --border-color: #e9ecef;
+        --background-light: #f8f9fa;
+        --success-color: #28a745;
+        --warning-color: #856404;
+        --danger-color: #dc3545;
+    }
+
+    .audit-wrapper {
+        min-height: 100vh;
+        background: var(--background-light);
+    }
+
+    .audit-header {
+        background: white;
+        border-bottom: 1px solid var(--border-color);
+        padding: 2rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    }
+
+    .header-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .header-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #10b981, #34d399);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.75rem;
+    }
+
+    .header-info h1 {
+        margin: 0 0 0.25rem 0;
+        font-size: 1.875rem;
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    .header-info p {
+        margin: 0;
+        color: var(--text-muted);
+        font-size: 0.95rem;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        border: none;
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #1e4fa0;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(39, 98, 203, 0.3);
+    }
+
+    .btn-outline {
+        background: white;
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-outline:hover {
+        background: var(--background-light);
+        border-color: var(--primary-color);
+    }
+
+    .content-wrapper {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .filter-section {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .filter-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-header h3 {
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.25rem;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filter-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-color);
+    }
+
+    .filter-input,
+    .filter-select {
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+
+    .filter-input:focus,
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-box {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .stat-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .stat-icon-wrapper.events {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+
+    .stat-icon-wrapper.users {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+
+    .stat-icon-wrapper.blockchain {
+        background: rgba(139, 92, 246, 0.1);
+        color: #8b5cf6;
+    }
+
+    .stat-content h4 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    .stat-content p {
+        margin: 0.25rem 0 0 0;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    .audit-table-card {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .table-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .table-header h3 {
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 600;
+    }
+
+    .search-box {
+        position: relative;
+        width: 300px;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 0.625rem 1rem 0.625rem 2.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 0.95rem;
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 0.875rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
+    .audit-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .audit-table thead {
+        background: var(--background-light);
+    }
+
+    .audit-table th {
+        padding: 1rem 1.5rem;
+        text-align: left;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-color);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .audit-table td {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid var(--border-color);
+        font-size: 0.95rem;
+    }
+
+    .audit-table tbody tr {
+        transition: background 0.2s;
+    }
+
+    .audit-table tbody tr:hover {
+        background: rgba(39, 98, 203, 0.02);
+    }
+
+    .action-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+    }
+
+    .action-badge.create {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+
+    .action-badge.update {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+
+    .action-badge.delete {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    .action-badge.access {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+    }
+
+    .action-badge.approve {
+        background: rgba(34, 197, 94, 0.1);
+        color: #22c55e;
+    }
+
+    .btn-icon {
+        padding: 0.5rem;
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-icon:hover {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .pagination {
+        padding: 1.5rem;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .pagination-info {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    .pagination-btn {
+        padding: 0.5rem 0.875rem;
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        color: var(--text-color);
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.875rem;
+        margin: 0 0.25rem;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .pagination-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 800px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .btn-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--text-muted);
+        padding: 0.25rem;
+        display: flex;
+    }
+
+    .btn-close:hover {
+        color: var(--text-color);
+    }
+
+    .modal-body {
+        padding: 2rem;
+    }
+
+    .detail-row {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        gap: 1rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+
+    .detail-row.full-width {
+        grid-template-columns: 1fr;
+    }
+
+    .detail-row label {
+        font-weight: 500;
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    .detail-row pre {
+        background: var(--background-light);
+        padding: 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+        font-size: 0.8125rem;
+    }
+
+    @media (max-width: 768px) {
+        .header-content {
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .filter-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-row {
+            grid-template-columns: 1fr;
+        }
+
+        .detail-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="audit-wrapper">
+    <!-- Header Section -->
+    <div class="audit-header">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="header-icon">
+                    <i class="ti ti-history"></i>
+                </div>
+                <div class="header-info">
+                    <h1>Audit Trail</h1>
+                    <p>Comprehensive tracking of all system activities and changes</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-outline" onclick="exportLogs('csv')">
+                    <i class="ti ti-download"></i>
+                    Export CSV
+                </button>
+                <button class="btn btn-primary" onclick="refreshData()">
+                    <i class="ti ti-refresh"></i>
+                    Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content-wrapper">
+        <!-- Statistics Row -->
+        <div class="stats-row">
+            <div class="stat-box">
+                <div class="stat-icon-wrapper events">
+                    <i class="ti ti-activity"></i>
+                </div>
+                <div class="stat-content">
+                    <h4 id="totalEvents">0</h4>
+                    <p>Total Events</p>
+                </div>
+            </div>
+
+            <div class="stat-box">
+                <div class="stat-icon-wrapper users">
+                    <i class="ti ti-users"></i>
+                </div>
+                <div class="stat-content">
+                    <h4 id="uniqueUsers">0</h4>
+                    <p>Unique Users</p>
+                </div>
+            </div>
+
+            <div class="stat-box">
+                <div class="stat-icon-wrapper blockchain">
+                    <i class="ti ti-shield-check"></i>
+                </div>
+                <div class="stat-content">
+                    <h4 id="blockchainVerified">0</h4>
+                    <p>Blockchain Verified</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="filter-header">
+                <h3>
+                    <i class="ti ti-filter"></i>
+                    Advanced Filters
+                </h3>
+                <button class="btn btn-outline" onclick="clearFilters()">
+                    <i class="ti ti-x"></i>
+                    Clear Filters
+                </button>
+            </div>
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label class="filter-label">Start Date:</label>
+                    <input type="date" class="filter-input" id="startDate">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">End Date:</label>
+                    <input type="date" class="filter-input" id="endDate">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Action Type:</label>
+                    <select class="filter-select" id="actionType">
+                        <option value="">All Actions</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Entity Type:</label>
+                    <select class="filter-select" id="entityType">
+                        <option value="">All Entities</option>
+                        <option value="contract">Contract</option>
+                        <option value="project">Project</option>
+                        <option value="document">Document</option>
+                        <option value="user">User</option>
+                        <option value="workflow">Workflow</option>
+                        <option value="obligation">Obligation</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">User:</label>
+                    <select class="filter-select" id="userId">
+                        <option value="">All Users</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Entity ID:</label>
+                    <input type="text" class="filter-input" id="entityId" placeholder="Enter ID...">
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit Log Table -->
+        <div class="audit-table-card">
+            <div class="table-header">
+                <h3>Audit Log Entries</h3>
+                <div class="search-box">
+                    <i class="ti ti-search"></i>
+                    <input type="text" placeholder="Search audit log..." id="searchInput">
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="audit-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Action</th>
+                            <th>Entity</th>
+                            <th>User</th>
+                            <th>IP Address</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditTableBody">
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 2rem;">
+                                Loading...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination">
+                <div class="pagination-info">Loading...</div>
+                <div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const API_BASE = '/api/reports/audit-trail';
+let currentPage = 1;
+let currentFilters = {};
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    initializePage();
+    setupEventListeners();
+});
+
+async function initializePage() {
+    await Promise.all([
+        loadStatistics(),
+        loadActionTypes(),
+        loadUsers(),
+        loadAuditLogs()
+    ]);
+}
+
+// Load Data
+async function loadAuditLogs(page = 1) {
+    try {
+        const params = new URLSearchParams({
+            page: page,
+            limit: 50,
+            ...currentFilters
+        });
+
+        const response = await fetch(`${API_BASE}/logs?${params}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            displayAuditLogs(data.data);
+            updatePagination(data.pagination);
+            currentPage = page;
+        }
+    } catch (error) {
+        console.error('Error loading audit logs:', error);
+        showError('Failed to load audit logs');
+    }
+}
+
+async function loadStatistics() {
+    try {
+        const params = new URLSearchParams(currentFilters);
+        const response = await fetch(`${API_BASE}/statistics?${params}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('totalEvents').textContent = formatNumber(data.total_events);
+            document.getElementById('uniqueUsers').textContent = formatNumber(data.unique_users);
+            document.getElementById('blockchainVerified').textContent = formatNumber(data.blockchain_verified);
+        }
+    } catch (error) {
+        console.error('Error loading statistics:', error);
+    }
+}
+
+async function loadActionTypes() {
+    try {
+        const response = await fetch(`${API_BASE}/action-types`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const select = document.getElementById('actionType');
+            select.innerHTML = '<option value="">All Actions</option>';
+            data.action_types.forEach(action => {
+                const option = document.createElement('option');
+                option.value = action;
+                option.textContent = capitalize(action);
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading action types:', error);
+    }
+}
+
+async function loadUsers() {
+    try {
+        const response = await fetch(`${API_BASE}/users`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const select = document.getElementById('userId');
+            select.innerHTML = '<option value="">All Users</option>';
+            data.users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = user.name;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading users:', error);
+    }
+}
+
+// Display Functions
+function displayAuditLogs(logs) {
+    const tbody = document.getElementById('auditTableBody');
+    
+    if (!logs || logs.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                    <i class="ti ti-inbox" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+                    No audit logs found
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = logs.map(log => `
+        <tr>
+            <td>${formatDateTime(log.timestamp)}</td>
+            <td>
+                <span class="action-badge ${getActionClass(log.action_type)}">
+                    <i class="ti ti-${getActionIcon(log.action_type)}"></i>
+                    ${capitalize(log.action_type)}
+                </span>
+            </td>
+            <td>
+                <div>${capitalize(log.entity_type)}</div>
+                <div style="font-size: 0.875rem; color: var(--text-muted);">${log.entity_id || 'N/A'}</div>
+            </td>
+            <td>${log.user_name}</td>
+            <td style="font-family: monospace; font-size: 0.875rem;">${log.ip_address || 'N/A'}</td>
+            <td>
+                <button class="btn-icon" onclick="showDetails(${log.id})" title="View Details">
+                    <i class="ti ti-eye"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function updatePagination(pagination) {
+    const paginationDiv = document.querySelector('.pagination');
+    if (!paginationDiv) return;
+    
+    paginationDiv.innerHTML = `
+        <div class="pagination-info">
+            Page ${pagination.page} of ${pagination.pages} (${formatNumber(pagination.total)} total)
+        </div>
+        <div>
+            <button class="pagination-btn" onclick="loadAuditLogs(${pagination.page - 1})" ${pagination.page === 1 ? 'disabled' : ''}>
+                <i class="ti ti-chevron-left"></i>
+            </button>
+            <button class="pagination-btn" onclick="loadAuditLogs(${pagination.page + 1})" ${pagination.page === pagination.pages ? 'disabled' : ''}>
+                <i class="ti ti-chevron-right"></i>
+            </button>
+        </div>
+    `;
+}
+
+// Event Listeners
+function setupEventListeners() {
+    document.getElementById('startDate')?.addEventListener('change', applyFilters);
+    document.getElementById('endDate')?.addEventListener('change', applyFilters);
+    document.getElementById('actionType')?.addEventListener('change', applyFilters);
+    document.getElementById('entityType')?.addEventListener('change', applyFilters);
+    document.getElementById('userId')?.addEventListener('change', applyFilters);
+    document.getElementById('entityId')?.addEventListener('input', debounce(applyFilters, 500));
+    document.getElementById('searchInput')?.addEventListener('input', debounce(applyFilters, 500));
+}
+
+function applyFilters() {
+    currentFilters = {};
+    
+    const startDate = document.getElementById('startDate')?.value;
+    if (startDate) currentFilters.start_date = new Date(startDate).toISOString();
+    
+    const endDate = document.getElementById('endDate')?.value;
+    if (endDate) currentFilters.end_date = new Date(endDate).toISOString();
+    
+    const actionType = document.getElementById('actionType')?.value;
+    if (actionType) currentFilters.action_type = actionType;
+    
+    const entityType = document.getElementById('entityType')?.value;
+    if (entityType) currentFilters.entity_type = entityType;
+    
+    const userId = document.getElementById('userId')?.value;
+    if (userId) currentFilters.user_id = userId;
+    
+    const entityId = document.getElementById('entityId')?.value?.trim();
+    if (entityId) currentFilters.entity_id = entityId;
+    
+    const search = document.getElementById('searchInput')?.value?.trim();
+    if (search) currentFilters.search = search;
+    
+    console.log('🔍 Applying filters:', currentFilters); // Debug log
+    
+    loadStatistics();
+    loadAuditLogs(1);
+}
+
+function clearFilters() {
+    document.getElementById('startDate').value = '';
+    document.getElementById('endDate').value = '';
+    document.getElementById('actionType').value = '';
+    document.getElementById('entityType').value = '';
+    document.getElementById('userId').value = '';
+    document.getElementById('entityId').value = '';
+    document.getElementById('searchInput').value = '';
+    currentFilters = {};
+    loadStatistics();
+    loadAuditLogs(1);
+}
+
+function refreshData() {
+    loadStatistics();
+    loadAuditLogs(currentPage);
+}
+
+async function exportLogs(format) {
+    const params = new URLSearchParams({
+        format: format,
+        ...currentFilters
+    });
+    window.location.href = `${API_BASE}/export?${params}`;
+}
+
+async function showDetails(logId) {
+    try {
+        const response = await fetch(`${API_BASE}/logs?limit=1000`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const log = data.data.find(l => l.id === logId);
+            if (log) {
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3><i class="ti ti-file-info"></i> Audit Log Details</h3>
+                            <button class="btn-close" onclick="this.closest('.modal-overlay').remove()">
+                                <i class="ti ti-x"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="detail-row">
+                                <label>Log ID:</label>
+                                <span>${log.id}</span>
+                            </div>
+                            <div class="detail-row">
+                                <label>Timestamp:</label>
+                                <span>${formatDateTime(log.timestamp)}</span>
+                            </div>
+                            <div class="detail-row">
+                                <label>Action:</label>
+                                <span class="action-badge ${getActionClass(log.action_type)}">${capitalize(log.action_type)}</span>
+                            </div>
+                            <div class="detail-row">
+                                <label>User:</label>
+                                <span>${log.user_name}</span>
+                            </div>
+                            <div class="detail-row">
+                                <label>Entity:</label>
+                                <span>${capitalize(log.entity_type)} - ${log.entity_id || 'N/A'}</span>
+                            </div>
+                            <div class="detail-row">
+                                <label>IP Address:</label>
+                                <span style="font-family: monospace;">${log.ip_address || 'N/A'}</span>
+                            </div>
+                            <div class="detail-row full-width">
+                                <label>Details:</label>
+                                <pre>${JSON.stringify(log.action_details, null, 2)}</pre>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+        }
+    } catch (error) {
+        console.error('Error loading details:', error);
+    }
+}
+
+// Utility Functions
+function formatDateTime(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function formatNumber(num) {
+    return new Intl.NumberFormat('en-US').format(num);
+}
+
+function capitalize(str) {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function getActionClass(action) {
+    const map = {
+        'create': 'create', 'update': 'update', 'delete': 'delete',
+        'view': 'access', 'access': 'access', 'approve': 'approve',
+        'reject': 'delete', 'sign': 'approve', 'upload': 'create',
+        'download': 'access', 'export': 'access'
+    };
+    return map[action] || 'access';
+}
+
+function getActionIcon(action) {
+    const map = {
+        'create': 'plus', 'update': 'edit', 'delete': 'trash',
+        'view': 'eye', 'access': 'eye', 'approve': 'check',
+        'reject': 'x', 'sign': 'signature', 'upload': 'upload',
+        'download': 'download', 'export': 'file-export'
+    };
+    return map[action] || 'activity';
+}
+
+function showError(message) {
+    const tbody = document.getElementById('auditTableBody');
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="6" style="text-align: center; padding: 2rem; color: var(--danger-color);">
+                <i class="ti ti-alert-circle" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+                ${message}
+            </td>
+        </tr>
+    `;
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+</script>
+{% endblock %}

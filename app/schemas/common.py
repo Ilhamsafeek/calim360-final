@@ -1,0 +1,1 @@
+# placeholder for: app/schemas/common.py

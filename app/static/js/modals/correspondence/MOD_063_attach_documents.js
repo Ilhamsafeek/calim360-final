@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/correspondence/MOD_063_attach_documents.js

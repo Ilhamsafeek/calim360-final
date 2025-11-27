@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/integration/MOD_088_sms_gateway.js

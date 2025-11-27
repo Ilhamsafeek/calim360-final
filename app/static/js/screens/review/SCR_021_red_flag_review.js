@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/review/SCR_021_red_flag_review.js

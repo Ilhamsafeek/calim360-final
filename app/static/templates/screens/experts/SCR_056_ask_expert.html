@@ -1,0 +1,846 @@
+<link rel="stylesheet" href="/static/css/toast.css">
+{% extends "base.html" %}
+
+{% block title %}Ask an Expert{% endblock %}
+
+{% block head %}
+<style>
+    /* Ask an Expert Specific Styles */
+    .page-content {
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    /* Page Header */
+    .page-header {
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.5s ease;
+    }
+
+    .page-title-section {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .page-title {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .page-title h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin: 0;
+    }
+
+    .page-title i {
+        font-size: 2rem;
+        color: var(--primary-color);
+    }
+
+    .page-subtitle {
+        color: var(--text-muted);
+        font-size: 1rem;
+        margin: 0.5rem 0;
+    }
+
+    /* Main Layout Grid */
+    .consultation-layout {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    /* Left Panel - Query Form */
+    .query-panel {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+    }
+
+    .form-section:last-child {
+        margin-bottom: 0;
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .section-icon {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.125rem;
+    }
+
+    .section-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    /* Form Elements */
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--text-color);
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .required {
+        color: var(--danger-color);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 0.925rem;
+        transition: var(--transition);
+        background: white;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
+    }
+
+    .form-control.error {
+        border-color: var(--danger-color);
+    }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 120px;
+        font-family: inherit;
+    }
+
+    .char-counter {
+        text-align: right;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+    }
+
+    /* Priority Selector */
+    .priority-selector {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+
+    .priority-option {
+        padding: 1rem;
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        text-align: center;
+        cursor: pointer;
+        transition: var(--transition);
+        background: white;
+    }
+
+    .priority-option:hover {
+        border-color: var(--primary-color);
+        background: var(--background-light);
+    }
+
+    .priority-option.selected {
+        border-color: var(--primary-color);
+        background: rgba(39, 98, 203, 0.05);
+    }
+
+    .priority-option i {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .priority-option.standard i {
+        color: var(--info-color);
+    }
+
+    .priority-option.urgent i {
+        color: var(--warning-color);
+    }
+
+    .priority-option.emergency i {
+        color: var(--danger-color);
+    }
+
+    .priority-label {
+        font-weight: 600;
+        color: var(--text-color);
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .priority-desc {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    /* Expertise Area Chips */
+    .expertise-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .chip {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        background: white;
+        color: var(--text-color);
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .chip:hover {
+        border-color: var(--primary-color);
+        background: var(--background-light);
+    }
+
+    .chip.selected {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    /* Document Attachments */
+    .attachments-area {
+        border: 2px dashed var(--border-color);
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        transition: var(--transition);
+        cursor: pointer;
+    }
+
+    .attachments-area:hover {
+        border-color: var(--primary-color);
+        background: var(--background-light);
+    }
+
+    .attachments-area.dragover {
+        border-color: var(--primary-color);
+        background: rgba(39, 98, 203, 0.05);
+    }
+
+    .attachments-icon {
+        font-size: 2.5rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    .attached-files {
+        margin-top: 1rem;
+    }
+
+    .attached-file {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem;
+        background: var(--background-light);
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+    }
+
+    .file-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .file-name {
+        color: var(--text-color);
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .file-size {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+    }
+
+    /* Right Panel - Expert Selection */
+    .expert-panel {
+        position: sticky;
+        top: calc(var(--header-height) + 2rem);
+        height: fit-content;
+    }
+
+    .expert-card-mini {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        margin-bottom: 1rem;
+        transition: var(--transition);
+        cursor: pointer;
+    }
+
+    .expert-card-mini:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .expert-card-mini.selected {
+        border-color: var(--primary-color);
+        background: rgba(39, 98, 203, 0.02);
+    }
+
+    .expert-mini-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .expert-mini-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+    }
+
+    .expert-mini-info h4 {
+        margin: 0 0 0.25rem 0;
+        font-size: 1rem;
+        color: var(--text-color);
+    }
+
+    .expert-mini-title {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .expert-mini-stats {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .mini-stat {
+        color: var(--text-muted);
+    }
+
+    .mini-stat strong {
+        color: var(--text-color);
+    }
+
+    .expert-availability-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.75rem;
+        background: var(--success-bg);
+        color: var(--success-color);
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .availability-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    /* Experts List Container */
+    .experts-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    /* Info Box */
+    .info-box {
+        background: var(--info-bg);
+        border-left: 4px solid var(--info-color);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+
+    .info-box-title {
+        color: var(--info-color);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .info-box-content {
+        color: var(--text-color);
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Action Buttons */
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-size: 0.925rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+        flex: 1;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+        background: #1e4ba8;
+        transform: translateY(-1px);
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .btn-secondary {
+        background: white;
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+        background: var(--background-light);
+    }
+
+    /* Session Options */
+    .session-options {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .session-option {
+        padding: 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        text-align: center;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .session-option:hover {
+        border-color: var(--primary-color);
+        background: var(--background-light);
+    }
+
+    .session-option.selected {
+        border-color: var(--primary-color);
+        background: rgba(39, 98, 203, 0.05);
+    }
+
+    .session-option i {
+        font-size: 1.5rem;
+        color: var(--primary-color);
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Loading State */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        display: none;
+    }
+
+    .loading-overlay.active {
+        display: flex;
+    }
+
+    .loading-content {
+        text-align: center;
+    }
+
+    .spinner {
+        width: 48px;
+        height: 48px;
+        border: 4px solid var(--border-color);
+        border-top-color: var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .consultation-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .expert-panel {
+            position: static;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .priority-selector {
+            grid-template-columns: 1fr;
+        }
+
+        .session-options {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-title-section">
+            <div>
+                <div class="page-title">
+                    <i class="ti ti-user-question"></i>
+                    <h1>Ask an Expert</h1>
+                </div>
+                <p class="page-subtitle">Get professional legal consultation for your contract needs</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Layout -->
+    <div class="consultation-layout">
+        <!-- Left Panel - Query Form -->
+        <div class="query-panel">
+            <form id="expertQueryForm">
+                <!-- Contract Context Section -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="ti ti-file-text"></i>
+                        </div>
+                        <h2 class="section-title">Contract Context</h2>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Related Contract (Optional)
+                        </label>
+                        <select class="form-control" id="contractSelect">
+                            <option value="">Select a contract...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Query Type <span class="required">*</span>
+                        </label>
+                        <select class="form-control" id="queryType" required>
+                            <option value="">Select query type...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Query Details Section -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="ti ti-message-question"></i>
+                        </div>
+                        <h2 class="section-title">Your Query</h2>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Subject <span class="required">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="querySubject"
+                            placeholder="Brief description of your query" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Detailed Question <span class="required">*</span>
+                        </label>
+                        <textarea class="form-control" id="queryDetails"
+                            placeholder="Provide detailed context and specific questions..." required></textarea>
+                        <div class="char-counter">
+                            <span id="charCount">0</span> / 2000 characters
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Priority Level</label>
+                        <div class="priority-selector">
+                            <div class="priority-option standard selected" data-priority="standard">
+                                <i class="ti ti-clock"></i>
+                                <span class="priority-label">Standard</span>
+                                <span class="priority-desc">Response in 24h</span>
+                            </div>
+                            <div class="priority-option urgent" data-priority="urgent">
+                                <i class="ti ti-alert-triangle"></i>
+                                <span class="priority-label">Urgent</span>
+                                <span class="priority-desc">Response in 4h</span>
+                            </div>
+                            <div class="priority-option emergency" data-priority="emergency">
+                                <i class="ti ti-urgent"></i>
+                                <span class="priority-label">Emergency</span>
+                                <span class="priority-desc">Immediate</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expertise Required Section -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="ti ti-certificate"></i>
+                        </div>
+                        <h2 class="section-title">Expertise Required</h2>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Select Required Expertise Areas</label>
+                        <div class="expertise-chips">
+                            <div class="chip" data-expertise="qfcra">
+                                <i class="ti ti-shield-check"></i> QFCRA Compliance
+                            </div>
+                            <div class="chip" data-expertise="construction">
+                                <i class="ti ti-building"></i> Construction Law
+                            </div>
+                            <div class="chip" data-expertise="arbitration">
+                                <i class="ti ti-gavel"></i> Arbitration
+                            </div>
+                            <div class="chip" data-expertise="contracts">
+                                <i class="ti ti-file-text"></i> Contract Review
+                            </div>
+                            <div class="chip" data-expertise="dispute">
+                                <i class="ti ti-users"></i> Dispute Resolution
+                            </div>
+                            <div class="chip" data-expertise="compliance">
+                                <i class="ti ti-checklist"></i> Legal Compliance
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Document Attachments Section -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="ti ti-paperclip"></i>
+                        </div>
+                        <h2 class="section-title">Attachments</h2>
+                    </div>
+
+                    <div class="attachments-area" id="dropZone">
+                        <i class="ti ti-cloud-upload attachments-icon"></i>
+                        <p>Drag and drop files here or click to browse</p>
+                        <p style="font-size: 0.75rem; color: var(--text-muted);">Supported: PDF, DOC, DOCX, XLS, XLSX
+                            (Max 10MB)</p>
+                        <input type="file" id="fileInput" multiple hidden accept=".pdf,.doc,.docx,.xls,.xlsx">
+                    </div>
+
+                    <div class="attached-files" id="attachedFiles"></div>
+                </div>
+
+                <!-- Session Preferences -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="ti ti-settings"></i>
+                        </div>
+                        <h2 class="section-title">Session Preferences</h2>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-box-title">
+                            <i class="ti ti-info-circle"></i> Session Options
+                        </div>
+                        <div class="info-box-content">
+                            Choose your preferred consultation method based on your needs
+                        </div>
+                    </div>
+
+                    <div class="session-options">
+                        <div class="session-option selected" data-type="chat">
+                            <i class="ti ti-message-circle"></i>
+                            <strong>Text Chat</strong>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+                                Real-time messaging
+                            </div>
+                        </div>
+                        <div class="session-option" data-type="video">
+                            <i class="ti ti-video"></i>
+                            <strong>Video Call</strong>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+                                Face-to-face consultation
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label class="form-label">Preferred Language</label>
+                        <select class="form-control" id="preferredLanguage">
+                            <option>English</option>
+                            <option>Arabic</option>
+                            <option>English & Arabic</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="resetBtn">
+                        <i class="ti ti-refresh"></i> Reset
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="ti ti-send"></i> Submit Query
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Right Panel - Expert Selection -->
+        <div class="expert-panel">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="ti ti-users"></i>
+                </div>
+                <h3 class="section-title">Available Experts</h3>
+            </div>
+
+            <!-- Experts List Container -->
+            <div id="expertsList" class="experts-list">
+                <!-- Experts will be dynamically loaded here by JavaScript -->
+                <div class="info-box">
+                    <div class="info-box-content">
+                        <i class="ti ti-loader"></i>
+                        <span>Loading experts...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Tips -->
+            <div style="margin-top: 2rem; padding: 1rem; background: var(--background-light); border-radius: 8px;">
+                <h4 style="margin: 0 0 0.75rem 0; font-size: 0.925rem; color: var(--text-color);">
+                    <i class="ti ti-bulb"></i> Quick Tips
+                </h4>
+                <ul
+                    style="margin: 0; padding-left: 1.25rem; font-size: 0.813rem; color: var(--text-muted); line-height: 1.6;">
+                    <li>Be specific about your legal question</li>
+                    <li>Attach relevant contract documents</li>
+                    <li>Choose expertise areas carefully</li>
+                    <li>Response time depends on priority level</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <p>Submitting your query...</p>
+    </div>
+</div>
+
+<!-- Use external JavaScript file -->
+<script src="/static/js/ask-expert.js"></script>
+{% endblock %}

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Obligations API</title>
+</head>
+<body>
+    <h1>Test Obligations API</h1>
+    
+    <div id="results"></div>
+    
+    <button onclick="testAPI()">Test API Connection</button>
+    <button onclick="createTestObligation()">Create Test Obligation</button>
+    <button onclick="fetchObligations()">Fetch Obligations</button>
+
+    <script>
+        const contractId = 4649; // Change to your contract ID
+        
+        async function testAPI() {
+            try {
+                console.log('Testing API...');
+                const response = await fetch('/api/obligations/test');
+                const data = await response.json();
+                console.log('Test result:', data);
+                document.getElementById('results').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                alert('API Test: ' + data.message);
+            } catch (error) {
+                console.error('Test failed:', error);
+                alert('API Test Failed: ' + error.message);
+            }
+        }
+        
+        async function createTestObligation() {
+            try {
+                console.log('Creating test obligation...');
+                
+                const payload = {
+                    contract_id: contractId,
+                    obligation_title: "Test Obligation " + Date.now(),
+                    description: "This is a test obligation",
+                    obligation_type: "testing",
+                    status: "initiated",
+                    is_ai_generated: false
+                };
+                
+                console.log('Payload:', payload);
+                
+                const response = await fetch('/api/obligations/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (response.ok) {
+                    document.getElementById('results').innerHTML = 
+                        '<h3 style="color: green;">✅ SUCCESS!</h3>' +
+                        '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                    alert('Obligation created with ID: ' + data.id);
+                } else {
+                    document.getElementById('results').innerHTML = 
+                        '<h3 style="color: red;">❌ ERROR!</h3>' +
+                        '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                    alert('Error: ' + data.detail);
+                }
+                
+            } catch (error) {
+                console.error('Create failed:', error);
+                document.getElementById('results').innerHTML = 
+                    '<h3 style="color: red;">❌ EXCEPTION!</h3>' +
+                    '<pre>' + error.message + '</pre>';
+                alert('Exception: ' + error.message);
+            }
+        }
+        
+        async function fetchObligations() {
+            try {
+                console.log('Fetching obligations...');
+                const response = await fetch(`/api/obligations/contract/${contractId}`);
+                const data = await response.json();
+                console.log('Fetched obligations:', data);
+                document.getElementById('results').innerHTML = 
+                    '<h3>📋 Obligations (' + data.length + ')</h3>' +
+                    '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                console.error('Fetch failed:', error);
+                alert('Fetch Failed: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

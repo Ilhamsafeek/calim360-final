@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/dashboard/SCR_012_search_results.js

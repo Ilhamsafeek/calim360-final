@@ -1,0 +1,1036 @@
+{% extends "base.html" %}
+
+{% block title %}Projects Dashboard{% endblock %}
+
+{% block head %}
+<style>
+/* Project Dashboard Styles - Scoped to avoid conflicts */
+.dashboard-container {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Header */
+.dashboard-container .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.dashboard-container .dashboard-title h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0 0 0.5rem 0;
+}
+
+.dashboard-container .dashboard-subtitle {
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.dashboard-container .header-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* Buttons */
+.dashboard-container .btn {
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid var(--border-color);
+    background: white;
+    color: var(--text-color);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dashboard-container .btn:hover {
+    background: var(--background-light);
+    transform: translateY(-1px);
+}
+
+.dashboard-container .btn-primary {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.dashboard-container .btn-primary:hover {
+    background: #1e4fa3;
+}
+
+.dashboard-container .btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+}
+
+/* Stats Cards */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.stat-icon.blue { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); }
+.stat-icon.green { background: linear-gradient(135deg, var(--success-color), #20c997); }
+.stat-icon.purple { background: linear-gradient(135deg, #6f42c1, #8e5ee4); }
+.stat-icon.cyan { background: linear-gradient(135deg, var(--info-color), #17a2b8); }
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.stat-label {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Projects Section */
+.projects-section {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.section-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--background-light);
+}
+
+.section-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.section-title h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.section-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Search */
+.search-box {
+    position: relative;
+    width: 300px;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 0.5rem 0.75rem 0.5rem 2.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.875rem;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
+}
+
+.search-box i {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+/* View Toggle */
+.view-toggle {
+    display: flex;
+    background: var(--background-light);
+    border-radius: 8px;
+    padding: 0.25rem;
+}
+
+.view-toggle button {
+    padding: 0.5rem 0.75rem;
+    border: none;
+    background: none;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.2s;
+    font-size: 0.875rem;
+}
+
+.view-toggle button.active {
+    background: white;
+    color: var(--primary-color);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Dropdown */
+.dropdown {
+    position: relative;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    min-width: 180px;
+    z-index: 1000;
+    display: none;
+    margin-top: 0.5rem;
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+.dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: none;
+    text-align: left;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 0.875rem;
+}
+
+.dropdown-item:hover {
+    background: var(--background-light);
+}
+
+.dropdown-item.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* Projects Grid */
+.projects-container {
+    padding: 1.5rem;
+    background-color: #ebf0fc;
+}
+
+.projects-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.project-card {
+    background: white;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    position: relative;
+}
+
+.project-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    border-color: var(--primary-color);
+}
+
+.project-menu-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.5rem;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.project-card:hover .project-menu-btn {
+    opacity: 1;
+}
+
+.project-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.project-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.project-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0 0 0.25rem 0;
+}
+
+.project-code {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.active {
+    background: var(--success-bg);
+    color: var(--success-color);
+}
+
+.status-badge.completed {
+    background: #e8f5e8;
+    color: #2d5a2d;
+}
+
+.status-badge.on-hold {
+    background: var(--warning-bg);
+    color: var(--warning-color);
+}
+
+.status-badge.planning {
+    background: var(--info-bg);
+    color: var(--info-color);
+}
+
+.project-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-muted);
+}
+
+.meta-item i {
+    color: var(--primary-color);
+}
+
+.project-body {
+    padding: 1.5rem;
+}
+
+.project-description {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+}
+
+/* Progress Bar */
+.progress-section {
+    margin-bottom: 1.5rem;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.progress-bar {
+    height: 8px;
+    background: var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    border-radius: 4px;
+    transition: width 0.3s;
+}
+
+/* Actions */
+.project-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 0.625rem;
+    border: 1px solid var(--border-color);
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.action-btn:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.action-btn.primary {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+/* Searchable Dropdown */
+.searchable-select {
+    position: relative;
+}
+
+.select-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.select-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
+}
+
+.select-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1001;
+    display: none;
+    margin-top: 0.25rem;
+    max-height: 300px;
+    overflow: auto;
+}
+
+.select-dropdown.show {
+    display: block;
+}
+
+.select-search {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.select-search input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.875rem;
+}
+
+.select-options {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.select-option {
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: 1px solid var(--background-light);
+}
+
+.select-option:hover {
+    background: var(--background-light);
+}
+
+.select-option.selected {
+    background: var(--primary-color);
+    color: white;
+}
+
+.option-name {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.option-email {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+.option-role {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    margin-left: 0.5rem;
+}
+
+/* Project Modal */
+.project-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    animation: fadeIn 0.3s;
+}
+
+.project-modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.project-modal .modal-dialog {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s;
+}
+
+.project-modal .modal-dialog.large {
+    max-width: 900px;
+}
+
+.project-modal .modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.project-modal .modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.project-modal .modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.project-modal .modal-close:hover {
+    background: var(--background-light);
+}
+
+.project-modal .modal-body {
+    padding: 1.5rem;
+}
+
+.project-modal .modal-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+/* Form */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 0.875rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.875rem;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+textarea.form-control {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Table View */
+.projects-table {
+    display: none;
+    overflow-x: auto;
+}
+
+.projects-table.show {
+    display: block;
+}
+
+.projects-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.projects-table th,
+.projects-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.projects-table th {
+    background: var(--background-light);
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.projects-table tr:hover {
+    background: rgba(39, 98, 203, 0.02);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    opacity: 0.3;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .projects-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 1rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .projects-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .search-box {
+        width: 100%;
+    }
+    
+    .section-controls {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .project-meta {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div>
+            <h1 class="dashboard-title">Projects</h1>
+            <p class="dashboard-subtitle">Manage and monitor all your projects</p>
+        </div>
+        <div class="header-actions">
+            <!-- <button class="btn" onclick="ProjectManager.exportData()">
+                <i class="ti ti-download"></i>
+                Export
+            </button>
+            <button class="btn" onclick="ProjectManager.importData()">
+                <i class="ti ti-upload"></i>
+                Import
+            </button> -->
+            <button class="btn btn-primary" onclick="ProjectManager.openCreateModal()">
+                <i class="ti ti-plus"></i>
+                New Project
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon blue">
+                <i class="ti ti-folder"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="totalProjects">0</div>
+                <div class="stat-label">Total Projects</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon green">
+                <i class="ti ti-player-play"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="activeProjects">0</div>
+                <div class="stat-label">Active Projects</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon purple">
+                <i class="ti ti-circle-check"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="completedProjects">0</div>
+                <div class="stat-label">Completed</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon cyan">
+                <i class="ti ti-file-text"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="totalContracts">0</div>
+                <div class="stat-label">Total Contracts</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects Section -->
+    <div class="projects-section">
+        <div class="section-header">
+            <div class="section-title">
+                <h2>All Projects (<span id="projectCount">0</span>)</h2>
+                <div class="section-controls">
+                    <div class="search-box">
+                        <i class="ti ti-search"></i>
+                        <input type="text" id="searchInput" placeholder="Search projects..." onkeyup="ProjectManager.search(this.value)">
+                    </div>
+                    <div class="view-toggle">
+                        <button class="active" onclick="ProjectManager.switchView('grid')">
+                            <i class="ti ti-grid-dots"></i> Grid
+                        </button>
+                        <button onclick="ProjectManager.switchView('table')">
+                            <i class="ti ti-list"></i> Table
+                        </button>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn" onclick="ProjectManager.toggleFilter()">
+                            <i class="ti ti-filter"></i> Filter
+                        </button>
+                        <div class="dropdown-menu" id="filterMenu">
+                            <button class="dropdown-item active" onclick="ProjectManager.filter('all')">All Projects</button>
+                            <button class="dropdown-item" onclick="ProjectManager.filter('active')">Active</button>
+                            <button class="dropdown-item" onclick="ProjectManager.filter('completed')">Completed</button>
+                            <button class="dropdown-item" onclick="ProjectManager.filter('on-hold')">On Hold</button>
+                            <button class="dropdown-item" onclick="ProjectManager.filter('planning')">Planning</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="projects-container">
+            <!-- Grid View -->
+            <div class="projects-grid" id="projectsGrid">
+                <!-- Projects will be loaded here -->
+            </div>
+
+            <!-- Table View -->
+            <div class="projects-table" id="projectsTable">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Project Name</th>
+                            <th>Status</th>
+                            <th>Manager</th>
+                            <th>Client</th>
+                            <th>Start Date</th>
+                            <th>Value</th>
+                            <th>Progress</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Table rows will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Project Form Modal -->
+<div class="project-modal" id="projectModal">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalTitle">Create New Project</h3>
+            <button class="modal-close" onclick="ProjectManager.closeModal('projectModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="projectForm">
+                <input type="hidden" id="projectId">
+                
+                <div class="form-group">
+                    <label class="form-label">Project Title *</label>
+                    <input type="text" class="form-control" id="projectTitle" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Project Code *</label>
+                        <input type="text" class="form-control" id="projectCode" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select class="form-control" id="projectStatus">
+                            <option value="planning">Planning</option>
+                            <option value="active">Active</option>
+                            <option value="on-hold">On Hold</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Project Manager *</label>
+                        <div class="searchable-select">
+                            <input type="hidden" id="projectManager" required>
+                            <div class="select-input" onclick="ProjectManager.toggleDropdown('managerDropdown')" id="managerDisplay">
+                                <span>Select Manager by Email</span>
+                                <i class="ti ti-chevron-down"></i>
+                            </div>
+                            <div class="select-dropdown" id="managerDropdown">
+                                <div class="select-search">
+                                    <input type="text" placeholder="Search by name or email..." onkeyup="ProjectManager.filterManagers(this.value)">
+                                </div>
+                                <div class="select-options" id="managerOptions">
+                                    <!-- Options will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Client *</label>
+                        <div class="searchable-select">
+                            <input type="hidden" id="projectClient" required>
+                            <div class="select-input" onclick="ProjectManager.toggleDropdown('clientDropdown')" id="clientDisplay">
+                                <span>Select Client</span>
+                                <i class="ti ti-chevron-down"></i>
+                            </div>
+                            <div class="select-dropdown" id="clientDropdown">
+                                <div class="select-search">
+                                    <input type="text" placeholder="Search by name..." onkeyup="ProjectManager.filterClients(this.value)">
+                                </div>
+                                <div class="select-options" id="clientOptions">
+                                    <!-- Options will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="projectStartDate">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="projectEndDate">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Project Value (QAR)</label>
+                    <input type="number" class="form-control" id="projectValue" min="0" step="1000">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" id="projectDescription" rows="4"></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="ProjectManager.closeModal('projectModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="ProjectManager.saveProject()">Save Project</button>
+        </div>
+    </div>
+</div>
+
+<!-- View Project Modal -->
+<div class="project-modal" id="viewModal">
+    <div class="modal-dialog large">
+        <div class="modal-header">
+            <h3 class="modal-title" id="viewModalTitle">Project Details</h3>
+            <button class="modal-close" onclick="ProjectManager.closeModal('viewModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="viewModalBody">
+            <!-- Project details will be loaded here -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="ProjectManager.closeModal('viewModal')">Close</button>
+            <button class="btn btn-primary" onclick="ProjectManager.editFromView()">
+                <i class="ti ti-edit"></i> Edit Project
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/projects.js"></script>
+{% endblock %}

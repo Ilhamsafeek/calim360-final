@@ -1,0 +1,1 @@
+// placeholder for: app/static/utils/helpers.js

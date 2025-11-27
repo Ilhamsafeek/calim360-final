@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/correspondence/SCR_047_attached_documents.js

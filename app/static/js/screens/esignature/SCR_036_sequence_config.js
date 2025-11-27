@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/esignature/SCR_036_sequence_config.js

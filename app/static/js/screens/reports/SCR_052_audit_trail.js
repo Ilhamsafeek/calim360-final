@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/reports/SCR_052_audit_trail.js

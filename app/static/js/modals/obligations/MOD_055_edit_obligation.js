@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/obligations/MOD_055_edit_obligation.js

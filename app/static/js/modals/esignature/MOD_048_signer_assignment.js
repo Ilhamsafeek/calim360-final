@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/esignature/MOD_048_signer_assignment.js

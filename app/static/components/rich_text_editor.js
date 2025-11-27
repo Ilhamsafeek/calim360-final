@@ -1,0 +1,1 @@
+// placeholder for: app/static/components/rich_text_editor.js

@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/negotiation/SCR_033_negotiation_history.js

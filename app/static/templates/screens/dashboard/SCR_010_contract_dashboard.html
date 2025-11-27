@@ -1,0 +1,2956 @@
+{% extends "base.html" %}
+
+{% block title %}Contract Dashboard - CALIM 360{% endblock %}
+
+{% block head %}
+<style>
+    :root {
+        --primary-color: #2762cb;
+        --secondary-color: #73B4E0;
+        --text-color: #333;
+        --text-muted: #666;
+        --border-color: #e9ecef;
+        --background-light: #f8f9fa;
+        --success-color: #28a745;
+        --warning-color: #856404;
+        --warning-bg: #fff3cd;
+        --success-bg: #d4edda;
+        --info-bg: #d1ecf1;
+        --info-color: #0c5460;
+        --danger-color: #dc3545;
+    }
+
+    .dashboard-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 1.5rem;
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin-bottom: 1.5rem;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .search-box {
+        flex: 1;
+        min-width: 300px;
+        position: relative;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.625rem 1rem 0.625rem 2.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 0.9rem;
+        transition: border-color 0.3s;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+    }
+
+    .filter-select {
+        padding: 0.625rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: white;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: border-color 0.3s;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
+    }
+
+    .filter-select:hover {
+        border-color: var(--secondary-color);
+    }
+
+    /* Advanced Filters */
+    .advanced-filters-toggle {
+        padding: 0.625rem 1rem;
+        border: 1px solid var(--border-color);
+        background: white;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-color);
+        transition: all 0.3s;
+    }
+
+    .advanced-filters-toggle:hover {
+        background: var(--background-light);
+        border-color: var(--primary-color);
+    }
+
+    .advanced-filters {
+        display: none;
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin-bottom: 1rem;
+        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .advanced-filters.active {
+        display: grid;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filter-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    /* Active Filters Display */
+    .active-filters {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+        min-height: 32px;
+    }
+
+    .filter-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        background: var(--info-bg);
+        color: var(--info-color);
+        border-radius: 16px;
+        font-size: 0.8125rem;
+    }
+
+    .filter-tag .remove {
+        cursor: pointer;
+        font-size: 1rem;
+        line-height: 1;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+    }
+
+    .filter-tag .remove:hover {
+        opacity: 1;
+    }
+
+    .clear-all-filters {
+        color: var(--danger-color);
+        font-size: 0.8125rem;
+        cursor: pointer;
+        padding: 0.375rem 0.75rem;
+        background: white;
+        border: 1px solid var(--danger-color);
+        border-radius: 16px;
+        transition: all 0.2s;
+    }
+
+    .clear-all-filters:hover {
+        background: var(--danger-color);
+        color: white;
+    }
+
+    /* Tab Navigation */
+    .tab-navigation {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .tabs-wrapper {
+        display: flex;
+        gap: 0.5rem;
+        background: white;
+        padding: 0.5rem;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+    }
+
+    .nav-tab {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+    }
+
+    .nav-tab.active {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .nav-tab:hover:not(.active) {
+        background: var(--background-light);
+        color: var(--text-color);
+    }
+
+    .tab-badge {
+        padding: 0.125rem 0.5rem;
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .nav-tab.active .tab-badge {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Sub Tabs */
+    .sub-tabs-container {
+        background: white;
+        border-radius: 8px 8px 0 0;
+        border: 1px solid var(--border-color);
+        border-bottom: none;
+        margin-top: 1.5rem;
+    }
+
+    .sub-tabs {
+        display: flex;
+        gap: 1rem;
+        padding: 0 1.5rem;
+        overflow-x: auto;
+    }
+
+    .sub-tab {
+        padding: 1rem 0;
+        border: none;
+        background: none;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+        white-space: nowrap;
+        transition: all 0.3s;
+    }
+
+    .sub-tab:hover {
+        color: var(--text-color);
+    }
+
+    .sub-tab.active {
+        color: var(--primary-color);
+        border-bottom-color: var(--primary-color);
+    }
+
+    /* Contract Grid */
+    .contracts-grid-container {
+        background: white;
+        border-radius: 0 0 8px 8px;
+        border: 1px solid var(--border-color);
+        padding: 1.5rem;
+        min-height: 400px;
+    }
+
+    .contracts-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .results-count {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    .view-controls {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .view-toggle {
+        padding: 0.5rem;
+        border: 1px solid var(--border-color);
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        color: var(--text-muted);
+        transition: all 0.2s;
+    }
+
+    .view-toggle.active {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .view-toggle:hover:not(.active) {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+
+    .contracts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.25rem;
+    }
+
+    /* List View Styles */
+    .contracts-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .contracts-grid.list-view {
+        display: flex !important;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .contracts-grid.list-view .contract-card {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        grid-template-rows: auto auto;
+        gap: 1rem;
+        padding: 1.5rem;
+    }
+
+    .contracts-grid.list-view .contract-header {
+        grid-column: 1;
+        grid-row: 1;
+        margin-bottom: 0;
+    }
+
+    .contracts-grid.list-view .contract-title {
+        grid-column: 2;
+        grid-row: 1;
+        margin-bottom: 0;
+        -webkit-line-clamp: 1;
+    }
+
+    .contracts-grid.list-view .contract-actions {
+        grid-column: 3;
+        grid-row: 1 / 3;
+        position: static;
+        opacity: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .contracts-grid.list-view .contract-type,
+    .contracts-grid.list-view .contract-party,
+    .contracts-grid.list-view .contract-meta {
+        grid-column: 2;
+        margin-bottom: 0;
+    }
+
+    .contracts-grid.list-view .contract-type {
+        grid-row: 2;
+    }
+
+    .contracts-grid.list-view .contract-footer {
+        grid-column: 1 / 3;
+        grid-row: 3;
+        margin-top: 1rem;
+    }
+
+    .contracts-grid.list-view .quick-actions {
+        grid-column: 2;
+        grid-row: 3;
+        margin-top: 1rem;
+    }
+
+    .contracts-grid.list-view .priority-indicator {
+        left: 0;
+        right: auto;
+        height: 100%;
+    }
+
+    .contracts-list.active {
+        display: block;
+    }
+
+    .contracts-grid.list-view {
+        display: none;
+    }
+
+    /* Compact Card Design with All Features */
+.contract-card {
+    border: 1px solid #9ccaf9;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.2s;
+    cursor: pointer;
+    position: relative;
+    background: #f0f5ff;
+    min-height: auto;
+}
+
+.contract-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.contract-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.contract-id {
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: var(--background-light);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.contract-actions {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    gap: 0.25rem;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 10;
+}
+
+.contract-card:hover .contract-actions {
+    opacity: 1;
+}
+
+.action-btn {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border-color);
+    background: white;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: var(--background-light);
+}
+
+.contract-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
+}
+
+.contract-type {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.contract-type i {
+    font-size: 0.875rem;
+}
+
+.contract-party {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+}
+
+.contract-party-label {
+    color: var(--text-muted);
+}
+
+.contract-party-name {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.contract-meta {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.meta-item i {
+    font-size: 0.875rem;
+}
+
+.contract-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.contract-date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.625rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-draft {
+    background: var(--background-light);
+    color: var(--text-muted);
+}
+
+.status-review {
+    background: var(--info-bg);
+    color: var(--info-color);
+}
+
+.status-approved {
+    background: var(--success-bg);
+    color: var(--success-color);
+}
+
+.status-negotiation {
+    background: var(--warning-bg);
+    color: var(--warning-color);
+}
+
+.status-signed {
+    background: rgba(39, 98, 203, 0.1);
+    color: var(--primary-color);
+}
+
+.status-expired {
+    background: rgba(220, 53, 69, 0.1);
+    color: var(--danger-color);
+}
+
+.status-pending {
+    background: rgba(115, 180, 224, 0.1);
+    color: var(--secondary-color);
+}
+
+/* Quick Actions */
+.quick-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.quick-action-btn {
+    padding: 0.375rem 0.75rem;
+    border: 1px solid var(--border-color);
+    background: white;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: var(--text-muted);
+    transition: all 0.2s;
+}
+
+.quick-action-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: var(--background-light);
+}
+
+.quick-action-btn i {
+    font-size: 0.875rem;
+}
+
+/* Priority Indicator */
+.priority-indicator {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 40px;
+    border-radius: 0 8px 0 8px;
+}
+
+.priority-high {
+    background: var(--danger-color);
+}
+
+.priority-medium {
+    background: var(--warning-color);
+}
+
+.priority-low {
+    background: var(--success-color);
+}
+
+/* Compact grid */
+.contracts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1rem;
+}
+
+/* Hide type and meta in negotiation for more compact view */
+.contracts-grid[data-module="negotiation"] .contract-type,
+.contracts-grid[data-module="negotiation"] .contract-meta {
+    display: none;
+}
+
+.contracts-grid[data-module="negotiation"] {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+    .contract-meta {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .meta-item i {
+        font-size: 0.875rem;
+    }
+
+    .contract-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .contract-date {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.375rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-draft {
+        background: var(--background-light);
+        color: var(--text-muted);
+    }
+
+    .status-review {
+        background: var(--info-bg);
+        color: var(--info-color);
+    }
+
+    .status-approved {
+        background: var(--success-bg);
+        color: var(--success-color);
+    }
+
+    .status-negotiation {
+        background: var(--warning-bg);
+        color: var(--warning-color);
+    }
+
+    .status-signed {
+        background: rgba(39, 98, 203, 0.1);
+        color: var(--primary-color);
+    }
+
+    .status-expired {
+        background: rgba(220, 53, 69, 0.1);
+        color: var(--danger-color);
+    }
+
+    .status-pending {
+        background: rgba(115, 180, 224, 0.1);
+        color: var(--secondary-color);
+    }
+
+    .btn {
+        padding: 0.625rem 1.25rem;
+        border: 1px solid var(--border-color);
+        background: white;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s;
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .btn-primary:hover {
+        background: #1e4ba8;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(39, 98, 203, 0.3);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: #ddd;
+        margin-bottom: 1rem;
+    }
+
+    .empty-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-text {
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+    }
+
+    /* Quick Action Icons */
+    .quick-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+    }
+
+    .quick-action-btn {
+        padding: 0.375rem 0.75rem;
+        border: 1px solid var(--border-color);
+        background: white;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        color: var(--text-muted);
+        transition: all 0.2s;
+    }
+
+    .quick-action-btn:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        background: var(--background-light);
+    }
+
+    .quick-action-btn i {
+        font-size: 0.875rem;
+    }
+
+    /* Priority Indicator */
+    .priority-indicator {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 4px;
+        height: 40px;
+        border-radius: 0 8px 0 8px;
+    }
+
+    .priority-high {
+        background: var(--danger-color);
+    }
+
+    .priority-medium {
+        background: var(--warning-color);
+    }
+
+    .priority-low {
+        background: var(--success-color);
+    }
+
+    /* Loading State */
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 4rem 3rem;
+    min-height: 400px;
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 1rem;
+}
+
+.loading-text {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .tabs-wrapper {
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        .nav-tab {
+            padding: 0.625rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .contracts-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .search-box {
+            min-width: 100%;
+        }
+    }
+
+    /* Hide the main module tabs - use sidebar navigation instead */
+    .tab-navigation {
+        display: none !important;
+    }
+
+
+
+    /* Pagination Styles */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.pagination-info {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.pagination-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.pagination-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-btn.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div style="background: white; padding: 1.5rem; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+    <div style="max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
+        <!-- Left side: Title and description -->
+        <div>
+            <h1 id="pageTitle" style="font-size: 1.5rem; font-weight: 600; margin: 0;">Contract Drafting</h1>
+            <p id="pageDescription" style="color: var(--text-muted); font-size: 0.9rem; margin: 0.25rem 0 0 0;">
+                Create and manage contract drafts with templates and AI assistance
+            </p>
+        </div>
+
+        <!-- Right side: Action items -->
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <!-- Dynamic action buttons container -->
+            <div id="dynamicActionButtons" style="display: flex; gap: 1rem;">
+                <!-- Default buttons for Drafting module -->
+                <a href="/contract/templates" class="nav-link dynamic-btn" data-module="drafting">
+                    <i class="ti ti-template"></i>
+                    <span class="nav-text">Templates</span>
+                </a>
+                <a href="/clause-library" class="nav-link dynamic-btn" data-module="drafting">
+                    <i class="ti ti-books nav-icon"></i>
+                    <span class="nav-text">Clause Library</span>
+                </a>
+            </div>
+            <button class="btn btn-primary" id="new" onclick="createNewContract()">
+                <i class="ti ti-plus"></i> New Contract
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-container">
+    <!-- Tab Navigation - Main Module Tabs -->
+    <div class="tab-navigation">
+        <div class="tabs-wrapper">
+            <button class="nav-tab active" onclick="switchModule('drafting')" data-module="drafting">
+                <i class="ti ti-file-pencil"></i>
+                <span>Contract Drafting</span>
+                <span class="tab-badge" id="draftingCount">12</span>
+            </button>
+            <button class="nav-tab" onclick="switchModule('negotiation')" data-module="negotiation">
+                <i class="ti ti-message-circle"></i>
+                <span>Contract Negotiation</span>
+                <span class="tab-badge" id="negotiationCount">5</span>
+            </button>
+            <button class="nav-tab" onclick="switchModule('operations')" data-module="operations">
+                <i class="ti ti-briefcase"></i>
+                <span>Contract Operations</span>
+                <span class="tab-badge" id="operationsCount">28</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <div class="search-box">
+            <i class="ti ti-search search-icon"></i>
+            <input type="text" class="search-input" id="searchInput"
+                placeholder="Search contracts by title, ID, or party..." onkeyup="performSearch()">
+        </div>
+
+        <select class="filter-select" id="statusFilter" onchange="applyFilters()">
+            <option value="">All Status</option>
+            <option value="draft">Draft</option>
+            <option value="review">In Review</option>
+            <option value="approved">Approved</option>
+            <option value="negotiation">In Negotiation</option>
+            <option value="pending">Pending Response</option>
+            <option value="signed">Signed</option>
+            <option value="expired">Expired</option>
+        </select>
+
+        <select class="filter-select" id="typeFilter" onchange="applyFilters()">
+            <option value="">All Types</option>
+            <option value="service">Service Agreement</option>
+            <option value="nda">NDA</option>
+            <option value="purchase">Purchase Order</option>
+            <option value="employment">Employment</option>
+            <option value="consultancy">Consultancy</option>
+            <option value="maintenance">Maintenance</option>
+        </select>
+
+        <select class="filter-select" id="dateFilter" onchange="applyFilters()">
+            <option value="">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="quarter">This Quarter</option>
+            <option value="year">This Year</option>
+        </select>
+
+        <button class="advanced-filters-toggle" onclick="toggleAdvancedFilters()">
+            <i class="ti ti-adjustments-horizontal"></i>
+            Advanced Filters
+        </button>
+    </div>
+
+    <!-- Advanced Filters -->
+    <div class="advanced-filters" id="advancedFilters">
+        <div class="filter-group">
+            <label class="filter-label">Value Range</label>
+            <select class="filter-select" id="valueFilter" onchange="applyFilters()">
+                <option value="">Any Value</option>
+                <option value="0-10k">$0 - $10,000</option>
+                <option value="10k-50k">$10,000 - $50,000</option>
+                <option value="50k-100k">$50,000 - $100,000</option>
+                <option value="100k-500k">$100,000 - $500,000</option>
+                <option value="500k+">$500,000+</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Priority</label>
+            <select class="filter-select" id="priorityFilter" onchange="applyFilters()">
+                <option value="">All Priorities</option>
+                <option value="high">High Priority</option>
+                <option value="medium">Medium Priority</option>
+                <option value="low">Low Priority</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Department</label>
+            <select class="filter-select" id="departmentFilter" onchange="applyFilters()">
+                <option value="">All Departments</option>
+                <option value="legal">Legal</option>
+                <option value="finance">Finance</option>
+                <option value="operations">Operations</option>
+                <option value="hr">Human Resources</option>
+                <option value="it">IT</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Region</label>
+            <select class="filter-select" id="regionFilter" onchange="applyFilters()">
+                <option value="">All Regions</option>
+                <option value="qatar">Qatar</option>
+                <option value="gcc">GCC</option>
+                <option value="mena">MENA</option>
+                <option value="global">Global</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Active Filters Display -->
+    <!-- <div class="active-filters" id="activeFilters"></div> -->
+
+    <!-- Sub Tabs -->
+    <div class="sub-tabs-container">
+        <div class="sub-tabs" id="subTabs">
+            <!-- Drafting Sub-tabs (default) -->
+            <button class="sub-tab active" onclick="switchSubTab('all')" data-subtab="all">All Contracts</button>
+            <button class="sub-tab" onclick="switchSubTab('my')" data-subtab="my">My Contracts</button>
+            <button class="sub-tab" onclick="switchSubTab('templates')" data-subtab="templates">Templates</button>
+            <button class="sub-tab" onclick="switchSubTab('draft')" data-subtab="draft">Drafts</button>
+        </div>
+    </div>
+
+    <!-- Contracts Grid -->
+<div class="contracts-grid-container">
+    <div class="contracts-header">
+        <div class="results-count" id="resultsCount">Showing 0 contracts</div>
+        <div class="view-controls">
+            <button class="view-toggle active" onclick="toggleView('grid')" title="Grid View">
+                <i class="ti ti-layout-grid"></i>
+            </button>
+            <button class="view-toggle" onclick="toggleView('list')" title="List View">
+                <i class="ti ti-list"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="contracts-grid" id="contractsGrid">
+        <!-- Contracts will be loaded here -->
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState" style="display: none;">
+        <i class="ti ti-file-off empty-icon"></i>
+        <div class="empty-title">No contracts found</div>
+        <div class="empty-text">Try adjusting your filters or search criteria</div>
+        <button class="btn btn-primary" onclick="clearAllFilters()">
+            <i class="ti ti-filter-off"></i> Clear Filters
+        </button>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-spinner" id="loadingState">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading contracts...</div>
+    </div>
+
+    <!-- ✅ NEW: Pagination Controls -->
+    <div class="pagination-container" id="paginationContainer" style="display: none;">
+        <div class="pagination-info" id="paginationInfo"></div>
+        <div class="pagination-buttons">
+            <button class="pagination-btn" id="prevBtn" onclick="changePage('prev')" disabled>
+                <i class="ti ti-chevron-left"></i> Previous
+            </button>
+            <button class="pagination-btn" id="nextBtn" onclick="changePage('next')">
+                Next <i class="ti ti-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+    // Contract Data Store
+    let allContracts = [];
+    let filteredContracts = [];
+    let currentModule = 'drafting';
+    let currentSubTab = 'all';
+    let activeFilters = {};
+    let currentUploadType = null;  // ✅ ADD THIS
+    let selectedFile = null;        // ✅ ADD THIS
+
+    // Load contracts from database
+async function initializeContracts() {
+    try {
+        showLoading();
+        
+        // Fetch statistics
+        // const statsResponse = await fetch('/api/contracts/statistics', {
+        //     credentials: 'include'
+        // });
+        // const stats = await statsResponse.json();
+        // updateSidebarCounts({
+        //     drafting: stats.drafting_count,
+        //     negotiation: stats.negotiation_count,
+        //     operations: stats.operations_count
+        // });
+        
+        // Load initial contracts
+        await loadContractsFromDB();
+        
+        hideLoading();
+    } catch (error) {
+        console.error('Error initializing:', error);
+        hideLoading();
+    }
+}
+
+// Load contracts from database with current filters
+// ✅ ADD: Pagination state
+let currentPage = 1;
+let totalPages = 1;
+let hasMore = false;
+
+// Load contracts from database with current filters
+async function loadContractsFromDB() {
+    try {
+        showLoading();
+        
+        const params = new URLSearchParams({
+            module: currentModule,
+            status: currentSubTab !== 'all' ? currentSubTab : '',
+            search: document.getElementById('searchInput').value,
+            type: document.getElementById('typeFilter').value,
+            date: document.getElementById('dateFilter').value,
+            page: currentPage,  // ✅ Add page parameter
+            limit: 20  // ✅ Add limit parameter
+        });
+        
+        const response = await fetch(`/api/contracts?${params}`, {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) throw new Error('Failed to fetch contracts');
+        
+        const data = await response.json();
+        allContracts = data.contracts || [];
+        filteredContracts = allContracts;
+        
+        // ✅ Update pagination state
+        if (data.pagination) {
+            totalPages = data.pagination.total_pages;
+            hasMore = data.pagination.has_more;
+            updatePaginationUI(data.pagination);
+        }
+        
+        renderContracts();
+        syncSidebarCounts();
+        hideLoading();
+        
+    } catch (error) {
+        console.error('Error loading contracts:', error);
+        hideLoading();
+        const emptyState = document.getElementById('emptyState');
+        const grid = document.getElementById('contractsGrid');
+        grid.style.display = 'none';
+        emptyState.style.display = 'block';
+    }
+}
+
+// ✅ NEW: Update pagination UI
+function updatePaginationUI(pagination) {
+    const paginationContainer = document.getElementById('paginationContainer');
+    const paginationInfo = document.getElementById('paginationInfo');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    
+    if (pagination.total === 0) {
+        paginationContainer.style.display = 'none';
+        return;
+    }
+    
+    paginationContainer.style.display = 'flex';
+    
+    // Update info text
+    const start = ((pagination.page - 1) * pagination.limit) + 1;
+    const end = Math.min(pagination.page * pagination.limit, pagination.total);
+    paginationInfo.textContent = `Showing ${start}-${end} of ${pagination.total} contracts`;
+    
+    // Update buttons
+    prevBtn.disabled = pagination.page === 1;
+    nextBtn.disabled = !pagination.has_more;
+}
+
+// ✅ NEW: Change page function
+function changePage(direction) {
+    if (direction === 'next' && hasMore) {
+        currentPage++;
+    } else if (direction === 'prev' && currentPage > 1) {
+        currentPage--;
+    }
+    
+    loadContractsFromDB();
+    
+    // Scroll to top of contracts
+    document.getElementById('contractsGrid').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ✅ UPDATE: Reset page when changing filters
+function applyFilters() {
+    currentPage = 1;  // Reset to first page when filtering
+    loadContractsFromDB();
+}
+
+// ✅ UPDATE: Reset page when switching modules
+function switchModule(module) {
+    currentModule = module;
+    currentPage = 1;  // Reset to first page
+    
+        // Update active tab
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.classList.remove('active');
+            if (tab.dataset.module === module) {
+                tab.classList.add('active');
+            }
+        });
+
+        // Update page header (title and description)
+        updatePageHeader(module);
+
+        // Update the button text based on module
+        updateCreateButton(module);
+
+        // Update dynamic action buttons based on module
+        updateActionButtons(module);
+
+        // Update sub-tabs based on module
+        updateSubTabs(module);
+
+        // Apply filters
+        applyFilters();
+}
+
+// ✅ UPDATE: Reset page when switching sub-tabs
+function switchSubTab(subTab) {
+    currentSubTab = subTab;
+    currentPage = 1;  // Reset to first page
+
+        // Update active sub-tab
+        document.querySelectorAll('.sub-tab').forEach(tab => {
+            tab.classList.remove('active');
+            if (tab.dataset.subtab === subTab) {
+                tab.classList.add('active');
+            }
+        });
+
+        applyFilters();
+}
+
+    // Update page title and description based on module
+    function updatePageHeader(module) {
+        const pageTitle = document.getElementById('pageTitle');
+        const pageDescription = document.getElementById('pageDescription');
+
+        const moduleInfo = {
+            drafting: {
+                title: 'Contract Drafting',
+                description: 'Create and manage contract drafts with templates and AI assistance'
+            },
+            negotiation: {
+                title: 'Contract Negotiation',
+                description: 'Manage contract negotiations and collaborate with counter-parties'
+            },
+            operations: {
+                title: 'Contract Operations',
+                description: 'Monitor executed contracts, obligations, and renewal activities'
+            }
+        };
+
+        if (moduleInfo[module]) {
+            pageTitle.textContent = moduleInfo[module].title;
+            pageDescription.textContent = moduleInfo[module].description;
+        }
+    }
+
+  
+    // Update the create button based on current module
+    function updateCreateButton(module) {
+        const createButton = document.getElementById('new');
+
+        if (module === 'negotiation') {
+            createButton.style.display = 'block'; // Make sure it's visible
+            createButton.innerHTML = '<i class="ti ti-upload"></i> Upload Existing Contract';
+            createButton.onclick = () => uploadExistingContract('create');
+        } else if (module === 'operations') {
+            createButton.style.display = 'none'; // Hide the button completely
+        } else {
+            createButton.style.display = 'block'; // Make sure it's visible
+            createButton.innerHTML = '<i class="ti ti-plus"></i> New Contract';
+            createButton.onclick = createNewContract;
+        }
+    }
+
+    // Update action buttons based on current module
+
+
+
+    function updateActionButtons(module) {
+    const actionButtonsContainer = document.getElementById('dynamicActionButtons');
+
+    if (module === 'operations') {
+        // Replace with Obligations and Correspondence buttons for Operations module
+        actionButtonsContainer.innerHTML = `
+            <button onclick="navigateToRiskAnalysis()" class="btn btn-primary" >
+                <i class="ti ti-alert-triangle"></i>
+                <span>Risk Analysis</span>
+            </button>
+            <button onclick="navigateToObligations()" class="btn" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border: 1px solid var(--border-color); background: white; border-radius: 8px; font-size: 0.875rem; cursor: pointer; transition: all 0.2s;">
+                <i class="ti ti-checklist"></i>
+                <span>Obligations</span>
+            </button>
+            <button onclick="navigateToCorrespondence()" class="btn" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border: 1px solid var(--border-color); background: white; border-radius: 8px; font-size: 0.875rem; cursor: pointer; transition: all 0.2s;">
+                <i class="ti ti-mail"></i>
+                <span>Correspondence</span>
+            </button>
+        `;
+    } else if (module === 'negotiation') {
+        // Empty for Negotiation module - no action buttons needed
+        actionButtonsContainer.innerHTML = '';
+    } else {
+        // Default buttons for Drafting module
+        actionButtonsContainer.innerHTML = `
+            <button onclick="navigateToClauseLibrary()" class="btn" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border: 1px solid var(--border-color); background: white; border-radius: 8px; font-size: 0.875rem; cursor: pointer; transition: all 0.2s;">
+                <i class="ti ti-books"></i>
+                <span>Clause Library</span>
+            </button>
+        `;
+    }
+}
+
+    // Upload existing contract function
+    // function uploadExistingContract(type) {
+    //     // Create a file input element
+    //     const fileInput = document.createElement('input');
+    //     fileInput.type = 'file';
+    //     fileInput.accept = '.pdf,.doc,.docx,.txt';
+    //     fileInput.style.display = 'none';
+
+    //     // Add event listener for file selection
+    //     fileInput.addEventListener('change', function (event) {
+    //         const file = event.target.files[0];
+    //         if (file) {
+    //             // Show upload dialog or redirect to upload page
+    //             showUploadDialog(file, type);
+    //         }
+    //     });
+
+    //     // Trigger file selection
+    //     document.body.appendChild(fileInput);
+    //     fileInput.click();
+    //     document.body.removeChild(fileInput);
+    // }
+    // Upload existing contract function
+    function uploadExistingContract(type) {
+        currentUploadType = type;  // ✅ ADD THIS LINE
+        
+        // Create a file input element
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.pdf,.doc,.docx';  // ✅ REMOVE .txt
+        fileInput.style.display = 'none';
+
+        // Add event listener for file selection
+        fileInput.addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (file) {
+                selectedFile = file;  // ✅ ADD THIS LINE
+                showUploadDialog(file, type);
+            }
+        });
+
+        // Trigger file selection
+        document.body.appendChild(fileInput);
+        fileInput.click();
+        document.body.removeChild(fileInput);
+    }
+
+    // function showUploadDialog(file, type) {
+    //     // Create modal for upload options
+    //     const modal = document.createElement('div');
+    //     modal.className = 'upload-modal'; // Add a class
+    //     modal.style.cssText = `
+    //     position: fixed;
+    //     top: 0;
+    //     left: 0;
+    //     width: 100%;
+    //     height: 100%;
+    //     background: rgba(0,0,0,0.5);
+    //     display: flex;
+    //     align-items: center;
+    //     justify-content: center;
+    //     z-index: 1000;
+    // `;
+
+    //     modal.innerHTML = `
+    //     <div style="background: white; padding: 2rem; border-radius: 8px; width: 500px; max-width: 90vw;">
+    //         <h3 style="margin: 0 0 1rem 0; color: var(--text-color);">Upload Contract</h3>
+    //         <p style="margin: 0 0 1.5rem 0; color: var(--text-muted);">
+    //             Uploading: <strong>${file.name}</strong>
+    //         </p>
+            
+    //         <div style="margin-bottom: 1.5rem;">
+    //             <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Contract Type</label>
+    //             <select class="filter-select" id="uploadType" style="width: 100%;">
+    //                 <option value="service">Service Agreement</option>
+    //                 <option value="nda">NDA</option>
+    //                 <option value="purchase">Purchase Order</option>
+    //                 <option value="employment">Employment</option>
+    //                 <option value="consultancy">Consultancy</option>
+    //                 <option value="maintenance">Maintenance</option>
+    //             </select>
+    //         </div>
+            
+    //         <div style="margin-bottom: 1.5rem;">
+    //             <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Counter-party</label>
+    //             <input type="text" class="search-input" id="counterpartyName" placeholder="Enter counter-party mail" style="width: 100%;">
+    //         </div>
+            
+    //         <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+    //             <button class="btn btn-secondary" onclick="this.closest('.upload-modal').remove()">
+    //                 Cancel
+    //             </button>
+    //             <button class="btn btn-primary" onclick="processUpload('${file.name}','${type}')">
+    //                 <i class="ti ti-upload"></i> Upload Contract
+    //             </button>
+    //         </div>
+    //     </div>
+    // `;
+
+    //     document.body.appendChild(modal);
+    // }
+    function showUploadDialog(file, type) {
+    // Create modal for upload options
+    const modal = document.createElement('div');
+    modal.className = 'upload-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    `;
+
+    const modalContent = type === 'risk_analysis' ? `
+        <div style="background: white; padding: 2rem; border-radius: 8px; width: 500px; max-width: 90vw;">
+            <h3 style="margin: 0 0 1rem 0; color: var(--text-color);">Upload Contract for Risk Analysis</h3>
+            <p style="margin: 0 0 1.5rem 0; color: var(--text-muted);">
+                Uploading: <strong>${file.name}</strong>
+            </p>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Profile Type</label>
+                <select class="filter-select" id="uploadProfileType" style="width: 100%;">
+                    <option value="client">Client</option>
+                    <option value="consultant">Consultant</option>
+                    <option value="contractor">Contractor</option>
+                    <option value="sub_contractor">Sub Contractor</option>
+                </select>
+            </div>
+            
+            <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="this.closest('.upload-modal').remove()">
+                    Cancel
+                </button>
+                <button class="btn btn-primary" onclick="processRiskAnalysisUpload('${file.name}')">
+                    <i class="ti ti-upload"></i> Upload Contract
+                </button>
+            </div>
+        </div>
+    ` : `
+        <div style="background: white; padding: 2rem; border-radius: 8px; width: 500px; max-width: 90vw;">
+            <h3 style="margin: 0 0 1rem 0; color: var(--text-color);">Upload Contract</h3>
+            <p style="margin: 0 0 1.5rem 0; color: var(--text-muted);">
+                Uploading: <strong>${file.name}</strong>
+            </p>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Contract Type</label>
+                <select class="filter-select" id="uploadType" style="width: 100%;">
+                    <option value="service">Service Agreement</option>
+                    <option value="nda">NDA</option>
+                    <option value="purchase">Purchase Order</option>
+                    <option value="employment">Employment</option>
+                    <option value="consultancy">Consultancy</option>
+                    <option value="maintenance">Maintenance</option>
+                </select>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Counter-party</label>
+                <input type="text" class="search-input" id="counterpartyName" placeholder="Enter counter-party mail" style="width: 100%;">
+            </div>
+            
+            <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="this.closest('.upload-modal').remove()">
+                    Cancel
+                </button>
+                <button class="btn btn-primary" onclick="processUpload('${file.name}','${type}')">
+                    <i class="ti ti-upload"></i> Upload Contract
+                </button>
+            </div>
+        </div>
+    `;
+
+    modal.innerHTML = modalContent;
+    document.body.appendChild(modal);
+}
+// ✅ NEW FUNCTION - Add this after showUploadDialog()
+async function processRiskAnalysisUpload(filename) {
+    const profileType = document.getElementById('uploadProfileType').value;
+
+    // Remove modal
+    const modal = document.querySelector('.upload-modal');
+    if (modal) modal.remove();
+
+    if (!selectedFile) {
+        showNotification('No file selected', 'error');
+        return;
+    }
+
+    try {
+        showNotification('Uploading contract for risk analysis...', 'info');
+
+        // Create FormData for file upload
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('profile_type', profileType);
+
+        // Upload the contract file
+        const response = await fetch('/api/contracts/risk-analysis-upload', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || 'Upload failed');
+        }
+
+        if (data.success) {
+            showNotification(`Contract "${filename}" uploaded successfully!`, 'success');
+            
+            // Redirect to contract editor
+            setTimeout(() => {
+                window.location.href = `/contract/edit/${data.contract_id}`;
+            }, 1500);
+        } else {
+            throw new Error(data.message || 'Upload failed');
+        }
+
+    } catch (error) {
+        console.error('Upload failed:', error);
+        showNotification('Failed to upload contract: ' + error.message, 'error');
+    } finally {
+        selectedFile = null;
+    }
+}
+
+    // Process the upload and redirect to counterparty invite page
+    async function processUpload(filename,purpose) {
+        const type = document.getElementById('uploadType').value;
+        const counterparty = document.getElementById('counterpartyName').value;
+
+        // Remove modal
+        document.querySelector('div[style*="position: fixed"]').remove();
+
+        try {
+            // In a real application, you would first upload the file to your backend
+            // For now, we'll simulate the upload and get a contract ID
+
+            // Show loading state
+            showNotification('Uploading contract...', 'info');
+
+            // Simulate file upload and contract creation
+            const contractId = await simulateContractCreation(filename, type, counterparty);
+
+            // Show success message
+            showNotification(`Contract "${filename}" uploaded successfully!`, 'success');
+
+            // Redirect to counterparty invite page after a short delay
+            setTimeout(() => {
+                if(purpose=='create'){
+                window.location.href = `/contract/invite/${contractId}`;
+                }else{
+                  window.location.href = `/contract/edit/${contractId}`;  
+                }
+            }, 1500);
+
+        } catch (error) {
+            console.error('Upload failed:', error);
+            showNotification('Failed to upload contract. Please try again.', 'error');
+        }
+    }
+
+    // Simulate contract creation and return a contract ID
+    async function simulateContractCreation(filename, type, counterparty) {
+        // This would be replaced with actual API call to your backend
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                // Generate a mock contract ID (in real app, this would come from backend)
+                const contractId = 'cont_' + Math.random().toString(36).substr(2, 9);
+                console.log('Contract created:', { contractId, filename, type, counterparty });
+                resolve(contractId);
+            }, 1000);
+        });
+    }
+
+    // Updated showNotification function to handle error type
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+
+        // Set colors based on type
+        let bgColor, textColor, borderColor, icon;
+        switch (type) {
+            case 'success':
+                bgColor = '#d4edda';
+                textColor = '#155724';
+                borderColor = '#c3e6cb';
+                icon = 'circle-check';
+                break;
+            case 'error':
+                bgColor = '#f8d7da';
+                textColor = '#721c24';
+                borderColor = '#f5c6cb';
+                icon = 'alert-circle';
+                break;
+            default:
+                bgColor = '#d1ecf1';
+                textColor = '#0c5460';
+                borderColor = '#bee5eb';
+                icon = 'info-circle';
+        }
+
+        notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        background: ${bgColor};
+        color: ${textColor};
+        border: 1px solid ${borderColor};
+        border-radius: 8px;
+        z-index: 1001;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    `;
+
+        notification.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <i class="ti ti-${icon}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+
+        document.body.appendChild(notification);
+
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+
+   
+
+    // Update sub-tabs based on module
+function updateSubTabs(module) {
+    const subTabsContainer = document.getElementById('subTabs');
+
+    if (module === 'drafting') {
+        subTabsContainer.innerHTML = `
+            <button class="sub-tab active" onclick="switchSubTab('all')" data-subtab="all">
+                <i class="ti ti-files"></i> All Contracts
+            </button>
+            <button class="sub-tab" onclick="switchSubTab('my')" data-subtab="my">
+                <i class="ti ti-user-check"></i> My Contracts
+            </button>
+            
+            <button class="sub-tab" onclick="switchSubTab('draft')" data-subtab="draft">
+                <i class="ti ti-file-pencil"></i> Drafts
+            </button>
+        `;
+        currentSubTab = 'all';
+    } else if (module === 'negotiation') {
+        subTabsContainer.innerHTML = `
+            <button class="sub-tab active" onclick="switchSubTab('all')" data-subtab="all">
+                <i class="ti ti-list-check"></i> All Negotiations
+            </button>
+            <button class="sub-tab" onclick="switchSubTab('active')" data-subtab="active">
+                <i class="ti ti-message-circle-2"></i> Active Negotiations
+            </button>
+            <button class="sub-tab" onclick="switchSubTab('pending')" data-subtab="pending">
+                <i class="ti ti-clock-pause"></i> Pending Response
+            </button>
+            <button class="sub-tab" onclick="switchSubTab('counterparty')" data-subtab="counterparty">
+                <i class="ti ti-users"></i> Counter-party View
+            </button>
+            <button class="sub-tab" onclick="switchSubTab('completed')" data-subtab="completed">
+                <i class="ti ti-circle-check"></i> Completed
+            </button>
+        `;
+        currentSubTab = 'all';
+    } else if (module === 'operations') {
+        subTabsContainer.innerHTML = `
+            <button class="sub-tab active" onclick="switchSubTab('all')" data-subtab="all">
+                <i class="ti ti-list"></i> All Contracts
+            </button>
+            <button class="sub-tab" onclick="switchSubTab('executed')" data-subtab="executed">
+                <i class="ti ti-file-check"></i> Executed Contracts
+            </button>
+            <button class="sub-tab" onclick="switchSubTab('obligations')" data-subtab="obligations">
+                <i class="ti ti-checklist"></i> With Obligations
+            </button>
+            <button class="sub-tab" onclick="switchSubTab('renewals')" data-subtab="renewals">
+                <i class="ti ti-refresh-alert"></i> Up for Renewal
+            </button>
+            <button class="sub-tab" onclick="switchSubTab('expired')" data-subtab="expired">
+                <i class="ti ti-calendar-x"></i> Expired
+            </button>
+        `;
+        currentSubTab = 'all';
+    }
+}
+
+    // Switch sub-tab
+    function switchSubTab(subTab) {
+        currentSubTab = subTab;
+
+        // Update active sub-tab
+        document.querySelectorAll('.sub-tab').forEach(tab => {
+            tab.classList.remove('active');
+            if (tab.dataset.subtab === subTab) {
+                tab.classList.add('active');
+            }
+        });
+
+        applyFilters();
+    }
+
+   
+
+    // Apply sub-tab specific filtering
+    function applySubTabFilter() {
+        switch (currentSubTab) {
+            case 'my':
+                filteredContracts = filteredContracts.filter(c => c.owner === 'me');
+                break;
+            case 'templates':
+                filteredContracts = filteredContracts.filter(c => c.template === true);
+                break;
+            case 'draft':
+                filteredContracts = filteredContracts.filter(c => c.status === 'draft');
+                break;
+            case 'active':
+                filteredContracts = filteredContracts.filter(c => c.status === 'negotiation');
+                break;
+            case 'pending':
+                filteredContracts = filteredContracts.filter(c => c.status === 'pending');
+                break;
+            case 'executed':
+                filteredContracts = filteredContracts.filter(c => c.status === 'signed');
+                break;
+            case 'expired':
+                filteredContracts = filteredContracts.filter(c => c.status === 'expired');
+                break;
+            case 'renewals':
+                // Contracts expiring in next 30 days
+                const thirtyDaysFromNow = new Date();
+                thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+                filteredContracts = filteredContracts.filter(c => {
+                    const cDate = new Date(c.date);
+                    return c.status === 'signed' && cDate <= thirtyDaysFromNow;
+                });
+                break;
+            case 'obligations':
+                // For demo, show signed contracts with high value
+                filteredContracts = filteredContracts.filter(c =>
+                    c.status === 'signed' && c.value > 100000
+                );
+                break;
+        }
+    }
+
+    // Apply advanced filters
+    function applyAdvancedFilters() {
+        // Value filter
+        const valueFilter = document.getElementById('valueFilter').value;
+        if (valueFilter) {
+            filteredContracts = filteredContracts.filter(c => {
+                switch (valueFilter) {
+                    case '0-10k':
+                        return c.value >= 0 && c.value <= 10000;
+                    case '10k-50k':
+                        return c.value > 10000 && c.value <= 50000;
+                    case '50k-100k':
+                        return c.value > 50000 && c.value <= 100000;
+                    case '100k-500k':
+                        return c.value > 100000 && c.value <= 500000;
+                    case '500k+':
+                        return c.value > 500000;
+                    default:
+                        return true;
+                }
+            });
+            activeFilters.value = valueFilter;
+        } else {
+            delete activeFilters.value;
+        }
+
+        // Priority filter
+        const priorityFilter = document.getElementById('priorityFilter').value;
+        if (priorityFilter) {
+            filteredContracts = filteredContracts.filter(c => c.priority === priorityFilter);
+            activeFilters.priority = priorityFilter;
+        } else {
+            delete activeFilters.priority;
+        }
+
+        // Department filter
+        const departmentFilter = document.getElementById('departmentFilter').value;
+        if (departmentFilter) {
+            filteredContracts = filteredContracts.filter(c => c.department === departmentFilter);
+            activeFilters.department = departmentFilter;
+        } else {
+            delete activeFilters.department;
+        }
+
+        // Region filter
+        const regionFilter = document.getElementById('regionFilter').value;
+        if (regionFilter) {
+            filteredContracts = filteredContracts.filter(c => c.region === regionFilter);
+            activeFilters.region = regionFilter;
+        } else {
+            delete activeFilters.region;
+        }
+    }
+
+    // Render contracts - Compact Version with All Buttons
+// Render contracts - Compact Version with All Buttons
+function renderContracts() {
+    const grid = document.getElementById('contractsGrid');
+    const emptyState = document.getElementById('emptyState');
+    const resultsCount = document.getElementById('resultsCount');
+    const loadingState = document.getElementById('loadingState');
+
+    // Hide loading state first
+    loadingState.style.display = 'none';
+
+    // Set data-module attribute for CSS targeting
+    grid.setAttribute('data-module', currentModule);
+
+    if (filteredContracts.length === 0) {
+        grid.style.display = 'none';
+        emptyState.style.display = 'block';
+        resultsCount.textContent = 'No contracts found';
+        return;
+    }
+
+    grid.style.display = 'grid';
+    emptyState.style.display = 'none';
+    resultsCount.textContent = `Showing ${filteredContracts.length} contract${filteredContracts.length !== 1 ? 's' : ''}`;
+    grid.innerHTML = filteredContracts.map(contract => `
+        <div class="contract-card" onclick="viewContract('${contract.id}')">
+            ${contract.priority ? `<div class="priority-indicator priority-${contract.priority}"></div>` : ''}
+            
+            <div class="contract-actions">
+                ${getContractActions(contract)}
+            </div>
+            
+            <div class="contract-header">
+                <span class="contract-id">${contract.contract_number}</span>
+            </div>
+            
+            <h3 class="contract-title" title="${contract.title}">${contract.title}</h3>
+            
+            <div class="contract-party">
+                <span class="contract-party-label">${contract.template ? 'Type:' : 'Counter-party:'}</span>
+                <span class="contract-party-name">${contract.counterparty}</span>
+            </div>
+            
+            <div class="quick-actions">
+                ${getQuickActions(contract)}
+            </div>
+            
+            <div class="contract-footer">
+                <span class="contract-date">
+                    <i class="ti ti-calendar"></i>
+                    ${formatDate(contract.created_at)}
+                </span>
+                <span class="status-badge status-${contract.status}">${getStatusLabel(contract.status)}</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+    // Get contract actions based on status
+    function getContractActions(contract) {
+        let actions = '';
+
+        if (contract.status === 'draft' || contract.status === 'review') {
+            actions += `
+            <button class="action-btn" onclick="event.stopPropagation(); editContract('${contract.id}')" title="Edit">
+                <i class="ti ti-edit"></i>
+            </button>
+            <button class="action-btn" onclick="event.stopPropagation(); deleteContract('${contract.id}')" title="Delete">
+                <i class="ti ti-trash"></i>
+            </button>
+        `;
+        }
+
+        if (contract.status === 'signed') {
+            actions += `
+            <button class="action-btn" onclick="event.stopPropagation(); downloadContract('${contract.id}')" title="Download">
+                <i class="ti ti-download"></i>
+            </button>
+            <button class="action-btn" onclick="event.stopPropagation(); viewAuditTrail('${contract.id}')" title="Audit Trail">
+                <i class="ti ti-history"></i>
+            </button>
+        `;
+        }
+
+        if (contract.status === 'negotiation' || contract.status === 'pending') {
+            actions += `
+            <button class="action-btn" onclick="event.stopPropagation(); viewNegotiation('${contract.id}')" title="View Negotiation">
+                <i class="ti ti-message-circle"></i>
+            </button>
+        `;
+        }
+
+        if (contract.status === 'expired') {
+            actions += `
+            <button class="action-btn" onclick="event.stopPropagation(); renewContract('${contract.id}')" title="Renew">
+                <i class="ti ti-refresh"></i>
+            </button>
+            <button class="action-btn" onclick="event.stopPropagation(); archiveContract('${contract.id}')" title="Archive">
+                <i class="ti ti-archive"></i>
+            </button>
+        `;
+        }
+
+        return actions;
+    }
+
+    // Get quick actions based on contract status
+    function getQuickActions(contract) {
+        let actions = '';
+
+        switch (contract.status) {
+            case 'draft':
+                actions = `
+                <button class="quick-action-btn" onclick="event.stopPropagation(); continueEditing('${contract.id}')">
+                    <i class="ti ti-edit"></i> Continue
+                </button>
+                <button class="quick-action-btn" onclick="event.stopPropagation(); submitForReview('${contract.id}')">
+                    <i class="ti ti-send"></i> Submit
+                </button>
+            `;
+                break;
+            case 'review':
+                actions = `
+                <button class="quick-action-btn" onclick="event.stopPropagation(); viewWorkflow('${contract.id}')">
+                    <i class="ti ti-git-branch"></i> Workflow
+                </button>
+                <button class="quick-action-btn" onclick="event.stopPropagation(); sendForReview('${contract.id}')">
+                    <i class="ti ti-users"></i> Review
+                </button>
+            `;
+                break;
+            case 'approved':
+                actions = `
+                <button class="quick-action-btn" onclick="event.stopPropagation(); initiateSignature('${contract.id}')">
+                    <i class="ti ti-writing-sign"></i> Sign
+                </button>
+                <button class="quick-action-btn" onclick="event.stopPropagation(); sendToCounterparty('${contract.id}')">
+                    <i class="ti ti-send"></i> Send
+                </button>
+            `;
+                break;
+            case 'negotiation':
+            case 'pending':
+                actions = `
+                <button class="quick-action-btn" onclick="event.stopPropagation(); viewNegotiation('${contract.id}')">
+                    <i class="ti ti-message-circle"></i> Negotiate
+                </button>
+                <button class="quick-action-btn" onclick="event.stopPropagation(); viewHistory('${contract.id}')">
+                    <i class="ti ti-history"></i> History
+                </button>
+            `;
+                break;
+            case 'signed':
+                actions = `
+                <button class="quick-action-btn" onclick="event.stopPropagation(); downloadContract('${contract.id}')">
+                    <i class="ti ti-download"></i> Download
+                </button>
+                <button class="quick-action-btn" onclick="event.stopPropagation(); viewObligations('${contract.id}')">
+                    <i class="ti ti-checklist"></i> Obligations
+                </button>
+            `;
+                break;
+            case 'expired':
+                actions = `
+                <button class="quick-action-btn" onclick="event.stopPropagation(); renewContract('${contract.id}')">
+                    <i class="ti ti-refresh"></i> Renew
+                </button>
+                <button class="quick-action-btn" onclick="event.stopPropagation(); viewHistory('${contract.id}')">
+                    <i class="ti ti-history"></i> History
+                </button>
+            `;
+                break;
+        }
+
+        return actions;
+    }
+
+    // Update active filters display
+    function updateActiveFiltersDisplay() {
+        const container = document.getElementById('activeFilters');
+        const tags = [];
+
+        // Only show filters that are actually active
+        const filterKeys = Object.keys(activeFilters);
+
+        if (filterKeys.length === 0) {
+            // Hide the container when no filters are active
+            container.style.display = 'none';
+            return;
+        }
+
+        // Show the container when filters are active
+        container.style.display = 'flex';
+
+        for (const [key, value] of Object.entries(activeFilters)) {
+            let label = '';
+            switch (key) {
+                case 'status':
+                    label = `Status: ${getStatusLabel(value)}`;
+                    break;
+                case 'type':
+                    label = `Type: ${value.charAt(0).toUpperCase() + value.slice(1)}`;
+                    break;
+                case 'date':
+                    label = `Date: ${value.charAt(0).toUpperCase() + value.slice(1)}`;
+                    break;
+                case 'value':
+                    label = `Value: $${value}`;
+                    break;
+                case 'priority':
+                    label = `Priority: ${value.charAt(0).toUpperCase() + value.slice(1)}`;
+                    break;
+                case 'department':
+                    label = `Dept: ${value.toUpperCase()}`;
+                    break;
+                case 'region':
+                    label = `Region: ${value.toUpperCase()}`;
+                    break;
+            }
+
+            tags.push(`
+            <span class="filter-tag">
+                ${label}
+                <span class="remove" onclick="removeFilter('${key}')">×</span>
+            </span>
+        `);
+        }
+
+        if (tags.length > 0) {
+            tags.push(`<button class="clear-all-filters" onclick="clearAllFilters()">Clear All</button>`);
+        }
+
+        container.innerHTML = tags.join('');
+    }
+
+    // Remove individual filter
+    function removeFilter(key) {
+        delete activeFilters[key];
+
+        // Reset the corresponding filter
+        switch (key) {
+            case 'status':
+                document.getElementById('statusFilter').value = '';
+                break;
+            case 'type':
+                document.getElementById('typeFilter').value = '';
+                break;
+            case 'date':
+                document.getElementById('dateFilter').value = '';
+                break;
+            case 'value':
+                document.getElementById('valueFilter').value = '';
+                break;
+            case 'priority':
+                document.getElementById('priorityFilter').value = '';
+                break;
+            case 'department':
+                document.getElementById('departmentFilter').value = '';
+                break;
+            case 'region':
+                document.getElementById('regionFilter').value = '';
+                break;
+        }
+
+        applyFilters();
+    }
+
+    // Clear all filters
+    function clearAllFilters() {
+        activeFilters = {};
+        document.getElementById('searchInput').value = '';
+        document.getElementById('statusFilter').value = '';
+        document.getElementById('typeFilter').value = '';
+        document.getElementById('dateFilter').value = '';
+        document.getElementById('valueFilter').value = '';
+        document.getElementById('priorityFilter').value = '';
+        document.getElementById('departmentFilter').value = '';
+        document.getElementById('regionFilter').value = '';
+
+        applyFilters();
+    }
+
+    // Toggle advanced filters
+    function toggleAdvancedFilters() {
+        const advancedFilters = document.getElementById('advancedFilters');
+        advancedFilters.classList.toggle('active');
+
+        if (advancedFilters.classList.contains('active')) {
+            applyFilters();
+        }
+    }
+
+    // Update module counts
+    function updateCounts() {
+        const draftingCount = allContracts.filter(c => c.module === 'drafting').length;
+        const negotiationCount = allContracts.filter(c => c.module === 'negotiation').length;
+        const operationsCount = allContracts.filter(c => c.module === 'operations').length;
+
+        document.getElementById('draftingCount').textContent = draftingCount;
+        document.getElementById('negotiationCount').textContent = negotiationCount;
+        document.getElementById('operationsCount').textContent = operationsCount;
+    }
+
+    // Toggle view (grid/list)
+    function toggleView(view) {
+        // Remove active class from all toggle buttons
+        document.querySelectorAll('.view-toggle').forEach(btn => {
+            btn.classList.remove('active');
+        });
+
+        // Add active class to clicked button
+        if (event && event.currentTarget) {
+            event.currentTarget.classList.add('active');
+        } else {
+            // Fallback if event is not available
+            const buttons = document.querySelectorAll('.view-toggle');
+            if (view === 'list') {
+                buttons[1].classList.add('active');
+            } else {
+                buttons[0].classList.add('active');
+            }
+        }
+
+        const grid = document.getElementById('contractsGrid');
+
+        if (view === 'list') {
+            grid.classList.add('list-view');
+        } else {
+            grid.classList.remove('list-view');
+        }
+    }
+
+    // Search functionality with debounce
+    let searchTimeout;
+    function performSearch() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            applyFilters();
+        }, 300);
+    }
+
+    // Show loading state
+function showLoading() {
+    const loadingState = document.getElementById('loadingState');
+    const contractsGrid = document.getElementById('contractsGrid');
+    const emptyState = document.getElementById('emptyState');
+    const resultsCount = document.getElementById('resultsCount');
+    
+    loadingState.style.display = 'flex';
+    contractsGrid.style.display = 'none';
+    emptyState.style.display = 'none';
+    resultsCount.textContent = 'Loading...';
+}
+
+    // Hide loading state
+function hideLoading() {
+    const loadingState = document.getElementById('loadingState');
+    loadingState.style.display = 'none';
+}
+
+    // Helper functions
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(value);
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const options = { month: 'short', day: 'numeric', year: 'numeric' };
+        return date.toLocaleDateString('en-US', options);
+    }
+
+    function getStatusLabel(status) {
+        const labels = {
+            draft: 'Draft',
+            review: 'In Review',
+            approved: 'Approved',
+            negotiation: 'In Negotiation',
+            pending: 'Pending',
+            signed: 'Signed',
+            expired: 'Expired'
+        };
+        return labels[status] || status;
+    }
+
+    function getTypeIcon(type) {
+        const icons = {
+            service: 'briefcase',
+            nda: 'shield-lock',
+            purchase: 'shopping-cart',
+            employment: 'user-check',
+            consultancy: 'users',
+            maintenance: 'tool'
+        };
+        return icons[type] || 'file';
+    }
+
+
+
+
+
+    // Sync counts with sidebar on page load and filter changes
+    function syncSidebarCounts() {
+        const counts = {
+            drafting: allContracts.filter(c => c.module === 'drafting').length,
+            negotiation: allContracts.filter(c => c.module === 'negotiation').length,
+            operations: allContracts.filter(c => c.module === 'operations').length
+        };
+
+        // Update sidebar if function exists
+        if (typeof updateSidebarCounts === 'function') {
+            updateSidebarCounts(counts);
+        }
+
+        // Also update the main tab badges
+        document.getElementById('draftingCount').textContent = counts.drafting;
+        document.getElementById('negotiationCount').textContent = counts.negotiation;
+        document.getElementById('operationsCount').textContent = counts.operations;
+    }
+
+    /// Check URL parameters on page load to set initial module
+    function checkInitialModule() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const module = urlParams.get('module');
+
+    if (module && ['drafting', 'negotiation', 'operations'].includes(module)) {
+        // Update module WITHOUT calling switchModule (which triggers applyFilters)
+        currentModule = module;
+        
+        // Update UI elements manually
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.classList.remove('active');
+            if (tab.dataset.module === module) {
+                tab.classList.add('active');
+            }
+        });
+        
+        updatePageHeader(module);
+        updateCreateButton(module);
+        updateActionButtons(module);
+        updateSubTabs(module);
+        
+        // DON'T call applyFilters() - let initializeContracts handle the data load
+    } else {
+        // Set default header for drafting module
+        updatePageHeader('drafting');
+    }
+}
+
+
+let isInitialized = false;
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (isInitialized) {
+        console.log('⚠️ Already initialized');
+        return;
+    }
+    isInitialized = true;
+    
+    console.log('🚀 DOMContentLoaded - Initializing ONCE');
+    
+    checkInitialModule();
+    initializeContracts();
+});
+
+
+
+    // Navigation functions for action buttons
+function navigateToRiskAnalysis() {
+    // window.location.href = `/contract/edit`;
+    currentUploadType = 'risk_analysis';  // ✅ ADD THIS LINE
+    uploadExistingContract('risk_analysis')
+}
+
+function navigateToObligations() {
+    window.location.href = '/obligations';
+}
+
+function navigateToCorrespondence() {
+    window.location.href = '/correspondence';
+}
+
+function navigateToClauseLibrary() {
+    window.location.href = '/clause-library';
+}
+
+
+
+function createNewContract() {
+    window.location.href = '/contract/create';
+}
+
+function viewContract(id) {
+    navigateToContract(id, 'view');
+}
+
+function editContract(id) {
+    navigateToContract(id, 'edit');
+}
+
+function deleteContract(id) {
+    if (confirm('Are you sure you want to delete this contract? This action cannot be undone.')) {
+        // Call API to delete
+        fetch(`/api/contracts/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                showNotification('Contract deleted successfully', 'success');
+                // Reload page or remove from list
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                throw new Error('Delete failed');
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting contract:', error);
+            showNotification('Failed to delete contract', 'error');
+        });
+    }
+}
+
+
+
+function viewNegotiation(id) {
+    navigateToContract(id, 'negotiation');
+}
+
+
+function viewWorkflow(id) {
+    navigateToContract(id, 'workflow-setup');
+}
+
+function initiateSignature(id) {
+    navigateToContract(id, 'signature', { party: 'initiator' });
+}
+
+function downloadContract(id) {
+    // Show loading notification
+    showNotification('Preparing download...', 'info');
+    
+    // Create a temporary link element for download
+    const link = document.createElement('a');
+    link.href = `/api/contract/download/${id}`;
+    link.download = `contract-${id}.pdf`; // Suggest filename
+    link.style.display = 'none';
+    
+    // Append to body, click, and remove
+    document.body.appendChild(link);
+    link.click();
+    
+    // Clean up
+    setTimeout(() => {
+        document.body.removeChild(link);
+        showNotification('Download started successfully', 'success');
+    }, 500);
+}
+
+function viewAuditTrail(id) {
+    // Create and show audit trail modal
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.id = 'auditTrailModalPopup';
+    modal.style.display = 'block';
+    
+    modal.innerHTML = `
+        <div class="modal-content modal-lg" style="max-width: 800px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; padding: 1.5rem; border-radius: 12px 12px 0 0;">
+                <h3 class="modal-title" style="color: white; display: flex; align-items: center; gap: 0.75rem; margin: 0;">
+                    <i class="ti ti-timeline"></i>
+                    Audit Trail - Contract ${id}
+                </h3>
+                <button class="modal-close" onclick="closeAuditTrailPopup()" style="background: rgba(255,255,255,0.2); color: white; border: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                    <i class="ti ti-x"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body" style="padding: 2rem; max-height: 500px; overflow-y: auto;">
+                <div class="audit-timeline">
+                    
+                    <div class="audit-event">
+                        <div class="audit-icon" style="background: var(--primary-color); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;">
+                            <i class="ti ti-file-plus"></i>
+                        </div>
+                        <div class="audit-content" style="flex: 1; background: var(--background-light); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <strong>Contract Created</strong>
+                                <span style="font-size: 0.875rem; color: var(--text-muted);">2 hours ago</span>
+                            </div>
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">
+                                <i class="ti ti-user"></i> John Doe
+                            </div>
+                            <p style="font-size: 0.875rem; margin: 0.5rem 0 0 0;">Contract draft created from template</p>
+                        </div>
+                    </div>
+                    
+                    <div class="audit-event">
+                        <div class="audit-icon" style="background: var(--info-color); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;">
+                            <i class="ti ti-edit"></i>
+                        </div>
+                        <div class="audit-content" style="flex: 1; background: var(--background-light); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <strong>Content Modified</strong>
+                                <span style="font-size: 0.875rem; color: var(--text-muted);">1 hour ago</span>
+                            </div>
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">
+                                <i class="ti ti-user"></i> John Doe
+                            </div>
+                            <p style="font-size: 0.875rem; margin: 0.5rem 0 0 0;">Updated payment terms in Section 2</p>
+                        </div>
+                    </div>
+                    
+                    <div class="audit-event">
+                        <div class="audit-icon" style="background: var(--secondary-color); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;">
+                            <i class="ti ti-eye"></i>
+                        </div>
+                        <div class="audit-content" style="flex: 1; background: var(--background-light); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <strong>Internal Review</strong>
+                                <span style="font-size: 0.875rem; color: var(--text-muted);">45 minutes ago</span>
+                            </div>
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">
+                                <i class="ti ti-user"></i> Jane Smith
+                            </div>
+                            <p style="font-size: 0.875rem; margin: 0.5rem 0 0 0;">Legal team review completed</p>
+                        </div>
+                    </div>
+                    
+                    <div class="audit-event">
+                        <div class="audit-icon" style="background: var(--success-color); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;">
+                            <i class="ti ti-circle-check"></i>
+                        </div>
+                        <div class="audit-content" style="flex: 1; background: var(--background-light); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <strong>Approved</strong>
+                                <span style="font-size: 0.875rem; color: var(--text-muted);">30 minutes ago</span>
+                            </div>
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">
+                                <i class="ti ti-user"></i> Michael Johnson
+                            </div>
+                            <p style="font-size: 0.875rem; margin: 0.5rem 0 0 0;">Contract approved by Legal Department</p>
+                        </div>
+                    </div>
+                    
+                    <div class="audit-event">
+                        <div class="audit-icon" style="background: var(--primary-color); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;">
+                            <i class="ti ti-send"></i>
+                        </div>
+                        <div class="audit-content" style="flex: 1; background: var(--background-light); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <strong>Sent to Counterparty</strong>
+                                <span style="font-size: 0.875rem; color: var(--text-muted);">15 minutes ago</span>
+                            </div>
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">
+                                <i class="ti ti-user"></i> John Doe
+                            </div>
+                            <p style="font-size: 0.875rem; margin: 0.5rem 0 0 0;">Contract sent to Qatar Energy Company for review</p>
+                        </div>
+                    </div>
+                    
+                    
+                </div>
+            </div>
+            
+            <div class="modal-footer" style="padding: 1.5rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
+                <button class="btn btn-primary" onclick="closeAuditTrailPopup()" style="padding: 0.5rem 1.5rem; background: var(--primary-color); color: white; border: none; border-radius: 8px; cursor: pointer;">
+                    Close
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+}
+
+
+
+// Close audit trail popup
+function closeAuditTrailPopup() {
+    const modal = document.getElementById('auditTrailModalPopup');
+    if (modal) {
+        modal.remove();
+    }
+    document.body.style.overflow = 'auto';
+}
+
+function viewObligations(id) {
+    window.location.href = `/contract/obligations/${id}`;
+}
+
+function sendForReview(id) {
+    navigateToContract(id, 'send-review');
+}
+
+function submitForReview(id) {
+    navigateToContract(id, 'submit-review');
+}
+
+function continueEditing(id) {
+    navigateToContract(id, 'edit');
+}
+
+
+function navigateToContract(contractId, action = 'edit', options = {}) {
+    if (!contractId) {
+        console.error('Contract ID is required');
+        return;
+    }
+
+    // Build URL with action parameter
+    const url = new URL(`/contract/edit/${contractId}`, window.location.origin);
+    
+    // Add action parameter
+    if (action && action !== 'edit') {
+        url.searchParams.set('action', action);
+    }
+    
+    // Add additional parameters
+    if (options.stage) {
+        url.searchParams.set('stage', options.stage);
+    }
+    if (options.party) {
+        url.searchParams.set('party', options.party);
+    }
+    if (options.tab) {
+        url.searchParams.set('tab', options.tab);
+    }
+    
+    // Navigate
+    window.location.href = url.toString();
+}
+
+function renewContract(id) {
+    if (confirm('Are you sure you want to renew this contract? This will create a new draft based on the current contract.')) {
+        showNotification('Preparing contract renewal...', 'info');
+        
+        // Call API to create renewal
+        fetch(`/api/contract/${id}/renew`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Renewal failed');
+            }
+        })
+        .then(data => {
+            showNotification('Contract renewed successfully!', 'success');
+            // Navigate to the new contract
+            if (data.new_contract_id) {
+                setTimeout(() => {
+                    window.location.href = `/contract/edit/${data.new_contract_id}`;
+                }, 1500);
+            } else {
+                setTimeout(() => window.location.reload(), 1500);
+            }
+        })
+        .catch(error => {
+            console.error('Error renewing contract:', error);
+            showNotification('Failed to renew contract. Please try again.', 'error');
+        });
+    }
+}
+
+function archiveContract(id) {
+    if (confirm('Are you sure you want to archive this contract?')) {
+        fetch(`/api/contract/${id}/archive`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                showNotification('Contract archived successfully', 'success');
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                throw new Error('Archive failed');
+            }
+        })
+        .catch(error => {
+            console.error('Error archiving contract:', error);
+            showNotification('Failed to archive contract', 'error');
+        });
+    }
+}
+
+function viewHistory(id) {
+    navigateToContract(id, 'history');
+}
+
+// Additional action handlers for AI and workflow
+function performRiskAnalysis(id) {
+    navigateToContract(id, 'risk-analysis');
+}
+
+function performClauseAnalysis(id) {
+    navigateToContract(id, 'clause-analysis');
+}
+
+function setupWorkflow(id) {
+    navigateToContract(id, 'workflow-setup');
+}
+
+/**
+ * Smart action based on contract status
+ * Determines the most appropriate action based on current status
+ */
+function smartAction(id, status) {
+    const action = STATUS_DEFAULT_ACTIONS[status] || 'edit';
+    navigateToContract(id, action);
+}
+
+/**
+ * Show notification helper
+ */
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? 'var(--success-color)' : 
+                     type === 'error' ? 'var(--danger-color)' : 
+                     'var(--primary-color)'};
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    const icon = type === 'success' ? 'ti-check' : 
+                 type === 'error' ? 'ti-x' : 'ti-info-circle';
+    
+    notification.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <i class="ti ${icon}"></i>
+            ${message}
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Add slide animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+    
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+    
+    /* Audit Trail Styles */
+    .audit-timeline {
+        position: relative;
+        padding: 1rem 0;
+    }
+    
+    .audit-event {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+    
+    .audit-event:not(:last-child)::before {
+        content: '';
+        position: absolute;
+        left: 19px;
+        top: 40px;
+        bottom: -24px;
+        width: 2px;
+        background: var(--border-color);
+    }
+    
+    .audit-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        flex-shrink: 0;
+        font-size: 1.25rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .audit-content {
+        flex: 1;
+        background: var(--background-light);
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+    }
+    
+    .audit-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .audit-time {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+    
+    .audit-details {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+    
+    .audit-user, .audit-ip {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .audit-description {
+        margin: 0.5rem 0 0 0;
+        font-size: 0.875rem;
+        color: var(--text-color);
+    }
+    
+    .audit-changes {
+        margin-top: 0.75rem;
+    }
+    
+    .audit-changes-detail {
+        margin-top: 0.5rem;
+        background: white;
+        padding: 0.75rem;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+    }
+    
+    .audit-changes-detail pre {
+        margin: 0;
+        font-size: 0.8rem;
+        color: var(--text-color);
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+`;
+document.head.appendChild(style);
+
+
+</script>
+<!-- <script src="/app/static/js/contract-actions.js"></script> -->
+{% endblock %}

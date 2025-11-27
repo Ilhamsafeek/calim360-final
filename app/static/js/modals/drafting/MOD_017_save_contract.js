@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/drafting/MOD_017_save_contract.js

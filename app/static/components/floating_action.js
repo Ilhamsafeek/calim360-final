@@ -1,0 +1,1 @@
+// placeholder for: app/static/components/floating_action.js

@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/blockchain/MOD_074_certificate_validation.js

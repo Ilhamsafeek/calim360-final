@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/mobile/SCR_M03_mobile_contract.js

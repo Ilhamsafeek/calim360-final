@@ -1,0 +1,351 @@
+/* Floating Menu Component - Based on Business Process Flow Requirements */
+
+.floating-menu {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+}
+
+.floating-toggle {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--background-white);
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(39, 98, 203, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.floating-toggle::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.2));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.floating-toggle:hover::before {
+    opacity: 1;
+}
+
+.floating-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 25px rgba(39, 98, 203, 0.5);
+}
+
+.menu-icon {
+    font-size: 1.5rem;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.floating-menu.active .menu-icon {
+    transform: rotate(45deg);
+}
+
+.floating-items {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.floating-menu.active .floating-items {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.floating-item {
+    width: 48px;
+    height: 48px;
+    background: var(--background-white);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color);
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    position: relative;
+    transform: scale(0);
+    animation: none;
+}
+
+.floating-menu.active .floating-item {
+    transform: scale(1);
+    animation: floatingItemIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.floating-item:nth-child(1) { animation-delay: 0.05s; }
+.floating-item:nth-child(2) { animation-delay: 0.1s; }
+.floating-item:nth-child(3) { animation-delay: 0.15s; }
+.floating-item:nth-child(4) { animation-delay: 0.2s; }
+.floating-item:nth-child(5) { animation-delay: 0.25s; }
+.floating-item:nth-child(6) { animation-delay: 0.3s; }
+.floating-item:nth-child(7) { animation-delay: 0.35s; }
+.floating-item:nth-child(8) { animation-delay: 0.4s; }
+
+@keyframes floatingItemIn {
+    0% {
+        transform: scale(0) rotate(-180deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1) rotate(-90deg);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+.floating-item:hover {
+    background: var(--primary-color);
+    color: var(--background-white);
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(39, 98, 203, 0.4);
+}
+
+.floating-item i {
+    font-size: 1.1rem;
+}
+
+/* Tooltip functionality */
+.floating-item::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: var(--background-white);
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    margin-right: 0.75rem;
+    pointer-events: none;
+}
+
+.floating-item::after {
+    content: '';
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 5px solid rgba(0, 0, 0, 0.8);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    margin-right: 0.25rem;
+}
+
+.floating-item:hover::before,
+.floating-item:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Backdrop */
+.floating-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 999;
+}
+
+.floating-menu.active ~ .floating-backdrop,
+.floating-menu.active .floating-backdrop {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Different icon styles for different actions */
+.floating-item[data-tooltip="Create Contract Type"] {
+    background: linear-gradient(135deg, var(--success-color), #20c997);
+    color: var(--background-white);
+    border: none;
+}
+
+.floating-item[data-tooltip="Create Contract Type"]:hover {
+    background: linear-gradient(135deg, #1e7e34, #17a2b8);
+    transform: scale(1.15);
+}
+
+.floating-item[data-tooltip="Workflow Setup"] {
+    background: linear-gradient(135deg, var(--info-color), #17a2b8);
+    color: var(--background-white);
+    border: none;
+}
+
+.floating-item[data-tooltip="Send for Internal Review"] {
+    background: linear-gradient(135deg, #6f42c1, #e83e8c);
+    color: var(--background-white);
+    border: none;
+}
+
+.floating-item[data-tooltip="Delete Contract"] {
+    background: linear-gradient(135deg, var(--danger-color), #fd7e14);
+    color: var(--background-white);
+    border: none;
+}
+
+.floating-item[data-tooltip="Ask an Expert"] {
+    background: linear-gradient(135deg, #fd7e14, #ffc107);
+    color: var(--background-white);
+    border: none;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .floating-menu {
+        bottom: 1rem;
+        right: 1rem;
+    }
+    
+    .floating-toggle {
+        width: 52px;
+        height: 52px;
+    }
+    
+    .menu-icon {
+        font-size: 1.4rem;
+    }
+    
+    .floating-item {
+        width: 44px;
+        height: 44px;
+    }
+    
+    .floating-item i {
+        font-size: 1rem;
+    }
+    
+    /* Show tooltips on tap for mobile */
+    .floating-item::before {
+        right: auto;
+        left: 50%;
+        transform: translateX(-50%);
+        top: auto;
+        bottom: 100%;
+        margin-bottom: 0.5rem;
+        margin-right: 0;
+    }
+    
+    .floating-item::after {
+        right: auto;
+        left: 50%;
+        transform: translateX(-50%);
+        top: auto;
+        bottom: 100%;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 5px solid rgba(0, 0, 0, 0.8);
+        border-bottom: none;
+        margin-right: 0;
+        margin-bottom: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .floating-menu {
+        bottom: 0.75rem;
+        right: 0.75rem;
+    }
+    
+    .floating-toggle {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .menu-icon {
+        font-size: 1.3rem;
+    }
+    
+    .floating-item {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .floating-item i {
+        font-size: 0.95rem;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .floating-toggle {
+        border: 2px solid var(--background-white);
+    }
+    
+    .floating-item {
+        border: 2px solid var(--text-color);
+    }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+    .floating-toggle,
+    .floating-items,
+    .floating-item,
+    .menu-icon {
+        transition: none;
+        animation: none;
+    }
+    
+    .floating-toggle:hover {
+        transform: none;
+    }
+    
+    .floating-item:hover {
+        transform: none;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .floating-item {
+        background: #343a40;
+        border-color: #495057;
+        color: #e9ecef;
+    }
+    
+    .floating-item:hover {
+        background: var(--primary-color);
+        color: var(--background-white);
+    }
+}

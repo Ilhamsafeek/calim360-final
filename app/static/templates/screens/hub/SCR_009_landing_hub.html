@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CALIM 360 - Glassy Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #ddeefb 0%, #c7e9f5 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url('/static/img/c360-background.jpg');
+            /*background-color: linear-gradient(135deg, #0f1729 0%, #1a2744 50%, #2762cb 100%);*/
+            background-size: cover;
+            background-position: center;
+            /*filter: blur(15px);*/
+            opacity: 1;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .blur-overlay {
+            position: absolute;
+            inset: 0;
+            /*backdrop-filter: blur(100px);*/
+            opacity: 0.2;
+            pointer-events: none;
+        }
+
+        .folder-container {
+            position: relative;
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+
+        .folder-container.closed {
+            transform: scale(0.95);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .folder-container.reopening .app {
+            animation: expandFromCenter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            opacity: 0;
+        }
+
+        .folder-container.reopening .app.center {
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .folder-container.reopening .connection-lines {
+            opacity: 0;
+            animation: fadeInLines 0.8s ease 0.5s forwards;
+        }
+
+        .folder-container.reopening .connection-group {
+            opacity: 0;
+            animation: fadeInGroup 0.6s ease forwards;
+        }
+
+        .folder-container.reopening .connection-line {
+            stroke-dashoffset: 300;
+            animation: drawLine 0.8s ease forwards;
+        }
+
+        .folder {
+            background: rgba(255, 255, 255, 0.1);
+            /*backdrop-filter: blur(50px);*/
+            border-radius: 50px;
+            padding: 80px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                0 0 100px rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            width: 950px;
+            height: 700px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .apps-circle {
+            position: relative;
+            width: 600px;
+            height: 600px;
+        }
+
+        /* SVG lines container */
+        .connection-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0;
+            animation: fadeInLines 0.8s ease 0.5s forwards;
+        }
+
+        .connection-group {
+            opacity: 0;
+            animation: fadeInGroup 0.6s ease forwards;
+        }
+
+        .connection-line {
+            stroke: url(#lineGradient);
+            stroke-width: 2.5;
+            stroke-dasharray: 8 6;
+            stroke-dashoffset: 300;
+            animation: drawLine 0.8s ease forwards;
+            stroke-linecap: round;
+        }
+
+        /* Stagger line and group animations */
+        .connection-group:nth-child(2) { animation-delay: 0.1s; }
+        .connection-group:nth-child(2) .connection-line { animation-delay: 0.1s; }
+        
+        .connection-group:nth-child(3) { animation-delay: 0.15s; }
+        .connection-group:nth-child(3) .connection-line { animation-delay: 0.15s; }
+        
+        .connection-group:nth-child(4) { animation-delay: 0.2s; }
+        .connection-group:nth-child(4) .connection-line { animation-delay: 0.2s; }
+        
+        .connection-group:nth-child(5) { animation-delay: 0.25s; }
+        .connection-group:nth-child(5) .connection-line { animation-delay: 0.25s; }
+        
+        .connection-group:nth-child(6) { animation-delay: 0.3s; }
+        .connection-group:nth-child(6) .connection-line { animation-delay: 0.3s; }
+        
+        .connection-group:nth-child(7) { animation-delay: 0.35s; }
+        .connection-group:nth-child(7) .connection-line { animation-delay: 0.35s; }
+        
+        .connection-group:nth-child(8) { animation-delay: 0.4s; }
+        .connection-group:nth-child(8) .connection-line { animation-delay: 0.4s; }
+        
+        .connection-group:nth-child(9) { animation-delay: 0.45s; }
+        .connection-group:nth-child(9) .connection-line { animation-delay: 0.45s; }
+
+        @keyframes fadeInLines {
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInGroup {
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes drawLine {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        .app {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.3s ease;
+            animation: expandFromCenter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            opacity: 0;
+        }
+
+        .app:hover {
+            z-index: 20;
+        }
+
+        /* Stagger animation delays for each app */
+        .app.center {
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .app.top {
+            animation-delay: 0.1s;
+        }
+
+        .app.top-right {
+            animation-delay: 0.15s;
+        }
+
+        .app.right {
+            animation-delay: 0.2s;
+        }
+
+        .app.bottom-right {
+            animation-delay: 0.25s;
+        }
+
+        .app.bottom {
+            animation-delay: 0.3s;
+        }
+
+        .app.bottom-left {
+            animation-delay: 0.35s;
+        }
+
+        .app.left {
+            animation-delay: 0.4s;
+        }
+
+        .app.top-left {
+            animation-delay: 0.45s;
+        }
+
+        @keyframes expandFromCenter {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Center app */
+        .app.center {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Surrounding apps positioned in a circle - 8 apps at 45° intervals */
+        .app.top {
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .app.top-right {
+            top: 8%;
+            right: 8%;
+        }
+
+        .app.right {
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+        }
+
+        .app.bottom-right {
+            bottom: 8%;
+            right: 8%;
+        }
+
+        .app.bottom {
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .app.bottom-left {
+            bottom: 8%;
+            left: 8%;
+        }
+
+        .app.left {
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+        }
+
+        .app.top-left {
+            top: 8%;
+            left: 8%;
+        }
+
+        .app-icon {
+            width: 130px;
+            height: 130px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                0 0 40px rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-icon img {
+            position: relative;
+            z-index: 2;
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .app.center .app-icon {
+            width: 160px;
+            height: 160px;
+            background: linear-gradient(135deg, rgba(74, 222, 128, 0.25) 0%, rgba(34, 197, 94, 0.35) 100%);
+            border: 3px solid rgba(74, 222, 128, 0.6);
+            box-shadow: 
+                0 12px 48px rgba(74, 222, 128, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4),
+                0 0 60px rgba(74, 222, 128, 0.3);
+        }
+
+        .app.center .app-icon img {
+            width: 80px;
+            height: 80px;
+        }
+
+        /* Color variations for each app */
+        .app.top .app-icon {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.3) 100%);
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 
+                0 8px 32px rgba(59, 130, 246, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                0 0 40px rgba(59, 130, 246, 0.15);
+        }
+
+        .app.top-right .app-icon {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.3) 100%);
+            border-color: rgba(245, 158, 11, 0.5);
+            box-shadow: 
+                0 8px 32px rgba(245, 158, 11, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                0 0 40px rgba(245, 158, 11, 0.15);
+        }
+
+        .app.right .app-icon {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(124, 58, 237, 0.3) 100%);
+            border-color: rgba(139, 92, 246, 0.5);
+            box-shadow: 
+                0 8px 32px rgba(139, 92, 246, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                0 0 40px rgba(139, 92, 246, 0.15);
+        }
+
+        .app.bottom-right .app-icon {
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.2) 0%, rgba(219, 39, 119, 0.3) 100%);
+            border-color: rgba(236, 72, 153, 0.5);
+            box-shadow: 
+                0 8px 32px rgba(236, 72, 153, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                0 0 40px rgba(236, 72, 153, 0.15);
+        }
+
+        .app.bottom .app-icon {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.3) 100%);
+            border-color: rgba(239, 68, 68, 0.5);
+            box-shadow: 
+                0 8px 32px rgba(239, 68, 68, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                0 0 40px rgba(239, 68, 68, 0.15);
+        }
+
+        .app.bottom-left .app-icon {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(147, 51, 234, 0.3) 100%);
+            border-color: rgba(168, 85, 247, 0.5);
+            box-shadow: 
+                0 8px 32px rgba(168, 85, 247, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                0 0 40px rgba(168, 85, 247, 0.15);
+        }
+
+        .app.left .app-icon {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(22, 163, 74, 0.3) 100%);
+            border-color: rgba(34, 197, 94, 0.5);
+            box-shadow: 
+                0 8px 32px rgba(34, 197, 94, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                0 0 40px rgba(34, 197, 94, 0.15);
+        }
+
+        .app.top-left .app-icon {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2) 0%, rgba(8, 145, 178, 0.3) 100%);
+            border-color: rgba(6, 182, 212, 0.5);
+            box-shadow: 
+                0 8px 32px rgba(6, 182, 212, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                0 0 40px rgba(6, 182, 212, 0.15);
+        }
+
+        .app:hover .app-icon {
+            transform: scale(1.12);
+            box-shadow: 
+                0 16px 48px rgba(0, 0, 0, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4),
+                0 0 50px rgba(255, 255, 255, 0.2);
+        }
+
+        .app:active .app-icon {
+            transform: scale(0.95);
+        }
+
+        .app-name {
+            color: rgb(30, 30, 30);
+            font-size: 14px;
+            text-align: center;
+            font-weight: 600;
+            max-width: 100px;
+            line-height: 1.3;
+            letter-spacing: 0.3px;
+        }
+
+        .reopen-btn {
+            position: fixed;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            color: rgb(40, 40, 40);
+            padding: 16px 32px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s;
+            opacity: 0;
+            pointer-events: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .reopen-btn.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .reopen-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.15);
+            transform: translateX(-50%) translateY(-2px);
+        }
+
+        .reopen-btn:active {
+            transform: translateX(-50%) translateY(0px);
+        }
+    </style>
+</head>
+<body>
+    <div class="blur-overlay"></div>
+
+    <div class="folder-container" id="folderContainer">
+        <div class="folder">
+            <div class="apps-circle">
+                <!-- SVG for connection lines with futuristic connectors -->
+                <svg class="connection-lines" viewBox="0 0 700 700" preserveAspectRatio="xMidYMid meet">
+                    <defs>
+                        <!-- Gradient for lines -->
+                        <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:rgba(255,255,255,0.3);stop-opacity:1" />
+                            <stop offset="50%" style="stop-color:rgba(255,255,255,0.8);stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:rgba(255,255,255,0.3);stop-opacity:1" />
+                        </linearGradient>
+                        
+                        <!-- Glow filter -->
+                        <filter id="glow">
+                            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                            <feMerge>
+                                <feMergeNode in="coloredBlur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    
+                    <!-- Lines from center to each surrounding app with node connectors -->
+                    <!-- Top -->
+                    <g class="connection-group">
+                        <line class="connection-line" x1="349" y1="270" x2="350" y2="135" />
+                        <circle cx="349" cy="135" r="5" fill="white" opacity="0.8" filter="url(#glow)"/>
+                        <circle cx="349" cy="135" r="10" fill="none" stroke="white" stroke-width="1" opacity="0.4"/>
+                    </g>
+                    
+                    <!-- Top Right -->
+                    <g class="connection-group">
+                        <line class="connection-line" x1="406" y1="294" x2="485" y2="215" />
+                        <circle cx="485" cy="215" r="5" fill="white" opacity="0.8" filter="url(#glow)"/>
+                        <circle cx="485" cy="215" r="10" fill="none" stroke="white" stroke-width="1" opacity="0.4"/>
+                    </g>
+                    
+                    <!-- Right -->
+                    <g class="connection-group">
+                        <line class="connection-line" x1="430" y1="353" x2="565" y2="352" />
+                        <circle cx="565" cy="352" r="5" fill="white" opacity="0.8" filter="url(#glow)"/>
+                        <circle cx="565" cy="352" r="10" fill="none" stroke="white" stroke-width="1" opacity="0.4"/>
+                    </g>
+                    
+                    <!-- Bottom Right -->
+                    <g class="connection-group">
+                        <line class="connection-line" x1="406" y1="406" x2="485" y2="485" />
+                        <circle cx="485" cy="485" r="5" fill="white" opacity="0.8" filter="url(#glow)"/>
+                        <circle cx="485" cy="485" r="10" fill="none" stroke="white" stroke-width="1" opacity="0.4"/>
+                    </g>
+                    
+                    <!-- Bottom -->
+                    <g class="connection-group">
+                        <line class="connection-line" x1="351" y1="430" x2="350" y2="565" />
+                        <circle cx="350" cy="565" r="5" fill="white" opacity="0.8" filter="url(#glow)"/>
+                        <circle cx="350" cy="565" r="10" fill="none" stroke="white" stroke-width="1" opacity="0.4"/>
+                    </g>
+                    
+                    <!-- Bottom Left -->
+                    <g class="connection-group">
+                        <line class="connection-line" x1="294" y1="406" x2="215" y2="485" />
+                        <circle cx="215" cy="485" r="5" fill="white" opacity="0.8" filter="url(#glow)"/>
+                        <circle cx="215" cy="485" r="10" fill="none" stroke="white" stroke-width="1" opacity="0.4"/>
+                    </g>
+                    
+                    <!-- Left -->
+                    <g class="connection-group">
+                        <line class="connection-line" x1="270" y1="351" x2="135" y2="350" />
+                        <circle cx="135" cy="350" r="5" fill="white" opacity="0.8" filter="url(#glow)"/>
+                        <circle cx="135" cy="350" r="10" fill="none" stroke="white" stroke-width="1" opacity="0.4"/>
+                    </g>
+                    
+                    <!-- Top Left -->
+                    <g class="connection-group">
+                        <line class="connection-line" x1="294" y1="294" x2="215" y2="215" />
+                        <circle cx="215" cy="215" r="5" fill="white" opacity="0.8" filter="url(#glow)"/>
+                        <circle cx="215" cy="215" r="10" fill="none" stroke="white" stroke-width="1" opacity="0.4"/>
+                    </g>
+                </svg>
+
+                <!-- Center app -->
+                <div class="app center">
+                    <div class="app-icon">
+                        <img src="/static/img/c360.png" alt="CALIM 360">
+                    </div>
+                </div>
+
+                <!-- Surrounding apps - 8 positions -->
+                <div class="app top">
+                    <div class="app-icon">
+                        <img src="/static/img/tender.png" alt="Tender">
+                    </div>
+                    <!--<div class="app-name">Tender</div>-->
+                </div>
+
+                <div class="app top-right">
+                    <div class="app-icon">
+                        <img src="/static/img/bid.png" alt="Bid">
+                    </div>
+                    <!--<div class="app-name">Bid</div>-->
+                </div>
+
+                <div class="app right">
+                    <div class="app-icon">
+                        <img src="/static/img/communication.png" alt="Communication">
+                    </div>
+                    <!--<div class="app-name">Comms</div>-->
+                </div>
+
+                <div class="app bottom-right">
+                    <div class="app-icon">
+                        <img src="/static/img/variation.png" alt="Variation">
+                    </div>
+                    <!--<div class="app-name">Variation</div>-->
+                </div>
+
+                <div class="app bottom">
+                    <div class="app-icon">
+                        <img src="/static/img/claim.png" alt="Claim">
+                    </div>
+                    <!--<div class="app-name">Claim</div>-->
+                </div>
+
+                <a href="/dashboard" class="app bottom-left" data-module="clm" id="clmModule">
+                    <div class="app-icon">
+                        <img src="/static/img/clm.png" alt="CLM">
+                    </div>
+                    <!-- <div class="app-name">CLM</div> -->
+                </a>
+
+                <div class="app left">
+                    <div class="app-icon">
+                        <img src="/static/img/closeout.png" alt="Closeout">
+                    </div>
+                    <!--<div class="app-name">Closeout</div>-->
+                </div>
+
+                <div class="app top-left">
+                    <div class="app-icon">
+                        <img src="/static/img/dpr.png" alt="DPR">
+                    </div>
+                    <!--<div class="app-name">DPR</div>-->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="reopen-btn" id="reopenBtn" onclick="openFolder()">
+        Tap to reopen folder
+    </button>
+
+    <script>
+        // Add click handlers to apps
+        document.querySelectorAll('.app:not(.center)').forEach(app => {
+            app.addEventListener('click', closeFolder);
+        });
+
+        function closeFolder() {
+            document.getElementById('folderContainer').classList.add('closed');
+            setTimeout(() => {
+                document.getElementById('reopenBtn').classList.add('visible');
+            }, 300);
+        }
+
+        function openFolder() {
+            const container = document.getElementById('folderContainer');
+            document.getElementById('reopenBtn').classList.remove('visible');
+            
+            setTimeout(() => {
+                container.classList.remove('closed');
+                container.classList.add('reopening');
+                
+                setTimeout(() => {
+                    container.classList.remove('reopening');
+                }, 1500);
+            }, 100);
+        }
+    </script>
+</body>
+</html>

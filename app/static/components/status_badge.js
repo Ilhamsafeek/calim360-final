@@ -1,0 +1,1 @@
+// placeholder for: app/static/components/status_badge.js

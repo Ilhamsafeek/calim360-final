@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/drafting/SCR_015_ai_generation.js

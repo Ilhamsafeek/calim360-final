@@ -1,0 +1,2249 @@
+{% extends "base.html" %}
+
+{% block title %}User Management - CALIM360{% endblock %}
+
+{% block head %}
+<style>
+    :root {
+        --primary-color: #2762cb;
+        --secondary-color: #73B4E0;
+        --text-color: #333;
+        --text-muted: #666;
+        --border-color: #e9ecef;
+        --background-light: #f8f9fa;
+        --success-color: #28a745;
+        --warning-color: #856404;
+        --warning-bg: #fff3cd;
+        --success-bg: #d4edda;
+        --info-bg: #d1ecf1;
+        --info-color: #0c5460;
+        --danger-color: #dc3545;
+    }
+
+    /* Page Header */
+    .page-header {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .page-title {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .page-title h1 {
+        font-size: 28px;
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+
+    .breadcrumb {
+        display: flex;
+        gap: 8px;
+        color: var(--text-muted);
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+
+    .breadcrumb a {
+        color: var(--primary-color);
+        text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+        text-decoration: underline;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color), #1e4bb8);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(39, 98, 203, 0.3);
+    }
+
+    .btn-secondary {
+        background: white;
+        color: var(--primary-color);
+        border: 1px solid var(--primary-color);
+    }
+
+    .btn-secondary:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .btn-danger {
+        background: white;
+        color: var(--danger-color);
+        border: 1px solid var(--danger-color);
+    }
+
+    .btn-danger:hover {
+        background: var(--danger-color);
+        color: white;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+    }
+
+    .stat-icon {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-size: 24px;
+        color: var(--secondary-color);
+        opacity: 0.5;
+    }
+
+    .stat-value {
+        font-size: 32px;
+        font-weight: bold;
+        color: var(--primary-color);
+        margin-bottom: 4px;
+    }
+
+    .stat-label {
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+
+    .stat-change {
+        margin-top: 8px;
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 4px;
+        background: var(--success-bg);
+        color: var(--success-color);
+        display: inline-block;
+    }
+
+    .stat-change.negative {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    /* Filters and Search */
+    .filter-section {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+    }
+
+    .search-box {
+        flex: 1;
+        min-width: 300px;
+        position: relative;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 10px 40px 10px 16px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .search-box input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
+    }
+
+    .search-box i {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    select {
+        padding: 10px 16px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 14px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
+    }
+
+    /* Users Table */
+    .table-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+
+    .table-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    }
+
+    .table-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .bulk-actions {
+        display: flex;
+        gap: 12px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    thead {
+        background: var(--background-light);
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    th {
+        padding: 16px;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    td {
+        padding: 16px;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 14px;
+    }
+
+    tbody tr {
+        transition: background 0.2s ease;
+    }
+
+    tbody tr:hover {
+        background: #fafbfc;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .user-details {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .user-name {
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    .user-email {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .status-active {
+        background: var(--success-bg);
+        color: var(--success-color);
+    }
+
+    .status-inactive {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .status-pending {
+        background: var(--warning-bg);
+        color: var(--warning-color);
+    }
+
+    .status-locked {
+        background: #e7e7e7;
+        color: #495057;
+    }
+
+    .role-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        background: var(--info-bg);
+        color: var(--info-color);
+        border-radius: 4px;
+        font-size: 12px;
+        margin-right: 4px;
+        margin-bottom: 4px;
+    }
+
+    .table-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .action-btn {
+        padding: 8px;
+        background: transparent;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        cursor: pointer;
+        color: var(--text-muted);
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .action-btn:hover {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+    }
+
+    .action-btn.danger:hover {
+        background: var(--danger-color);
+        border-color: var(--danger-color);
+    }
+
+    /* Pagination */
+    .pagination {
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid var(--border-color);
+        background: #fafbfc;
+    }
+
+    .pagination-info {
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+
+    .pagination-controls {
+        display: flex;
+        gap: 8px;
+    }
+
+    .page-btn {
+        padding: 8px 12px;
+        border: 1px solid var(--border-color);
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        min-width: 36px;
+        text-align: center;
+    }
+
+    .page-btn.active {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .page-btn:hover:not(.active):not(:disabled) {
+        background: var(--background-light);
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+
+    .page-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .modal.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 700px;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: slideUp 0.3s ease;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-content.large {
+        max-width: 900px;
+    }
+
+    .modal-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-radius: 16px 16px 0 0;
+    }
+
+    .modal-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .modal-close {
+        background: transparent;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: var(--text-muted);
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+    }
+
+    .modal-close:hover {
+        background: var(--background-light);
+        color: var(--danger-color);
+    }
+
+    .modal-body {
+        padding: 24px;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group.full-width {
+        grid-column: 1/-1;
+    }
+
+    .form-label {
+        font-size: 14px;
+        color: var(--text-color);
+        margin-bottom: 8px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .form-label .required {
+        color: var(--danger-color);
+    }
+
+    .form-input {
+        padding: 10px 16px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        font-family: inherit;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
+    }
+
+    .form-input[multiple] {
+        min-height: 120px;
+    }
+
+    .modal-footer {
+        padding: 24px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #fafbfc;
+        border-radius: 0 0 16px 16px;
+    }
+
+    .modal-footer-left {
+        display: flex;
+        gap: 12px;
+    }
+
+    .modal-footer-right {
+        display: flex;
+        gap: 12px;
+    }
+
+    /* Workflow Setup Section */
+    .workflow-section {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+    }
+
+    .workflow-options {
+        margin-bottom: 24px;
+        padding: 20px;
+        background: var(--background-light);
+        border-radius: 8px;
+    }
+
+    .radio-group {
+        display: flex;
+        gap: 24px;
+        margin-top: 12px;
+    }
+
+    .radio-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .workflow-grid {
+        display: grid;
+        gap: 16px;
+    }
+
+    .workflow-row {
+        display: grid;
+        grid-template-columns: 150px 1fr 1fr;
+        gap: 16px;
+        align-items: center;
+        padding: 16px;
+        background: var(--background-light);
+        border-radius: 8px;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .workflow-label {
+        font-weight: 600;
+        color: var(--primary-color);
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .workflow-note {
+        margin-top: 24px;
+        padding: 16px;
+        background: var(--info-bg);
+        border-radius: 8px;
+        border-left: 4px solid var(--info-color);
+    }
+
+    .workflow-note p {
+        color: var(--info-color);
+        font-size: 14px;
+        margin: 0;
+    }
+
+    /* Permissions Section */
+    .permissions-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .permission-module {
+        padding: 16px;
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .permission-module:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border-color: var(--primary-color);
+    }
+
+    .permission-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .permission-title {
+        font-weight: 600;
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .permission-actions {
+        display: flex;
+        gap: 20px;
+    }
+
+    .permission-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+    }
+
+    .permission-checkbox input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+
+    /* Checkbox Styles */
+    .checkbox-wrapper {
+        display: flex;
+        align-items: center;
+    }
+
+    input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        margin: 0;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Loading State */
+    .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid var(--border-color);
+        border-top-color: var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    /* Toast Notification */
+    .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 16px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 2000;
+        animation: slideInRight 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 300px;
+    }
+
+    .toast.success {
+        background: var(--success-bg);
+        color: var(--success-color);
+        border-left: 4px solid var(--success-color);
+    }
+
+    .toast.warning {
+        background: var(--warning-bg);
+        color: var(--warning-color);
+        border-left: 4px solid var(--warning-color);
+    }
+
+    .toast.error {
+        background: #f8d7da;
+        color: #721c24;
+        border-left: 4px solid #721c24;
+    }
+
+    .toast.info {
+        background: var(--info-bg);
+        color: var(--info-color);
+        border-left: 4px solid var(--info-color);
+    }
+
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+        .stats-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .filter-section {
+            flex-direction: column;
+        }
+
+        .search-box {
+            min-width: 100%;
+        }
+
+        .filter-group {
+            width: 100%;
+            flex-direction: column;
+        }
+
+        .filter-group select {
+            width: 100%;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            min-width: 800px;
+        }
+
+        .modal-content {
+            width: 95%;
+            margin: 20px;
+        }
+
+        .workflow-row {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .workflow-label {
+            margin-bottom: 8px;
+        }
+
+        .pagination {
+            flex-direction: column;
+            gap: 16px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .action-buttons .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .bulk-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .bulk-actions .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <div class="breadcrumb">
+                <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                <span>/</span>
+                <a href="{{ url_for('admin_dashboard') }}">Administration</a>
+                <span>/</span>
+                <span>User Management</span>
+            </div>
+            <div class="page-title">
+                <i class="ti ti-users"></i>
+                <h1>User Management</h1>
+            </div>
+        </div>
+        <div class="action-buttons">
+            <button class="btn btn-secondary" onclick="showMasterWorkflowModal()">
+                <i class="ti ti-git-merge"></i>
+                Master Workflow
+            </button>
+            <button class="btn btn-secondary" onclick="exportUsers()">
+                <i class="ti ti-download"></i>
+                Export
+            </button>
+            <button class="btn btn-primary" onclick="showAddUserModal()">
+                <i class="ti ti-user-plus"></i>
+                Add New User
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <i class="ti ti-users stat-icon"></i>
+            <div class="stat-value">{{ total_users | default(127) }}</div>
+            <div class="stat-label">Total Users</div>
+            <div class="stat-change">+12%</div>
+        </div>
+        <div class="stat-card">
+            <i class="ti ti-user-check stat-icon"></i>
+            <div class="stat-value">{{ active_users | default(89) }}</div>
+            <div class="stat-label">Active Users</div>
+            <div class="stat-change">+5%</div>
+        </div>
+        <div class="stat-card">
+            <i class="ti ti-clock stat-icon"></i>
+            <div class="stat-value">{{ pending_users | default(12) }}</div>
+            <div class="stat-label">Pending Approval</div>
+        </div>
+        <div class="stat-card">
+            <i class="ti ti-shield stat-icon"></i>
+            <div class="stat-value">{{ total_roles | default(8) }}</div>
+            <div class="stat-label">Roles</div>
+        </div>
+        <div class="stat-card">
+            <i class="ti ti-building stat-icon"></i>
+            <div class="stat-value">{{ total_departments | default(5) }}</div>
+            <div class="stat-label">Departments</div>
+        </div>
+        <div class="stat-card">
+            <i class="ti ti-activity stat-icon"></i>
+            <div class="stat-value">{{ active_sessions | default(34) }}</div>
+            <div class="stat-label">Active Sessions</div>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filter-section">
+        <div class="search-box">
+            <input type="text" placeholder="Search by name, email, QID, or company..." id="searchInput">
+            <i class="ti ti-search"></i>
+        </div>
+        <div class="filter-group">
+            <select id="statusFilter">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="pending">Pending</option>
+                <option value="locked">Locked</option>
+            </select>
+            <select id="roleFilter">
+                <option value="">All Roles</option>
+                <option value="initiator">Initiator</option>
+                <option value="reviewer">Reviewer</option>
+                <option value="approver">Approver</option>
+                <option value="esign">E-Sign</option>
+                <option value="counterparty">Counter-Party</option>
+                <option value="legal">Legal Counsel</option>
+                <option value="finance">Finance</option>
+                <option value="admin">Super Admin</option>
+            </select>
+            <select id="departmentFilter">
+                <option value="">All Departments</option>
+                <option value="legal">Legal</option>
+                <option value="finance">Finance</option>
+                <option value="operations">Operations</option>
+                <option value="procurement">Procurement</option>
+                <option value="it">IT</option>
+                <option value="hr">HR</option>
+            </select>
+        </div>
+        <button class="btn btn-secondary" onclick="clearFilters()">
+            <i class="ti ti-filter-off"></i>
+            Clear
+        </button>
+    </div>
+
+    <!-- Users Table -->
+    <div class="table-container">
+        <div class="table-header">
+            <h2 class="table-title">
+                <i class="ti ti-list"></i>
+                All Users
+            </h2>
+            <div class="bulk-actions">
+                <button class="btn btn-secondary" onclick="bulkActivate()">
+                    <i class="ti ti-check"></i>
+                    Activate
+                </button>
+                <button class="btn btn-secondary" onclick="bulkDeactivate()">
+                    <i class="ti ti-x"></i>
+                    Deactivate
+                </button>
+                <button class="btn btn-danger" onclick="bulkDelete()">
+                    <i class="ti ti-trash"></i>
+                    Delete
+                </button>
+            </div>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th width="40">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                        </div>
+                    </th>
+                    <th>User</th>
+                    <th>QID</th>
+                    <th>Company</th>
+                    <th>Department</th>
+                    <th>Roles</th>
+                    <th>Status</th>
+                    <th>Last Login</th>
+                    <th width="150">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="usersTableBody">
+                <!-- User data will be loaded here -->
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <div class="pagination">
+            <div class="pagination-info">
+                Showing <span id="showingFrom">1</span>-<span id="showingTo">10</span> of <span id="totalCount">127</span> users
+            </div>
+            <div class="pagination-controls" id="paginationControls">
+                <!-- Pagination buttons will be generated here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MOD-080: Add/Edit User Modal -->
+<div class="modal" id="userModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">
+                <i class="ti ti-user-plus"></i>
+                <span id="modalTitle">Add New User</span>
+            </h2>
+            <button class="modal-close" onclick="closeModal('userModal')">×</button>
+        </div>
+        <div class="modal-body">
+            <form class="form-grid" id="userForm">
+                <input type="hidden" id="userId">
+                
+                <div class="form-group">
+                    <label class="form-label">First Name <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="firstName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Last Name <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="lastName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Email Address <span class="required">*</span></label>
+                    <input type="email" class="form-input" id="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">QID Number <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="qid" pattern="[0-9]{11}" maxlength="11" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Company <span class="required">*</span></label>
+                    <select class="form-input" id="company" required>
+                        <option value="">Select Company</option>
+                        {% for company in companies %}
+                        <option value="{{ company.id }}">{{ company.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Department <span class="required">*</span></label>
+                    <select class="form-input" id="department" required>
+                        <option value="">Select Department</option>
+                        <option value="legal">Legal</option>
+                        <option value="finance">Finance</option>
+                        <option value="operations">Operations</option>
+                        <option value="procurement">Procurement</option>
+                        <option value="it">IT</option>
+                        <option value="hr">HR</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Role(s) <span class="required">*</span></label>
+                    <select class="form-input" id="roles" multiple required>
+                        <option value="initiator">Initiator</option>
+                        <option value="reviewer">Reviewer</option>
+                        <option value="approver">Approver</option>
+                        <option value="esign">E-Sign</option>
+                        <option value="counterparty">Counter-Party</option>
+                        <option value="legal_counsel">Legal Counsel</option>
+                        <option value="finance">Finance</option>
+                        <option value="admin">Super Admin</option>
+                    </select>
+                    <small style="color: var(--text-muted); margin-top: 4px;">Hold Ctrl/Cmd to select multiple roles</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input type="tel" class="form-input" id="phone" pattern="[+]?[0-9]{8,15}">
+                </div>
+                
+                <div class="form-group full-width">
+                    <label class="form-label">
+                        <input type="checkbox" id="sendWelcomeEmail" checked>
+                        Send welcome email with login credentials
+                    </label>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <div class="modal-footer-right">
+                <button class="btn btn-secondary" onclick="closeModal('userModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveUser()">
+                    <i class="ti ti-check"></i>
+                    Save User
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MOD-081: Edit User Permissions Modal -->
+<div class="modal" id="permissionsModal">
+    <div class="modal-content large">
+        <div class="modal-header">
+            <h2 class="modal-title">
+                <i class="ti ti-key"></i>
+                User Permissions
+            </h2>
+            <button class="modal-close" onclick="closeModal('permissionsModal')">×</button>
+        </div>
+        <div class="modal-body">
+            <div style="margin-bottom: 24px; padding: 16px; background: var(--background-light); border-radius: 8px;">
+                <div class="user-info">
+                    <div class="user-avatar" id="permUserAvatar">AK</div>
+                    <div class="user-details">
+                        <span class="user-name" id="permUserName">Ahmed Al-Khalifa</span>
+                        <span class="user-email" id="permUserEmail">ahmed.khalifa@company.qa</span>
+                    </div>
+                </div>
+            </div>
+            
+            <h3 style="margin-bottom: 16px; color: var(--primary-color);">Module Permissions</h3>
+            <div class="permissions-container">
+                <div class="permission-module">
+                    <div class="permission-header">
+                        <div class="permission-title">
+                            <i class="ti ti-file-text"></i>
+                            Contract Drafting
+                        </div>
+                        <div class="permission-actions">
+                            <label class="permission-checkbox">
+                                <input type="checkbox" name="contract_view" checked> View
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" name="contract_edit" checked> Edit
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" name="contract_delete"> Delete
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" name="contract_approve" checked> Approve
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="permission-module">
+                    <div class="permission-header">
+                        <div class="permission-title">
+                            <i class="ti ti-git-merge"></i>
+                            Workflow Management
+                        </div>
+                        <div class="permission-actions">
+                            <label class="permission-checkbox">
+                                <input type="checkbox" name="workflow_view" checked> View
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" name="workflow_edit"> Edit
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" name="workflow_delete"> Delete
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" name="workflow_approve"> Approve
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="permission-module">
+                    <div class="permission-header">
+                        <div class="permission-title">
+                            <i class="ti ti-writing-sign"></i>
+                            E-Signature
+                        </div>
+                        <div class="permission-actions">
+                            <label class="permission-checkbox">
+                                <input type="checkbox" name="esign_view" checked> View
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" name="esign_edit" checked> Edit
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" name="esign_delete"> Delete
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" name="esign_approve" checked> Sign
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="permission-module">
+                    <div class="permission-header">
+                        <div class="permission-title">
+                            <i class="ti ti-message-circle"></i>
+                            Negotiation
+                        </div>
+                        <div class="permission-actions">
+                            <label class="permission-checkbox">
+                                <input type="checkbox" name="negotiation_view" checked> View
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" name="negotiation_edit" checked> Participate
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" name="negotiation_delete"> Delete
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" name="negotiation_approve"> Approve
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="permission-module">
+                    <div class="permission-header">
+                        <div class="permission-title">
+                            <i class="ti ti-report"></i>
+                            Reports & Analytics
+                        </div>
+                        <div class="permission-actions">
+                            <label class="permission-checkbox">
+                                <input type="checkbox" name="reports_view" checked> View
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" name="reports_edit"> Create
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" name="reports_delete"> Delete
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" name="reports_export" checked> Export
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <div class="modal-footer-right">
+                <button class="btn btn-secondary" onclick="closeModal('permissionsModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="savePermissions()">
+                    <i class="ti ti-check"></i>
+                    Save Permissions
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MOD-027: Master Workflow Setup Modal -->
+<div class="modal" id="workflowModal">
+    <div class="modal-content large">
+        <div class="modal-header">
+            <h2 class="modal-title">
+                <i class="ti ti-git-merge"></i>
+                Master Workflow Setup
+            </h2>
+            <button class="modal-close" onclick="closeModal('workflowModal')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="workflow-section">
+                <div class="workflow-options">
+                    <label class="form-label" style="font-size: 16px; font-weight: 600;">USE MASTER WORKFLOW</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="useMasterWorkflow" value="yes" checked onchange="toggleWorkflowSetup()">
+                            Yes
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="useMasterWorkflow" value="no" onchange="toggleWorkflowSetup()">
+                            No
+                        </label>
+                    </div>
+                </div>
+                
+                <div id="workflowSetupSection">
+                    <h3 style="margin-bottom: 16px; color: var(--text-color);">SETUP WORKFLOW FOR THIS CONTRACT:</h3>
+                    <div class="workflow-grid">
+                        <div class="workflow-row">
+                            <div class="workflow-label">REVIEWER</div>
+                            <select class="form-input" id="reviewerUser">
+                                <option value="">Select User</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}">{{ user.first_name }} {{ user.last_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <select class="form-input" id="reviewerDept">
+                                <option value="">Select Department</option>
+                                <option value="legal">Legal</option>
+                                <option value="finance">Finance</option>
+                                <option value="operations">Operations</option>
+                                <option value="procurement">Procurement</option>
+                            </select>
+                        </div>
+                        
+                        <div class="workflow-row">
+                            <div class="workflow-label">APPROVER</div>
+                            <select class="form-input" id="approverUser">
+                                <option value="">Select User</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}">{{ user.first_name }} {{ user.last_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <select class="form-input" id="approverDept">
+                                <option value="">Select Department</option>
+                                <option value="legal">Legal</option>
+                                <option value="finance">Finance</option>
+                                <option value="operations">Operations</option>
+                            </select>
+                        </div>
+                        
+                        <div class="workflow-row">
+                            <div class="workflow-label">E-SIGN</div>
+                            <select class="form-input" id="esignUser">
+                                <option value="">Select User</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}">{{ user.first_name }} {{ user.last_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <select class="form-input" id="esignDept">
+                                <option value="">Select Department</option>
+                                <option value="legal">Legal</option>
+                                <option value="finance">Finance</option>
+                                <option value="management">Management</option>
+                            </select>
+                        </div>
+                        
+                        <div class="workflow-row">
+                            <div class="workflow-label">COUNTER-PARTY</div>
+                            <select class="form-input" id="counterpartyUser">
+                                <option value="">Select User</option>
+                                <option value="external">External User</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}">{{ user.first_name }} {{ user.last_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <select class="form-input" id="counterpartyDept">
+                                <option value="">Select Department</option>
+                                <option value="external">External</option>
+                                <option value="client">Client</option>
+                                <option value="vendor">Vendor</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="workflow-note">
+                    <p>
+                        <strong>Note:</strong> Pressing Submit will finalize the Workflow and the user will return to the Landing Page.
+                        This master workflow will be used as the default for all contracts at the company level. 
+                        Users can override this workflow for specific contracts if needed.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <div class="modal-footer-left">
+                <button class="btn btn-secondary" onclick="closeModal('workflowModal')">Back</button>
+            </div>
+            <div class="modal-footer-right">
+                <button class="btn btn-secondary" onclick="saveAndExit()">Save & Exit</button>
+                <button class="btn btn-primary" onclick="submitWorkflow()">
+                    Submit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Include common scripts -->
+<script src="{{ url_for('static', filename='js/common.js') }}"></script>
+
+<script>
+// Sample user data
+const sampleUsers = [
+    {
+        id: 1,
+        firstName: 'Ahmed',
+        lastName: 'Al-Khalifa',
+        email: 'ahmed.khalifa@company.qa',
+        qid: '28574839201',
+        company: 'Qatar Construction Co.',
+        department: 'Legal',
+        roles: ['Approver', 'Reviewer'],
+        status: 'active',
+        lastLogin: '2 hours ago'
+    },
+    {
+        id: 2,
+        firstName: 'Fatima',
+        lastName: 'Al-Mahmoud',
+        email: 'fatima.m@company.qa',
+        qid: '29384756102',
+        company: 'Qatar Construction Co.',
+        department: 'Finance',
+        roles: ['Finance'],
+        status: 'active',
+        lastLogin: '1 day ago'
+    },
+    {
+        id: 3,
+        firstName: 'John',
+        lastName: 'Davidson',
+        email: 'j.davidson@company.qa',
+        qid: '30495867213',
+        company: 'Qatar Construction Co.',
+        department: 'Operations',
+        roles: ['Initiator'],
+        status: 'pending',
+        lastLogin: 'Never'
+    },
+    {
+        id: 4,
+        firstName: 'Sarah',
+        lastName: 'Williams',
+        email: 's.williams@company.qa',
+        qid: '31506978324',
+        company: 'Gulf Petroleum Ltd.',
+        department: 'Procurement',
+        roles: ['Reviewer', 'Initiator'],
+        status: 'active',
+        lastLogin: '5 hours ago'
+    },
+    {
+        id: 5,
+        firstName: 'Mohammed',
+        lastName: 'Al-Thani',
+        email: 'm.thani@company.qa',
+        qid: '32617089435',
+        company: 'Doha Infrastructure',
+        department: 'Legal',
+        roles: ['Legal Counsel', 'Approver'],
+        status: 'active',
+        lastLogin: '3 days ago'
+    }
+];
+
+// Load users on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadUsers();
+    generatePagination();
+});
+
+// Load users into table
+function loadUsers(users = sampleUsers) {
+    const tbody = document.getElementById('usersTableBody');
+    tbody.innerHTML = '';
+    
+    users.forEach(user => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" class="user-checkbox" value="${user.id}">
+                </div>
+            </td>
+            <td>
+                <div class="user-info">
+                    <div class="user-avatar">${user.firstName[0]}${user.lastName[0]}</div>
+                    <div class="user-details">
+                        <span class="user-name">${user.firstName} ${user.lastName}</span>
+                        <span class="user-email">${user.email}</span>
+                    </div>
+                </div>
+            </td>
+            <td>${user.qid}</td>
+            <td>${user.company}</td>
+            <td>${user.department}</td>
+            <td>
+                ${user.roles.map(role => `
+                    <span class="role-badge">
+                        <i class="ti ti-${getRoleIcon(role)}"></i>
+                        ${role}
+                    </span>
+                `).join('')}
+            </td>
+            <td>
+                <span class="status-badge status-${user.status}">
+                    ${user.status === 'active' ? '<i class="ti ti-circle-check"></i>' : 
+                      user.status === 'pending' ? '<i class="ti ti-clock"></i>' : 
+                      '<i class="ti ti-circle-x"></i>'} 
+                    ${user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                </span>
+            </td>
+            <td>${user.lastLogin}</td>
+            <td>
+                <div class="table-actions">
+                    ${user.status === 'pending' ? `
+                        <button class="action-btn" title="Approve" onclick="approveUser(${user.id})">
+                            <i class="ti ti-check"></i>
+                        </button>
+                    ` : ''}
+                    <button class="action-btn" title="Edit" onclick="editUser(${user.id})">
+                        <i class="ti ti-edit"></i>
+                    </button>
+                    <button class="action-btn" title="Permissions" onclick="showPermissionsModal(${user.id})">
+                        <i class="ti ti-key"></i>
+                    </button>
+                    <button class="action-btn" title="Activity" onclick="viewActivity(${user.id})">
+                        <i class="ti ti-activity"></i>
+                    </button>
+                    <button class="action-btn danger" title="Delete" onclick="deleteUser(${user.id})">
+                        <i class="ti ti-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Get role icon
+function getRoleIcon(role) {
+    const icons = {
+        'Initiator': 'file-plus',
+        'Reviewer': 'file-text',
+        'Approver': 'shield-check',
+        'Finance': 'currency-dollar',
+        'Legal Counsel': 'scale',
+        'E-Sign': 'writing-sign',
+        'Counter-Party': 'users',
+        'Admin': 'crown'
+    };
+    return icons[role] || 'user';
+}
+
+// Generate pagination
+function generatePagination() {
+    const controls = document.getElementById('paginationControls');
+    const totalPages = 13;
+    const currentPage = 1;
+    
+    let html = `
+        <button class="page-btn" ${currentPage === 1 ? 'disabled' : ''}>
+            <i class="ti ti-chevron-left"></i>
+        </button>
+    `;
+    
+    for (let i = 1; i <= Math.min(3, totalPages); i++) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+    }
+    
+    if (totalPages > 5) {
+        html += `<button class="page-btn" disabled>...</button>`;
+        html += `<button class="page-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+    }
+    
+    html += `
+        <button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''}>
+            <i class="ti ti-chevron-right"></i>
+        </button>
+    `;
+    
+    controls.innerHTML = html;
+}
+
+// Modal Functions
+function showAddUserModal() {
+    document.getElementById('modalTitle').textContent = 'Add New User';
+    document.getElementById('userForm').reset();
+    document.getElementById('userId').value = '';
+    document.getElementById('userModal').classList.add('active');
+}
+
+function editUser(id) {
+    const user = sampleUsers.find(u => u.id === id);
+    if (user) {
+        document.getElementById('modalTitle').textContent = 'Edit User';
+        document.getElementById('userId').value = user.id;
+        document.getElementById('firstName').value = user.firstName;
+        document.getElementById('lastName').value = user.lastName;
+        document.getElementById('email').value = user.email;
+        document.getElementById('qid').value = user.qid;
+        // Set other fields...
+        document.getElementById('userModal').classList.add('active');
+    }
+}
+
+function showPermissionsModal(id) {
+    const user = sampleUsers.find(u => u.id === id);
+    if (user) {
+        document.getElementById('permUserAvatar').textContent = user.firstName[0] + user.lastName[0];
+        document.getElementById('permUserName').textContent = `${user.firstName} ${user.lastName}`;
+        document.getElementById('permUserEmail').textContent = user.email;
+        document.getElementById('permissionsModal').classList.add('active');
+    }
+}
+
+function showMasterWorkflowModal() {
+    document.getElementById('workflowModal').classList.add('active');
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+}
+
+// Save Functions
+function saveUser() {
+    const form = document.getElementById('userForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    // API call would go here
+    showToast('User saved successfully', 'success');
+    closeModal('userModal');
+    loadUsers(); // Reload table
+}
+
+function savePermissions() {
+    // API call would go here
+    showToast('Permissions updated successfully', 'success');
+    closeModal('permissionsModal');
+}
+
+function saveAndExit() {
+    // API call would go here
+    showToast('Workflow saved successfully', 'success');
+    closeModal('workflowModal');
+}
+
+function submitWorkflow() {
+    // API call would go here
+    showToast('Master workflow submitted successfully', 'success');
+    closeModal('workflowModal');
+}
+
+// User Actions
+function approveUser(id) {
+    if (confirm('Are you sure you want to approve this user?')) {
+        // API call would go here
+        showToast('User approved successfully', 'success');
+        loadUsers();
+    }
+}
+
+function deleteUser(id) {
+    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+        // API call would go here
+        showToast('User deleted successfully', 'success');
+        loadUsers();
+    }
+}
+
+function viewActivity(id) {
+    // Redirect to activity log
+    window.location.href = `/admin/users/${id}/activity`;
+}
+
+// Bulk Actions
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.user-checkbox');
+    checkboxes.forEach(cb => cb.checked = selectAll.checked);
+}
+
+function bulkActivate() {
+    const selected = document.querySelectorAll('.user-checkbox:checked');
+    if (selected.length === 0) {
+        showToast('Please select users to activate', 'warning');
+        return;
+    }
+    
+    if (confirm(`Are you sure you want to activate ${selected.length} user(s)?`)) {
+        // API call would go here
+        showToast(`${selected.length} user(s) activated successfully`, 'success');
+        loadUsers();
+    }
+}
+
+function bulkDeactivate() {
+    const selected = document.querySelectorAll('.user-checkbox:checked');
+    if (selected.length === 0) {
+        showToast('Please select users to deactivate', 'warning');
+        return;
+    }
+    
+    if (confirm(`Are you sure you want to deactivate ${selected.length} user(s)?`)) {
+        // API call would go here
+        showToast(`${selected.length} user(s) deactivated successfully`, 'success');
+        loadUsers();
+    }
+}
+
+function bulkDelete() {
+    const selected = document.querySelectorAll('.user-checkbox:checked');
+    if (selected.length === 0) {
+        showToast('Please select users to delete', 'warning');
+        return;
+    }
+    
+    if (confirm(`Are you sure you want to delete ${selected.length} user(s)? This action cannot be undone.`)) {
+        // API call would go here
+        showToast(`${selected.length} user(s) deleted successfully`, 'success');
+        loadUsers();
+    }
+}
+
+// Export Function
+function exportUsers() {
+    // API call would go here
+    showToast('Export started. You will receive an email when ready.', 'info');
+}
+
+// Filter Functions
+function clearFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('roleFilter').value = '';
+    document.getElementById('departmentFilter').value = '';
+    loadUsers();
+}
+
+// Search functionality
+document.getElementById('searchInput')?.addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const filteredUsers = sampleUsers.filter(user => 
+        user.firstName.toLowerCase().includes(searchTerm) ||
+        user.lastName.toLowerCase().includes(searchTerm) ||
+        user.email.toLowerCase().includes(searchTerm) ||
+        user.qid.includes(searchTerm) ||
+        user.company.toLowerCase().includes(searchTerm)
+    );
+    loadUsers(filteredUsers);
+});
+
+// Filter handlers
+document.getElementById('statusFilter')?.addEventListener('change', function() {
+    filterUsers();
+});
+
+document.getElementById('roleFilter')?.addEventListener('change', function() {
+    filterUsers();
+});
+
+document.getElementById('departmentFilter')?.addEventListener('change', function() {
+    filterUsers();
+});
+
+function filterUsers() {
+    const status = document.getElementById('statusFilter').value;
+    const role = document.getElementById('roleFilter').value;
+    const department = document.getElementById('departmentFilter').value;
+    
+    let filteredUsers = sampleUsers;
+    
+    if (status) {
+        filteredUsers = filteredUsers.filter(u => u.status === status);
+    }
+    
+    if (department) {
+        filteredUsers = filteredUsers.filter(u => u.department.toLowerCase() === department);
+    }
+    
+    loadUsers(filteredUsers);
+}
+
+// Workflow Toggle
+function toggleWorkflowSetup() {
+    const useMaster = document.querySelector('input[name="useMasterWorkflow"]:checked').value;
+    const setupSection = document.getElementById('workflowSetupSection');
+    
+    if (useMaster === 'no') {
+        setupSection.style.display = 'none';
+    } else {
+        setupSection.style.display = 'block';
+    }
+}
+
+// Pagination
+function goToPage(page) {
+    // API call would go here
+    generatePagination();
+    showToast(`Loading page ${page}...`, 'info');
+}
+
+// Toast Notification
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const icon = {
+        success: 'circle-check',
+        warning: 'alert-triangle',
+        error: 'circle-x',
+        info: 'info-circle'
+    }[type];
+    
+    toast.innerHTML = `
+        <i class="ti ti-${icon}"></i>
+        <span>${message}</span>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Initialize on load
+window.addEventListener('load', function() {
+    // Check for any pending approvals
+    const pendingCount = sampleUsers.filter(u => u.status === 'pending').length;
+    if (pendingCount > 0) {
+        showToast(`You have ${pendingCount} pending user approval(s)`, 'warning');
+    }
+});
+
+// Handle Enter key in search
+document.getElementById('searchInput')?.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        filterUsers();
+    }
+});
+
+// Handle form submission with Enter key
+document.getElementById('userForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    saveUser();
+});
+
+// Auto-save draft
+let draftTimer;
+document.querySelectorAll('#userForm input, #userForm select').forEach(element => {
+    element.addEventListener('change', function() {
+        clearTimeout(draftTimer);
+        draftTimer = setTimeout(() => {
+            // Save draft to localStorage
+            const formData = new FormData(document.getElementById('userForm'));
+            const draft = {};
+            for (let [key, value] of formData.entries()) {
+                draft[key] = value;
+            }
+            localStorage.setItem('userFormDraft', JSON.stringify(draft));
+        }, 1000);
+    });
+});
+
+// Restore draft if exists
+function restoreDraft() {
+    const draft = localStorage.getItem('userFormDraft');
+    if (draft && document.getElementById('userId').value === '') {
+        if (confirm('Would you like to restore your previous draft?')) {
+            const data = JSON.parse(draft);
+            Object.keys(data).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.value = data[key];
+                }
+            });
+        }
+    }
+}
+
+// Clear draft on successful save
+function clearDraft() {
+    localStorage.removeItem('userFormDraft');
+}
+
+// Export to different formats
+function exportUsers(format = 'csv') {
+    const formats = {
+        csv: 'text/csv',
+        excel: 'application/vnd.ms-excel',
+        pdf: 'application/pdf'
+    };
+    
+    // Show format selection modal or proceed with default
+    showToast(`Exporting users as ${format.toUpperCase()}...`, 'info');
+    
+    // In real implementation, make API call
+    setTimeout(() => {
+        showToast('Export completed. Check your email for download link.', 'success');
+    }, 2000);
+}
+
+// Advanced search
+function toggleAdvancedSearch() {
+    const advancedPanel = document.getElementById('advancedSearchPanel');
+    if (advancedPanel) {
+        advancedPanel.classList.toggle('active');
+    }
+}
+
+// Activity monitoring
+function startActivityMonitoring() {
+    let inactivityTimer;
+    const WARNING_TIME = 10 * 60 * 1000; // 10 minutes
+    const LOGOUT_TIME = 15 * 60 * 1000; // 15 minutes
+    
+    function resetTimer() {
+        clearTimeout(inactivityTimer);
+        inactivityTimer = setTimeout(() => {
+            showToast('You will be logged out due to inactivity in 5 minutes', 'warning');
+            setTimeout(() => {
+                window.location.href = '/logout';
+            }, 5 * 60 * 1000);
+        }, WARNING_TIME);
+    }
+    
+    // Monitor user activity
+    ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(event => {
+        document.addEventListener(event, resetTimer, true);
+    });
+    
+    resetTimer();
+}
+
+// Start monitoring when page loads
+startActivityMonitoring();
+
+// Handle window resize for responsive table
+function handleTableResponsive() {
+    const table = document.querySelector('table');
+    const container = document.querySelector('.table-container');
+    
+    if (window.innerWidth < 768) {
+        container.style.overflowX = 'auto';
+        table.style.minWidth = '800px';
+    } else {
+        container.style.overflowX = 'visible';
+        table.style.minWidth = 'auto';
+    }
+}
+
+window.addEventListener('resize', handleTableResponsive);
+handleTableResponsive();
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + K for search
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        document.getElementById('searchInput')?.focus();
+    }
+    
+    // Ctrl/Cmd + N for new user
+    if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        showAddUserModal();
+    }
+    
+    // Escape to close modals
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal.active').forEach(modal => {
+            modal.classList.remove('active');
+        });
+    }
+});
+
+// Role-based UI adjustments
+function adjustUIForUserRole() {
+    // This would be based on actual user role from backend
+    const userRole = '{{ current_user.role | default("admin") }}';
+    
+    if (userRole !== 'admin' && userRole !== 'super_admin') {
+        // Hide certain actions for non-admin users
+        document.querySelectorAll('.action-btn.danger').forEach(btn => {
+            btn.style.display = 'none';
+        });
+        
+        document.querySelectorAll('.bulk-actions').forEach(section => {
+            section.style.display = 'none';
+        });
+    }
+}
+
+adjustUIForUserRole();
+
+// Real-time updates using WebSocket (placeholder)
+function initializeWebSocket() {
+    // In production, connect to actual WebSocket server
+    // const ws = new WebSocket('ws://localhost:8000/ws/users');
+    
+    // ws.onmessage = function(event) {
+    //     const data = JSON.parse(event.data);
+    //     if (data.type === 'user_update') {
+    //         loadUsers();
+    //         showToast('User list updated', 'info');
+    //     }
+    // };
+}
+
+// API Integration Functions
+async function fetchUsers() {
+    try {
+        const response = await fetch('/api/users', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            loadUsers(data.users);
+        } else {
+            showToast('Failed to load users', 'error');
+        }
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        showToast('Network error. Please try again.', 'error');
+    }
+}
+
+async function createUser(userData) {
+    try {
+        const response = await fetch('/api/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(userData)
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            showToast('User created successfully', 'success');
+            clearDraft();
+            closeModal('userModal');
+            fetchUsers();
+        } else {
+            const error = await response.json();
+            showToast(error.message || 'Failed to create user', 'error');
+        }
+    } catch (error) {
+        console.error('Error creating user:', error);
+        showToast('Network error. Please try again.', 'error');
+    }
+}
+
+async function updateUser(userId, userData) {
+    try {
+        const response = await fetch(`/api/users/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(userData)
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            showToast('User updated successfully', 'success');
+            closeModal('userModal');
+            fetchUsers();
+        } else {
+            const error = await response.json();
+            showToast(error.message || 'Failed to update user', 'error');
+        }
+    } catch (error) {
+        console.error('Error updating user:', error);
+        showToast('Network error. Please try again.', 'error');
+    }
+}
+
+async function removeUser(userId) {
+    try {
+        const response = await fetch(`/api/users/${userId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        
+        if (response.ok) {
+            showToast('User deleted successfully', 'success');
+            fetchUsers();
+        } else {
+            const error = await response.json();
+            showToast(error.message || 'Failed to delete user', 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        showToast('Network error. Please try again.', 'error');
+    }
+}
+
+async function updatePermissions(userId, permissions) {
+    try {
+        const response = await fetch(`/api/users/${userId}/permissions`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(permissions)
+        });
+        
+        if (response.ok) {
+            showToast('Permissions updated successfully', 'success');
+            closeModal('permissionsModal');
+        } else {
+            const error = await response.json();
+            showToast(error.message || 'Failed to update permissions', 'error');
+        }
+    } catch (error) {
+        console.error('Error updating permissions:', error);
+        showToast('Network error. Please try again.', 'error');
+    }
+}
+
+async function saveMasterWorkflow(workflowData) {
+    try {
+        const response = await fetch('/api/workflow/master', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(workflowData)
+        });
+        
+        if (response.ok) {
+            showToast('Master workflow saved successfully', 'success');
+            closeModal('workflowModal');
+        } else {
+            const error = await response.json();
+            showToast(error.message || 'Failed to save workflow', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving workflow:', error);
+        showToast('Network error. Please try again.', 'error');
+    }
+}
+
+// Initialize everything when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Load initial data
+    fetchUsers();
+    
+    // Initialize WebSocket for real-time updates
+    initializeWebSocket();
+    
+    // Check for draft
+    restoreDraft();
+    
+    // Set up auto-refresh
+    setInterval(fetchUsers, 60000); // Refresh every minute
+});
+</script>

@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/negotiation/MOD_047_language_selection.js

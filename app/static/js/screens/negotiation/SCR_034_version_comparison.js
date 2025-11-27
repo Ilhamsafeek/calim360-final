@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/negotiation/SCR_034_version_comparison.js

@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/negotiation/MOD_040_generate_secure_link.js

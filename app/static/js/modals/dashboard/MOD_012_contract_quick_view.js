@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/dashboard/MOD_012_contract_quick_view.js

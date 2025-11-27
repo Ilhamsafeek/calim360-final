@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/i18n.js

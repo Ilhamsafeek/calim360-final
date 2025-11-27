@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/review/MOD_025_legal_escalation.js

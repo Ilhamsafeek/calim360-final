@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/integration/SCR_066_external_systems.js

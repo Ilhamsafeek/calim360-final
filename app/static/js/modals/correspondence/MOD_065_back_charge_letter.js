@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/correspondence/MOD_065_back_charge_letter.js

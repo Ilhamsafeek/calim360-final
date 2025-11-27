@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/auth/MOD_008_privacy.js

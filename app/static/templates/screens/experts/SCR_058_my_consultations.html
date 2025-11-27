@@ -1,0 +1,1048 @@
+{% extends "base.html" %}
+
+{% block title %}My Consultations{% endblock %}
+
+{% block content %}
+<style>
+    /* EXACT COPY OF YOUR ORIGINAL CSS - NO CHANGES */
+    .consultations-page {
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .page-header-section {
+        margin-bottom: 2rem;
+    }
+
+    .header-content-wrapper {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 2rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .header-text-section {
+        flex: 1;
+    }
+
+    .page-main-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .page-subtitle {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+    }
+
+    .header-actions-section {
+        display: flex;
+        gap: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card-item {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: var(--transition);
+    }
+
+    .stat-card-item:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transform: translateY(-2px);
+    }
+
+    .stat-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .stat-icon-wrapper.total {
+        background: rgba(39, 98, 203, 0.1);
+        color: var(--primary-color);
+    }
+
+    .stat-icon-wrapper.completed {
+        background: rgba(40, 167, 69, 0.1);
+        color: var(--success-color);
+    }
+
+    .stat-icon-wrapper.upcoming {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+    }
+
+    .stat-icon-wrapper.cancelled {
+        background: rgba(220, 53, 69, 0.1);
+        color: var(--danger-color);
+    }
+
+    .stat-content-wrapper {
+        flex: 1;
+    }
+
+    .stat-value-text {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-color);
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label-text {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .filters-wrapper {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 2rem;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .filter-row {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-item-group {
+        flex: 1;
+        min-width: 250px;
+    }
+
+    .filter-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .search-input-wrapper {
+        position: relative;
+    }
+
+    .search-input-wrapper i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-size: 1.125rem;
+    }
+
+    .filter-input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 2.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        transition: var(--transition);
+    }
+
+    .filter-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
+    }
+
+    .status-tabs {
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        background: var(--background-light);
+        border-radius: 10px;
+    }
+
+    .status-tab {
+        flex: 1;
+        padding: 0.75rem 1.25rem;
+        border: none;
+        background: transparent;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .status-tab:hover {
+        background: white;
+        color: var(--text-color);
+    }
+
+    .status-tab.active {
+        background: white;
+        color: var(--primary-color);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .tab-count {
+        padding: 0.25rem 0.5rem;
+        background: var(--background-light);
+        border-radius: 12px;
+        font-size: 0.75rem;
+    }
+
+    .status-tab.active .tab-count {
+        background: rgba(39, 98, 203, 0.1);
+        color: var(--primary-color);
+    }
+
+    .consultations-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .consultation-card {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: var(--transition);
+    }
+
+    .consultation-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .consultation-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+        gap: 1rem;
+    }
+
+    .consultation-main-info {
+        flex: 1;
+    }
+
+    .consultation-title-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .consultation-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin: 0;
+    }
+
+    .consultation-id {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        background: var(--background-light);
+        padding: 0.25rem 0.625rem;
+        border-radius: 6px;
+    }
+
+    .consultation-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.25rem;
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .meta-item i {
+        color: var(--primary-color);
+        font-size: 1rem;
+    }
+
+    .consultation-badges {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .status-badge {
+        padding: 0.375rem 0.875rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .status-badge.completed {
+        background: var(--success-bg);
+        color: var(--success-color);
+    }
+
+    .status-badge.scheduled {
+        background: rgba(115, 180, 224, 0.15);
+        color: var(--secondary-color);
+    }
+
+    .status-badge.in-progress {
+        background: rgba(255, 193, 7, 0.15);
+        color: #d39e00;
+    }
+
+    .status-badge.cancelled {
+        background: rgba(220, 53, 69, 0.15);
+        color: var(--danger-color);
+    }
+
+    .priority-badge {
+        padding: 0.375rem 0.875rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .priority-badge.urgent {
+        background: rgba(220, 53, 69, 0.15);
+        color: var(--danger-color);
+    }
+
+    .priority-badge.standard {
+        background: var(--background-light);
+        color: var(--text-muted);
+    }
+
+    .expert-info-section {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: var(--background-light);
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .expert-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .expert-details {
+        flex: 1;
+    }
+
+    .expert-name {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 0.125rem;
+    }
+
+    .expert-specialty {
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+    }
+
+    .expert-rating {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .expert-rating i {
+        color: #fbbf24;
+        font-size: 1rem;
+    }
+
+    .rating-value {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-left: 0.25rem;
+    }
+
+    .query-preview {
+        margin-bottom: 1rem;
+    }
+
+    .query-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+
+    .query-text {
+        font-size: 0.875rem;
+        color: var(--text-color);
+        line-height: 1.6;
+    }
+
+    .consultation-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .action-links {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .action-link {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        font-size: 0.875rem;
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s;
+    }
+
+    .action-link:hover {
+        color: #1e4f8b;
+        text-decoration: underline;
+    }
+
+    .action-link i {
+        font-size: 1rem;
+    }
+
+    .loading-state {
+        margin-bottom: 1rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h3 {
+        font-size: 1.25rem;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+    }
+
+ .loading-state {
+    display: block;
+}
+
+.loading-state.hidden {
+    display: none !important;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+    @media (max-width: 768px) {
+        .consultations-page {
+            padding: 1rem;
+        }
+
+        .header-content-wrapper {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .header-actions-section {
+            width: 100%;
+        }
+
+        .header-actions-section .btn {
+            flex: 1;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .filters-wrapper {
+            grid-template-columns: 1fr;
+        }
+
+        .status-tabs {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .consultation-header {
+            flex-direction: column;
+        }
+
+        .consultation-badges {
+            align-self: flex-start;
+        }
+
+        .consultation-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .action-buttons .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .action-links {
+            justify-content: space-around;
+        }
+    }
+</style>
+
+<div class="consultations-page">
+    <!-- Page Header - EXACT COPY -->
+    <div class="page-header-section">
+        <div class="header-content-wrapper">
+            <div class="header-text-section">
+                <h1 class="page-main-title">
+                    <i class="ti ti-calendar-event"></i>
+                    My Consultations
+                </h1>
+                <p class="page-subtitle">View and manage your expert consultation sessions</p>
+            </div>
+            <div class="header-actions-section">
+                <button class="btn btn-secondary" onclick="refreshConsultations()">
+                    <i class="ti ti-refresh"></i>
+                    Refresh
+                </button>
+                <button class="btn btn-primary" onclick="window.location.href='/ask-expert'">
+                    <i class="ti ti-plus"></i>
+                    New Consultation
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Grid - EXACT COPY -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card-item">
+                <div class="stat-icon-wrapper total">
+                    <i class="ti ti-calendar-stats"></i>
+                </div>
+                <div class="stat-content-wrapper">
+                    <div class="stat-value-text" id="statTotal">0</div>
+                    <div class="stat-label-text">Total Consultations</div>
+                </div>
+            </div>
+            <div class="stat-card-item">
+                <div class="stat-icon-wrapper completed">
+                    <i class="ti ti-circle-check"></i>
+                </div>
+                <div class="stat-content-wrapper">
+                    <div class="stat-value-text" id="statCompleted">0</div>
+                    <div class="stat-label-text">Completed</div>
+                </div>
+            </div>
+            <div class="stat-card-item">
+                <div class="stat-icon-wrapper upcoming">
+                    <i class="ti ti-clock"></i>
+                </div>
+                <div class="stat-content-wrapper">
+                    <div class="stat-value-text" id="statScheduled">0</div>
+                    <div class="stat-label-text">Scheduled</div>
+                </div>
+            </div>
+            <div class="stat-card-item">
+                <div class="stat-icon-wrapper cancelled">
+                    <i class="ti ti-x-circle"></i>
+                </div>
+                <div class="stat-content-wrapper">
+                    <div class="stat-value-text" id="statCancelled">0</div>
+                    <div class="stat-label-text">Cancelled</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters - EXACT COPY -->
+    <div class="filters-wrapper">
+        <div class="filter-row">
+            <div class="filter-item-group">
+                <label class="filter-label">Search</label>
+                <div class="search-input-wrapper">
+                    <i class="ti ti-search"></i>
+                    <input type="text" class="filter-input" id="searchInput" placeholder="Search by subject, expert..." onkeyup="applyFilters()">
+                </div>
+            </div>
+        </div>
+        <div class="status-tabs">
+            <button class="status-tab active" data-status="all" onclick="filterByStatus('all')">
+                All <span class="tab-count" id="countAll">0</span>
+            </button>
+            <button class="status-tab" data-status="scheduled" onclick="filterByStatus('scheduled')">
+                Scheduled <span class="tab-count" id="countScheduled">0</span>
+            </button>
+            <button class="status-tab" data-status="completed" onclick="filterByStatus('completed')">
+                Completed <span class="tab-count" id="countCompleted">0</span>
+            </button>
+            <button class="status-tab" data-status="cancelled" onclick="filterByStatus('cancelled')">
+                Cancelled <span class="tab-count" id="countCancelled">0</span>
+            </button>
+        </div>
+    </div>
+
+
+    <!-- Consultations List - EXACT COPY -->
+    <div class="consultations-list" id="consultationsList" style="display: none;">
+        <!-- Cards will be dynamically loaded here -->
+    </div>
+
+    <!-- Empty State - EXACT COPY -->
+    <div class="empty-state" id="emptyState" style="display: none;">
+        <i class="ti ti-calendar-off"></i>
+        <h3>No Consultations Found</h3>
+        <p>You don't have any consultations matching the current filters.</p>
+        <button class="btn btn-primary" onclick="window.location.href='/ask-expert'">
+            Schedule Consultation
+        </button>
+    </div>
+</div>
+
+<script>
+let allConsultations = [];
+let currentStatus = 'all';
+
+// Make functions globally available
+window.joinSession = joinSession;
+window.rescheduleConsultation = rescheduleConsultation;
+window.cancelConsultation = cancelConsultation;
+window.downloadMemo = downloadMemo;
+window.downloadRecording = downloadRecording;
+window.viewTranscript = viewTranscript;
+window.viewActionItems = viewActionItems;
+window.viewDetails = viewDetails;
+window.refreshConsultations = refreshConsultations;
+window.filterByStatus = filterByStatus;
+window.applyFilters = applyFilters;
+
+// Load on page ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Page loaded, starting data fetch...');
+    loadConsultationsData();
+});
+
+
+// Load data from API
+// Load data from API
+async function loadConsultationsData() {
+    console.log('📡 Fetching consultations from API...');
+    
+    try {
+        const token = localStorage.getItem('access_token');
+        console.log('🔑 Token exists:', !!token);
+        
+        const response = await fetch('/api/v1/consultations/my-consultations?limit=50', {
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        });
+
+        console.log('📥 Response status:', response.status);
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log('📦 Raw data received:', data);
+            
+            // Check if data is an array or wrapped in an object
+            if (Array.isArray(data)) {
+                allConsultations = data;
+            } else if (data.consultations) {
+                allConsultations = data.consultations;
+            } else if (data.items) {
+                allConsultations = data.items;
+            } else if (data.data) {
+                allConsultations = data.data;
+            } else {
+                allConsultations = [];
+            }
+            
+            console.log('✅ Parsed consultations:', allConsultations.length, 'items');
+            
+            // Update UI
+            updateStatistics();
+            displayConsultations(allConsultations);
+            
+        } else {
+            console.error('❌ API error:', response.status, response.statusText);
+            showError('Failed to load consultations. Status: ' + response.status);
+        }
+    } catch (error) {
+        console.error('❌ Error loading consultations:', error);
+        showError('An error occurred: ' + error.message);
+    } finally {
+        // Always hide loading regardless of success/error
+        console.log('🏁 API call finished, hiding loader...');
+    }
+}
+
+// Update statistics
+function updateStatistics() {
+    console.log('📊 Updating statistics...');
+    const total = allConsultations.length;
+    const completed = allConsultations.filter(c => c.status === 'completed').length;
+    const scheduled = allConsultations.filter(c => c.status === 'scheduled').length;
+    const cancelled = allConsultations.filter(c => c.status === 'cancelled').length;
+
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statCompleted').textContent = completed;
+    document.getElementById('statScheduled').textContent = scheduled;
+    document.getElementById('statCancelled').textContent = cancelled;
+
+    document.getElementById('countAll').textContent = total;
+    document.getElementById('countCompleted').textContent = completed;
+    document.getElementById('countScheduled').textContent = scheduled;
+    document.getElementById('countCancelled').textContent = cancelled;
+    
+    console.log('📊 Stats updated - Total:', total, 'Completed:', completed, 'Scheduled:', scheduled, 'Cancelled:', cancelled);
+}
+
+// Display consultations
+function displayConsultations(consultations) {
+    console.log('🎨 Displaying', consultations.length, 'consultations...');
+    
+    const container = document.getElementById('consultationsList');
+    const emptyState = document.getElementById('emptyState');
+
+    if (!container || !emptyState) {
+        console.error('❌ Container elements not found!');
+        return;
+    }
+
+    if (consultations.length === 0) {
+        console.log('📭 No consultations to display - showing empty state');
+        container.style.display = 'none';
+        emptyState.style.display = 'block';
+        return;
+    }
+
+    console.log('✅ Rendering', consultations.length, 'consultation cards...');
+    container.style.display = 'flex';
+    emptyState.style.display = 'none';
+    container.innerHTML = consultations.map(c => createConsultationCard(c)).join('');
+    console.log('✅ Cards rendered successfully');
+}
+
+// Show error message
+function showError(message) {
+    console.log('❌ Showing error:', message);
+    const container = document.getElementById('consultationsList');
+    container.style.display = 'block';
+    container.innerHTML = `
+        <div style="text-align: center; padding: 3rem; background: white; border: 1px solid var(--border-color); border-radius: 12px;">
+            <i class="ti ti-alert-circle" style="font-size: 3rem; color: var(--danger-color); margin-bottom: 1rem;"></i>
+            <h3 style="color: var(--text-color); margin-bottom: 0.5rem;">Error Loading Data</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">${message}</p>
+            <button class="btn btn-primary" onclick="refreshConsultations()">
+                <i class="ti ti-refresh"></i>
+                Try Again
+            </button>
+        </div>
+    `;
+    document.getElementById('emptyState').style.display = 'none';
+}
+
+// Create consultation card - EXACT HTML structure
+function createConsultationCard(consultation) {
+    const date = consultation.consultation_date ? new Date(consultation.consultation_date) : null;
+    const dateStr = date ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' at ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'Not scheduled';
+    
+    const sessionIcons = { 'video': 'ti-video', 'audio': 'ti-phone', 'text': 'ti-message-circle' };
+    const sessionLabels = { 'video': 'Video Call', 'audio': 'Audio Call', 'text': 'Text Chat' };
+    
+    const initials = consultation.expert_name ? consultation.expert_name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : 'EX';
+    
+    const rating = consultation.expert_rating || 0;
+    const fullStars = Math.floor(rating);
+    const hasHalf = (rating % 1) >= 0.5;
+    let stars = '';
+    for (let i = 0; i < fullStars; i++) stars += '<i class="ti ti-star-filled"></i>';
+    if (hasHalf) stars += '<i class="ti ti-star-half-filled"></i>';
+
+    // Determine which action buttons to show based on status
+    let actionButtonsHtml = '';
+    
+    if (consultation.status === 'scheduled') {
+        actionButtonsHtml = `
+            <button class="btn btn-success" onclick="joinSession('${consultation.consultation_id}')">
+                <i class="ti ti-video"></i>
+                Join Session
+            </button>
+            <button class="btn btn-secondary" onclick="rescheduleConsultation('${consultation.consultation_id}')">
+                <i class="ti ti-calendar-event"></i>
+                Reschedule
+            </button>
+            <button class="btn btn-secondary" onclick="cancelConsultation('${consultation.consultation_id}')">
+                <i class="ti ti-x"></i>
+                Cancel
+            </button>
+        `;
+    } else if (consultation.status === 'completed') {
+        if (consultation.memo_file) {
+            actionButtonsHtml += `
+                <button class="btn btn-primary" onclick="downloadMemo('${consultation.consultation_id}')">
+                    <i class="ti ti-file-download"></i>
+                    Download Memo
+                </button>
+            `;
+        }
+        
+        if (consultation.recording_url) {
+            actionButtonsHtml += `
+                <button class="btn btn-secondary" onclick="downloadRecording('${consultation.consultation_id}')">
+                    <i class="ti ti-video"></i>
+                    View Recording
+                </button>
+            `;
+        } else if (consultation.session_type === 'text') {
+            actionButtonsHtml += `
+                <button class="btn btn-secondary" onclick="viewTranscript('${consultation.consultation_id}')">
+                    <i class="ti ti-file-text"></i>
+                    View Transcript
+                </button>
+            `;
+        }
+    }
+    
+    const actionItemsHtml = consultation.action_items_count > 0 ? `
+        <a href="#" class="action-link" onclick="viewActionItems('${consultation.consultation_id}'); return false;">
+            <i class="ti ti-checklist"></i>
+            Action Items (${consultation.action_items_count})
+        </a>
+    ` : '';
+    
+    return `
+        <div class="consultation-card" data-status="${consultation.status}">
+            <div class="consultation-header">
+                <div class="consultation-main-info">
+                    <div class="consultation-title-row">
+                        <h3 class="consultation-title">${consultation.subject}</h3>
+                        <span class="consultation-id">${consultation.consultation_code}</span>
+                    </div>
+                    <div class="consultation-meta">
+                        <span class="meta-item">
+                            <i class="ti ti-calendar"></i>
+                            ${dateStr}
+                        </span>
+                        <span class="meta-item">
+                            <i class="ti ti-clock"></i>
+                            ${consultation.duration_minutes || 0} minutes
+                        </span>
+                        <span class="meta-item">
+                            <i class="ti ${sessionIcons[consultation.session_type] || 'ti-message-circle'}"></i>
+                            ${sessionLabels[consultation.session_type] || 'Chat'}
+                        </span>
+                    </div>
+                </div>
+                <div class="consultation-badges">
+                    <span class="status-badge ${consultation.status}">${consultation.status.charAt(0).toUpperCase() + consultation.status.slice(1)}</span>
+                    <span class="priority-badge ${consultation.priority}">${consultation.priority.charAt(0).toUpperCase() + consultation.priority.slice(1)}</span>
+                </div>
+            </div>
+
+            ${consultation.expert_name ? `
+            <div class="expert-info-section">
+                <div class="expert-avatar">${initials}</div>
+                <div class="expert-details">
+                    <div class="expert-name">${consultation.expert_name}</div>
+                    <div class="expert-specialty">${consultation.expert_specialty || 'Expert Consultant'}</div>
+                </div>
+                ${consultation.expert_rating ? `
+                <div class="expert-rating">
+                    ${stars}
+                    <span class="rating-value">${consultation.expert_rating.toFixed(1)}</span>
+                </div>
+                ` : ''}
+            </div>
+            ` : ''}
+
+            <div class="query-preview">
+                <div class="query-label">Consultation Query</div>
+                <div class="query-text">${consultation.query_text}</div>
+            </div>
+
+            <div class="consultation-actions">
+                <div class="action-buttons">
+                    ${actionButtonsHtml}
+                </div>
+                <div class="action-links">
+                    ${actionItemsHtml}
+                    <a href="#" class="action-link" onclick="viewDetails('${consultation.consultation_id}'); return false;">
+                        <i class="ti ti-eye"></i>
+                        View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Filter by status
+function filterByStatus(status) {
+    currentStatus = status;
+    
+    document.querySelectorAll('.status-tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelector(`[data-status="${status}"]`).classList.add('active');
+    
+    const filtered = status === 'all' ? allConsultations : allConsultations.filter(c => c.status === status);
+    displayConsultations(filtered);
+}
+
+// Apply filters
+function applyFilters() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    let filtered = currentStatus === 'all' ? allConsultations : allConsultations.filter(c => c.status === currentStatus);
+    
+    if (search) {
+        filtered = filtered.filter(c => 
+            c.subject.toLowerCase().includes(search) ||
+            c.query_text.toLowerCase().includes(search) ||
+            (c.expert_name && c.expert_name.toLowerCase().includes(search))
+        );
+    }
+    
+    displayConsultations(filtered);
+}
+
+// Refresh
+function refreshConsultations() {
+    showLoading();
+    loadConsultationsData();
+}
+
+// Actions
+async function downloadMemo(id) {
+    try {
+        const response = await fetch(`/api/v1/consultations/sessions/${id}/download/memo`, {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('access_token') }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            window.open(data.file_url, '_blank');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function downloadRecording(id) {
+    try {
+        const response = await fetch(`/api/v1/consultations/sessions/${id}/download/recording`, {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('access_token') }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            window.open(data.file_url, '_blank');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+function viewTranscript(id) {
+    window.location.href = `/consultations/${id}/transcript`;
+}
+
+function viewActionItems(id) {
+    window.location.href = `/consultations/${id}/action-items`;
+}
+
+function viewDetails(id) {
+    window.location.href = `/consultations/${id}`;
+}
+
+function joinSession(id) {
+    console.log('Joining session:', id);
+    window.location.href = `/consultation-room?query=${id}&session=${id}`;
+}
+
+function rescheduleConsultation(id) {
+    console.log('Rescheduling consultation:', id);
+    alert('Reschedule functionality coming soon');
+}
+
+function cancelConsultation(id) {
+    if (confirm('Are you sure you want to cancel this consultation?')) {
+        console.log('Cancelling consultation:', id);
+        alert('Cancel functionality coming soon');
+    }
+}
+</script>
+{% endblock %}

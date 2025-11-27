@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/help/SCR_067_help_center.js

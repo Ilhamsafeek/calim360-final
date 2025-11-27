@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/review/SCR_020_clause_analysis.js

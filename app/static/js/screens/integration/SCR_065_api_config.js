@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/integration/SCR_065_api_config.js

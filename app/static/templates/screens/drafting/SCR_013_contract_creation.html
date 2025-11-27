@@ -1,0 +1,636 @@
+{% extends "base.html" %}
+
+{% block title %}Create Contract - CALIM360{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/app/static/css/contract-creation.css">
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1 class="page-title">Create New Contract</h1>
+        <p class="page-description">Select your profile and choose how to create your contract</p>
+    </div>
+    <div class="page-header-right">
+        <button class="btn btn-outline-secondary" onclick="window.location.href='/'">
+            <i class="ti ti-arrow-left"></i>
+            Back to Dashboard
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="contract-creation-container">
+    <!-- Step 1: Profile Selection -->
+    <div class="step-card">
+        <div class="step-header">
+            <div class="step-number">1</div>
+            <div class="step-title">
+                <h2>Select Your Profile</h2>
+                <div class="step-subtitle">Choose your role for this contract</div>
+            </div>
+        </div>
+
+        <div class="profile-grid">
+            <div class="profile-option">
+                <input type="radio" name="profile" id="contractor" value="contractor" checked>
+                <label class="profile-card" for="contractor">
+                    <div class="profile-icon">
+                        <i class="ti ti-hammer"></i>
+                    </div>
+                    <div class="profile-info">
+                        <div class="profile-name">Contractor</div>
+                        <div class="profile-desc">Primary service provider</div>
+                    </div>
+                </label>
+            </div>
+
+            <div class="profile-option">
+                <input type="radio" name="profile" id="subcontractor" value="subcontractor">
+                <label class="profile-card" for="subcontractor">
+                    <div class="profile-icon">
+                        <i class="ti ti-tools"></i>
+                    </div>
+                    <div class="profile-info">
+                        <div class="profile-name">Sub-Contractor</div>
+                        <div class="profile-desc">Secondary service provider</div>
+                    </div>
+                </label>
+            </div>
+
+            <div class="profile-option disabled">
+                <input type="radio" name="profile" id="client" value="client" disabled>
+                <label class="profile-card disabled" for="client">
+                    <div class="profile-icon">
+                        <i class="ti ti-building"></i>
+                    </div>
+                    <div class="profile-info">
+                        <div class="profile-name">Client</div>
+                        <div class="profile-desc">Project owner or buyer</div>
+                        <div class="disabled-badge">
+                            <i class="ti ti-lock"></i>
+                            <span>Coming Soon</span>
+                        </div>
+                    </div>
+
+                </label>
+            </div>
+
+            <div class="profile-option disabled">
+                <input type="radio" name="profile" id="consultant" value="consultant" disabled>
+                <label class="profile-card disabled" for="consultant">
+                    <div class="profile-icon">
+                        <i class="ti ti-users"></i>
+                    </div>
+                    <div class="profile-info">
+                        <div class="profile-name">Consultant</div>
+                        <div class="profile-desc">Advisory services provider</div>
+                        <div class="disabled-badge">
+                            <i class="ti ti-lock"></i>
+                            <span>Coming Soon</span>
+                        </div>
+                    </div>
+
+                </label>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Step 2: Contract Creation Method -->
+    <div class="step-card">
+        <div class="step-header">
+            <div class="step-number">2</div>
+            <div class="step-title">
+                <h2>Choose Contract Creation Method</h2>
+                <div class="step-subtitle">Select how you want to create your contract</div>
+            </div>
+        </div>
+
+        <div class="tabs-container">
+            <!-- Tab Navigation -->
+            <div class="tab-nav">
+                <button class="tab-btn active" onclick="switchTab('template')">
+
+                    <div class="profile-icon">
+                        <i class="ti ti-template"></i>
+                    </div>
+                    <h2>Use Template</h2>
+                </button>
+                <button class="tab-btn" onclick="switchTab('ai')">
+
+                    <div class="profile-icon">
+                        <i class="ti ti-sparkles"></i>
+                    </div>
+                    <h2>Generate with AI</h2>
+
+                </button>
+                <button class="tab-btn" onclick="switchTab('upload')">
+
+                    <div class="profile-icon">
+                        <i class="ti ti-upload"></i>
+                    </div>
+                    <h2>Upload Existing</h2>
+
+                </button>
+            </div>
+
+            <!-- Template Tab Content -->
+            <div id="template-tab" class="tab-content active">
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+                    Select from our pre-built contract templates tailored to your profile and needs
+                </p>
+
+                <!-- Templates will be loaded here dynamically -->
+                <div class="template-grid" id="templateGrid">
+                    <!-- Loading state -->
+                    <div class="loading-templates" id="loadingTemplates">
+                        <i class="ti ti-loader"></i>
+                        <p>Loading templates...</p>
+                    </div>
+
+                    <!-- No templates state -->
+                    <div class="no-templates" id="noTemplates" style="display: none;">
+                        <i class="ti ti-file-x"></i>
+                        <p>No templates available for this profile</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Generation Tab Content -->
+            <div id="ai-tab" class="tab-content">
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+                    Describe your contract requirements and let AI generate a custom contract
+                </p>
+
+                <!-- Contract Type Selection (Required before AI Assistant) -->
+                <div class="contract-type-section" style="margin-bottom: 1.5rem;">
+                    <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                        Type of Contract <span style="color: var(--danger-color);">*</span>
+                    </label>
+                    <select id="contractTypeSelect" class="form-control"
+                        style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                        <option value="">Select Contract Type</option>
+                        <option value="employment">Employment Contract</option>
+                        <option value="service">Service Agreement</option>
+                        <option value="purchase">Purchase Agreement</option>
+                        <option value="lease">Lease Agreement</option>
+                        <option value="nda">Non-Disclosure Agreement</option>
+                        <option value="consulting">Consulting Agreement</option>
+                        <option value="construction">Construction Contract</option>
+                        <option value="supply">Supply Agreement</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <!-- AI Assistant Section -->
+                <div class="ai-assistant-container">
+                    <div class="ai-assistant-header">
+                        <button class="btn-ai-assistant" id="aiAssistantToggle" disabled>
+                            <i class="ti ti-sparkles"></i>
+                            AI Assistant
+                        </button>
+                        <span class="ai-hint" id="aiHint">Select contract type to enable AI Assistant</span>
+                    </div>
+
+                    <!-- AI Assistant Panel (Collapsible) -->
+                    <div class="ai-assistant-panel" id="aiAssistantPanel" style="display: none;">
+                        <div class="ai-assistant-content">
+                            <h4>AI Contract Assistant</h4>
+                            <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
+                                Answer these questions to help AI generate a better contract
+                            </p>
+
+                            <div class="ai-questions-grid">
+                                <div class="ai-question-item">
+                                    <label>Duration</label>
+                                    <input type="text" id="aiDuration" class="form-control"
+                                        placeholder="e.g., 6 months, 1 year">
+                                </div>
+
+                                <div class="ai-question-item">
+                                    <label>Payment Structure</label>
+                                    <select id="aiPaymentStructure" class="form-control">
+                                        <option value="">Select payment type</option>
+                                        <option value="fixed">Fixed Price</option>
+                                        <option value="hourly">Hourly Rate</option>
+                                        <option value="milestone">Milestone Based</option>
+                                        <option value="subscription">Subscription</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+
+                                <div class="ai-question-item full-width">
+                                    <label>Special Requirements</label>
+                                    <textarea id="aiSpecialRequirements" class="form-control"
+                                        placeholder="Any specific clauses or requirements..." rows="3"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Add/Remove Clauses Button inside AI Assistant -->
+                            <button class="btn btn-outline-secondary" id="addClausesBtn" style="margin-top: 1rem;">
+                                <i class="ti ti-list-check"></i>
+                                Customize Clauses
+                            </button>
+
+                            <button class="btn-hide-prompt" onclick="hideAiAssistant()">
+                                <i class="ti ti-chevron-up"></i>
+                                Hide
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Upload Tab Content -->
+            <div id="upload-tab" class="tab-content">
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+                    Upload an existing contract to review, edit, or enhance with AI
+                </p>
+
+                <!-- Hidden File Input -->
+                <input type="file" id="fileInput" accept=".pdf,.doc,.docx" style="display: none;">
+
+                <!-- Upload Zone -->
+                <div class="upload-zone" id="uploadZone"
+                    style="border: 2px dashed #ccc; padding: 3rem; text-align: center; border-radius: 8px; cursor: pointer; background: #f9f9f9;">
+                    <i class="ti ti-cloud-upload" style="font-size: 3rem; color: #007bff;"></i>
+                    <div style="font-size: 1.125rem; margin: 1rem 0;">Drag and drop your contract here</div>
+                    <div style="color: #666;">or <span
+                            style="color: #007bff; font-weight: 600; text-decoration: underline;">browse files</span>
+                    </div>
+                    <div style="color: #999; font-size: 0.875rem; margin-top: 0.5rem;">Supported formats: PDF, DOC, DOCX
+                        (Max 50MB)</div>
+                </div>
+
+                <!-- File Preview (Hidden initially) -->
+                <div class="file-preview" id="filePreview"
+                    style="display: none; margin-top: 1rem; padding: 1rem; background: #e8f5e9; border: 2px solid #4caf50; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <i class="ti ti-file-text" style="font-size: 2rem; color: #4caf50;"></i>
+                        <div style="flex: 1;">
+                            <div id="fileName" style="font-weight: 600;">Document.pdf</div>
+                            <div id="fileSize" style="font-size: 0.875rem; color: #666;">2.3 MB</div>
+                        </div>
+                        <button id="removeFileBtn"
+                            style="background: #f44336; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer;">
+                            <i class="ti ti-x"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Section -->
+        <div class="action-section">
+            <span class="action-hint" id="actionHint">Select a template or method to proceed</span>
+            <div class="action-buttons">
+                <button class="btn btn-outline-secondary" id="previewBtn" style="display: none;">
+                    <i class="ti ti-eye"></i>
+                    Preview
+                </button>
+                <button class="btn btn-primary" id="proceedBtn">
+                    <i class="ti ti-arrow-right"></i>
+                    Proceed to Editor
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODALS -->
+
+<!-- MOD-013: Profile Confirmation Modal -->
+<div class="modal" id="profileModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Confirm Profile Selection</h3>
+            <button class="modal-close" onclick="closeModal('profileModal')">
+                <i class="ti ti-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p>You have selected <strong id="selectedProfileText">Client</strong> as your profile.</p>
+            <p>This will affect the available templates and contract terms. Do you want to proceed?</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline-secondary" onclick="closeModal('profileModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="confirmProfile()">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- MOD-014: Template Preview Modal -->
+<div class="modal" id="templatePreviewModal">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h3 class="modal-title">Template Preview</h3>
+            <button class="modal-close" onclick="closeModal('templatePreviewModal')">
+                <i class="ti ti-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <h4 id="previewTemplateName">Service Agreement Template</h4>
+            <div id="previewContent"
+                style="background: var(--background-light); padding: 1rem; border-radius: 8px; margin-top: 1rem; overflow:auto; max-height:60vh;">
+                <div style="display:flex; align-items:center; gap:8px; color: var(--text-muted);">
+                    <i class="ti ti-loader"></i>
+                    <span>Loading template content...</span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline-secondary" onclick="closeModal('templatePreviewModal')">Close</button>
+            <button class="btn btn-primary" onclick="useSelectedTemplate()">Use This Template</button>
+        </div>
+    </div>
+</div>
+
+<!-- MOD-015: AI Prompt Assistant Modal -->
+<div class="modal" id="aiPromptModal">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h3 class="modal-title">AI Contract Assistant</h3>
+            <button class="modal-close" onclick="closeModal('aiPromptModal')">
+                <i class="ti ti-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom: 1rem;">Answer these questions to help AI generate a better contract:</p>
+
+            <div style="display: grid; gap: 1rem;">
+                <div>
+                    <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Contract Type</label>
+                    <select class="form-control"
+                        style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                        <option>Service Agreement</option>
+                        <option>Purchase Agreement</option>
+                        <option>Employment Contract</option>
+                        <option>Lease Agreement</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Contract Duration</label>
+                    <input type="text" class="form-control" placeholder="e.g., 6 months, 1 year"
+                        style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                </div>
+
+                <div>
+                    <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Payment Structure</label>
+                    <select class="form-control"
+                        style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                        <option>Fixed Price</option>
+                        <option>Hourly Rate</option>
+                        <option>Milestone Based</option>
+                        <option>Subscription</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Special Requirements</label>
+                    <textarea class="form-control" placeholder="Any specific clauses or requirements..."
+                        style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px; min-height: 80px;"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline-secondary" onclick="closeModal('aiPromptModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="generateAIPrompt()">Generate Contract</button>
+        </div>
+    </div>
+</div>
+
+<!-- MOD-016: Add/Remove Clauses Modal -->
+<!-- ========================================================================= -->
+<!-- MOD-016: Add/Remove Clauses Modal - FIXED VERSION -->
+<!-- Location: app/static/templates/screens/drafting/SCR_013_contract_creation.html -->
+<!-- Replace the existing MOD-016 section with this code -->
+<!-- ========================================================================= -->
+
+<div class="modal" id="clausesModal">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h3 class="modal-title">Customize Contract Clauses</h3>
+            <button class="modal-close" onclick="closeModal('clausesModal')">
+                <i class="ti ti-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <!-- Essential Clauses -->
+            <div class="clause-category">
+                <h4>Essential Clauses</h4>
+                <div class="clause-grid">
+                    <label class="clause-item">
+                        <input type="checkbox" name="clause_performance_bond" checked>
+                        <span>Performance Bond</span>
+                    </label>
+                    <label class="clause-item">
+                        <input type="checkbox" name="clause_retention_amount" checked>
+                        <span>Retention Amount</span>
+                    </label>
+                    <label class="clause-item">
+                        <input type="checkbox" name="clause_payment_terms" checked>
+                        <span>Payment Terms</span>
+                    </label>
+                    <label class="clause-item">
+                        <input type="checkbox" name="clause_timeline" checked>
+                        <span>Timeline & Milestones</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Legal & Compliance -->
+            <div class="clause-category">
+                <h4>Legal & Compliance</h4>
+                <div class="clause-grid">
+                    <label class="clause-item">
+                        <input type="checkbox" name="clause_back_to_back" checked>
+                        <span>Back-to-Back Terms</span>
+                    </label>
+                    <label class="clause-item">
+                        <input type="checkbox" name="clause_intellectual_property" checked>
+                        <span>Intellectual Property</span>
+                    </label>
+                    <label class="clause-item">
+                        <input type="checkbox" name="clause_non_compete">
+                        <span>Non-Compete</span>
+                    </label>
+                    <label class="clause-item">
+                        <input type="checkbox" name="clause_data_protection">
+                        <span>Data Protection (GDPR)</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Risk Management -->
+            <div class="clause-category">
+                <h4>Risk Management</h4>
+                <div class="clause-grid">
+                    <label class="clause-item">
+                        <input type="checkbox" name="clause_insurance" checked>
+                        <span>Insurance Requirements</span>
+                    </label>
+                    <label class="clause-item">
+                        <input type="checkbox" name="clause_liability">
+                        <span>Liability Limitation</span>
+                    </label>
+                    <label class="clause-item">
+                        <input type="checkbox" name="clause_indemnification">
+                        <span>Indemnification</span>
+                    </label>
+                    <label class="clause-item">
+                        <input type="checkbox" name="clause_force_majeure">
+                        <span>Force Majeure</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Contract Management -->
+            <div class="clause-category">
+                <h4>Contract Management</h4>
+                <div class="clause-grid">
+                    <label class="clause-item">
+                        <input type="checkbox" name="clause_termination" checked>
+                        <span>Termination Conditions</span>
+                    </label>
+                    <label class="clause-item">
+                        <input type="checkbox" name="clause_arbitration" checked>
+                        <span>Arbitration Clause</span>
+                    </label>
+                    <label class="clause-item">
+                        <input type="checkbox" name="clause_mediation">
+                        <span>Mediation Clause</span>
+                    </label>
+                    <label class="clause-item">
+                        <input type="checkbox" name="clause_liquidated_damages">
+                        <span>Liquidated Damages</span>
+                    </label>
+                    <label class="clause-item">
+                        <input type="checkbox" name="clause_kpi">
+                        <span>Key Performance Indicators</span>
+                    </label>
+                    <label class="clause-item">
+                        <input type="checkbox" name="clause_governing_law">
+                        <span>Governing Law</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline-secondary" onclick="closeModal('clausesModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="applyClauseSelection()">Apply Selection</button>
+        </div>
+    </div>
+</div>
+
+<!-- MOD-017: Save Contract Modal -->
+<div class="modal" id="saveContractModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Save Contract</h3>
+            <button class="modal-close" onclick="closeModal('saveContractModal')">
+                <i class="ti ti-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div style="margin-bottom: 1rem;">
+                <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                    Contract Name <span style="color: var(--danger-color);">*</span>
+                </label>
+                <input type="text" id="contractNameInput" class="form-control" placeholder="Enter contract name"
+                    style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;"
+                    required>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                    Project Assignment <span style="color: var(--danger-color);">*</span>
+                </label>
+                <select id="projectSelect" class="form-control"
+                    style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;"
+                    required>
+                    <option value="">Select Project</option>
+                    <!-- Projects will be loaded dynamically -->
+                </select>
+            </div>
+            <div>
+                <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Tags (Optional)</label>
+                <input type="text" id="tagsInput" class="form-control" placeholder="Add tags (comma separated)"
+                    style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                <small style="color: var(--text-muted); font-size: 0.875rem;">
+                    Example: urgent, high-value, construction
+                </small>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline-secondary" onclick="closeModal('saveContractModal')">
+                Cancel
+            </button>
+            <button class="btn btn-primary" onclick="saveContract()">
+                <i class="ti ti-device-floppy"></i>
+                Save & Continue
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MOD-018: Import Document Modal -->
+<div class="modal" id="importModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Import Document</h3>
+            <button class="modal-close" onclick="closeModal('importModal')">
+                <i class="ti ti-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p>Document uploaded successfully!</p>
+            <div
+                style="background: var(--success-bg); color: var(--success-color); padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                <strong>Document Analysis:</strong>
+                <ul style="margin: 0.5rem 0 0 1.5rem;">
+                    <li>Contract type: Service Agreement</li>
+                    <li>Parties: 2 identified</li>
+                    <li>Clauses: 15 detected</li>
+                    <li>Risk level: Medium</li>
+                </ul>
+            </div>
+            <p>Would you like to proceed with AI-powered review and enhancement?</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline-secondary" onclick="closeModal('importModal')">Skip Review</button>
+            <button class="btn btn-primary" onclick="proceedWithReview()">Start AI Review</button>
+        </div>
+    </div>
+</div>
+
+<!-- Simple Upload Click Fix Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        setTimeout(function () {
+            const uploadZone = document.getElementById('uploadZone');
+            const fileInput = document.getElementById('fileInput');
+
+            if (uploadZone && fileInput) {
+                const newUploadZone = uploadZone.cloneNode(true);
+                uploadZone.parentNode.replaceChild(newUploadZone, uploadZone);
+
+                newUploadZone.addEventListener('click', function () {
+                    document.getElementById('fileInput').click();
+                });
+
+                console.log('✅ Upload click enabled');
+            }
+        }, 1000);
+    });
+</script>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="/app/static/js/contract-creation.js"></script>
+{% endblock %}

@@ -1,0 +1,1115 @@
+{% extends "base.html" %}
+
+{% block title %}Invite Counterparty{% endblock %}
+
+{% block head %}
+<style>
+    .counterparty-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    /* Page Header */
+    .page-header {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .page-title-section {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .page-icon {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    .page-title h1 {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin: 0;
+    }
+
+    .page-subtitle {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        margin-top: 0.25rem;
+    }
+
+    /* Contract Info Bar */
+    .contract-info-bar {
+        background: white;
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .contract-info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .info-label {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    .info-value {
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.813rem;
+        font-weight: 500;
+        background: var(--warning-bg);
+        color: var(--warning-color);
+        border: 1px solid rgba(133, 100, 4, 0.2);
+    }
+
+    /* Main Content Layout */
+    .content-layout {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 2rem;
+    }
+
+    /* Invitation Form Card */
+    .invitation-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+
+    .card-header {
+        background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 1.25rem 1.5rem;
+        border-bottom: none;
+    }
+
+    .card-header h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    /* Form Groups */
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--text-color);
+        font-size: 0.875rem;
+    }
+
+    .required {
+        color: var(--danger-color);
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
+    }
+
+    .form-textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    .form-help {
+        margin-top: 0.25rem;
+        font-size: 0.813rem;
+        color: var(--text-muted);
+    }
+
+    /* Email Recipients Section */
+    .recipients-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .recipient-item {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .recipient-item .form-input {
+        flex: 1;
+    }
+
+    .btn-icon {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid var(--border-color);
+        background: white;
+        color: var(--text-muted);
+    }
+
+    .btn-icon:hover {
+        background: var(--background-light);
+        color: var(--primary-color);
+    }
+
+    .btn-icon.remove:hover {
+        background: rgba(220, 53, 69, 0.1);
+        color: var(--danger-color);
+        border-color: var(--danger-color);
+    }
+
+    .add-recipient-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        color: var(--primary-color);
+        background: transparent;
+        border: 1px dashed var(--primary-color);
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .add-recipient-btn:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    /* Permission Checkboxes */
+    .permission-group {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-top: 0.75rem;
+    }
+
+    .permission-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .permission-item:hover {
+        background: var(--background-light);
+    }
+
+    .permission-item.selected {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .permission-item input[type="checkbox"] {
+        margin-right: 0.5rem;
+    }
+
+    .permission-item label {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0;
+        font-size: 0.875rem;
+    }
+
+    /* Access Control Section */
+    .access-control-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .control-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem;
+        background: var(--background-light);
+        border-radius: 8px;
+    }
+
+    .control-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: var(--text-color);
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+        position: relative;
+        width: 48px;
+        height: 24px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked + .toggle-slider {
+        background-color: var(--success-color);
+    }
+
+    input:checked + .toggle-slider:before {
+        transform: translateX(24px);
+    }
+
+    /* Action Buttons */
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .btn {
+        padding: 0.625rem 1.25rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: none;
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #1e4ba8;
+        box-shadow: 0 4px 12px rgba(39, 98, 203, 0.3);
+    }
+
+    .btn-secondary {
+        background: white;
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+        background: var(--background-light);
+    }
+
+    .btn-outline {
+        background: transparent;
+        color: var(--primary-color);
+        border: 1px solid var(--primary-color);
+    }
+
+    .btn-outline:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    /* Sidebar Cards */
+    .sidebar-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .sidebar-card h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin: 0 0 1rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Previous Invitations Table */
+    .invitations-table {
+        width: 100%;
+        font-size: 0.875rem;
+    }
+
+    .invitations-table thead th {
+        padding: 0.75rem;
+        background: var(--background-light);
+        font-weight: 600;
+        text-align: left;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .invitations-table tbody td {
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 0.5rem;
+    }
+
+    .status-active {
+        background: var(--success-color);
+    }
+
+    .status-pending {
+        background: var(--warning-color);
+    }
+
+    .status-expired {
+        background: var(--text-muted);
+    }
+
+    /* Guidelines */
+    .guidelines-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .guidelines-list li {
+        padding: 0.5rem 0;
+        padding-left: 1.5rem;
+        position: relative;
+        color: var(--text-muted);
+        font-size: 0.813rem;
+        line-height: 1.5;
+    }
+
+    .guidelines-list li:before {
+        content: "✓";
+        position: absolute;
+        left: 0;
+        color: var(--success-color);
+        font-weight: bold;
+    }
+
+    /* Date Time Inputs */
+    .datetime-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    /* Warning Alert */
+    .warning-alert {
+        background: var(--warning-bg);
+        border: 1px solid rgba(133, 100, 4, 0.2);
+        border-radius: 8px;
+        padding: 1rem;
+        display: flex;
+        align-items: start;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .warning-alert i {
+        color: var(--warning-color);
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .warning-alert-content {
+        flex: 1;
+    }
+
+    .warning-alert-title {
+        font-weight: 600;
+        color: var(--warning-color);
+        margin-bottom: 0.25rem;
+    }
+
+    .warning-alert-text {
+        font-size: 0.875rem;
+        color: var(--warning-color);
+        margin: 0;
+    }
+
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        animation: fadeIn 0.3s ease;
+    }
+
+    .modal.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: slideUp 0.3s ease;
+    }
+
+    .modal-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin: 0;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .modal-close:hover {
+        background: var(--background-light);
+        color: var(--text-color);
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-footer {
+        padding: 1.5rem;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(30px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+        .content-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .permission-group {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="counterparty-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-title-section">
+            <div class="page-icon">
+                <i class="ti ti-user-plus"></i>
+            </div>
+            <div>
+                <h1 class="page-title">Invite Counterparty</h1>
+                <div class="page-subtitle">Send secure invitation for contract negotiation</div>
+            </div>
+        </div>
+        <button class="btn btn-secondary" onclick="window.history.back()">
+            <i class="ti ti-arrow-left"></i>
+            Back to Contract
+        </button>
+    </div>
+
+    <!-- Contract Info Bar -->
+    <div class="contract-info-bar">
+        <div class="contract-info-item">
+            <span class="info-label">Contract:</span>
+            <span class="info-value">NDA-2024-0045</span>
+        </div>
+        <div class="contract-info-item">
+            <span class="info-label">Project:</span>
+            <span class="info-value">Qatar Energy Project</span>
+        </div>
+        <div class="contract-info-item">
+            <span class="info-label">Type:</span>
+            <span class="info-value">Non-Disclosure Agreement</span>
+        </div>
+        <div class="contract-info-item">
+            <span class="status-badge">Pending Counterparty Review</span>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content-layout">
+        <!-- Left Column - Invitation Form -->
+        <div>
+            <!-- Warning Alert -->
+            <div class="warning-alert">
+                <i class="ti ti-alert-triangle"></i>
+                <div class="warning-alert-content">
+                    <div class="warning-alert-title">Important</div>
+                    <p class="warning-alert-text">Ensure all internal approvals are complete before inviting external parties. Once sent, the counterparty will have access to the contract based on permissions granted.</p>
+                </div>
+            </div>
+
+            <!-- Invitation Form -->
+            <div class="invitation-card">
+                <div class="card-header">
+                    <h2><i class="ti ti-mail"></i> Invitation Details</h2>
+                </div>
+                <div class="card-body">
+                    <form id="invitationForm">
+                        <!-- Recipient Emails -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                Counterparty Email(s) <span class="required">*</span>
+                            </label>
+                            <div class="recipients-container" id="recipientsContainer">
+                                <div class="recipient-item">
+                                    <input type="email" class="form-input" placeholder="email@company.com" required>
+                                    <button type="button" class="btn-icon" onclick="addRecipient()">
+                                        <i class="ti ti-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <span class="form-help">You can add multiple recipients. They will all receive the same access level.</span>
+                        </div>
+
+                        <!-- Permission Level -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                Permission Level <span class="required">*</span>
+                            </label>
+                            <div class="permission-group">
+                                <div class="permission-item selected" onclick="selectPermission(this, 'view')">
+                                    <input type="radio" name="permission" value="view" checked>
+                                    <label><i class="ti ti-eye"></i> View Only</label>
+                                </div>
+                                <div class="permission-item" onclick="selectPermission(this, 'comment')">
+                                    <input type="radio" name="permission" value="comment">
+                                    <label><i class="ti ti-message"></i> Comment</label>
+                                </div>
+                                <div class="permission-item" onclick="selectPermission(this, 'edit')">
+                                    <input type="radio" name="permission" value="edit">
+                                    <label><i class="ti ti-edit"></i> Full Edit</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Message to Counterparty -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                Message <span class="required">*</span>
+                            </label>
+                            <textarea class="form-textarea" placeholder="Please review the attached contract and provide your feedback..." required>Dear Partner,
+
+Please review Section 3.2 of the Non-Disclosure Agreement and provide your feedback by the deadline mentioned below.
+
+Feel free to use the comment feature for any clarifications needed.
+
+Best regards</textarea>
+                            <span class="form-help">This message will be included in the invitation email</span>
+                        </div>
+
+                        <!-- Deadline -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                Response Deadline <span class="required">*</span>
+                            </label>
+                            <div class="datetime-group">
+                                <input type="date" class="form-input" required value="2024-11-30">
+                                <input type="time" class="form-input" value="17:00">
+                            </div>
+                            <span class="form-help">Invitation link will expire after this date</span>
+                        </div>
+
+                        <!-- Language Preference -->
+                        <div class="form-group">
+                            <label class="form-label">Language Preference</label>
+                            <select class="form-select">
+                                <option value="en">English</option>
+                                <option value="ar">Arabic</option>
+                                <option value="bilingual" selected>Bilingual (Arabic/English)</option>
+                            </select>
+                        </div>
+
+                        <!-- Access Controls -->
+                        <div class="form-group">
+                            <label class="form-label">Access Controls</label>
+                            <div class="access-control-grid">
+                                <div class="control-item">
+                                    <label class="control-label">
+                                        <i class="ti ti-droplet"></i>
+                                        Add Watermark
+                                    </label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="control-item">
+                                    <label class="control-label">
+                                        <i class="ti ti-download-off"></i>
+                                        Restrict Download
+                                    </label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="control-item">
+                                    <label class="control-label">
+                                        <i class="ti ti-printer-off"></i>
+                                        Disable Printing
+                                    </label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="control-item">
+                                    <label class="control-label">
+                                        <i class="ti ti-device-mobile"></i>
+                                        Require OTP
+                                    </label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="saveDraft()">
+                                <i class="ti ti-device-floppy"></i>
+                                Save as Draft
+                            </button>
+                            <button type="button" class="btn btn-outline" onclick="previewInvitation()">
+                                <i class="ti ti-eye"></i>
+                                Preview
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="ti ti-send"></i>
+                                Send Invitation
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Sidebar -->
+        <div>
+            <!-- Previous Invitations -->
+            <div class="sidebar-card">
+                <h3><i class="ti ti-history"></i> Previous Invitations</h3>
+                <table class="invitations-table">
+                    <thead>
+                        <tr>
+                            <th>Recipient</th>
+                            <th>Status</th>
+                            <th>Sent</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>john.doe@abc.com</td>
+                            <td><span class="status-dot status-active"></span>Viewed</td>
+                            <td>2 days ago</td>
+                        </tr>
+                        <tr>
+                            <td>sarah@xyz.qa</td>
+                            <td><span class="status-dot status-pending"></span>Pending</td>
+                            <td>5 days ago</td>
+                        </tr>
+                        <tr>
+                            <td>ahmed@def.com</td>
+                            <td><span class="status-dot status-expired"></span>Expired</td>
+                            <td>14 days ago</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Guidelines -->
+            <div class="sidebar-card">
+                <h3><i class="ti ti-info-circle"></i> Guidelines</h3>
+                <ul class="guidelines-list">
+                    <li>Invitation links are encrypted and expire after 14 days by default</li>
+                    <li>Counterparty must verify identity via OTP or email verification</li>
+                    <li>All counterparty activities are logged with IP and timestamp</li>
+                    <li>Watermarking is recommended for confidential documents</li>
+                    <li>Maximum 10 recipients per invitation batch</li>
+                    <li>Guest accounts are automatically created for new users</li>
+                </ul>
+            </div>
+
+            <!-- Support Contact -->
+            <div class="sidebar-card" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white;">
+                <h3 style="color: white;"><i class="ti ti-headset"></i> Need Help?</h3>
+                <p style="font-size: 0.875rem; margin-bottom: 1rem;">Contact our support team for assistance with counterparty invitations</p>
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <i class="ti ti-phone"></i>
+                    <span>+974 4444 5555</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="ti ti-mail"></i>
+                    <span>support@smartclm.qa</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MOD-038: Invite Counterparty Confirmation Modal -->
+<div class="modal" id="confirmModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Confirm Invitation</h3>
+            <button class="modal-close" onclick="closeModal('confirmModal')">
+                <i class="ti ti-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div style="background: var(--info-bg); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <p style="color: var(--info-color); margin: 0;">
+                    <strong>You are about to send an invitation to:</strong>
+                </p>
+                <ul id="recipientsList" style="margin: 0.5rem 0 0 1.5rem; color: var(--info-color);">
+                    <!-- Recipients will be listed here -->
+                </ul>
+            </div>
+            
+            <div style="margin-bottom: 1rem;">
+                <strong>Permission Level:</strong> <span id="permissionLevel">View Only</span>
+            </div>
+            
+            <div style="margin-bottom: 1rem;">
+                <strong>Expires:</strong> <span id="expiryDate">November 30, 2024 at 5:00 PM</span>
+            </div>
+            
+            <div style="margin-bottom: 1rem;">
+                <strong>Access Controls:</strong>
+                <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--text-muted); font-size: 0.875rem;">
+                    <li>Watermark: Enabled</li>
+                    <li>Download: Restricted</li>
+                    <li>Print: Disabled</li>
+                </ul>
+            </div>
+            
+            <p style="color: var(--text-muted); font-size: 0.875rem; margin-top: 1rem;">
+                Once sent, the invitation cannot be recalled. The counterparty will receive an email with a secure link to access the contract.
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('confirmModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="sendInvitation()">
+                <i class="ti ti-send"></i>
+                Send Invitation
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MOD-040: Generate Secure Link Modal -->
+<div class="modal" id="linkModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Secure Link Generated</h3>
+            <button class="modal-close" onclick="closeModal('linkModal')">
+                <i class="ti ti-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div style="background: var(--success-bg); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <p style="color: var(--success-color); margin: 0; font-weight: 600;">
+                    <i class="ti ti-check-circle"></i> Invitation sent successfully!
+                </p>
+            </div>
+            
+            <p style="margin-bottom: 1rem;">A secure link has been generated and sent to the recipients. They can use the following link to access the contract:</p>
+            
+            <div style="background: var(--background-light); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; word-break: break-all;">
+                <code id="secureLink">https://smartclm.qa/external/contract/NDA-2024-0045?token=a7b9c2d4e6f8...</code>
+            </div>
+            
+            <button class="btn btn-outline" onclick="copyLink()" style="width: 100%;">
+                <i class="ti ti-copy"></i>
+                Copy Link
+            </button>
+            
+            <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                <strong>Next Steps:</strong>
+                <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--text-muted); font-size: 0.875rem;">
+                    <li>Counterparty will receive email notification</li>
+                    <li>They must verify identity via OTP</li>
+                    <li>You'll be notified when they access the document</li>
+                    <li>Track activity in the negotiation dashboard</li>
+                </ul>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" onclick="closeModal('linkModal')">Done</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Recipient Management
+function addRecipient() {
+    const container = document.getElementById('recipientsContainer');
+    const recipientCount = container.children.length;
+    
+    if (recipientCount >= 10) {
+        alert('Maximum 10 recipients allowed per invitation');
+        return;
+    }
+    
+    const newRecipient = document.createElement('div');
+    newRecipient.className = 'recipient-item';
+    newRecipient.innerHTML = `
+        <input type="email" class="form-input" placeholder="email@company.com" required>
+        <button type="button" class="btn-icon remove" onclick="removeRecipient(this)">
+            <i class="ti ti-x"></i>
+        </button>
+    `;
+    
+    container.appendChild(newRecipient);
+}
+
+function removeRecipient(button) {
+    const container = document.getElementById('recipientsContainer');
+    if (container.children.length > 1) {
+        button.parentElement.remove();
+    }
+}
+
+// Permission Selection
+function selectPermission(element, value) {
+    // Remove selected class from all items
+    document.querySelectorAll('.permission-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+    
+    // Add selected class to clicked item
+    element.classList.add('selected');
+    
+    // Check the radio button
+    element.querySelector('input[type="radio"]').checked = true;
+}
+
+// Form Submission
+document.getElementById('invitationForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Collect recipients
+    const recipients = [];
+    document.querySelectorAll('#recipientsContainer input[type="email"]').forEach(input => {
+        if (input.value) {
+            recipients.push(input.value);
+        }
+    });
+    
+    // Update confirmation modal
+    const recipientsList = document.getElementById('recipientsList');
+    recipientsList.innerHTML = recipients.map(email => `<li>${email}</li>`).join('');
+    
+    // Get permission level
+    const permission = document.querySelector('input[name="permission"]:checked').value;
+    const permissionText = {
+        'view': 'View Only',
+        'comment': 'Comment',
+        'edit': 'Full Edit'
+    }[permission];
+    document.getElementById('permissionLevel').textContent = permissionText;
+    
+    // Show confirmation modal
+    showModal('confirmModal');
+});
+
+// Modal Functions
+function showModal(modalId) {
+    document.getElementById(modalId).classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('show');
+    document.body.style.overflow = 'auto';
+}
+
+// Send Invitation
+function sendInvitation() {
+    // Close confirmation modal
+    closeModal('confirmModal');
+    
+    // Simulate sending invitation
+    setTimeout(() => {
+        // Show success modal with link
+        showModal('linkModal');
+    }, 500);
+}
+
+// Copy Link
+function copyLink() {
+    const link = document.getElementById('secureLink').textContent;
+    navigator.clipboard.writeText(link).then(() => {
+        alert('Link copied to clipboard!');
+    });
+}
+
+// Save as Draft
+function saveDraft() {
+    alert('Invitation saved as draft');
+}
+
+// Preview Invitation
+function previewInvitation() {
+    alert('Preview functionality will open a modal showing how the invitation email will look');
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default date to 14 days from now
+    const defaultDate = new Date();
+    defaultDate.setDate(defaultDate.getDate() + 14);
+    const dateInput = document.querySelector('input[type="date"]');
+    if (dateInput) {
+        dateInput.value = defaultDate.toISOString().split('T')[0];
+    }
+});
+</script>
+{% endblock %}

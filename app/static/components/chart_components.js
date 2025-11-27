@@ -1,0 +1,1 @@
+// placeholder for: app/static/components/chart_components.js

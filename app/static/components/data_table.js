@@ -1,0 +1,1 @@
+// placeholder for: app/static/components/data_table.js

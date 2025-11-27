@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/drafting/MOD_015_ai_prompt_input.js

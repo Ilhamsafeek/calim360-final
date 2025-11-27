@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/mobile/SCR_M04_mobile_approval.js

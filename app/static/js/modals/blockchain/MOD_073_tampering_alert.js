@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/blockchain/MOD_073_tampering_alert.js

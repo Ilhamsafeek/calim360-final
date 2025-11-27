@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/review/MOD_023_accept_reject_edit.js

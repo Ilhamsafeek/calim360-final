@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/obligations/SCR_041_manual_obligations.js

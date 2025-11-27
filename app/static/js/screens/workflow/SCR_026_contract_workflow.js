@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/workflow/SCR_026_contract_workflow.js

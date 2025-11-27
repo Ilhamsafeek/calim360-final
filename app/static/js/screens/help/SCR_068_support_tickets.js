@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/help/SCR_068_support_tickets.js

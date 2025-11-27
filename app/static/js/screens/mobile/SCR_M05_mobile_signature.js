@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/mobile/SCR_M05_mobile_signature.js

@@ -1,0 +1,1059 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block head %}
+<style>
+    .dashboard-container {
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .dashboard-header {
+        margin-bottom: 2rem;
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .dashboard-header p {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+    }
+
+    .quick-actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 0.625rem 1.25rem;
+        border-radius: 8px;
+        border: none;
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        text-decoration: none;
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #1e4f8b;
+    }
+
+    .btn-secondary {
+        background: white;
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+        background: var(--background-light);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        padding: 1.5rem;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 12px rgba(39, 98, 203, 0.1);
+    }
+
+    .stat-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    .stat-icon.blue { background: linear-gradient(135deg, #0066cc, #3b82f6); }
+    .stat-icon.green { background: linear-gradient(135deg, #10b981, #34d399); }
+    .stat-icon.orange { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+    .stat-icon.purple { background: linear-gradient(135deg, #9333ea, #a855f7); }
+    .stat-icon.red { background: linear-gradient(135deg, #ef4444, #f87171); }
+    .stat-icon.cyan { background: linear-gradient(135deg, #06b6d4, #22d3ee); }
+
+    .stat-info h4 {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        margin: 0;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin: 0.5rem 0;
+    }
+
+    .stat-change {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.875rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+    }
+
+    .stat-change.positive {
+        color: var(--success-color);
+        background: rgba(16, 185, 129, 0.1);
+    }
+
+    .stat-change.negative {
+        color: var(--danger-color);
+        background: rgba(239, 68, 68, 0.1);
+    }
+
+    /* Content Grid */
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    @media (max-width: 1024px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        padding: 1.5rem;
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+    }
+
+    .card-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card-title i {
+        font-size: 1.25rem;
+        color: var(--primary-color);
+    }
+
+    .view-all-link {
+        font-size: 0.875rem;
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .view-all-link:hover {
+        text-decoration: underline;
+    }
+
+    /* Contract List */
+    .contract-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .contract-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        background: var(--background-light);
+        border-radius: 8px;
+        transition: var(--transition);
+        cursor: pointer;
+    }
+
+    .contract-item:hover {
+        background: #e8effa;
+        transform: translateX(4px);
+    }
+
+    .contract-info {
+        flex: 1;
+    }
+
+    .contract-title {
+        font-weight: 600;
+        color: var(--text-color);
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .contract-meta {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .contract-badge {
+        padding: 0.25rem 0.625rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .badge-warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: #d97706;
+    }
+
+    .badge-danger {
+        background: rgba(239, 68, 68, 0.1);
+        color: #dc2626;
+    }
+
+    .badge-success {
+        background: rgba(16, 185, 129, 0.1);
+        color: #059669;
+    }
+
+    /* Obligation List */
+    .obligation-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .obligation-item {
+        padding: 1rem;
+        background: var(--background-light);
+        border-radius: 8px;
+        border-left: 3px solid transparent;
+        transition: var(--transition);
+    }
+
+    .obligation-item.high {
+        border-left-color: #ef4444;
+    }
+
+    .obligation-item.medium {
+        border-left-color: #f59e0b;
+    }
+
+    .obligation-item.low {
+        border-left-color: #10b981;
+    }
+
+    .obligation-item:hover {
+        background: #e8effa;
+    }
+
+    .obligation-title {
+        font-weight: 600;
+        color: var(--text-color);
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .obligation-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    .obligation-progress {
+        width: 100%;
+        height: 6px;
+        background: var(--border-color);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-top: 0.5rem;
+    }
+
+    .obligation-progress-bar {
+        height: 100%;
+        background: var(--success-color);
+        transition: width 0.3s ease;
+    }
+
+    /* Activity Feed */
+    .activity-feed {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .activity-item {
+        display: flex;
+        gap: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--background-light);
+        color: var(--primary-color);
+        flex-shrink: 0;
+    }
+
+    .activity-content {
+        flex: 1;
+    }
+
+    .activity-text {
+        font-size: 0.875rem;
+        color: var(--text-color);
+        margin-bottom: 0.25rem;
+    }
+
+    .activity-time {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    /* Charts */
+    .chart-container {
+        width: 100%;
+        height: 300px;
+        position: relative;
+    }
+
+    /* Status Breakdown */
+    .status-breakdown {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .status-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem;
+        background: var(--background-light);
+        border-radius: 8px;
+    }
+
+    .status-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: var(--text-color);
+    }
+
+    .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+
+    .status-count {
+        font-weight: 700;
+        font-size: 1.125rem;
+        color: var(--text-color);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--text-muted);
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+
+    .empty-state p {
+        margin: 0.5rem 0;
+    }
+
+    /* Loading State */
+    .loading-spinner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--border-color);
+        border-top-color: var(--primary-color);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <h1>Welcome back, <span id="userName">{{ user.full_name if user else 'User' }}</span>!</h1>
+        <!-- <p id="currentDateTime">Loading...</p> -->
+        
+        <div class="quick-actions">
+            <a href="/contract/create" class="btn btn-primary">
+                <i class="ti ti-plus"></i>
+                Create New Contract
+            </a>
+            <a href="/contracts?module=drafting" class="btn btn-secondary">
+                <i class="ti ti-file-text"></i>
+                View All Contracts
+            </a>
+            <a href="/reports" class="btn btn-secondary">
+                <i class="ti ti-chart-bar"></i>
+                Generate Report
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <!-- Total Contracts -->
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon blue">
+                    <i class="ti ti-files"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Total Contracts</h4>
+                </div>
+            </div>
+            <div class="stat-value" id="totalContracts">-</div>
+            <div class="stat-change positive" id="totalContractsChange" style="display: none;">
+                <i class="ti ti-trending-up"></i>
+                <span>+12% from last month</span>
+            </div>
+        </div>
+
+        <!-- Active Contracts -->
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon green">
+                    <i class="ti ti-circle-check"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Active Contracts</h4>
+                </div>
+            </div>
+            <div class="stat-value" id="activeContracts">-</div>
+            <div class="stat-change positive" id="activeContractsChange" style="display: none;">
+                <i class="ti ti-trending-up"></i>
+                <span>+8% from last month</span>
+            </div>
+        </div>
+
+        <!-- Expiring Soon -->
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon orange">
+                    <i class="ti ti-clock-alert"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Expiring in 30 Days</h4>
+                </div>
+            </div>
+            <div class="stat-value" id="expiringSoon">-</div>
+            <div class="stat-change negative" id="expiringSoonChange" style="display: none;">
+                <i class="ti ti-alert-triangle"></i>
+                <span>Action required</span>
+            </div>
+        </div>
+
+        <!-- Pending Approvals -->
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon purple">
+                    <i class="ti ti-hourglass"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Pending Approvals</h4>
+                </div>
+            </div>
+            <div class="stat-value" id="pendingApprovals">-</div>
+            <div class="stat-change negative" id="pendingApprovalsChange" style="display: none;">
+                <i class="ti ti-alert-circle"></i>
+                <span>Needs attention</span>
+            </div>
+        </div>
+
+        <!-- Overdue Obligations -->
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon red">
+                    <i class="ti ti-alert-octagon"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Overdue Obligations</h4>
+                </div>
+            </div>
+            <div class="stat-value" id="overdueObligations">-</div>
+            <div class="stat-change negative" id="overdueObligationsChange" style="display: none;">
+                <i class="ti ti-arrow-down"></i>
+                <span>Urgent action needed</span>
+            </div>
+        </div>
+
+        <!-- Contract Value -->
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon cyan">
+                    <i class="ti ti-currency-dollar"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Total Contract Value</h4>
+                </div>
+            </div>
+            <div class="stat-value" id="contractValue">-</div>
+            <div class="stat-change positive" id="contractValueChange" style="display: none;">
+                <i class="ti ti-trending-up"></i>
+                <span>+15% from last quarter</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="content-grid">
+        <!-- Left Column -->
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Expiring Contracts -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="ti ti-calendar-due"></i>
+                        Contracts Expiring Soon
+                    </h3>
+                    <a href="/contracts?filter=expiring" class="view-all-link">View All →</a>
+                </div>
+                <div class="contract-list" id="expiringContractsList">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contract Status Breakdown -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="ti ti-chart-pie"></i>
+                        Contract Status Overview
+                    </h3>
+                </div>
+                <div class="status-breakdown" id="statusBreakdown">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="ti ti-activity"></i>
+                        Recent Activity
+                    </h3>
+                    <a href="/audit-trail" class="view-all-link">View All →</a>
+                </div>
+                <div class="activity-feed" id="activityFeed">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Upcoming Obligations -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="ti ti-checkbox"></i>
+                        Upcoming Obligations
+                    </h3>
+                    <a href="/obligations" class="view-all-link">View All →</a>
+                </div>
+                <div class="obligation-list" id="obligationsList">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="ti ti-file-analytics"></i>
+                        Document Statistics
+                    </h3>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div class="status-item">
+                        <span class="status-label">
+                            <span class="status-dot" style="background: #3b82f6;"></span>
+                            Total Documents
+                        </span>
+                        <span class="status-count" id="totalDocuments">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">
+                            <span class="status-dot" style="background: #10b981;"></span>
+                            Signed Documents
+                        </span>
+                        <span class="status-count" id="signedDocuments">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">
+                            <span class="status-dot" style="background: #f59e0b;"></span>
+                            Pending Signature
+                        </span>
+                        <span class="status-count" id="pendingSignature">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workflow Progress -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="ti ti-git-branch"></i>
+                        Active Workflows
+                    </h3>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div class="status-item">
+                        <span class="status-label">
+                            <span class="status-dot" style="background: #f59e0b;"></span>
+                            Pending
+                        </span>
+                        <span class="status-count" id="workflowPending">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">
+                            <span class="status-dot" style="background: #3b82f6;"></span>
+                            In Progress
+                        </span>
+                        <span class="status-count" id="workflowInProgress">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">
+                            <span class="status-dot" style="background: #10b981;"></span>
+                            Completed
+                        </span>
+                        <span class="status-count" id="workflowCompleted">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Update current date/time
+// function updateDateTime() {
+//     const now = new Date();
+//     const options = { 
+//         weekday: 'long', 
+//         year: 'numeric', 
+//         month: 'long', 
+//         day: 'numeric',
+//         hour: '2-digit',
+//         minute: '2-digit'
+//     };
+//     document.getElementById('currentDateTime').textContent = now.toLocaleDateString('en-US', options);
+// }
+// updateDateTime();
+// setInterval(updateDateTime, 60000); // Update every minute
+
+// Fetch dashboard statistics
+async function loadDashboardData() {
+    try {
+        // Fetch main statistics
+        const statsResponse = await fetch('/api/dashboard/statistics');
+        const statsData = await statsResponse.json();
+        
+        if (statsData.success) {
+            const data = statsData.data;
+            
+            // Update overview stats
+            document.getElementById('totalContracts').textContent = data.overview.total_contracts;
+            document.getElementById('activeContracts').textContent = data.overview.active_contracts;
+            document.getElementById('expiringSoon').textContent = data.overview.expiring_soon;
+            document.getElementById('pendingApprovals').textContent = data.overview.pending_approvals;
+            
+            // Update obligations
+            document.getElementById('overdueObligations').textContent = data.obligations.overdue;
+            
+            // Update contract value
+            const value = data.contracts.total_value;
+            document.getElementById('contractValue').textContent = formatCurrency(value);
+            
+            // Update document stats
+            document.getElementById('totalDocuments').textContent = data.documents.total;
+            document.getElementById('signedDocuments').textContent = Math.floor(data.documents.total * 0.7); // Estimate
+            document.getElementById('pendingSignature').textContent = Math.floor(data.documents.total * 0.3); // Estimate
+            
+            // Update workflow stats
+            document.getElementById('workflowPending').textContent = data.workflows.pending || 0;
+            document.getElementById('workflowInProgress').textContent = data.workflows.in_progress || 0;
+            document.getElementById('workflowCompleted').textContent = data.workflows.completed || 0;
+            
+            // Show change indicators if there's data
+            if (data.overview.recent_contracts > 0) {
+                document.getElementById('totalContractsChange').style.display = 'inline-flex';
+            }
+            
+            // Build status breakdown
+            buildStatusBreakdown(data.contracts.by_status);
+        }
+        
+        // Fetch expiring contracts
+        loadExpiringContracts();
+        
+        // Fetch obligations
+        loadObligations();
+        
+        // Fetch recent activity
+        loadRecentActivity();
+        
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+    }
+}
+
+// Load expiring contracts
+async function loadExpiringContracts() {
+    try {
+        const response = await fetch('/api/dashboard/expiring-contracts?days=30');
+        const data = await response.json();
+        
+        const container = document.getElementById('expiringContractsList');
+        
+        if (data.success && data.data.length > 0) {
+            container.innerHTML = data.data.map(contract => {
+                const daysRemaining = contract.days_remaining;
+                const badgeClass = daysRemaining <= 7 ? 'badge-danger' : 'badge-warning';
+                
+                return `
+                    <div class="contract-item" onclick="viewContract(${contract.id})">
+                        <div class="contract-info">
+                            <div class="contract-title">${contract.title}</div>
+                            <div class="contract-meta">
+                                <span><i class="ti ti-hash"></i> ${contract.contract_number}</span>
+                                <span><i class="ti ti-building"></i> ${contract.counterparty || 'N/A'}</span>
+                            </div>
+                        </div>
+                        <span class="contract-badge ${badgeClass}">
+                            ${daysRemaining} days left
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="ti ti-circle-check"></i>
+                    <p>No contracts expiring soon</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading expiring contracts:', error);
+        document.getElementById('expiringContractsList').innerHTML = `
+            <div class="empty-state">
+                <p style="color: var(--danger-color);">Failed to load contracts</p>
+            </div>
+        `;
+    }
+}
+
+// Load obligations
+async function loadObligations() {
+    try {
+        const response = await fetch('/api/dashboard/obligations-due-soon?days=7');
+        const data = await response.json();
+        
+        const container = document.getElementById('obligationsList');
+        
+        if (data.success && data.data.length > 0) {
+            container.innerHTML = data.data.map(obligation => {
+                return `
+                    <div class="obligation-item ${obligation.priority}" onclick="viewObligation(${obligation.id})">
+                        <div class="obligation-title">${obligation.title}</div>
+                        <div class="obligation-meta">
+                            <span><i class="ti ti-calendar"></i> Due: ${formatDate(obligation.due_date)}</span>
+                            <span style="font-weight: 600; color: var(--primary-color);">${obligation.days_remaining} days</span>
+                        </div>
+                        <div class="obligation-progress">
+                            <div class="obligation-progress-bar" style="width: ${obligation.completion_percentage}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="ti ti-checkbox"></i>
+                    <p>No upcoming obligations</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading obligations:', error);
+        document.getElementById('obligationsList').innerHTML = `
+            <div class="empty-state">
+                <p style="color: var(--danger-color);">Failed to load obligations</p>
+            </div>
+        `;
+    }
+}
+
+// Load recent activity
+async function loadRecentActivity() {
+    try {
+        const response = await fetch('/api/dashboard/recent-activity?limit=5');
+        const data = await response.json();
+        
+        const container = document.getElementById('activityFeed');
+        
+        if (data.success && data.data.length > 0) {
+            container.innerHTML = data.data.map(activity => {
+                const icon = getActivityIcon(activity.action);
+                
+                // Parse JSON description if it's JSON, otherwise use as-is
+                let displayText = activity.description;
+                try {
+                    const jsonData = JSON.parse(activity.description);
+                    // Create a user-friendly message from JSON
+                    displayText = formatActivityFromJson(jsonData, activity.action);
+                } catch (e) {
+                    // Not JSON, use the raw description
+                    displayText = activity.description;
+                }
+                
+                return `
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="ti ${icon}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-text">${displayText}</div>
+                            <div class="activity-time">
+                                <i class="ti ti-clock"></i> ${formatTimeAgo(activity.timestamp)} by ${activity.user}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="ti ti-activity"></i>
+                    <p>No recent activity</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading activity:', error);
+        document.getElementById('activityFeed').innerHTML = `
+            <div class="empty-state">
+                <p style="color: var(--danger-color);">Failed to load activity</p>
+            </div>
+        `;
+    }
+}
+
+// Format activity message from JSON data
+function formatActivityFromJson(jsonData, actionType) {
+    // Handle different activity types
+    if (jsonData.event === 'signature_applied') {
+        return `✍️ ${jsonData.signer_type} signed the contract`;
+    }
+    
+    if (jsonData.event === 'contract_executed') {
+        return `✅ Contract ${jsonData.contract_number} executed and activated`;
+    }
+    
+    if (jsonData.clause_type) {
+        return `📝 Analyzed ${jsonData.clause_type} clause (${jsonData.suggestions_count || 0} suggestions)`;
+    }
+    
+    if (jsonData.overall_score !== undefined) {
+        return `⚠️ Risk assessment completed: ${jsonData.high_risks_count || 0} high risks found (Score: ${jsonData.overall_score})`;
+    }
+    
+    if (jsonData.message) {
+        return jsonData.message;
+    }
+    
+    // Default: try to create a readable summary
+    const keys = Object.keys(jsonData);
+    if (keys.length > 0) {
+        return `${actionType}: ${keys.slice(0, 3).join(', ')}`;
+    }
+    
+    return actionType || 'Activity recorded';
+}
+
+// Build status breakdown
+function buildStatusBreakdown(statusData) {
+    const container = document.getElementById('statusBreakdown');
+    const statusConfig = {
+        'draft': { label: 'Draft', color: '#6b7280' },
+        'in_progress': { label: 'In Progress', color: '#3b82f6' },
+        'pending_approval': { label: 'Pending Approval', color: '#f59e0b' },
+        'active': { label: 'Active', color: '#10b981' },
+        'expired': { label: 'Expired', color: '#ef4444' },
+        'terminated': { label: 'Terminated', color: '#991b1b' }
+    };
+    
+    const html = Object.entries(statusData).map(([status, count]) => {
+        const config = statusConfig[status] || { label: status, color: '#6b7280' };
+        return `
+            <div class="status-item">
+                <span class="status-label">
+                    <span class="status-dot" style="background: ${config.color};"></span>
+                    ${config.label}
+                </span>
+                <span class="status-count">${count}</span>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = html || '<div class="empty-state"><p>No data available</p></div>';
+}
+
+// Helper functions
+function formatCurrency(value) {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'QAR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(value);
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function formatTimeAgo(timestamp) {
+    const now = new Date();
+    const past = new Date(timestamp);
+    const seconds = Math.floor((now - past) / 1000);
+    
+    if (seconds < 60) return 'just now';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+    return formatDate(timestamp);
+}
+
+function getActivityIcon(action) {
+    const iconMap = {
+        'created': 'ti-file-plus',
+        'updated': 'ti-edit',
+        'approved': 'ti-check',
+        'rejected': 'ti-x',
+        'signed': 'ti-writing-sign',
+        'deleted': 'ti-trash'
+    };
+    return iconMap[action] || 'ti-point';
+}
+
+function viewContract(id) {
+    window.location.href = `/contracts/${id}`;
+}
+
+function viewObligation(id) {
+    window.location.href = `/obligations?id=${id}`;
+}
+
+// Set active nav item
+document.addEventListener('DOMContentLoaded', function() {
+    // Set dashboard as active in sidebar
+    const dashboardLink = document.querySelector('a[href="/"]');
+    if (dashboardLink) {
+        dashboardLink.classList.add('active');
+    }
+    
+    // Load all dashboard data
+    loadDashboardData();
+});
+</script>
+{% endblock %}

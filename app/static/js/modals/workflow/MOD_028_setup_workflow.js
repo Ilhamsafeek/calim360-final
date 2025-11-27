@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/workflow/MOD_028_setup_workflow.js

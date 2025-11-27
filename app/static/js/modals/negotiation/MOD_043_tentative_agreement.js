@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/negotiation/MOD_043_tentative_agreement.js

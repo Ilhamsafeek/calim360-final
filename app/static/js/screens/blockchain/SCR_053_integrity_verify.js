@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/blockchain/SCR_053_integrity_verify.js

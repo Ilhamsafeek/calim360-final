@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/correspondence/SCR_045_query_management.js

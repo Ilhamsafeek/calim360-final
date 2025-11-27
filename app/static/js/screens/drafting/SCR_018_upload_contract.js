@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/drafting/SCR_018_upload_contract.js

@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/drafting/MOD_016_add_remove_clauses.js

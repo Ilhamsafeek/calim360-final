@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/review/MOD_022_clause_suggestion.js

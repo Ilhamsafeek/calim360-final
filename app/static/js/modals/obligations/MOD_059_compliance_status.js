@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/obligations/MOD_059_compliance_status.js

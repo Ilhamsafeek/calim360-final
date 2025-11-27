@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications & Alerts{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/notifications.css">
+{% endblock %}
+
+{% block content %}
+    <!-- Page Header -->
+    <div style="background: white; padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="font-size: 1.75rem; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 12px;">
+                    <i class="ti ti-bell" style="color: var(--primary-color);"></i>
+                    Notifications & Alerts
+                </h1>
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn btn-secondary" onclick="markAllAsRead()">
+                    <i class="ti ti-checks"></i> Mark All Read
+                </button>
+                <button class="btn btn-primary" onclick="refreshNotifications()">
+                    <i class="ti ti-refresh"></i> Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div style="padding: 0 2rem; max-width: 1400px; margin: 0 auto;">
+        
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon blue">
+                    <i class="ti ti-inbox"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Total Notifications</div>
+                    <div class="stat-value" id="totalNotifications">0</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon orange">
+                    <i class="ti ti-mail-opened"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Unread</div>
+                    <div class="stat-value" id="unreadNotifications">0</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon red">
+                    <i class="ti ti-alert-triangle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Critical Alerts</div>
+                    <div class="stat-value" id="criticalAlerts">0</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon green">
+                    <i class="ti ti-calendar-event"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Obligations Due</div>
+                    <div class="stat-value" id="obligationsDue">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs-container">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="all" onclick="switchTab('all')">
+                    <i class="ti ti-inbox"></i> All Notifications
+                </button>
+                <button class="tab-btn" data-tab="alerts" onclick="switchTab('alerts')">
+                    <i class="ti ti-alert-circle"></i> Obligation Alerts
+                </button>
+                <button class="tab-btn" data-tab="approvals" onclick="switchTab('approvals')">
+                    <i class="ti ti-clipboard-check"></i> Approval Requests
+                </button>
+            </div>
+            
+            <div class="tab-actions">
+                <div class="filter-group">
+                    <label>
+                        <input type="checkbox" id="unreadOnlyCheckbox" onchange="toggleUnreadFilter()">
+                        Show Unread Only
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: All Notifications -->
+        <div class="tab-content active" id="tab-all">
+            <div class="notifications-container">
+                <div class="notifications-list" id="notificationsList">
+                    <!-- Notifications will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Obligation Alerts -->
+        <div class="tab-content" id="tab-alerts">
+            <div class="alert-dashboard">
+                
+                <!-- Alert Monitoring Panel -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3><i class="ti ti-radar-2"></i> Obligation Monitoring</h3>
+                        <button class="btn btn-sm btn-primary" onclick="scanObligations()">
+                            <i class="ti ti-scan"></i> Scan Now
+                        </button>
+                    </div>
+                    <div class="panel-body">
+                        <div class="alert-overview" id="alertOverview">
+                            <!-- Alert overview will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI Monitoring -->
+                <div class="panel mt-4">
+                    <div class="panel-header">
+                        <h3><i class="ti ti-gauge"></i> KPI Monitoring</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="kpi-badges" id="kpiMonitoring">
+                            <span class="badge badge-success"><i class="ti ti-check"></i> Healthy: 45</span>
+                            <span class="badge badge-warning"><i class="ti ti-alert-triangle"></i> At Risk: 12</span>
+                            <span class="badge badge-danger"><i class="ti ti-x"></i> Breach: 3</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Escalation Tiers -->
+                <div class="panel mt-4">
+                    <div class="panel-header">
+                        <h3><i class="ti ti-topology-star-3"></i> Escalation Tiers</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="escalation-tiers">
+                            <div class="tier-card tier-1">
+                                <div class="tier-header">
+                                    <i class="ti ti-user"></i>
+                                    <span>Tier 1: Owner</span>
+                                </div>
+                                <div class="tier-stats">
+                                    <span id="tier1Count">0</span> Active
+                                </div>
+                            </div>
+                            <div class="tier-card tier-2">
+                                <div class="tier-header">
+                                    <i class="ti ti-users"></i>
+                                    <span>Tier 2: Manager</span>
+                                </div>
+                                <div class="tier-stats">
+                                    <span id="tier2Count">0</span> Escalated
+                                </div>
+                            </div>
+                            <div class="tier-card tier-3">
+                                <div class="tier-header">
+                                    <i class="ti ti-crown"></i>
+                                    <span>Tier 3: Leadership</span>
+                                </div>
+                                <div class="tier-stats">
+                                    <span id="tier3Count">0</span> Critical
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Alerts Table -->
+                <div class="panel mt-4">
+                    <div class="panel-header">
+                        <h3><i class="ti ti-list"></i> Recent Alerts</h3>
+                        <div class="panel-actions">
+                            <button class="btn btn-sm btn-secondary" onclick="exportAlerts()">
+                                <i class="ti ti-download"></i> Export Report
+                            </button>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="table-responsive">
+                            <table class="table" id="alertsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Obligation</th>
+                                        <th>Contract</th>
+                                        <th>Status</th>
+                                        <th>Tier</th>
+                                        <th>Due Date</th>
+                                        <th>Alert Time</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="alertsTableBody">
+                                    <!-- Alerts will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Approval Requests -->
+        <div class="tab-content" id="tab-approvals">
+            <div class="approvals-list" id="approvalsList">
+                <!-- Approval requests will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Detail Modal -->
+    <div class="modal" id="notificationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Notification Details</h2>
+                <button class="modal-close" onclick="closeModal()">
+                    <i class="ti ti-x"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Notification details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+                <button class="btn btn-primary" onclick="markCurrentNotificationRead()">Mark as Read</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Acknowledgement Modal -->
+    <div class="modal" id="acknowledgeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Acknowledge Alert</h2>
+                <button class="modal-close" onclick="closeAcknowledgeModal()">
+                    <i class="ti ti-x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Comments (Optional)</label>
+                    <textarea id="acknowledgeComments" rows="4" class="form-control" placeholder="Add any comments..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAcknowledgeModal()">Cancel</button>
+                <button class="btn btn-success" onclick="submitAcknowledgement()">
+                    <i class="ti ti-check"></i> Acknowledge
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="/static/js/notifications.js"></script>
+{% endblock %}

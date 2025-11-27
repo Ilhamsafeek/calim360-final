@@ -1,0 +1,2614 @@
+{% extends "base.html" %}
+
+{% block title %}Consultation Room - Smart CLM{% endblock %}
+
+{% block head %}
+<style>
+    /* Consultation Room Specific Styles */
+    :root {
+        --consultation-header-height: 60px;
+    }
+
+    .consultation-container {
+        height: calc(100vh - var(--header-height));
+        display: flex;
+        flex-direction: column;
+        background: var(--background-light);
+        overflow: hidden;
+    }
+
+    /* Consultation Header */
+    .consultation-header {
+        height: var(--consultation-header-height);
+        background: white;
+        border-bottom: 1px solid var(--border-color);
+        padding: 0 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    }
+
+    .consultation-info {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .expert-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .expert-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+    }
+
+    .expert-details h3 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    .expert-details p {
+        margin: 0;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .session-status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.375rem 0.75rem;
+        background: var(--success-bg);
+        color: var(--success-color);
+        border-radius: 20px;
+        font-size: 0.813rem;
+        font-weight: 600;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .session-timer {
+        font-size: 0.925rem;
+        font-weight: 600;
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .consultation-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    /* Main Content Layout */
+    .consultation-main {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* Left Panel - Video/Chat Area */
+    .main-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: white;
+        margin: 1rem 0 1rem 1rem;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    /* Video Container */
+    .video-container {
+        flex: 1;
+        background: #000;
+        position: relative;
+        display: none;
+    }
+
+    .video-container.active {
+        display: block;
+    }
+
+    .remote-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .local-video {
+        position: absolute;
+        bottom: 1rem;
+        right: 1rem;
+        width: 200px;
+        height: 150px;
+        background: #333;
+        border-radius: 8px;
+        border: 2px solid white;
+        object-fit: cover;
+    }
+
+    .video-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: white;
+    }
+
+    .video-placeholder i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .video-controls {
+        position: absolute;
+        bottom: 1rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: rgba(0, 0, 0, 0.8);
+        border-radius: 30px;
+    }
+
+    .video-btn {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+    }
+
+    .video-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* View Mode Badge */
+    .view-mode-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.375rem 0.75rem;
+        background: var(--primary-color);
+        color: white;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    /* Active button indicator */
+    .video-btn.active {
+        background: var(--primary-color);
+    }
+
+    .video-btn.danger.active {
+        background: var(--danger-color);
+    }
+
+    /* Chat Container - FIXED FOR SCROLLING */
+    .chat-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        height: 100%;
+    }
+
+    .chat-container.hidden {
+        display: none;
+    }
+
+    /* Split View - Video and Chat Side by Side */
+    .main-panel.split-view {
+        flex-direction: row;
+    }
+
+    .main-panel.split-view .video-container {
+        flex: 1;
+        display: block;
+    }
+
+    .main-panel.split-view .chat-container {
+        width: 400px;
+        border-left: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        height: 100%;
+    }
+
+    .main-panel.split-view .chat-container .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        height: 0;
+        min-height: 0;
+    }
+
+    .main-panel.split-view .chat-container .chat-input-container {
+        flex-shrink: 0;
+    }
+
+    /* Chat Overlay for Video Mode */
+    .chat-overlay {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 400px;
+        background: white;
+        display: flex;
+        flex-direction: column;
+        box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+        z-index: 100;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+        overflow: hidden;
+    }
+
+    .chat-overlay.active {
+        transform: translateX(0);
+    }
+
+    .video-container .chat-overlay {
+        display: flex;
+    }
+
+    .chat-overlay .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 1.5rem;
+        background: var(--background-light);
+        height: 0;
+        min-height: 0;
+    }
+
+    .chat-overlay .chat-input-container {
+        flex-shrink: 0;
+        padding: 1rem 1.5rem;
+        background: white;
+        border-top: 1px solid var(--border-color);
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+    }
+
+    /* Chat Messages - SCROLLABLE AREA */
+    .chat-messages {
+        flex: 1;
+        padding: 1.5rem;
+        overflow-y: auto;
+        overflow-x: hidden;
+        background: var(--background-light);
+        height: 0;
+        min-height: 0;
+        scroll-behavior: smooth;
+    }
+
+    /* Custom Scrollbar for Chat */
+    .chat-messages::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .chat-messages::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    .message {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        animation: fadeInUp 0.3s ease;
+    }
+
+    .message.own {
+        flex-direction: row-reverse;
+    }
+
+    .message-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.875rem;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+
+    .message.own .message-avatar {
+        background: linear-gradient(135deg, #6c757d, #5a6268);
+    }
+
+    .message-content {
+        max-width: 70%;
+    }
+
+    .message-bubble {
+        background: white;
+        padding: 0.875rem 1.25rem;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .message.own .message-bubble {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .message-text {
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .message-time {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+    }
+
+    .message.own .message-time {
+        color: rgba(255, 255, 255, 0.8);
+        text-align: right;
+    }
+
+    .typing-indicator {
+        display: flex;
+        gap: 0.25rem;
+        padding: 0.5rem;
+    }
+
+    .typing-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-muted);
+        animation: typing 1.4s infinite;
+    }
+
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typing {
+        0%, 80%, 100% { opacity: 0.5; transform: scale(1); }
+        40% { opacity: 1; transform: scale(1.2); }
+    }
+
+    /* Chat Input - FLOATING AT BOTTOM */
+    .chat-input-container {
+        padding: 1rem 1.5rem;
+        background: white;
+        border-top: 1px solid var(--border-color);
+        flex-shrink: 0;
+        position: relative;
+        z-index: 10;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+    }
+
+    .chat-input-wrapper {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .chat-input {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 24px;
+        resize: none;
+        font-family: inherit;
+        font-size: 0.925rem;
+        outline: none;
+        transition: var(--transition);
+    }
+
+    .chat-input:focus {
+        border-color: var(--primary-color);
+    }
+
+    .chat-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    /* Right Sidebar */
+    .sidebar-panel {
+        width: 380px;
+        background: white;
+        margin: 1rem 1rem 1rem 0;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        overflow: hidden;
+    }
+
+    /* Tabs */
+    .sidebar-tabs {
+        display: flex;
+        border-bottom: 1px solid var(--border-color);
+        flex-shrink: 0;
+    }
+
+    .tab-btn {
+        flex: 1;
+        padding: 1rem;
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-weight: 600;
+        cursor: pointer;
+        position: relative;
+        transition: var(--transition);
+    }
+
+    .tab-btn:hover {
+        color: var(--text-color);
+        background: var(--background-light);
+    }
+
+    .tab-btn.active {
+        color: var(--primary-color);
+    }
+
+    .tab-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--primary-color);
+    }
+
+    .tab-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 6px;
+        margin-left: 0.5rem;
+        background: var(--primary-color);
+        color: white;
+        border-radius: 10px;
+        font-size: 0.75rem;
+    }
+
+    /* Tab Content */
+    .tab-content {
+        flex: 1;
+        overflow-y: auto;
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    /* Contract Details Tab */
+    .contract-details {
+        padding: 1.5rem;
+    }
+
+    .detail-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .detail-label {
+        font-size: 0.813rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .detail-value {
+        font-size: 0.925rem;
+        color: var(--text-color);
+        font-weight: 500;
+    }
+
+    .clause-item {
+        padding: 0.75rem;
+        background: var(--background-light);
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .clause-item:hover {
+        background: rgba(39, 98, 203, 0.05);
+    }
+
+    .clause-title {
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 0.25rem;
+    }
+
+    .clause-excerpt {
+        font-size: 0.813rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+
+    /* Documents Tab */
+    .documents-section {
+        padding: 1.5rem;
+    }
+
+    .upload-area {
+        border: 2px dashed var(--border-color);
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .upload-area:hover {
+        border-color: var(--primary-color);
+        background: var(--background-light);
+    }
+
+    .document-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem;
+        background: var(--background-light);
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+    }
+
+    .document-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .document-icon {
+        width: 40px;
+        height: 40px;
+        background: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-color);
+    }
+
+    .document-details h4 {
+        margin: 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    .document-meta {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .document-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    /* Notes Tab */
+    .notes-section {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .notes-editor {
+        flex: 1;
+        padding: 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 0.925rem;
+        resize: none;
+        outline: none;
+        min-height: 300px;
+    }
+
+    .notes-editor:focus {
+        border-color: var(--primary-color);
+    }
+
+    .notes-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 1rem;
+    }
+
+    .auto-save-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.813rem;
+        color: var(--text-muted);
+    }
+
+    /* Action Items Tab */
+    .action-items-section {
+        padding: 1.5rem;
+    }
+
+    .action-item {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.875rem;
+        background: var(--background-light);
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+    }
+
+    .action-checkbox {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--border-color);
+        border-radius: 4px;
+        cursor: pointer;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+    }
+
+    .action-checkbox.checked {
+        background: var(--success-color);
+        border-color: var(--success-color);
+        color: white;
+    }
+
+    .action-content {
+        flex: 1;
+    }
+
+    .action-text {
+        color: var(--text-color);
+        margin-bottom: 0.25rem;
+    }
+
+    .action-checkbox.checked + .action-content .action-text {
+        text-decoration: line-through;
+        opacity: 0.7;
+    }
+
+    .action-meta {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    /* Buttons */
+    .btn {
+        padding: 0.625rem 1.25rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .btn-icon {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border-radius: 50%;
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #1e4ba8;
+    }
+
+    .btn-danger {
+        background: var(--danger-color);
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background: #c82333;
+    }
+
+    .btn-secondary {
+        background: white;
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+        background: var(--background-light);
+    }
+
+    /* Session End Modal */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        display: none;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 500px;
+        padding: 2rem;
+        animation: modalFadeIn 0.3s ease;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-color);
+    }
+
+    .rating-section {
+        margin: 2rem 0;
+    }
+
+    .rating-stars {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin: 1rem 0;
+    }
+
+    .star {
+        font-size: 2rem;
+        color: var(--border-color);
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .star:hover,
+    .star.active {
+        color: #ffc107;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+        .sidebar-panel {
+            width: 320px;
+        }
+        
+        .chat-overlay {
+            width: 350px;
+        }
+        
+        .main-panel.split-view .chat-container {
+            width: 350px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .consultation-main {
+            flex-direction: column;
+        }
+        
+        .sidebar-panel {
+            width: 100%;
+            margin: 1rem;
+        }
+        
+        .local-video {
+            width: 120px;
+            height: 90px;
+        }
+        
+        .chat-overlay {
+            width: 100%;
+        }
+        
+        .main-panel.split-view {
+            flex-direction: column;
+        }
+        
+        .main-panel.split-view .chat-container {
+            width: 100%;
+            height: 300px;
+            border-left: none;
+            border-top: 1px solid var(--border-color);
+        }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="consultation-container">
+    <!-- Consultation Header -->
+    <div class="consultation-header">
+        <div class="consultation-info">
+            <div class="expert-info">
+                <div class="expert-avatar">SA</div>
+                <div class="expert-details">
+                    <h3>Sarah Al-Rashid</h3>
+                    <p>Senior Legal Advisor • QFCRA Licensed</p>
+                </div>
+            </div>
+            <div class="session-status">
+                <span class="status-dot"></span>
+                <span>Live Session</span>
+            </div>
+            <div class="view-mode-badge" id="viewModeBadge">
+                <i class="ti ti-message-circle"></i>
+                <span>Chat Mode</span>
+            </div>
+            <div class="session-timer">
+                <i class="ti ti-clock"></i>
+                <span id="sessionTimer">00:00</span>
+            </div>
+        </div>
+        
+        <div class="consultation-actions">
+            <button class="btn btn-secondary btn-icon" id="fullscreenBtn" title="Fullscreen">
+                <i class="ti ti-maximize"></i>
+            </button>
+            <button class="btn btn-secondary btn-icon" id="recordBtn" title="Record Session">
+                <i class="ti ti-record-mail"></i>
+            </button>
+            <button class="btn btn-danger" id="endSessionBtn">
+                <i class="ti ti-phone-off"></i>
+                End Session
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="consultation-main">
+        <!-- Left Panel - Video/Chat -->
+        <div class="main-panel">
+            <!-- Video Container -->
+            <div class="video-container" id="videoContainer">
+                <div class="video-placeholder">
+                    <i class="ti ti-video-off"></i>
+                    <p>Video will appear when connected</p>
+                </div>
+                <video class="remote-video" id="remoteVideo" autoplay></video>
+                <video class="local-video" id="localVideo" autoplay muted></video>
+                
+                <div class="video-controls">
+                    <button class="video-btn" id="cameraBtn">
+                        <i class="ti ti-video"></i>
+                    </button>
+                    <button class="video-btn" id="micBtn">
+                        <i class="ti ti-microphone"></i>
+                    </button>
+                    <button class="video-btn" id="screenBtn">
+                        <i class="ti ti-screen-share"></i>
+                    </button>
+                    <button class="video-btn" id="toggleChatOverlayBtn" title="Toggle Chat">
+                        <i class="ti ti-message-circle"></i>
+                    </button>
+                    <button class="video-btn" id="layoutBtn" title="Change Layout">
+                        <i class="ti ti-layout-grid"></i>
+                    </button>
+                </div>
+                
+                <!-- Chat Overlay for Video Mode -->
+                <div class="chat-overlay" id="chatOverlay">
+                    <div style="padding: 1rem; border-bottom: 1px solid var(--border-color); background: white;">
+                        <h4 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="ti ti-message-circle"></i>
+                            Chat with Expert
+                        </h4>
+                    </div>
+                    <div class="chat-messages" id="videoModeChatMessages">
+                        <!-- Messages will be synced here -->
+                    </div>
+                    
+                    <div class="chat-input-container">
+                        <div class="chat-input-wrapper">
+                            <textarea 
+                                class="chat-input" 
+                                id="videoModeChatInput"
+                                placeholder="Type your message..."
+                                rows="1"
+                            ></textarea>
+                            <div class="chat-actions">
+                                <button class="btn btn-primary btn-icon" id="videoModeSendBtn" title="Send Message">
+                                    <i class="ti ti-send"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Container -->
+            <div class="chat-container active" id="chatContainer">
+                <div class="chat-messages" id="chatMessages">
+                    <!-- Welcome Message -->
+                    <div class="message">
+                        <div class="message-avatar">SA</div>
+                        <div class="message-content">
+                            <div class="message-bubble">
+                                <p class="message-text">Hello! I'm Sarah Al-Rashid, your legal advisor for today's session. How can I help you with your contract review?</p>
+                            </div>
+                            <div class="message-time">10:30 AM</div>
+                        </div>
+                    </div>
+                    
+                    <!-- User Message -->
+                    <div class="message own">
+                        <div class="message-avatar">YO</div>
+                        <div class="message-content">
+                            <div class="message-bubble">
+                                <p class="message-text">Hi Sarah, I need help reviewing the termination clauses in our Qatar Energy Services Agreement.</p>
+                            </div>
+                            <div class="message-time">10:31 AM</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Expert Typing Indicator -->
+                    <div class="message" id="typingIndicator" style="display: none;">
+                        <div class="message-avatar">SA</div>
+                        <div class="message-content">
+                            <div class="message-bubble">
+                                <div class="typing-indicator">
+                                    <span class="typing-dot"></span>
+                                    <span class="typing-dot"></span>
+                                    <span class="typing-dot"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-input-container">
+                    <div class="chat-input-wrapper">
+                        <textarea 
+                            class="chat-input" 
+                            id="chatInput"
+                            placeholder="Type your message..."
+                            rows="1"
+                        ></textarea>
+                        <div class="chat-actions">
+                            <button class="btn btn-secondary btn-icon" id="attachFileBtn" title="Attach File">
+                                <i class="ti ti-paperclip"></i>
+                            </button>
+                            <button class="btn btn-primary btn-icon" id="sendMessageBtn" title="Send Message">
+                                <i class="ti ti-send"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="sidebar-panel">
+            <!-- Tabs -->
+            <div class="sidebar-tabs">
+                <button class="tab-btn active" data-tab="details">
+                    <i class="ti ti-file-text"></i> Details
+                </button>
+                <button class="tab-btn" data-tab="documents">
+                    <i class="ti ti-files"></i> Files
+                    <span class="tab-badge">3</span>
+                </button>
+                <button class="tab-btn" data-tab="notes">
+                    <i class="ti ti-notes"></i> Notes
+                </button>
+                <button class="tab-btn" data-tab="actions">
+                    <i class="ti ti-checklist"></i> Actions
+                    <span class="tab-badge">2</span>
+                </button>
+            </div>
+
+            <!-- Tab Contents -->
+            <!-- Contract Details -->
+            <div class="tab-content active" id="detailsTab">
+                <div class="contract-details">
+                    <div class="detail-section">
+                        <div class="detail-label">Contract ID</div>
+                        <div class="detail-value">CON-2024-001</div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <div class="detail-label">Contract Title</div>
+                        <div class="detail-value">Qatar Energy Services Agreement</div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <div class="detail-label">Query Type</div>
+                        <div class="detail-value">Contract Review - Termination Clauses</div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <div class="detail-label">Priority</div>
+                        <div class="detail-value" style="color: var(--warning-color);">
+                            <i class="ti ti-alert-triangle"></i> Urgent
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h4 style="margin-bottom: 1rem;">Relevant Clauses</h4>
+                        <div class="clause-item" data-clause="15.1">
+                            <div class="clause-title">15.1 Termination for Convenience</div>
+                            <div class="clause-excerpt">Either party may terminate this Agreement...</div>
+                        </div>
+                        <div class="clause-item" data-clause="15.2">
+                            <div class="clause-title">15.2 Termination for Cause</div>
+                            <div class="clause-excerpt">This Agreement may be terminated immediately...</div>
+                        </div>
+                        <div class="clause-item" data-clause="15.3">
+                            <div class="clause-title">15.3 Effect of Termination</div>
+                            <div class="clause-excerpt">Upon termination, all rights and obligations...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents -->
+            <div class="tab-content" id="documentsTab">
+                <div class="documents-section">
+                    <div class="upload-area" id="uploadArea">
+                        <i class="ti ti-cloud-upload" style="font-size: 2rem; color: var(--text-muted);"></i>
+                        <p style="margin: 0.5rem 0 0 0; color: var(--text-muted);">Drop files or click to upload</p>
+                        <input type="file" id="fileUpload" hidden multiple>
+                    </div>
+                    
+                    <h4 style="margin-bottom: 1rem;">Shared Documents</h4>
+                    
+                    <div class="document-item">
+                        <div class="document-info">
+                            <div class="document-icon">
+                                <i class="ti ti-file-text"></i>
+                            </div>
+                            <div class="document-details">
+                                <h4>Qatar Energy Services Agreement.pdf</h4>
+                                <div class="document-meta">2.4 MB • Uploaded 10 min ago</div>
+                            </div>
+                        </div>
+                        <div class="document-actions">
+                            <button class="btn btn-icon btn-secondary" data-action="view" data-doc-id="doc1">
+                                <i class="ti ti-eye"></i>
+                            </button>
+                            <button class="btn btn-icon btn-secondary" data-action="download" data-doc-id="doc1">
+                                <i class="ti ti-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="document-item">
+                        <div class="document-info">
+                            <div class="document-icon">
+                                <i class="ti ti-file-spreadsheet"></i>
+                            </div>
+                            <div class="document-details">
+                                <h4>Payment Schedule.xlsx</h4>
+                                <div class="document-meta">156 KB • Uploaded 5 min ago</div>
+                            </div>
+                        </div>
+                        <div class="document-actions">
+                            <button class="btn btn-icon btn-secondary" data-action="view" data-doc-id="doc2">
+                                <i class="ti ti-eye"></i>
+                            </button>
+                            <button class="btn btn-icon btn-secondary" data-action="download" data-doc-id="doc2">
+                                <i class="ti ti-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="document-item">
+                        <div class="document-info">
+                            <div class="document-icon">
+                                <i class="ti ti-file-text"></i>
+                            </div>
+                            <div class="document-details">
+                                <h4>Legal Opinion Draft.docx</h4>
+                                <div class="document-meta">89 KB • Just now</div>
+                            </div>
+                        </div>
+                        <div class="document-actions">
+                            <button class="btn btn-icon btn-secondary" data-action="view" data-doc-id="doc3">
+                                <i class="ti ti-eye"></i>
+                            </button>
+                            <button class="btn btn-icon btn-secondary" data-action="download" data-doc-id="doc3">
+                                <i class="ti ti-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="tab-content" id="notesTab">
+                <div class="notes-section">
+                    <textarea 
+                        class="notes-editor" 
+                        id="notesEditor"
+                        placeholder="Take notes during the session..."
+                    >Key Points Discussed:
+- Termination clause needs 90-day notice period
+- Include provision for force majeure events
+- Consider adding liquidated damages clause</textarea>
+                    
+                    <div class="notes-actions">
+                        <div class="auto-save-indicator">
+                            <i class="ti ti-circle-check" style="color: var(--success-color);"></i>
+                            <span>Auto-saved</span>
+                        </div>
+                        <button class="btn btn-primary" id="exportNotesBtn">
+                            <i class="ti ti-download"></i> Export Notes
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Items -->
+            <div class="tab-content" id="actionsTab">
+                <div class="action-items-section">
+                    <button class="btn btn-primary" style="width: 100%; margin-bottom: 1rem;" id="addActionItemBtn">
+                        <i class="ti ti-plus"></i> Add Action Item
+                    </button>
+                    
+                    <div class="action-item">
+                        <div class="action-checkbox">
+                            <i class="ti ti-check" style="display: none;"></i>
+                        </div>
+                        <div class="action-content">
+                            <div class="action-text">Review and revise termination notice period to 90 days</div>
+                            <div class="action-meta">Assigned to: You • Due: Tomorrow</div>
+                        </div>
+                    </div>
+                    
+                    <div class="action-item">
+                        <div class="action-checkbox">
+                            <i class="ti ti-check" style="display: none;"></i>
+                        </div>
+                        <div class="action-content">
+                            <div class="action-text">Add force majeure provisions as discussed</div>
+                            <div class="action-meta">Assigned to: Legal Team • Due: This Week</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- End Session Modal -->
+<div class="modal-overlay" id="endSessionModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Session Summary</h2>
+            <button id="closeModalBtn" style="background: none; border: none; cursor: pointer; font-size: 1.5rem;">
+                <i class="ti ti-x"></i>
+            </button>
+        </div>
+        
+        <div style="margin: 1.5rem 0;">
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">Session Duration: <strong id="finalDuration">45:23</strong></p>
+            <p style="color: var(--text-muted);">Thank you for your consultation. Please rate your experience:</p>
+        </div>
+        
+        <div class="rating-section">
+            <div class="rating-stars" id="ratingStars">
+                <i class="ti ti-star star" data-rating="1"></i>
+                <i class="ti ti-star star" data-rating="2"></i>
+                <i class="ti ti-star star" data-rating="3"></i>
+                <i class="ti ti-star star" data-rating="4"></i>
+                <i class="ti ti-star star" data-rating="5"></i>
+            </div>
+        </div>
+        
+        <div style="margin: 1.5rem 0;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Feedback (Optional)</label>
+            <textarea 
+                id="feedbackText"
+                style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; resize: vertical; min-height: 80px;"
+                placeholder="Share your feedback about the session..."
+            ></textarea>
+        </div>
+        
+        <div style="display: flex; gap: 1rem;">
+            <button class="btn btn-secondary" style="flex: 1;" id="skipFeedbackBtn">
+                Skip
+            </button>
+            <button class="btn btn-primary" style="flex: 1;" id="submitFeedbackBtn">
+                Submit & End Session
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// =====================================================
+// CONSULTATION ROOM - MAIN JAVASCRIPT
+// =====================================================
+
+(function() {
+    'use strict';
+
+    console.log('%c🚀 Consultation Room Initializing...', 'color: #2762cb; font-size: 14px; font-weight: bold;');
+
+    // Session Variables
+    let sessionStartTime = Date.now();
+    let sessionTimer = null;
+    let isVideoMode = false;
+    let isCameraOn = true;
+    let isMicOn = true;
+    let isRecording = false;
+    let localStream = null;
+    let selectedRating = 0;
+    let websocket = null;
+    let viewMode = 'chat'; // 'chat', 'video', 'split'
+    let isChatOverlayOpen = false;
+
+    // Session ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session') || 'demo-session';
+    const queryId = urlParams.get('query') || 'demo-query';
+
+    console.log('Session ID:', sessionId);
+    console.log('Query ID:', queryId);
+
+    // =====================================================
+    // INITIALIZATION
+    // =====================================================
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    function init() {
+        console.log('✅ DOM Content Loaded - Starting initialization');
+        
+        try {
+            startSessionTimer();
+            console.log('✅ Session timer started');
+            
+            initializeChat();
+            console.log('✅ Chat initialized');
+            
+            initializeEventListeners();
+            console.log('✅ Event listeners initialized');
+            
+            setupAutoSaveNotes();
+            console.log('✅ Auto-save notes set up');
+            
+            // Sync existing messages to video overlay
+            syncChatMessages();
+            console.log('✅ Chat messages synced');
+            
+            // Check for video mode
+            const sessionType = urlParams.get('type');
+            if (sessionType === 'video') {
+                switchToVideo();
+                console.log('✅ Switched to video mode');
+            }
+            
+            // Initialize WebSocket last (so it doesn't block other initialization)
+            setTimeout(() => {
+                initializeWebSocket();
+            }, 1000);
+            
+            console.log('%c✨ Consultation Room Ready!', 'color: #10b981; font-size: 14px; font-weight: bold;');
+            
+        } catch (error) {
+            console.error('❌ Initialization error:', error);
+        }
+    }
+
+    // Sync messages from main chat to video overlay
+    function syncChatMessages() {
+        const mainChatMessages = document.getElementById('chatMessages');
+        const videoModeChatMessages = document.getElementById('videoModeChatMessages');
+        
+        if (mainChatMessages && videoModeChatMessages) {
+            const messages = mainChatMessages.querySelectorAll('.message');
+            messages.forEach(message => {
+                const clone = message.cloneNode(true);
+                videoModeChatMessages.appendChild(clone);
+            });
+        }
+    }
+
+    // =====================================================
+    // SESSION TIMER
+    // =====================================================
+    function startSessionTimer() {
+        if (sessionTimer) {
+            clearInterval(sessionTimer);
+        }
+        
+        sessionTimer = setInterval(() => {
+            try {
+                const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+                const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                const seconds = (elapsed % 60).toString().padStart(2, '0');
+                const timerElement = document.getElementById('sessionTimer');
+                if (timerElement) {
+                    timerElement.textContent = `${minutes}:${seconds}`;
+                }
+            } catch (error) {
+                console.error('Timer error:', error);
+            }
+        }, 1000);
+    }
+
+    // =====================================================
+    // EVENT LISTENERS SETUP
+    // =====================================================
+    function initializeEventListeners() {
+        console.log('Setting up event listeners...');
+        
+        // Header buttons
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const recordBtn = document.getElementById('recordBtn');
+        const endSessionBtn = document.getElementById('endSessionBtn');
+        
+        if (fullscreenBtn) {
+            fullscreenBtn.addEventListener('click', toggleFullscreen);
+            console.log('✓ Fullscreen button attached');
+        } else {
+            console.warn('⚠ Fullscreen button not found');
+        }
+        
+        if (recordBtn) {
+            recordBtn.addEventListener('click', toggleRecording);
+            console.log('✓ Record button attached');
+        } else {
+            console.warn('⚠ Record button not found');
+        }
+        
+        if (endSessionBtn) {
+            endSessionBtn.addEventListener('click', endSession);
+            console.log('✓ End session button attached');
+        } else {
+            console.warn('⚠ End session button not found');
+        }
+        
+        // Video controls
+        const cameraBtn = document.getElementById('cameraBtn');
+        const micBtn = document.getElementById('micBtn');
+        const screenBtn = document.getElementById('screenBtn');
+        const toggleChatOverlayBtn = document.getElementById('toggleChatOverlayBtn');
+        const layoutBtn = document.getElementById('layoutBtn');
+        
+        if (cameraBtn) {
+            cameraBtn.addEventListener('click', toggleCamera);
+            console.log('✓ Camera button attached');
+        }
+        if (micBtn) {
+            micBtn.addEventListener('click', toggleMicrophone);
+            console.log('✓ Mic button attached');
+        }
+        if (screenBtn) {
+            screenBtn.addEventListener('click', shareScreen);
+            console.log('✓ Screen button attached');
+        }
+        if (toggleChatOverlayBtn) {
+            toggleChatOverlayBtn.addEventListener('click', toggleChatOverlay);
+            console.log('✓ Toggle chat overlay button attached');
+        }
+        if (layoutBtn) {
+            layoutBtn.addEventListener('click', toggleLayout);
+            console.log('✓ Layout button attached');
+        }
+        
+        // Chat controls
+        const sendMessageBtn = document.getElementById('sendMessageBtn');
+        const attachFileBtn = document.getElementById('attachFileBtn');
+        const chatInput = document.getElementById('chatInput');
+        const videoModeSendBtn = document.getElementById('videoModeSendBtn');
+        const videoModeChatInput = document.getElementById('videoModeChatInput');
+        
+        if (sendMessageBtn) {
+            sendMessageBtn.addEventListener('click', () => sendMessage('chatInput'));
+            console.log('✓ Send message button attached');
+        } else {
+            console.warn('⚠ Send message button not found');
+        }
+        
+        if (attachFileBtn) {
+            attachFileBtn.addEventListener('click', attachFile);
+            console.log('✓ Attach file button attached');
+        }
+        
+        if (chatInput) {
+            chatInput.addEventListener('keypress', (e) => handleChatKeypress(e, 'chatInput'));
+            console.log('✓ Chat input keypress attached');
+        }
+        
+        if (videoModeSendBtn) {
+            videoModeSendBtn.addEventListener('click', () => sendMessage('videoModeChatInput'));
+            console.log('✓ Video mode send button attached');
+        }
+        
+        if (videoModeChatInput) {
+            videoModeChatInput.addEventListener('keypress', (e) => handleChatKeypress(e, 'videoModeChatInput'));
+            console.log('✓ Video mode chat input keypress attached');
+        }
+        
+        // Tab buttons
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        console.log(`Found ${tabButtons.length} tab buttons`);
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const tabName = this.getAttribute('data-tab');
+                console.log('Tab clicked:', tabName);
+                switchTab(tabName);
+            });
+        });
+        
+        // Clause items
+        const clauseItems = document.querySelectorAll('.clause-item');
+        console.log(`Found ${clauseItems.length} clause items`);
+        clauseItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const clause = this.getAttribute('data-clause');
+                highlightClause(clause);
+            });
+        });
+        
+        // Document actions
+        const viewButtons = document.querySelectorAll('[data-action="view"]');
+        const downloadButtons = document.querySelectorAll('[data-action="download"]');
+        
+        console.log(`Found ${viewButtons.length} view buttons`);
+        viewButtons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const docId = this.getAttribute('data-doc-id');
+                viewDocument(docId);
+            });
+        });
+        
+        console.log(`Found ${downloadButtons.length} download buttons`);
+        downloadButtons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const docId = this.getAttribute('data-doc-id');
+                downloadDocument(docId);
+            });
+        });
+        
+        // File upload
+        const uploadArea = document.getElementById('uploadArea');
+        const fileUpload = document.getElementById('fileUpload');
+        
+        if (uploadArea && fileUpload) {
+            uploadArea.addEventListener('click', function() {
+                fileUpload.click();
+            });
+            fileUpload.addEventListener('change', handleFileUpload);
+            console.log('✓ File upload attached');
+        }
+        
+        // Notes export
+        const exportNotesBtn = document.getElementById('exportNotesBtn');
+        if (exportNotesBtn) {
+            exportNotesBtn.addEventListener('click', exportNotes);
+            console.log('✓ Export notes button attached');
+        }
+        
+        // Action items
+        const addActionItemBtn = document.getElementById('addActionItemBtn');
+        if (addActionItemBtn) {
+            addActionItemBtn.addEventListener('click', addActionItem);
+            console.log('✓ Add action item button attached');
+        }
+        
+        const actionCheckboxes = document.querySelectorAll('.action-checkbox');
+        console.log(`Found ${actionCheckboxes.length} action checkboxes`);
+        actionCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('click', function() {
+                toggleActionItem(this);
+            });
+        });
+        
+        // Modal controls
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const skipFeedbackBtn = document.getElementById('skipFeedbackBtn');
+        const submitFeedbackBtn = document.getElementById('submitFeedbackBtn');
+        
+        if (closeModalBtn) {
+            closeModalBtn.addEventListener('click', closeModal);
+            console.log('✓ Close modal button attached');
+        }
+        if (skipFeedbackBtn) {
+            skipFeedbackBtn.addEventListener('click', skipFeedback);
+            console.log('✓ Skip feedback button attached');
+        }
+        if (submitFeedbackBtn) {
+            submitFeedbackBtn.addEventListener('click', submitFeedback);
+            console.log('✓ Submit feedback button attached');
+        }
+        
+        // Rating stars
+        const ratingStars = document.querySelectorAll('.star');
+        console.log(`Found ${ratingStars.length} rating stars`);
+        ratingStars.forEach(star => {
+            star.addEventListener('click', function() {
+                const rating = parseInt(this.getAttribute('data-rating'));
+                setRating(rating);
+            });
+        });
+        
+        console.log('✅ All event listeners attached successfully');
+    }
+
+    // =====================================================
+// REPLACE WebSocket Section in consultation_room.html
+// =====================================================
+
+// WebSocket for real-time communication
+let ws = null;
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 5;
+
+function initializeWebSocket() {
+    // Get session ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session');
+    
+    if (!sessionId) {
+        console.error('No session ID found');
+        return;
+    }
+    
+    // Get auth token from cookie or localStorage
+    const token = getCookie('session_token') || localStorage.getItem('auth_token');
+    
+    if (!token) {
+        console.error('No authentication token found');
+        showToast('Authentication required', 'error');
+        return;
+    }
+    
+    // Construct WebSocket URL
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/consultation/${sessionId}?token=${token}`;
+    
+    console.log('Connecting to WebSocket:', wsUrl);
+    
+    try {
+        ws = new WebSocket(wsUrl);
+        
+        ws.onopen = () => {
+            console.log('✅ WebSocket connected');
+            reconnectAttempts = 0;
+            showToast('Connected to consultation room', 'success');
+        };
+        
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            } catch (e) {
+                console.error('Error parsing WebSocket message:', e);
+            }
+        };
+        
+        ws.onerror = (error) => {
+            console.error('❌ WebSocket error:', error);
+            showToast('Connection error', 'error');
+        };
+        
+        ws.onclose = (event) => {
+            console.log('WebSocket closed:', event.code, event.reason);
+            
+            // Attempt to reconnect
+            if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                reconnectAttempts++;
+                const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+                console.log(`Reconnecting in ${delay}ms... (Attempt ${reconnectAttempts})`);
+                setTimeout(initializeWebSocket, delay);
+            } else {
+                showToast('Connection lost. Please refresh the page.', 'error');
+            }
+        };
+        
+    } catch (error) {
+        console.error('Failed to create WebSocket:', error);
+        showToast('Failed to connect to consultation room', 'error');
+    }
+}
+
+function handleWebSocketMessage(data) {
+    const { type, data: payload } = data;
+    
+    switch (type) {
+        case 'connected':
+            console.log('Connected to session:', payload.session_id);
+            console.log('Users in session:', payload.users);
+            updateParticipantsList(payload.users);
+            break;
+            
+        case 'message':
+            // Display new message
+            displayReceivedMessage(payload);
+            break;
+            
+        case 'typing':
+            // Show typing indicator
+            if (payload.is_typing) {
+                showTypingIndicator(payload.user_name);
+            } else {
+                hideTypingIndicator();
+            }
+            break;
+            
+        case 'user_joined':
+            showToast(`${payload.user_name} joined the session`, 'info');
+            break;
+            
+        case 'user_left':
+            showToast(`${payload.user_name} left the session`, 'info');
+            break;
+            
+        case 'session_update':
+            handleSessionUpdate(payload);
+            break;
+            
+        case 'document_shared':
+            showToast(`${payload.user_name} shared a document`, 'info');
+            // Refresh documents tab
+            if (typeof loadDocuments === 'function') {
+                loadDocuments();
+            }
+            break;
+            
+        default:
+            console.log('Unknown message type:', type);
+    }
+}
+
+function sendWebSocketMessage(type, data) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type, data }));
+    } else {
+        console.error('WebSocket not connected');
+        showToast('Not connected. Please refresh the page.', 'error');
+    }
+}
+
+// Update sendMessage function to use WebSocket
+function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    // Send via WebSocket
+    sendWebSocketMessage('message', {
+        content: message
+    });
+    
+    // Add message to UI immediately (will be confirmed by server)
+    addMessageToChat(message, true);
+    
+    // Clear input
+    input.value = '';
+    input.style.height = 'auto';
+}
+
+function displayReceivedMessage(payload) {
+    const { sender_id, sender_name, content, timestamp } = payload;
+    
+    // Don't display if it's our own message (already displayed)
+    const currentUserId = getCurrentUserId(); // Implement this to get current user ID
+    if (sender_id === currentUserId) {
+        return;
+    }
+    
+    addMessageToChat(content, false, sender_name, timestamp);
+}
+
+// Typing indicator
+let typingTimeout;
+const chatInput = document.getElementById('chatInput');
+
+if (chatInput) {
+    chatInput.addEventListener('input', function() {
+        // Send typing indicator
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            sendWebSocketMessage('typing', { is_typing: true });
+            
+            // Clear previous timeout
+            clearTimeout(typingTimeout);
+            
+            // Stop typing after 2 seconds of no input
+            typingTimeout = setTimeout(() => {
+                sendWebSocketMessage('typing', { is_typing: false });
+            }, 2000);
+        }
+    });
+}
+
+// Helper function to get cookie
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+}
+
+// Helper function to get current user ID (implement based on your auth system)
+function getCurrentUserId() {
+    // This should return the current user's ID
+    // You might get this from a data attribute, API call, or global variable
+    const userElement = document.querySelector('[data-user-id]');
+    return userElement ? parseInt(userElement.dataset.userId) : null;
+}
+
+// Update participants list
+function updateParticipantsList(users) {
+    console.log('Participants:', users);
+    // Implement UI update for participants list if needed
+}
+
+// Handle session updates
+function handleSessionUpdate(payload) {
+    console.log('Session update:', payload);
+    // Implement session status updates (e.g., expert joined, session started, etc.)
+}
+
+// Initialize WebSocket on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeWebSocket();
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+    }
+});
+
+    // =====================================================
+    // CHAT FUNCTIONS
+    // =====================================================
+    function initializeChat() {
+        const chatInput = document.getElementById('chatInput');
+        const videoModeChatInput = document.getElementById('videoModeChatInput');
+        
+        if (chatInput) {
+            chatInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+                
+                // Send typing indicator if WebSocket is connected
+                if (websocket && websocket.readyState === WebSocket.OPEN) {
+                    try {
+                        websocket.send(JSON.stringify({ type: 'typing' }));
+                    } catch (error) {
+                        console.warn('Could not send typing indicator:', error);
+                    }
+                }
+            });
+        }
+        
+        if (videoModeChatInput) {
+            videoModeChatInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+                
+                // Send typing indicator if WebSocket is connected
+                if (websocket && websocket.readyState === WebSocket.OPEN) {
+                    try {
+                        websocket.send(JSON.stringify({ type: 'typing' }));
+                    } catch (error) {
+                        console.warn('Could not send typing indicator:', error);
+                    }
+                }
+            });
+        }
+    }
+
+    function handleChatKeypress(event, inputId) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            sendMessage(inputId);
+        }
+    }
+
+    function sendMessage(inputId = 'chatInput') {
+        console.log('📤 Send message clicked from:', inputId);
+        
+        const input = document.getElementById(inputId);
+        
+        if (!input) {
+            console.error('Chat input not found:', inputId);
+            return;
+        }
+        
+        const message = input.value.trim();
+        
+        if (!message) {
+            console.log('Empty message, not sending');
+            return;
+        }
+        
+        console.log('Sending message:', message);
+        
+        // Add message to both chat areas
+        addMessageToChat(message, true);
+        
+        // Send via WebSocket if connected
+        if (websocket && websocket.readyState === WebSocket.OPEN) {
+            try {
+                websocket.send(JSON.stringify({
+                    type: 'message',
+                    message: message,
+                    session_id: sessionId,
+                    query_id: queryId
+                }));
+            } catch (error) {
+                console.warn('Could not send via WebSocket:', error);
+            }
+        }
+        
+        // Clear both inputs
+        input.value = '';
+        input.style.height = 'auto';
+        
+        const otherInputId = inputId === 'chatInput' ? 'videoModeChatInput' : 'chatInput';
+        const otherInput = document.getElementById(otherInputId);
+        if (otherInput) {
+            otherInput.value = '';
+            otherInput.style.height = 'auto';
+        }
+        
+        // Simulate expert response for demo
+        setTimeout(() => {
+            showTypingIndicator();
+            setTimeout(() => {
+                hideTypingIndicator();
+                const response = generateExpertResponse(message);
+                addMessageToChat(response, false);
+            }, 2000);
+        }, 500);
+    }
+
+    function addMessageToChat(text, isOwn, sender = null) {
+        const messagesContainer = document.getElementById('chatMessages');
+        const videoModeChatMessages = document.getElementById('videoModeChatMessages');
+        
+        const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        const avatar = isOwn ? 'YO' : 'SA';
+        
+        const messageHTML = `
+            <div class="message ${isOwn ? 'own' : ''}">
+                <div class="message-avatar">${avatar}</div>
+                <div class="message-content">
+                    <div class="message-bubble">
+                        <p class="message-text">${escapeHtml(text)}</p>
+                    </div>
+                    <div class="message-time">${time}</div>
+                </div>
+            </div>
+        `;
+        
+        // Add to main chat
+        if (messagesContainer) {
+            messagesContainer.insertAdjacentHTML('beforeend', messageHTML);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        // Add to video mode chat overlay
+        if (videoModeChatMessages) {
+            videoModeChatMessages.insertAdjacentHTML('beforeend', messageHTML);
+            videoModeChatMessages.scrollTop = videoModeChatMessages.scrollHeight;
+        }
+    }
+
+    function showTypingIndicator() {
+        const indicator = document.getElementById('typingIndicator');
+        const messagesContainer = document.getElementById('chatMessages');
+        const videoModeChatMessages = document.getElementById('videoModeChatMessages');
+        
+        if (indicator) {
+            indicator.style.display = 'flex';
+            
+            // Clone to video overlay
+            const clone = indicator.cloneNode(true);
+            clone.id = 'videoModeTypingIndicator';
+            if (videoModeChatMessages && !document.getElementById('videoModeTypingIndicator')) {
+                videoModeChatMessages.appendChild(clone);
+            }
+        }
+        
+        if (messagesContainer) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        if (videoModeChatMessages) {
+            videoModeChatMessages.scrollTop = videoModeChatMessages.scrollHeight;
+        }
+    }
+
+    function hideTypingIndicator() {
+        const indicator = document.getElementById('typingIndicator');
+        const videoModeIndicator = document.getElementById('videoModeTypingIndicator');
+        
+        if (indicator) {
+            indicator.style.display = 'none';
+        }
+        if (videoModeIndicator) {
+            videoModeIndicator.remove();
+        }
+    }
+
+    function generateExpertResponse(message) {
+        const responses = [
+            "That's an excellent point about the termination clause. Under QFCRA regulations, we need to ensure the notice period aligns with standard practice.",
+            "I understand your concern. Let me review the specific clause and provide you with a detailed analysis.",
+            "Based on the contract terms, I recommend we include a provision for that scenario. This will protect your interests.",
+            "You're right to question this clause. It could potentially expose you to unnecessary liability.",
+            "Let me share a similar case we handled recently that might provide useful context for your situation."
+        ];
+        return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    // =====================================================
+    // VIDEO FUNCTIONS
+    // =====================================================
+    function switchToVideo() {
+        console.log('Switching to video mode');
+        viewMode = 'video';
+        
+        const chatContainer = document.getElementById('chatContainer');
+        const videoContainer = document.getElementById('videoContainer');
+        const mainPanel = document.querySelector('.main-panel');
+        
+        if (chatContainer) chatContainer.classList.add('hidden');
+        if (videoContainer) videoContainer.classList.add('active');
+        if (mainPanel) mainPanel.classList.remove('split-view');
+        
+        isVideoMode = true;
+        initializeVideo();
+    }
+
+    function toggleLayout() {
+        console.log('🔄 Toggle layout');
+        const mainPanel = document.querySelector('.main-panel');
+        const chatContainer = document.getElementById('chatContainer');
+        const videoContainer = document.getElementById('videoContainer');
+        const chatOverlay = document.getElementById('chatOverlay');
+        const viewModeBadge = document.getElementById('viewModeBadge');
+        
+        if (viewMode === 'chat') {
+            // Switch to split view
+            viewMode = 'split';
+            if (chatContainer) chatContainer.classList.remove('hidden');
+            if (videoContainer) videoContainer.classList.add('active');
+            if (mainPanel) mainPanel.classList.add('split-view');
+            if (chatOverlay) chatOverlay.classList.remove('active');
+            if (viewModeBadge) {
+                viewModeBadge.innerHTML = '<i class="ti ti-layout-grid"></i><span>Split View</span>';
+            }
+            initializeVideo();
+            showToast('Split screen mode - Video & Chat side by side', 'info');
+        } else if (viewMode === 'split') {
+            // Switch to video only
+            viewMode = 'video';
+            if (chatContainer) chatContainer.classList.add('hidden');
+            if (videoContainer) videoContainer.classList.add('active');
+            if (mainPanel) mainPanel.classList.remove('split-view');
+            if (viewModeBadge) {
+                viewModeBadge.innerHTML = '<i class="ti ti-video"></i><span>Video Mode</span>';
+            }
+            showToast('Video mode - Click chat icon to show chat overlay', 'info');
+        } else {
+            // Switch to chat only
+            viewMode = 'chat';
+            if (videoContainer) videoContainer.classList.remove('active');
+            if (chatContainer) chatContainer.classList.remove('hidden');
+            if (mainPanel) mainPanel.classList.remove('split-view');
+            if (chatOverlay) chatOverlay.classList.remove('active');
+            if (viewModeBadge) {
+                viewModeBadge.innerHTML = '<i class="ti ti-message-circle"></i><span>Chat Mode</span>';
+            }
+            isChatOverlayOpen = false;
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            showToast('Chat mode', 'info');
+        }
+    }
+
+    function toggleChatOverlay() {
+        console.log('💬 Toggle chat overlay');
+        const chatOverlay = document.getElementById('chatOverlay');
+        const toggleBtn = document.getElementById('toggleChatOverlayBtn');
+        
+        if (chatOverlay) {
+            isChatOverlayOpen = !isChatOverlayOpen;
+            chatOverlay.classList.toggle('active', isChatOverlayOpen);
+            
+            if (toggleBtn) {
+                toggleBtn.classList.toggle('active', isChatOverlayOpen);
+            }
+            
+            showToast(isChatOverlayOpen ? 'Chat opened' : 'Chat closed', 'info');
+        }
+    }
+
+    async function initializeVideo() {
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            const localVideo = document.getElementById('localVideo');
+            if (localVideo) {
+                localVideo.srcObject = localStream;
+            }
+            showToast('Camera and microphone connected', 'success');
+        } catch (error) {
+            console.error('Error accessing camera:', error);
+            showToast('Unable to access camera/microphone', 'error');
+        }
+    }
+
+    function toggleCamera() {
+        console.log('📹 Toggle camera');
+        const btn = document.getElementById('cameraBtn');
+        if (localStream && btn) {
+            const videoTrack = localStream.getVideoTracks()[0];
+            if (videoTrack) {
+                videoTrack.enabled = !videoTrack.enabled;
+                isCameraOn = videoTrack.enabled;
+                btn.classList.toggle('active', !isCameraOn);
+                btn.innerHTML = isCameraOn ? '<i class="ti ti-video"></i>' : '<i class="ti ti-video-off"></i>';
+                showToast(isCameraOn ? 'Camera on' : 'Camera off', 'info');
+            }
+        }
+    }
+
+    function toggleMicrophone() {
+        console.log('🎤 Toggle microphone');
+        const btn = document.getElementById('micBtn');
+        if (localStream && btn) {
+            const audioTrack = localStream.getAudioTracks()[0];
+            if (audioTrack) {
+                audioTrack.enabled = !audioTrack.enabled;
+                isMicOn = audioTrack.enabled;
+                btn.classList.toggle('active', !isMicOn);
+                btn.innerHTML = isMicOn ? '<i class="ti ti-microphone"></i>' : '<i class="ti ti-microphone-off"></i>';
+                showToast(isMicOn ? 'Microphone on' : 'Microphone off', 'info');
+            }
+        }
+    }
+
+    function shareScreen() {
+        console.log('🖥️ Share screen');
+        showToast('Screen sharing started', 'success');
+        // Implement actual screen sharing logic
+    }
+
+    // =====================================================
+    // TAB SWITCHING
+    // =====================================================
+    function switchTab(tabName) {
+        console.log('Switching to tab:', tabName);
+        
+        // Update tab buttons
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        tabButtons.forEach(btn => {
+            const btnTab = btn.getAttribute('data-tab');
+            if (btnTab === tabName) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        
+        // Update tab contents
+        const allTabContents = document.querySelectorAll('.tab-content');
+        allTabContents.forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        const targetTab = document.getElementById(tabName + 'Tab');
+        if (targetTab) {
+            targetTab.classList.add('active');
+        }
+    }
+
+    // =====================================================
+    // DOCUMENT FUNCTIONS
+    // =====================================================
+    function viewDocument(docId) {
+        console.log('👁️ View document:', docId);
+        window.open(`/api/documents/${docId}/view`, '_blank');
+        showToast('Opening document...', 'info');
+    }
+
+    function downloadDocument(docId) {
+        console.log('⬇️ Download document:', docId);
+        window.location.href = `/api/documents/${docId}/download`;
+        showToast('Download started', 'success');
+    }
+
+    function attachFile() {
+        console.log('📎 Attach file clicked');
+        const fileUpload = document.getElementById('fileUpload');
+        if (fileUpload) {
+            fileUpload.click();
+        }
+    }
+
+    function handleFileUpload(event) {
+        const files = event.target.files;
+        if (files.length > 0) {
+            console.log(`📤 Uploading ${files.length} file(s)`);
+            showToast(`Uploading ${files.length} file(s)...`, 'info');
+            // Implement actual file upload logic
+        }
+    }
+
+    // =====================================================
+    // NOTES FUNCTIONS
+    // =====================================================
+    function setupAutoSaveNotes() {
+        const notesEditor = document.getElementById('notesEditor');
+        if (!notesEditor) return;
+        
+        let saveTimeout;
+        
+        notesEditor.addEventListener('input', function() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                saveNotes();
+            }, 2000);
+        });
+    }
+
+    function saveNotes() {
+        const notes = document.getElementById('notesEditor');
+        if (!notes) return;
+        
+        console.log('💾 Auto-saving notes...');
+        
+        // Save to backend via API
+        fetch('/api/consultation-sessions/notes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                session_id: sessionId,
+                notes: notes.value
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Notes saved:', data);
+        })
+        .catch(error => {
+            console.error('Error saving notes:', error);
+        });
+    }
+
+    function exportNotes() {
+        console.log('📥 Export notes');
+        const notes = document.getElementById('notesEditor');
+        if (!notes) return;
+        
+        const blob = new Blob([notes.value], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `consultation-notes-${sessionId}-${Date.now()}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Notes exported successfully', 'success');
+    }
+
+    // =====================================================
+    // ACTION ITEMS
+    // =====================================================
+    function toggleActionItem(checkbox) {
+        console.log('✅ Toggle action item');
+        checkbox.classList.toggle('checked');
+        const checkIcon = checkbox.querySelector('i');
+        if (checkIcon) {
+            checkIcon.style.display = checkbox.classList.contains('checked') ? 'block' : 'none';
+        }
+        
+        const actionContent = checkbox.nextElementSibling;
+        if (actionContent) {
+            const actionText = actionContent.querySelector('.action-text');
+            if (actionText) {
+                const isCompleted = checkbox.classList.contains('checked');
+                console.log('Action item:', actionText.textContent, 'Status:', isCompleted ? 'Completed' : 'Open');
+            }
+        }
+    }
+
+    function addActionItem() {
+        console.log('➕ Add action item');
+        const text = prompt('Enter action item:');
+        if (text && text.trim()) {
+            const actionsSection = document.querySelector('.action-items-section');
+            if (!actionsSection) return;
+            
+            const actionItem = document.createElement('div');
+            actionItem.className = 'action-item';
+            actionItem.innerHTML = `
+                <div class="action-checkbox">
+                    <i class="ti ti-check" style="display: none;"></i>
+                </div>
+                <div class="action-content">
+                    <div class="action-text">${escapeHtml(text)}</div>
+                    <div class="action-meta">Assigned to: You • Due: Not set</div>
+                </div>
+            `;
+            
+            actionsSection.appendChild(actionItem);
+            
+            // Add event listener to new checkbox
+            const newCheckbox = actionItem.querySelector('.action-checkbox');
+            if (newCheckbox) {
+                newCheckbox.addEventListener('click', function() {
+                    toggleActionItem(this);
+                });
+            }
+            
+            showToast('Action item added', 'success');
+            
+            // Save to backend via API
+            fetch('/api/consultation-sessions/action-items', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    session_id: sessionId,
+                    task_description: text,
+                    assigned_to: 'current_user',
+                    status: 'Open'
+                })
+            }).catch(error => {
+                console.error('Error saving action item:', error);
+            });
+        }
+    }
+
+    // =====================================================
+    // CLAUSE FUNCTIONS
+    // =====================================================
+    function highlightClause(clauseId) {
+        console.log('🔍 Highlight clause:', clauseId);
+        showToast(`Highlighting clause ${clauseId} in document`, 'info');
+    }
+
+    // =====================================================
+    // SESSION CONTROLS
+    // =====================================================
+    function toggleFullscreen() {
+        console.log('⛶ Toggle fullscreen');
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.error('Fullscreen error:', err);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    }
+
+    function toggleRecording() {
+        console.log('⏺️ Toggle recording');
+        isRecording = !isRecording;
+        const btn = document.getElementById('recordBtn');
+        
+        if (isRecording) {
+            if (btn) btn.style.color = 'var(--danger-color)';
+            showToast('Recording started', 'success');
+            
+            // Start recording via API
+            fetch('/api/consultation-sessions/start-recording', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    session_id: sessionId
+                })
+            }).catch(error => {
+                console.error('Error starting recording:', error);
+            });
+        } else {
+            if (btn) btn.style.color = '';
+            showToast('Recording stopped', 'success');
+            
+            // Stop recording via API
+            fetch('/api/consultation-sessions/stop-recording', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    session_id: sessionId
+                })
+            }).catch(error => {
+                console.error('Error stopping recording:', error);
+            });
+        }
+    }
+
+    function endSession() {
+        console.log('🛑 End session');
+        const duration = document.getElementById('sessionTimer');
+        const finalDuration = document.getElementById('finalDuration');
+        const modal = document.getElementById('endSessionModal');
+        
+        if (duration && finalDuration) {
+            finalDuration.textContent = duration.textContent;
+        }
+        
+        if (modal) {
+            modal.classList.add('active');
+        }
+        
+        if (sessionTimer) {
+            clearInterval(sessionTimer);
+        }
+        
+        // Stop video/audio streams
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+        }
+    }
+
+    // =====================================================
+    // RATING AND FEEDBACK
+    // =====================================================
+    function setRating(rating) {
+        console.log('⭐ Rating:', rating);
+        selectedRating = rating;
+        const stars = document.querySelectorAll('.star');
+        stars.forEach((star, index) => {
+            if (index < rating) {
+                star.classList.add('active');
+            } else {
+                star.classList.remove('active');
+            }
+        });
+    }
+
+    function submitFeedback() {
+        console.log('📝 Submit feedback');
+        
+        if (selectedRating === 0) {
+            showToast('Please provide a rating', 'error');
+            return;
+        }
+        
+        const feedbackText = document.getElementById('feedbackText');
+        const feedback = feedbackText ? feedbackText.value : '';
+        
+        // Submit feedback to backend
+        fetch('/api/consultation-sessions/feedback', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                session_id: sessionId,
+                rating: selectedRating,
+                feedback: feedback
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            showToast('Thank you for your feedback!', 'success');
+            
+            // Close WebSocket
+            if (websocket) {
+                websocket.close();
+            }
+            
+            setTimeout(() => {
+                window.location.href = '/consultations';
+            }, 1500);
+        })
+        .catch(error => {
+            console.error('Error submitting feedback:', error);
+            showToast('Error submitting feedback', 'error');
+        });
+    }
+
+    function skipFeedback() {
+        console.log('⏭️ Skip feedback');
+        
+        // Close WebSocket
+        if (websocket) {
+            websocket.close();
+        }
+        
+        window.location.href = '/consultations';
+    }
+
+    function closeModal() {
+        console.log('✖️ Close modal');
+        const modal = document.getElementById('endSessionModal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+        startSessionTimer(); // Resume timer if modal closed
+    }
+
+    // =====================================================
+    // UTILITY FUNCTIONS
+    // =====================================================
+    function showToast(message, type = 'info') {
+        console.log(`Toast [${type}]:`, message);
+        
+        const toast = document.createElement('div');
+        toast.className = 'toast-notification';
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            background: ${type === 'success' ? 'var(--success-color)' : type === 'error' ? 'var(--danger-color)' : 'var(--info-color)'};
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            animation: slideInUp 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        `;
+        
+        const icon = type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'info-circle';
+        toast.innerHTML = `
+            <i class="ti ti-${icon}"></i>
+            <span>${message}</span>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.animation = 'fadeOut 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Add animations CSS
+    if (!document.querySelector('#consultationAnimations')) {
+        const style = document.createElement('style');
+        style.id = 'consultationAnimations';
+        style.textContent = `
+            @keyframes slideInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+})();
+</script>
+{% endblock %}

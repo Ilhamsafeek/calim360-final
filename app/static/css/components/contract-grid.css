@@ -1,0 +1,398 @@
+.contracts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 2rem;
+    padding: 0;
+}
+
+.contract-card {
+    background: var(--background-white);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    position: relative;
+}
+
+.contract-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary-color);
+}
+
+.contract-header {
+    padding: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.contract-type-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--background-white);
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(39, 98, 203, 0.3);
+}
+
+.contract-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.contract-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0 0 0.5rem 0;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.contract-id {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
+    margin: 0 0 0.75rem 0;
+    letter-spacing: 0.5px;
+}
+
+.contract-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+}
+
+.contract-type,
+.contract-category {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.contract-separator {
+    color: var(--border-color);
+}
+
+.contract-status-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+/* Status badges */
+.status-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.875rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 20px;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.status-draft {
+    background: var(--warning-bg);
+    color: var(--warning-color);
+    border: 1px solid rgba(133, 100, 4, 0.2);
+}
+
+.status-in-progress {
+    background: var(--info-bg);
+    color: var(--info-color);
+    border: 1px solid rgba(12, 84, 96, 0.2);
+}
+
+.status-internal-review {
+    background: #e2e3ff;
+    color: #5a67d8;
+    border: 1px solid rgba(90, 103, 216, 0.2);
+}
+
+.status-completed {
+    background: var(--success-bg);
+    color: var(--success-color);
+    border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.priority-indicator {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+}
+
+.priority-indicator.high {
+    background: rgba(220, 53, 69, 0.1);
+    color: var(--danger-color);
+    border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+/* Contract body */
+.contract-body {
+    padding: 1.5rem;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--background-light);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+}
+
+.detail-item:hover {
+    background: var(--background-white);
+    border-color: var(--primary-color);
+}
+
+.detail-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.detail-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--primary-color);
+    color: var(--background-white);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.detail-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.detail-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-value {
+    font-size: 0.875rem;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.detail-value.overdue {
+    color: var(--danger-color);
+    font-weight: 600;
+}
+
+.detail-value.upcoming {
+    color: var(--warning-color);
+    font-weight: 600;
+}
+
+/* Progress bar */
+.progress-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    transition: width 0.3s ease;
+    border-radius: 4px;
+    position: relative;
+}
+
+.progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.progress-percentage {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-color);
+    min-width: 32px;
+    text-align: right;
+}
+
+/* Contract actions */
+.contract-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: var(--background-light);
+    border-top: 1px solid var(--border-color);
+}
+
+.action-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-group.menu {
+    margin-left: auto;
+}
+
+.action-btn {
+    width: 40px;
+    height: 40px;
+    background: var(--background-white);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+}
+
+.action-btn:hover {
+    background: var(--primary-color);
+    color: var(--background-white);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(39, 98, 203, 0.3);
+}
+
+.action-btn.primary {
+    background: var(--primary-color);
+    color: var(--background-white);
+    border-color: var(--primary-color);
+}
+
+.action-btn.primary:hover {
+    background: #1e4f8b;
+    box-shadow: 0 6px 20px rgba(39, 98, 203, 0.4);
+}
+
+/* Add contract card */
+.add-contract-card {
+    border: 2px dashed var(--border-color);
+    background: var(--background-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 320px;
+    position: relative;
+    overflow: hidden;
+}
+
+.add-contract-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(39, 98, 203, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.add-contract-card:hover {
+    border-color: var(--primary-color);
+    background: rgba(39, 98, 203, 0.05);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(39, 98, 203, 0.15);
+}
+
+.add-contract-card:hover::before {
+    left: 100%;
+}
+
+.add-contract-content {
+    text-align: center;
+    color: var(--text-muted);
+    position: relative;
+    z-index: 1;
+}
+
+.add-contract-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--background-white);
+    font-size: 2.5rem;
+    margin: 0 auto 1.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(39, 98, 203, 0.3);
+}
+
+.add-contract-card:hover .add-contract-icon {
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 8px 25px rgba(39, 98, 203, 0.4);
+}
+
+.add-contract-text h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.add-contract-text p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}

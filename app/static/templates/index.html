@@ -1,0 +1,2963 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CALIM 360 - Smart Contract Lifecycle Management</title>
+    <meta name="description"
+        content="End-to-End Project, Contract & Compliance Intelligence - Delivered in One Unified Platform">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.34.0/tabler-icons.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #2762cb;
+            --secondary-color: #73B4E0;
+            --text-color: #333;
+            --text-muted: #666;
+            --border-color: #e9ecef;
+            --background-light: #f8f9fa;
+            --white: #ffffff;
+            --success-color: #28a745;
+            --warning-color: #f0ad4e;
+            --danger-color: #dc3545;
+            --blockchain-color: #6c4dc4;
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.15);
+            --shadow-xl: 0 25px 50px rgba(0, 0, 0, 0.2);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --gradient-primary: linear-gradient(135deg, #2762cb 0%, #1e4bb8 100%);
+            --gradient-hero: linear-gradient(135deg, #0f1729 0%, #1a2744 50%, #2762cb 100%);
+            --gradient-blockchain: linear-gradient(135deg, #6c4dc4 0%, #5035a3 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ============================================
+           NAVIGATION
+           ============================================ */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 1rem 0;
+            transition: var(--transition);
+            background: rgba(255, 255, 255, 0.98);
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-md);
+            padding: 0.5rem 0;
+        }
+
+        .navbar.scrolled {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-md);
+            padding: 0.5rem 0;
+        }
+
+        .navbar.scrolled .nav-link {
+            color: var(--text-color);
+        }
+
+        .navbar.scrolled .btn-ghost:hover {
+            background: rgba(39, 98, 203, 0.1);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 9.7px 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .logo-img {
+            height: 48px;
+            width: auto;
+            max-width: 130px;
+            object-fit: contain;
+
+            transition: var(--transition);
+        }
+
+        .navbar.scrolled .logo-img {
+            filter: none;
+            height: 48px;
+        }
+
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            list-style: none;
+
+        }
+
+
+        .nav-link {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .nav-link:hover {
+            color: var(--secondary-color);
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--secondary-color);
+            transition: var(--transition);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: var(--transition);
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-ghost {
+            color: var(--primary-color);
+
+            background: rgba(39, 98, 203, 0.1);
+        }
+
+        .ghost {
+            color: var(--primary-color);
+            background: rgba(39, 98, 203, 0.1);
+            color: var(--white);
+            border: 1px solid var(--border-color);
+
+        }
+
+        .btn-ghost:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(39, 98, 203, 0.5);
+        }
+
+        .ghost:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(39, 98, 203, 0.5);
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(39, 98, 203, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(39, 98, 203, 0.5);
+        }
+
+        .btn-large {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
+        .btn-white {
+            background: white;
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        .btn-white:hover {
+            background: var(--background-light);
+            transform: translateY(-2px);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+        }
+
+        .navbar.scrolled .mobile-menu-btn {
+            color: var(--text-color);
+        }
+
+        /* ============================================
+           HERO SECTION
+           ============================================ */
+        .hero {
+            min-height: 100vh;
+            background: var(--gradient-hero);
+            position: relative;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .hero-bg-pattern {
+            position: absolute;
+            inset: 0;
+            background-image:
+                radial-gradient(circle at 20% 80%, rgba(115, 180, 224, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(39, 98, 203, 0.2) 0%, transparent 50%);
+        }
+
+        .hero-grid {
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        .hero-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 8rem 2rem 4rem;
+            position: relative;
+            z-index: 10;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .hero-content {
+            max-width: 650px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(115, 180, 224, 0.15);
+            border: 1px solid rgba(115, 180, 224, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            color: var(--secondary-color);
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: white;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            letter-spacing: -1px;
+        }
+
+        .hero-title .highlight {
+            background: linear-gradient(135deg, var(--secondary-color), #a8d4f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-description {
+            font-size: 1.25rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 2rem;
+            line-height: 1.7;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        /* Micro Trust Line */
+        .micro-trust {
+            margin-top: 2.5rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        /* Dashboard Preview - Dynamic 3D Animation */
+        .hero-visual {
+            position: relative;
+            perspective: 1000px;
+        }
+
+        .dashboard-preview {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1rem;
+            transform: rotateY(-5deg) rotateX(5deg);
+            box-shadow: var(--shadow-xl);
+            transition: var(--transition);
+            animation: dashboardFloat 6s ease-in-out infinite;
+        }
+
+        @keyframes dashboardFloat {
+
+            0%,
+            100% {
+                transform: rotateY(-5deg) rotateX(5deg) translateY(0);
+            }
+
+            50% {
+                transform: rotateY(-3deg) rotateX(3deg) translateY(-10px);
+            }
+        }
+
+        .dashboard-preview:hover {
+            transform: rotateY(0) rotateX(0);
+            animation-play-state: paused;
+        }
+
+        .dashboard-header {
+            display: flex;
+            gap: 0.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1rem;
+        }
+
+        .dashboard-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot-red {
+            background: #ff5f57;
+        }
+
+        .dot-yellow {
+            background: #febc2e;
+        }
+
+        .dot-green {
+            background: #28c840;
+        }
+
+        .dashboard-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .mini-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: var(--transition);
+        }
+
+        .mini-card:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: scale(1.02);
+        }
+
+        .mini-card-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .mini-card-icon i {
+            color: white;
+            font-size: 20px;
+        }
+
+        .mini-card-text h4 {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 0.25rem;
+        }
+
+        .mini-card-text p {
+            font-size: 1.25rem;
+            color: white;
+            font-weight: 700;
+        }
+
+        /* Animated counter effect */
+        .mini-card-text p {
+            animation: countPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes countPulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        .floating-card {
+            position: absolute;
+            background: white;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .floating-card-1 {
+            top: 10%;
+            right: -20px;
+            animation-delay: 0s;
+        }
+
+        .floating-card-2 {
+            bottom: 20%;
+            left: -30px;
+            animation-delay: 1.5s;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .floating-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .floating-icon.success {
+            background: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
+        }
+
+        .floating-icon.primary {
+            background: rgba(39, 98, 203, 0.1);
+            color: var(--primary-color);
+        }
+
+        .floating-text h5 {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .floating-text p {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        /* ============================================
+           SECTIONS COMMON
+           ============================================ */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 4rem;
+        }
+
+        .section-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(39, 98, 203, 0.08);
+            color: var(--primary-color);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 2.75rem;
+            font-weight: 800;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            letter-spacing: -0.5px;
+        }
+
+        .section-subtitle {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* ============================================
+           VALUE PROPOSITION SLIDER
+           ============================================ */
+        .value-section {
+            padding: 6rem 0;
+            background: white;
+        }
+
+        .slider-container {
+            position: relative;
+            overflow: hidden;
+            padding: 2rem 0;
+        }
+
+        .slider-wrapper {
+            overflow: hidden;
+        }
+
+        .value-grid {
+            display: flex;
+            gap: 2rem;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .value-card {
+            background: var(--background-light);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: var(--transition);
+            border: 1px solid transparent;
+            flex: 0 0 calc(33.333% - 1.34rem);
+            min-width: 300px;
+        }
+
+        .value-card:hover {
+            background: white;
+            border-color: var(--primary-color);
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .value-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--gradient-primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .value-icon i {
+            font-size: 28px;
+            color: white;
+        }
+
+        .value-card h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 0.75rem;
+        }
+
+        .value-card p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* Slider Navigation */
+        .slider-nav {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .slider-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--border-color);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .slider-dot.active {
+            background: var(--primary-color);
+            width: 30px;
+            border-radius: 5px;
+        }
+
+        .slider-arrows {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 1rem;
+            pointer-events: none;
+        }
+
+        .slider-arrow {
+            width: 48px;
+            height: 48px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            pointer-events: all;
+            transition: var(--transition);
+            box-shadow: var(--shadow-md);
+        }
+
+        .slider-arrow:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .slider-arrow i {
+            font-size: 24px;
+        }
+
+        /* ============================================
+           THREE PILLARS
+           ============================================ */
+        .pillars-section {
+            padding: 6rem 0;
+            background: linear-gradient(180deg, var(--background-light) 0%, white 100%);
+        }
+
+        .pillars-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        .pillar-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+        }
+
+        .pillar-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .pillar-header {
+            padding: 2rem;
+            background: var(--gradient-primary);
+            text-align: center;
+        }
+
+        .pillar-icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+
+        .pillar-icon i {
+            font-size: 32px;
+            color: white;
+        }
+
+        .pillar-header h3 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .pillar-content {
+            padding: 2rem;
+        }
+
+        .pillar-list {
+            list-style: none;
+        }
+
+        .pillar-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .pillar-list li:last-child {
+            border-bottom: none;
+        }
+
+        .pillar-list i {
+            color: var(--success-color);
+            font-size: 18px;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .pillar-list span {
+            color: var(--text-color);
+            font-size: 0.95rem;
+        }
+
+        .pillars-cta {
+            text-align: center;
+            margin-top: 3rem;
+        }
+
+        /* ============================================
+           FEATURES GRID
+           ============================================ */
+        .features-section {
+            padding: 6rem 0;
+            background: white;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+        }
+
+        .feature-tile {
+            background: var(--background-light);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .feature-tile:hover {
+            background: white;
+            border-color: var(--primary-color);
+            transform: scale(1.05);
+        }
+
+        .feature-tile i {
+            font-size: 32px;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .feature-tile h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        /* ============================================
+           BLOCKCHAIN SECTION - PURPLE THEME
+           ============================================ */
+        .blockchain-section {
+            padding: 6rem 0;
+            background: linear-gradient(135deg, #1a0f2e 0%, #2d1b4e 50%, #3d2b5f 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .blockchain-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(108, 77, 196, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(115, 180, 224, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .blockchain-section .section-title,
+        .blockchain-section .section-subtitle {
+            color: white;
+        }
+
+        .blockchain-section .section-badge {
+            background: rgba(108, 77, 196, 0.2);
+            border: 1px solid rgba(108, 77, 196, 0.4);
+            color: #b19aff;
+        }
+
+        .blockchain-section .section-subtitle {
+            opacity: 0.85;
+        }
+
+        /* Step-by-Step Process Styling */
+        .blockchain-steps {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 3rem;
+            margin-bottom: 4rem;
+            border: 1px solid rgba(108, 77, 196, 0.2);
+            position: relative;
+            z-index: 10;
+        }
+
+        .blockchain-steps h3 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+        }
+
+        .step-item {
+            text-align: center;
+        }
+
+        .step-number {
+            width: 80px;
+            height: 80px;
+            background: var(--gradient-blockchain);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 2rem;
+            color: white;
+            font-weight: 800;
+            box-shadow: 0 8px 24px rgba(108, 77, 196, 0.4);
+            transition: var(--transition);
+        }
+
+        .step-item:hover .step-number {
+            transform: scale(1.1);
+            box-shadow: 0 12px 32px rgba(108, 77, 196, 0.6);
+        }
+
+        .step-item h4 {
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-item p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* Grid Layout */
+        .blockchain-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: start;
+            position: relative;
+            z-index: 10;
+        }
+
+        .blockchain-visual {
+            position: relative;
+        }
+
+        .blockchain-visual-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .blockchain-visual-header h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .blockchain-visual-header p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .blockchain-visual-header code {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            color: #b19aff;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+
+        .blockchain-chain {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .blockchain-block {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(108, 77, 196, 0.3);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            transition: var(--transition);
+            animation: blockPulse 3s ease-in-out infinite;
+        }
+
+        .blockchain-block:nth-child(odd) {
+            animation-delay: 0s;
+        }
+
+        .blockchain-block:nth-child(even) {
+            animation-delay: 1.5s;
+        }
+
+        @keyframes blockPulse {
+
+            0%,
+            100% {
+                border-color: rgba(108, 77, 196, 0.3);
+                box-shadow: 0 4px 20px rgba(108, 77, 196, 0);
+            }
+
+            50% {
+                border-color: rgba(108, 77, 196, 0.8);
+                box-shadow: 0 4px 20px rgba(108, 77, 196, 0.3);
+            }
+        }
+
+        .blockchain-block:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(10px);
+            animation-play-state: paused;
+        }
+
+        .block-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .block-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-blockchain);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(108, 77, 196, 0.3);
+        }
+
+        .block-icon i {
+            font-size: 20px;
+            color: white;
+        }
+
+        .block-info h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 0.25rem;
+        }
+
+        .block-info span {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-family: 'Courier New', monospace;
+        }
+
+        .block-data {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
+            padding-left: 3rem;
+        }
+
+        .block-connection {
+            width: 2px;
+            height: 1rem;
+            background: linear-gradient(180deg, rgba(108, 77, 196, 0.6) 0%, rgba(108, 77, 196, 0) 100%);
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .block-connection::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 8px;
+            background: rgba(108, 77, 196, 0.6);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 0.6;
+                transform: translateX(-50%) scale(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: translateX(-50%) scale(1.2);
+            }
+        }
+
+        .blockchain-content {
+            color: white;
+        }
+
+        .blockchain-content h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .blockchain-content>p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            margin-bottom: 2rem;
+            line-height: 1.7;
+        }
+
+        .blockchain-feature-list {
+            list-style: none;
+            margin: 2rem 0;
+        }
+
+        .blockchain-feature-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            transition: var(--transition);
+            border: 1px solid rgba(108, 77, 196, 0.2);
+        }
+
+        .blockchain-feature-list li:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(5px);
+            border-color: rgba(108, 77, 196, 0.4);
+        }
+
+        .feature-icon-wrapper {
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-blockchain);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(108, 77, 196, 0.3);
+        }
+
+        .feature-icon-wrapper i {
+            font-size: 24px;
+            color: white;
+        }
+
+        .feature-text h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-text p {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+        }
+
+        .feature-text code {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            color: #b19aff;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+
+        /* Verification Box */
+        .verification-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(108, 77, 196, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .verification-box h4 {
+            color: #b19aff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .verification-box p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            line-height: 1.7;
+            margin-bottom: 0.75rem;
+        }
+
+        .verification-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        .verification-box code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            color: #4ade80;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+
+        .verification-box strong {
+            color: white;
+        }
+
+        .blockchain-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .blockchain-stat {
+            text-align: center;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(108, 77, 196, 0.2);
+            transition: var(--transition);
+        }
+
+        .blockchain-stat:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(108, 77, 196, 0.4);
+            transform: translateY(-4px);
+        }
+
+        .blockchain-stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #b19aff;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 20px rgba(177, 154, 255, 0.3);
+        }
+
+        .blockchain-stat-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-top: 4rem;
+            border: 1px solid rgba(108, 77, 196, 0.2);
+        }
+
+        .comparison-table h3 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 2rem;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .comparison-table thead tr {
+            border-bottom: 2px solid rgba(108, 77, 196, 0.3);
+        }
+
+        .comparison-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table th:first-child {
+            color: white;
+        }
+
+        .comparison-table th:nth-child(2) {
+            color: #ef4444;
+        }
+
+        .comparison-table th:nth-child(3) {
+            color: #22c55e;
+        }
+
+        .comparison-table tbody {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .comparison-table tbody tr {
+            border-bottom: 1px solid rgba(108, 77, 196, 0.15);
+            transition: var(--transition);
+        }
+
+        .comparison-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .comparison-table td {
+            padding: 1rem;
+        }
+
+        .comparison-table td:first-child {
+            font-weight: 600;
+        }
+
+        .comparison-table .ti-x {
+            color: #ef4444;
+            margin-right: 0.5rem;
+        }
+
+        .comparison-table .ti-check {
+            color: #22c55e;
+            margin-right: 0.5rem;
+        }
+
+        /* ============================================
+           IMPACT SECTION
+           ============================================ */
+        .impact-section {
+            padding: 6rem 0;
+            background: var(--gradient-hero);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .impact-section .section-title,
+        .impact-section .section-subtitle {
+            color: white;
+        }
+
+        .impact-section .section-subtitle {
+            opacity: 0.8;
+        }
+
+        .impact-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        .impact-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 2.5rem;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .impact-card:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-4px);
+        }
+
+        .impact-stat {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .impact-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 0.75rem;
+        }
+
+        .impact-desc {
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* ============================================
+           INDUSTRIES
+           ============================================ */
+        .industries-section {
+            padding: 6rem 0;
+            background: var(--background-light);
+        }
+
+        .industries-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1.5rem;
+        }
+
+        .industry-item {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem 1rem;
+            text-align: center;
+            transition: var(--transition);
+            border: 1px solid var(--border-color);
+        }
+
+        .industry-item:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .industry-item i {
+            font-size: 36px;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .industry-item span {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-color);
+            display: block;
+        }
+
+        /* ============================================
+           TESTIMONIALS SECTION
+           ============================================ */
+        .testimonials-section {
+            padding: 6rem 0;
+            background: white;
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .testimonial-card {
+            background: var(--background-light);
+            border-radius: 20px;
+            padding: 2rem;
+            position: relative;
+            transition: var(--transition);
+            border: 1px solid transparent;
+        }
+
+        .testimonial-card:hover {
+            background: white;
+            border-color: var(--primary-color);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .testimonial-quote {
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .testimonial-quote i {
+            font-size: 24px;
+            color: white;
+        }
+
+        .testimonial-text {
+            font-size: 1.05rem;
+            color: var(--text-color);
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .author-avatar {
+            width: 48px;
+            height: 48px;
+            background: rgba(39, 98, 203, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .author-avatar i {
+            font-size: 24px;
+            color: var(--primary-color);
+        }
+
+        .author-info h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .author-info span {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .testimonials-cta {
+            text-align: center;
+        }
+
+        /* ============================================
+           PLATFORM SHOWCASE SECTION
+           ============================================ */
+        .showcase-section {
+            padding: 6rem 0;
+            background: linear-gradient(180deg, var(--background-light) 0%, white 100%);
+        }
+
+        .showcase-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+        }
+
+        .showcase-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+            border: 2px solid transparent;
+        }
+
+        .showcase-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .showcase-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--gradient-primary);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            transition: var(--transition);
+        }
+
+        .showcase-card:hover .showcase-icon {
+            transform: scale(1.1);
+        }
+
+        .showcase-icon i {
+            font-size: 36px;
+            color: white;
+        }
+
+        .showcase-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 0.75rem;
+        }
+
+        .showcase-card p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-preview {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            background: rgba(39, 98, 203, 0.08);
+            color: var(--primary-color);
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .btn-preview:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* ============================================
+           LIFECYCLE
+           ============================================ */
+        .lifecycle-section {
+            padding: 6rem 0;
+            background: white;
+        }
+
+        .lifecycle-flow {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 3rem;
+        }
+
+        .lifecycle-step {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--background-light);
+            padding: 1rem 1.5rem;
+            border-radius: 50px;
+            transition: var(--transition);
+        }
+
+        .lifecycle-step:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .lifecycle-step:hover i {
+            color: white;
+        }
+
+        .lifecycle-step i {
+            font-size: 20px;
+            color: var(--primary-color);
+        }
+
+        .lifecycle-step span {
+            font-weight: 600;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .lifecycle-arrow {
+            font-size: 24px;
+            color: var(--secondary-color);
+        }
+
+        /* ============================================
+           ABOUT SECTION
+           ============================================ */
+        .about-section {
+            padding: 6rem 0;
+            background: var(--gradient-hero);
+        }
+
+        .about-content {
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .about-headline {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .about-text {
+            font-size: 1.15rem;
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.8;
+            margin-bottom: 3rem;
+        }
+
+        .credibility-badges {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .credibility-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1rem 1.5rem;
+            border-radius: 50px;
+            transition: var(--transition);
+        }
+
+        .credibility-badge:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .credibility-badge i {
+            font-size: 24px;
+            color: var(--secondary-color);
+        }
+
+        .credibility-badge span {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        /* ============================================
+           CTA SECTION
+           ============================================ */
+        .cta-section {
+            padding: 6rem 0;
+            background: var(--gradient-primary);
+            text-align: center;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            font-size: 1.15rem;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* ============================================
+           FOOTER
+           ============================================ */
+        .footer {
+            background: #0f1729;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 4rem 0 2rem;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+            gap: 3rem;
+            padding-bottom: 3rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-brand {
+            max-width: 280px;
+        }
+
+        .footer-logo {
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .footer-logo-img {
+            height: 38px;
+            width: auto;
+            max-width: 120px;
+            object-fit: contain;
+
+            opacity: 0.95;
+        }
+
+        .footer-brand p {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .footer-links h4 {
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+        }
+
+        .footer-links ul {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .footer-links a:hover {
+            color: var(--secondary-color);
+        }
+
+        .footer-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 2rem;
+        }
+
+        .footer-copyright {
+            font-size: 0.875rem;
+        }
+
+        .footer-socials {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .footer-socials a {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: var(--transition);
+        }
+
+        .footer-socials a:hover {
+            background: var(--primary-color);
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 1200px) {
+            .hero-container {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .hero-content {
+                max-width: 100%;
+                margin: 0 auto;
+            }
+
+            .hero-buttons {
+                justify-content: center;
+            }
+
+            .hero-visual {
+                display: none;
+            }
+
+            .value-card {
+                flex: 0 0 calc(50% - 1rem);
+                min-width: 280px;
+            }
+
+            .features-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .industries-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .testimonials-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .showcase-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .footer-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .blockchain-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .blockchain-stats {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .steps-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .nav-actions .btn-ghost {
+                display: none;
+            }
+
+            .logo-img {
+                height: 32px;
+            }
+
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .pillars-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .impact-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .value-card {
+                flex: 0 0 calc(100% - 1rem);
+                min-width: 100%;
+            }
+
+            .slider-arrows {
+                display: none;
+            }
+
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .industries-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .showcase-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .credibility-badges {
+                gap: 1rem;
+            }
+
+            .credibility-badge {
+                padding: 0.75rem 1rem;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .footer-brand {
+                max-width: 100%;
+                margin: 0 auto;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .lifecycle-flow {
+                flex-direction: column;
+            }
+
+            .lifecycle-arrow {
+                transform: rotate(90deg);
+            }
+
+            .blockchain-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .blockchain-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .steps-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .blockchain-steps {
+                padding: 2rem 1.5rem;
+            }
+
+            .comparison-table {
+                padding: 2rem 1.5rem;
+            }
+
+            .comparison-table table {
+                font-size: 0.8rem;
+            }
+
+            .comparison-table th,
+            .comparison-table td {
+                padding: 0.75rem 0.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo-img {
+                height: 28px;
+            }
+
+            .footer-logo-img {
+                height: 28px;
+            }
+
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .section-title {
+                font-size: 1.75rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .industries-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .cta-section h2 {
+                font-size: 1.75rem;
+            }
+
+            .blockchain-content h3 {
+                font-size: 1.5rem;
+            }
+
+            .blockchain-visual-header h3 {
+                font-size: 1.25rem;
+            }
+
+            .blockchain-steps h3 {
+                font-size: 1.5rem;
+            }
+
+            .comparison-table h3 {
+                font-size: 1.5rem;
+            }
+
+            .step-number {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <img src="/static/img/contriq-logo.png" alt="CALIM 360" class="logo-img">
+            </a>
+            <ul class="nav-menu">
+                <li><a href="#features" class="nav-link">Features</a></li>
+                <li><a href="#blockchain" class="nav-link">Blockchain</a></li>
+                <li><a href="#modules" class="nav-link">Modules</a></li>
+                <li><a href="#industries" class="nav-link">Industries</a></li>
+                <li><a href="/about" class="nav-link">About</a></li>
+            </ul>
+            <div class="nav-actions">
+                <a href="/login" class="btn btn-ghost"><i class="ti ti-login"></i> Login</a>
+                <a href="/register" class="btn btn-primary"><i class="ti ti-rocket"></i> Get Started</a>
+            </div>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="ti ti-menu-2"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg-pattern"></div>
+        <div class="hero-grid"></div>
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <i class="ti ti-shield-lock"></i>
+                    Blockchain-Secured | AI-Powered Contract Intelligence
+                </div>
+                <h1 class="hero-title">
+                    End-to-End Project, Contract & Compliance Intelligence -<br>
+                    <span class="highlight">Delivered in One Unified Platform.</span>
+                </h1>
+                <p class="hero-description">
+                    Transform the way you manage projects, contracts, claims & compliance - all in one 360° ecosystem.
+                    Powered by advanced AI for intelligent contract analysis and secured by blockchain technology for
+                    immutable audit trails, CALIM 360 ensures transparency, accountability, and compliance at every
+                    stage of your contract lifecycle.
+                </p>
+                <div class="hero-buttons">
+                    <a href="/register" class="btn btn-primary btn-large">
+                        <i class="ti ti-rocket"></i> Request Live Demo
+                    </a>
+                    <a href="#features" class="btn ghost btn-large">
+                        <i class="ti ti-player-play"></i> Explore Platform
+                    </a>
+                </div>
+                <!-- Micro Trust Line -->
+                <p class="micro-trust">Built by industry experts. Powered by AI & Blockchain. Trusted by
+                    high-performance organisations.</p>
+            </div>
+            <div class="hero-visual">
+                <!-- Dynamic 3D Dashboard showing contracts, timelines, claims, analytics and compliance widgets -->
+                <div class="dashboard-preview">
+                    <div class="dashboard-header">
+                        <div class="dashboard-dot dot-red"></div>
+                        <div class="dashboard-dot dot-yellow"></div>
+                        <div class="dashboard-dot dot-green"></div>
+                    </div>
+                    <div class="dashboard-content">
+                        <div class="mini-card">
+                            <div class="mini-card-icon"><i class="ti ti-file-text"></i></div>
+                            <div class="mini-card-text">
+                                <h4>Active Contracts</h4>
+                                <p>247</p>
+                            </div>
+                        </div>
+                        <div class="mini-card">
+                            <div class="mini-card-icon"><i class="ti ti-clock-hour-4"></i></div>
+                            <div class="mini-card-text">
+                                <h4>Timelines</h4>
+                                <p>On Track</p>
+                            </div>
+                        </div>
+                        <div class="mini-card">
+                            <div class="mini-card-icon"><i class="ti ti-alert-triangle"></i></div>
+                            <div class="mini-card-text">
+                                <h4>Claims</h4>
+                                <p>12</p>
+                            </div>
+                        </div>
+                        <div class="mini-card">
+                            <div class="mini-card-icon"><i class="ti ti-chart-bar"></i></div>
+                            <div class="mini-card-text">
+                                <h4>Analytics</h4>
+                                <p>+15%</p>
+                            </div>
+                        </div>
+                        <div class="mini-card">
+                            <div class="mini-card-icon"><i class="ti ti-shield-check"></i></div>
+                            <div class="mini-card-text">
+                                <h4>Compliance</h4>
+                                <p>94%</p>
+                            </div>
+                        </div>
+                        <div class="mini-card">
+                            <div class="mini-card-icon"><i class="ti ti-calendar-check"></i></div>
+                            <div class="mini-card-text">
+                                <h4>Due This Week</h4>
+                                <p>8</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="floating-card floating-card-1">
+                    <div class="floating-icon success"><i class="ti ti-check"></i></div>
+                    <div class="floating-text">
+                        <h5>Contract Approved</h5>
+                        <p>PRJ-2024-0847</p>
+                    </div>
+                </div>
+                <div class="floating-card floating-card-2">
+                    <div class="floating-icon primary"><i class="ti ti-brain"></i></div>
+                    <div class="floating-text">
+                        <h5>AI Analysis</h5>
+                        <p>3 Risks Identified</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- VALUE PROPOSITION SLIDER - Why CALIM 360? -->
+    <section class="value-section" id="features">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge"><i class="ti ti-star"></i> Why CALIM 360?</span>
+                <h2 class="section-title">Built to Deliver Precision, Speed and Legal Assurance</h2>
+                <p class="section-subtitle">Experience the future of contract management with AI-driven insights,
+                    automated workflows, and blockchain-secured audit trails.</p>
+            </div>
+
+            <!-- Slider Container -->
+            <div class="slider-container">
+                <div class="slider-wrapper" id="valueSlider">
+                    <div class="value-grid">
+                        <!-- Card 1 – Contract Intelligence -->
+                        <div class="value-card">
+                            <div class="value-icon"><i class="ti ti-brain"></i></div>
+                            <h3>Contract Intelligence</h3>
+                            <p>AI-driven drafting, clause scanning, risk scoring and jurisdiction-aligned templates.</p>
+                        </div>
+                        <!-- Card 2 – Claims & Dispute Prevention -->
+                        <div class="value-card">
+                            <div class="value-icon"><i class="ti ti-shield-check"></i></div>
+                            <h3>Claims & Dispute Prevention</h3>
+                            <p>Early-warning alerts, evidence mapping and predictive analytics to eliminate disputes
+                                before they arise.</p>
+                        </div>
+                        <!-- Card 3 – Real-Time Project Governance -->
+                        <div class="value-card">
+                            <div class="value-icon"><i class="ti ti-chart-dots-3"></i></div>
+                            <h3>Real-Time Project Governance</h3>
+                            <p>Unified dashboards showing cost, schedule, risk, productivity and compliance metrics.</p>
+                        </div>
+                        <!-- Card 4 – Compliance Automation -->
+                        <div class="value-card">
+                            <div class="value-icon"><i class="ti ti-checkbox"></i></div>
+                            <h3>Compliance Automation</h3>
+                            <p>Auto-tracked approvals, deliverables and regulatory obligations — always audit-ready.</p>
+                        </div>
+                        <!-- Card 5 – Enterprise Integration -->
+                        <div class="value-card">
+                            <div class="value-icon"><i class="ti ti-plug-connected"></i></div>
+                            <h3>Enterprise Integration</h3>
+                            <p>Seamless connectivity with ERP, PMIS, DMS, and scheduling systems.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slider Arrows -->
+                <div class="slider-arrows">
+                    <button class="slider-arrow" onclick="slideValue(-1)">
+                        <i class="ti ti-chevron-left"></i>
+                    </button>
+                    <button class="slider-arrow" onclick="slideValue(1)">
+                        <i class="ti ti-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Slider Navigation Dots - 2 slides -->
+            <div class="slider-nav">
+                <div class="slider-dot active" onclick="goToSlide(0)"></div>
+                <div class="slider-dot" onclick="goToSlide(1)"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Three Pillars -->
+    <section class="pillars-section" id="modules">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge"><i class="ti ti-stack-3"></i> Platform Pillars</span>
+                <h2 class="section-title">Your Entire Ecosystem - Connected, Intelligent & Always in Sync.</h2>
+                <p class="section-subtitle">Three integrated pillars working in perfect harmony to deliver end-to-end
+                    project and contract excellence.</p>
+            </div>
+            <div class="pillars-grid">
+                <!-- Pillar 1: Project Management 360 -->
+                <div class="pillar-card">
+                    <div class="pillar-header">
+                        <div class="pillar-icon"><i class="ti ti-clipboard-list"></i></div>
+                        <h3>Project Management 360</h3>
+                    </div>
+                    <div class="pillar-content">
+                        <ul class="pillar-list">
+                            <li><i class="ti ti-check"></i><span>Real-time dashboards</span></li>
+                            <li><i class="ti ti-check"></i><span>Delay analysis</span></li>
+                            <li><i class="ti ti-check"></i><span>Scope monitoring</span></li>
+                            <li><i class="ti ti-check"></i><span>Cost forecasting</span></li>
+                            <li><i class="ti ti-check"></i><span>Resource performance analytics</span></li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- Pillar 2: Contract & Claims 360 -->
+                <div class="pillar-card">
+                    <div class="pillar-header">
+                        <div class="pillar-icon"><i class="ti ti-file-certificate"></i></div>
+                        <h3>Contract & Claims 360</h3>
+                    </div>
+                    <div class="pillar-content">
+                        <ul class="pillar-list">
+                            <li><i class="ti ti-check"></i><span>Smart drafting</span></li>
+                            <li><i class="ti ti-check"></i><span>Risk scoring</span></li>
+                            <li><i class="ti ti-check"></i><span>Change order tracking</span></li>
+                            <li><i class="ti ti-check"></i><span>Claims prediction</span></li>
+                            <li><i class="ti ti-check"></i><span>Evidence consolidation</span></li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- Pillar 3: Compliance & Governance 360 -->
+                <div class="pillar-card">
+                    <div class="pillar-header">
+                        <div class="pillar-icon"><i class="ti ti-shield-lock"></i></div>
+                        <h3>Compliance & Governance 360</h3>
+                    </div>
+                    <div class="pillar-content">
+                        <ul class="pillar-list">
+                            <li><i class="ti ti-check"></i><span>Obligation tracking</span></li>
+                            <li><i class="ti ti-check"></i><span>Approvals and workflows</span></li>
+                            <li><i class="ti ti-check"></i><span>Regulatory mapping</span></li>
+                            <li><i class="ti ti-check"></i><span>Compliance health score</span></li>
+                            <li><i class="ti ti-check"></i><span>Automated escalations</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <!-- CTA: See How It Works -->
+            <div class="pillars-cta">
+                <a href="#" class="btn btn-primary btn-large">
+                    <i class="ti ti-player-play"></i> See How It Works
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Grid - CALIM 360 FEATURE GRID -->
+    <section class="features-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge"><i class="ti ti-apps"></i> Feature Catalogue</span>
+                <h2 class="section-title">Built to Deliver Precision, Speed and Legal Assurance.</h2>
+                <p class="section-subtitle">Interactive tiles for comprehensive contract management tools.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-tile"><i class="ti ti-robot"></i>
+                    <h4>AI Contract Analyzer</h4>
+                </div>
+                <div class="feature-tile"><i class="ti ti-folder"></i>
+                    <h4>Digital Contract Repository</h4>
+                </div>
+                <div class="feature-tile"><i class="ti ti-calendar-stats"></i>
+                    <h4>Timeline Validation Engine</h4>
+                </div>
+                <div class="feature-tile"><i class="ti ti-flame"></i>
+                    <h4>Risk Heatmaps</h4>
+                </div>
+                <div class="feature-tile"><i class="ti ti-exchange"></i>
+                    <h4>Change Order Intelligence</h4>
+                </div>
+                <div class="feature-tile"><i class="ti ti-gavel"></i>
+                    <h4>Dispute-Ready Documentation</h4>
+                </div>
+                <div class="feature-tile"><i class="ti ti-history"></i>
+                    <h4>Blockchain Audit Trail</h4>
+                </div>
+                <div class="feature-tile"><i class="ti ti-users-group"></i>
+                    <h4>Team Collaboration Hub</h4>
+                </div>
+                <div class="feature-tile"><i class="ti ti-git-merge"></i>
+                    <h4>Approval Workflows</h4>
+                </div>
+                <div class="feature-tile"><i class="ti ti-chart-infographic"></i>
+                    <h4>Performance Dashboards</h4>
+                </div>
+                <div class="feature-tile"><i class="ti ti-trending-up"></i>
+                    <h4>Predictive Analytics</h4>
+                </div>
+                <div class="feature-tile"><i class="ti ti-world"></i>
+                    <h4>Multi-Jurisdiction Legal Models</h4>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         BLOCKCHAIN SECURITY SECTION - ACTUAL IMPLEMENTATION
+         ============================================ -->
+    <section class="blockchain-section" id="blockchain">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">
+                    <i class="ti ti-shield-lock"></i> Blockchain in CALIM 360
+                </span>
+                <h2 class="section-title">How Hyperledger Fabric Secures Your Contracts</h2>
+                <p class="section-subtitle">Every contract lifecycle event is cryptographically hashed using SHA-256 and
+                    stored on our distributed Hyperledger Fabric network. The blockchain hash acts as an immutable
+                    digital fingerprint—once recorded, it cannot be altered without detection. This ensures complete
+                    transparency, legal validity, and QFCRA compliance.</p>
+            </div>
+
+            <!-- Step-by-Step Process -->
+            <div class="blockchain-steps">
+                <h3>
+                    <i class="ti ti-timeline" style="margin-right: 0.5rem;"></i>How It Works - Step by Step
+                </h3>
+                <div class="steps-grid">
+                    <div class="step-item">
+                        <div class="step-number">1</div>
+                        <h4>Create Contract</h4>
+                        <p>User creates or uploads a contract in CALIM 360</p>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">2</div>
+                        <h4>Generate Hash</h4>
+                        <p>System creates SHA-256 cryptographic hash of the document</p>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">3</div>
+                        <h4>Store on Blockchain</h4>
+                        <p>Hash is recorded on Hyperledger Fabric blockchain</p>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">4</div>
+                        <h4>Verify Anytime</h4>
+                        <p>Future verification compares current hash with blockchain record</p>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <!-- Blockchain vs Traditional Database Comparison -->
+            <div class="comparison-table">
+                <h3>
+                    <i class="ti ti-vs"></i>Blockchain vs Traditional Database
+                </h3>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>Traditional Database Logs</th>
+                                <th>Blockchain (Our System)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Tamper-proof</td>
+                                <td><i class="ti ti-x"></i>Can be modified by admin</td>
+                                <td><i class="ti ti-check"></i>Cryptographically immutable</td>
+                            </tr>
+                            <tr>
+                                <td>Verification</td>
+                                <td><i class="ti ti-x"></i>Trust-based</td>
+                                <td><i class="ti ti-check"></i>Mathematically verifiable</td>
+                            </tr>
+                            <tr>
+                                <td>Audit Trail</td>
+                                <td><i class="ti ti-x"></i>Can be deleted/altered</td>
+                                <td><i class="ti ti-check"></i>Permanent, distributed record</td>
+                            </tr>
+                            <tr>
+                                <td>Single Point of Failure</td>
+                                <td><i class="ti ti-x"></i>Yes, database can be compromised</td>
+                                <td><i class="ti ti-check"></i>Distributed across multiple nodes</td>
+                            </tr>
+                            <tr>
+                                <td>Regulatory Compliance</td>
+                                <td><i class="ti ti-x"></i>May not meet QFCRA standards</td>
+                                <td><i class="ti ti-check"></i>Meets Qatar blockchain requirements</td>
+                            </tr>
+                            <tr>
+                                <td>Legal Validity</td>
+                                <td><i class="ti ti-x"></i>Disputed in court</td>
+                                <td><i class="ti ti-check"></i>Cryptographic proof accepted</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Impact Section - REAL-WORLD IMPACT -->
+    <section class="impact-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge" style="background: rgba(255,255,255,0.1); color: white;">
+                    <i class="ti ti-chart-arrows"></i> Real-World Impact
+                </span>
+                <h2 class="section-title">Accelerate Decisions. Reduce Risk. Strengthen Outcomes.</h2>
+                <p class="section-subtitle">3 Impact Pillars shown as Infographics</p>
+            </div>
+            <div class="impact-grid">
+                <!-- 1. Execution Acceleration -->
+                <div class="impact-card">
+                    <div class="impact-stat">60%</div>
+                    <div class="impact-label">Execution Acceleration</div>
+                    <div class="impact-desc">Reduce approval cycles by up to 60% with automated workflows.</div>
+                </div>
+                <!-- 2. Contractual Clarity -->
+                <div class="impact-card">
+                    <div class="impact-stat">100%</div>
+                    <div class="impact-label">Contractual Clarity</div>
+                    <div class="impact-desc">Identify high-risk clauses in seconds with AI-driven scoring.</div>
+                </div>
+                <!-- 3. Dispute Reduction -->
+                <div class="impact-card">
+                    <div class="impact-stat">90%</div>
+                    <div class="impact-label">Dispute Reduction</div>
+                    <div class="impact-desc">Predict claims and delays before they happen — and act proactively.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Industries - INDUSTRY SEGMENTS -->
+    <section class="industries-section" id="industries">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge"><i class="ti ti-building-factory-2"></i> Industry Segments</span>
+                <h2 class="section-title">Built for Industries That Run on Precision.</h2>
+            </div>
+            <div class="industries-grid">
+                <div class="industry-item"><i class="ti ti-building"></i><span>Construction & Infrastructure</span>
+                </div>
+                <div class="industry-item"><i class="ti ti-gas-station"></i><span>Oil & Gas</span></div>
+                <div class="industry-item"><i class="ti ti-bolt"></i><span>Energy & Utilities</span></div>
+                <div class="industry-item"><i class="ti ti-building-bank"></i><span>Government & Public Works</span>
+                </div>
+                <div class="industry-item"><i class="ti ti-car"></i><span>Transportation</span></div>
+                <div class="industry-item"><i class="ti ti-ruler-2"></i><span>Engineering & Consultancy</span></div>
+                <div class="industry-item"><i class="ti ti-assembly"></i><span>Manufacturing</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 7 — CUSTOMER TRUST / TESTIMONIALS -->
+    <section class="testimonials-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge"><i class="ti ti-users"></i> Customer Trust</span>
+                <h2 class="section-title">Trusted by Leaders Who Deliver High-Stakes Projects.</h2>
+            </div>
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-quote">
+                        <i class="ti ti-quote"></i>
+                    </div>
+                    <p class="testimonial-text">"CALIM 360 gave us complete project transparency and eliminated 90% of
+                        documentation bottlenecks."</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar"><i class="ti ti-user"></i></div>
+                        <div class="author-info">
+                            <h4>Project Director</h4>
+                            <span>Engineering Group</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-quote">
+                        <i class="ti ti-quote"></i>
+                    </div>
+                    <p class="testimonial-text">"The AI-powered risk analysis has transformed how we review contracts.
+                        What took days now takes minutes."</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar"><i class="ti ti-user"></i></div>
+                        <div class="author-info">
+                            <h4>Legal Counsel</h4>
+                            <span>Construction Corp</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-quote">
+                        <i class="ti ti-quote"></i>
+                    </div>
+                    <p class="testimonial-text">"The blockchain audit trail gives us confidence that every contract
+                        action is verified and legally defensible."</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar"><i class="ti ti-user"></i></div>
+                        <div class="author-info">
+                            <h4>Compliance Manager</h4>
+                            <span>Oil & Gas International</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonials-cta">
+                <a href="#" class="btn btn-primary">
+                    <i class="ti ti-arrow-right"></i> See Customer Stories
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 8 — PLATFORM SHOWCASE -->
+    <section class="showcase-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge"><i class="ti ti-device-desktop"></i> Platform Showcase</span>
+                <h2 class="section-title">Experience the CALIM 360 Advantage.</h2>
+                <p class="section-subtitle">Interactive sections showing the power of our platform.</p>
+            </div>
+            <div class="showcase-grid">
+                <div class="showcase-card">
+                    <div class="showcase-icon">
+                        <i class="ti ti-robot"></i>
+                    </div>
+                    <h3>Contract Analyzer</h3>
+                    <p>AI-powered clause analysis, risk scoring, and jurisdiction alignment in seconds.</p>
+                    <a href="#" class="btn-preview">
+                        <i class="ti ti-player-play"></i> Try Interactive Preview
+                    </a>
+                </div>
+                <div class="showcase-card">
+                    <div class="showcase-icon">
+                        <i class="ti ti-chart-dots-3"></i>
+                    </div>
+                    <h3>Project Dashboard</h3>
+                    <p>Real-time visibility into cost, schedule, risk, and performance metrics.</p>
+                    <a href="#" class="btn-preview">
+                        <i class="ti ti-player-play"></i> Try Interactive Preview
+                    </a>
+                </div>
+                <div class="showcase-card">
+                    <div class="showcase-icon">
+                        <i class="ti ti-timeline"></i>
+                    </div>
+                    <h3>Claims Timeline</h3>
+                    <p>Visual timeline of claims, evidence mapping, and dispute prediction.</p>
+                    <a href="#" class="btn-preview">
+                        <i class="ti ti-player-play"></i> Try Interactive Preview
+                    </a>
+                </div>
+                <div class="showcase-card">
+                    <div class="showcase-icon">
+                        <i class="ti ti-shield-check"></i>
+                    </div>
+                    <h3>Blockchain Verification</h3>
+                    <p>Immutable audit trail with cryptographic verification for every contract action.</p>
+                    <a href="#" class="btn-preview">
+                        <i class="ti ti-player-play"></i> Try Interactive Preview
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- SECTION 9 — ABOUT CALIM 360 -->
+    <section class="about-section" id="about">
+        <div class="container">
+            <div class="about-content">
+                <span class="section-badge" style="background: rgba(255,255,255,0.1); color: white;"><i
+                        class="ti ti-device-desktop"></i> About</span>
+                <h2 class="about-headline">Engineering Precision Meets Contractual Intelligence.</h2>
+                <p class="about-text">CALIM 360 is designed by industry specialists with decades of experience in
+                    project execution, contracts, governance and dispute resolution. The platform brings together
+                    advanced AI, blockchain security, automation, analytics and legal-grade structures to support fast,
+                    confident decisions.</p>
+                <!-- Badge strip for credibility -->
+                <div class="credibility-badges">
+                    <div class="credibility-badge">
+                        <i class="ti ti-lock"></i>
+                        <span>Data Security</span>
+                    </div>
+                    <div class="credibility-badge">
+                        <i class="ti ti-certificate"></i>
+                        <span>ISO-Compliant Processes</span>
+                    </div>
+                    <div class="credibility-badge">
+                        <i class="ti ti-brain"></i>
+                        <span>AI Governance Supported</span>
+                    </div>
+                    <div class="credibility-badge">
+                        <i class="ti ti-shield-lock"></i>
+                        <span>Blockchain-Secured</span>
+                    </div>
+                    <div class="credibility-badge">
+                        <i class="ti ti-world"></i>
+                        <span>Multi-jurisdiction Legal Frameworks</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Lifecycle - Project Contract Management End-to-End Lifecycle -->
+    <section class="lifecycle-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge"><i class="ti ti-rotate-clockwise-2"></i> Complete Lifecycle</span>
+                <h2 class="section-title">Project Contract Management End-to-End Lifecycle</h2>
+                <p class="section-subtitle">From tender preparation to project close-out, CALIM 360 manages every phase
+                    of your contract lifecycle with blockchain-verified audit trails at each stage.</p>
+            </div>
+            <div class="lifecycle-flow">
+                <!-- Pre-Contract Phase -->
+                <div class="lifecycle-step"><i class="ti ti-file-search"></i><span>Tender Management</span></div>
+                <i class="ti ti-arrow-right lifecycle-arrow"></i>
+                <div class="lifecycle-step"><i class="ti ti-gavel"></i><span>Bid Management</span></div>
+                <i class="ti ti-arrow-right lifecycle-arrow"></i>
+                <!-- Contract Execution Phase -->
+                <div class="lifecycle-step"><i class="ti ti-file-certificate"></i><span>Contract Lifecycle (CLM)</span>
+                </div>
+                <i class="ti ti-arrow-right lifecycle-arrow"></i>
+                <div class="lifecycle-step"><i class="ti ti-report"></i><span>Daily Progress (DPR)</span></div>
+                <i class="ti ti-arrow-right lifecycle-arrow"></i>
+                <!-- Post-Contract Phase -->
+                <div class="lifecycle-step"><i class="ti ti-alert-circle"></i><span>Claim Management</span></div>
+                <i class="ti ti-arrow-right lifecycle-arrow"></i>
+                <div class="lifecycle-step"><i class="ti ti-exchange"></i><span>Variation & Change</span></div>
+                <i class="ti ti-arrow-right lifecycle-arrow"></i>
+                <div class="lifecycle-step"><i class="ti ti-receipt"></i><span>Payment Certificate</span></div>
+                <i class="ti ti-arrow-right lifecycle-arrow"></i>
+                <div class="lifecycle-step"><i class="ti ti-flag-check"></i><span>Project Close-Out</span></div>
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- CTA Section - FINAL CTA -->
+    <section class="cta-section">
+        <div class="container">
+            <h2>Ready to Take Your Project & Contract Management to the Next Level?</h2>
+            <p>CALIM 360 - Your Single Source of Truth for Projects, Contracts & Compliance.</p>
+            <div class="cta-buttons">
+                <a href="/register" class="btn btn-white btn-large">
+                    <i class="ti ti-calendar"></i> Book a Live Demo
+                </a>
+                <a href="/register" class="btn ghost btn-large">
+                    <i class="ti ti-rocket"></i> Start Free Trial
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="/" class="footer-logo">
+                        <img src="/static/img/contriq-logo.png" alt="CALIM 360" class="footer-logo-img">
+                    </a>
+                    <p>Engineering precision meets contractual intelligence. Designed by industry specialists with
+                        decades of experience in project execution, contracts, governance and dispute resolution.
+                        Secured by blockchain technology.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Platform</h4>
+                    <ul>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#blockchain">Blockchain</a></li>
+                        <li><a href="#modules">Modules</a></li>
+                        <li><a href="#">Integrations</a></li>
+                        <li><a href="#">Security</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Solutions</h4>
+                    <ul>
+                        <li><a href="#">Construction</a></li>
+                        <li><a href="#">Oil & Gas</a></li>
+                        <li><a href="#">Government</a></li>
+                        <li><a href="#">Enterprise</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">API Reference</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Support</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="/about">About Us</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Contact</a></li>
+                        <li><a href="#">Partners</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p class="footer-copyright">© 2025 CALIM 360. All rights reserved. | Secure. Scalable.
+                    Blockchain-Verified. Audit-Ready.</p>
+                <div class="footer-socials">
+                    <a href="#"><i class="ti ti-brand-linkedin"></i></a>
+                    <!-- <a href="#"><i class="ti ti-brand-twitter"></i></a> -->
+                    <a href="#"><i class="ti ti-brand-youtube"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ============================================
+        // NAVBAR SCROLL EFFECT
+        // ============================================
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // ============================================
+        // SMOOTH SCROLL FOR ANCHOR LINKS
+        // ============================================
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // ============================================
+        // MOBILE MENU TOGGLE
+        // ============================================
+        function toggleMobileMenu() {
+            const menu = document.querySelector('.nav-menu');
+            menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        // ============================================
+        // VALUE PROPOSITION SLIDER - Shows 3 cards, scroll for 2 more
+        // ============================================
+        let currentSlide = 0;
+        const totalSlides = 2; // 0 = cards 1-3, 1 = cards 3-5
+
+        function slideValue(direction) {
+            currentSlide += direction;
+            if (currentSlide < 0) currentSlide = totalSlides - 1;
+            if (currentSlide >= totalSlides) currentSlide = 0;
+            updateSlider();
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            updateSlider();
+        }
+
+        function updateSlider() {
+            const slider = document.querySelector('.value-grid');
+            const dots = document.querySelectorAll('.slider-dot');
+            const cards = document.querySelectorAll('.value-card');
+
+            // Calculate card width + gap
+            const cardWidth = cards[0].offsetWidth + 32; // 32px = 2rem gap
+
+            // Move by 2 cards (to show next set)
+            const translateX = currentSlide * cardWidth * 2;
+            slider.style.transform = `translateX(-${translateX}px)`;
+
+            // Update dots
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentSlide);
+            });
+        }
+
+        // Auto-rotate slider every 5 seconds
+        setInterval(() => {
+            slideValue(1);
+        }, 5000);
+
+        // Recalculate on window resize
+        window.addEventListener('resize', () => {
+            updateSlider();
+        });
+
+        // ============================================
+        // ANIMATE ON SCROLL
+        // ============================================
+        const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.value-card, .pillar-card, .feature-tile, .impact-card, .industry-item, .lifecycle-step, .blockchain-block, .step-item, .blockchain-stat').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+
+        // ============================================
+        // COUNTER ANIMATION FOR IMPACT STATS
+        // ============================================
+        function animateCounter(element, target, suffix = '%') {
+            let current = 0;
+            const increment = target / 60;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    element.textContent = target + suffix;
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(current) + suffix;
+                }
+            }, 25);
+        }
+
+        const impactSection = document.querySelector('.impact-section');
+        const impactObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const stats = document.querySelectorAll('.impact-stat');
+                    stats.forEach(stat => {
+                        const value = parseInt(stat.textContent);
+                        stat.textContent = '0%';
+                        animateCounter(stat, value);
+                    });
+                    impactObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        if (impactSection) {
+            impactObserver.observe(impactSection);
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1053 @@
+{% extends "base.html" %}
+
+{% block title %}Expert Directory{% endblock %}
+
+{% block head %}
+<style>
+    /* Expert Directory Specific Styles */
+    .page-content {
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    /* Page Header */
+    .page-header {
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.5s ease;
+    }
+
+    .page-title-section {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .page-title {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .page-title h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin: 0;
+    }
+
+    .page-title i {
+        font-size: 2rem;
+        color: var(--primary-color);
+    }
+
+    .page-subtitle {
+        color: var(--text-muted);
+        font-size: 1rem;
+        margin: 0.5rem 0;
+    }
+
+    .page-actions {
+        display: flex;
+        gap: 1rem;
+    }
+
+    /* Search and Filter Section */
+    .search-filter-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        border: 1px solid var(--border-color);
+    }
+
+    .search-bar-wrapper {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.875rem 1rem 0.875rem 3rem;
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: var(--transition);
+        background: var(--background-light);
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        background: white;
+        box-shadow: 0 0 0 4px rgba(39, 98, 203, 0.1);
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-size: 1.25rem;
+    }
+
+    /* Filter Tags */
+    .filter-section {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .filter-label {
+        font-weight: 600;
+        color: var(--text-color);
+        font-size: 0.875rem;
+    }
+
+    .filter-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .filter-tag {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        background: white;
+        color: var(--text-color);
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .filter-tag:hover {
+        border-color: var(--primary-color);
+        background: var(--background-light);
+    }
+
+    .filter-tag.active {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    /* Stats Cards */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.25rem;
+        border: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: var(--transition);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+    }
+
+    .stat-content h3 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin: 0;
+    }
+
+    .stat-content p {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin: 0;
+    }
+
+    /* Expert Grid */
+    .experts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    /* Expert Card */
+    .expert-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        transition: var(--transition);
+        cursor: pointer;
+        animation: fadeInUp 0.5s ease;
+    }
+
+    .expert-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        border-color: var(--primary-color);
+    }
+
+    .expert-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(39, 98, 203, 0.05), rgba(115, 180, 224, 0.05));
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .expert-profile {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .expert-avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: 600;
+        overflow: hidden;
+    }
+
+    .expert-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .expert-info h3 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin: 0 0 0.25rem 0;
+    }
+
+    .expert-title {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin: 0;
+    }
+
+    .expert-license {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin-top: 0.5rem;
+        padding: 0.25rem 0.5rem;
+        background: var(--success-bg);
+        color: var(--success-color);
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .expert-body {
+        padding: 1.5rem;
+    }
+
+    .expert-specialties {
+        margin-bottom: 1rem;
+    }
+
+    .specialty-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .specialty-tag {
+        padding: 0.25rem 0.75rem;
+        background: var(--info-bg);
+        color: var(--info-color);
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .expert-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem 0;
+        border-top: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .expert-stat {
+        text-align: center;
+    }
+
+    .expert-stat-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-color);
+        display: block;
+    }
+
+    .expert-stat-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .expert-availability {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 1rem;
+    }
+
+    .availability-status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--success-color);
+    }
+
+    .status-dot.busy {
+        background: var(--warning-color);
+    }
+
+    .status-dot.offline {
+        background: var(--text-muted);
+    }
+
+    .expert-rating {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .star {
+        color: #ffc107;
+        font-size: 0.875rem;
+    }
+
+    .rating-value {
+        font-size: 0.875rem;
+        color: var(--text-color);
+        font-weight: 600;
+        margin-left: 0.25rem;
+    }
+
+    .expert-actions {
+        padding: 1rem 1.5rem;
+        background: var(--background-light);
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    /* Buttons */
+    .btn {
+        padding: 0.625rem 1.25rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #1e4ba8;
+        transform: translateY(-1px);
+    }
+
+    .btn-outline {
+        background: white;
+        color: var(--primary-color);
+        border: 2px solid var(--primary-color);
+    }
+
+    .btn-outline:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .btn-secondary {
+        background: white;
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        flex: 1;
+    }
+
+    .btn-secondary:hover {
+        background: var(--background-light);
+    }
+
+    /* Loading State */
+    .loading-spinner {
+        display: flex;
+        justify-content: center;
+        padding: 4rem;
+        grid-column: 1 / -1;
+    }
+
+    .spinner {
+        width: 48px;
+        height: 48px;
+        border: 4px solid var(--border-color);
+        border-top-color: var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    /* Empty State */
+    .empty-state {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h3 {
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .experts-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .page-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .page-title-section {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-title-section">
+            <div>
+                <div class="page-title">
+                    <i class="ti ti-users-group"></i>
+                    <h1>Expert Directory</h1>
+                </div>
+                <p class="page-subtitle">Connect with licensed legal experts for contract consultations</p>
+            </div>
+            <div class="page-actions">
+                <button class="btn btn-outline" onclick="refreshExperts()">
+                    <i class="ti ti-refresh"></i>
+                    Refresh
+                </button>
+                <button class="btn btn-primary" onclick="window.location.href='/ask-expert'">
+                    <i class="ti ti-user-question"></i>
+                    Ask an Expert
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="search-filter-section">
+        <div class="search-bar-wrapper">
+            <i class="ti ti-search search-icon"></i>
+            <input type="text" class="search-input" id="expertSearch" placeholder="Search by name, expertise, or specialization...">
+        </div>
+        
+        <div class="filter-section">
+            <span class="filter-label">Expertise Area:</span>
+            <div class="filter-tags">
+                <div class="filter-tag active" data-filter="all">All Experts</div>
+                <div class="filter-tag" data-filter="qfcra">QFCRA</div>
+                <div class="filter-tag" data-filter="construction">Construction Law</div>
+                <div class="filter-tag" data-filter="arbitration">Arbitration</div>
+                <div class="filter-tag" data-filter="contracts">Contract Review</div>
+                <div class="filter-tag" data-filter="compliance">Compliance</div>
+                <div class="filter-tag" data-filter="dispute">Dispute Resolution</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-row" id="statsRow">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="ti ti-users"></i>
+            </div>
+            <div class="stat-content">
+                <h3 id="totalExperts">0</h3>
+                <p>Total Experts</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="ti ti-circle-check"></i>
+            </div>
+            <div class="stat-content">
+                <h3 id="availableExperts">0</h3>
+                <p>Available Now</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="ti ti-clock"></i>
+            </div>
+            <div class="stat-content">
+                <h3 id="avgResponseTime">&lt;5 min</h3>
+                <p>Avg Response Time</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="ti ti-star"></i>
+            </div>
+            <div class="stat-content">
+                <h3 id="platformRating">4.5</h3>
+                <p>Average Rating</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Experts Grid -->
+    <div class="experts-grid" id="expertsGrid">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// =====================================================
+// EXPERT DIRECTORY WITH BACKEND API INTEGRATION
+// =====================================================
+
+let allExperts = [];
+let currentFilter = 'all';
+let currentSearch = '';
+
+// Get auth token
+function getAuthToken() {
+    return localStorage.getItem('access_token') || sessionStorage.getItem('access_token') || '';
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Expert Directory initialized');
+    
+    // Load data from backend
+    loadExpertStats();
+    loadExperts();
+    
+    // Setup event listeners
+    setupEventListeners();
+});
+
+// Setup Event Listeners
+function setupEventListeners() {
+    // Search functionality
+    const searchInput = document.getElementById('expertSearch');
+    if (searchInput) {
+        let searchTimeout;
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(searchTimeout);
+            currentSearch = e.target.value.trim();
+            searchTimeout = setTimeout(() => {
+                console.log('🔍 Searching for:', currentSearch);
+                loadExperts();
+            }, 300);
+        });
+    }
+    
+    // Filter tags
+    document.querySelectorAll('.filter-tag').forEach(tag => {
+        tag.addEventListener('click', function() {
+            document.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            currentFilter = this.getAttribute('data-filter');
+            console.log('🏷️ Filter changed to:', currentFilter);
+            loadExperts();
+        });
+    });
+}
+
+// Load Expert Statistics from Backend
+async function loadExpertStats() {
+    try {
+        const response = await fetch('/api/experts/stats', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load statistics');
+        }
+        
+        const data = await response.json();
+        console.log('📊 Stats loaded:', data);
+        
+        // Update stat cards
+        document.getElementById('totalExperts').textContent = data.total_experts || 0;
+        document.getElementById('availableExperts').textContent = data.available_now || 0;
+        document.getElementById('avgResponseTime').textContent = data.avg_response_time || '< 5 min';
+        document.getElementById('platformRating').textContent = data.platform_rating || '4.5';
+        
+    } catch (error) {
+        console.error('❌ Error loading stats:', error);
+    }
+}
+
+// Load Experts from Backend
+async function loadExperts() {
+    try {
+        const grid = document.getElementById('expertsGrid');
+        grid.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+        
+        // Build query parameters
+        const params = new URLSearchParams();
+        if (currentSearch) params.append('search', currentSearch);
+        if (currentFilter && currentFilter !== 'all') params.append('expertise_area', currentFilter);
+        params.append('limit', '50');
+        
+        const response = await fetch(`/api/experts/directory?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load experts');
+        }
+        
+        const data = await response.json();
+        console.log('✅ Experts loaded:', data);
+        
+        if (data.success && data.experts && data.experts.length > 0) {
+            allExperts = data.experts;
+            renderExperts(allExperts);
+        } else {
+            renderEmptyState();
+        }
+        
+    } catch (error) {
+        console.error('❌ Error loading experts:', error);
+        renderEmptyState();
+    }
+}
+
+// Render Experts Grid
+function renderExperts(experts) {
+    const grid = document.getElementById('expertsGrid');
+    
+    if (!experts || experts.length === 0) {
+        renderEmptyState();
+        return;
+    }
+    
+    grid.innerHTML = experts.map(expert => createExpertCard(expert)).join('');
+}
+
+// Create Expert Card HTML
+function createExpertCard(expert) {
+    const initials = getInitials(expert.full_name || expert.first_name + ' ' + expert.last_name);
+    const availabilityClass = expert.is_available ? '' : 'busy';
+    const availabilityText = expert.is_available ? 'Available Now' : 'Busy';
+    const certBadge = expert.qfcra_certified ? `<span class="expert-license"><i class="ti ti-shield-check"></i> QFCRA Licensed</span>` : '';
+    
+    // Get up to 3 expertise areas
+    const expertiseAreas = Array.isArray(expert.expertise_areas) 
+        ? expert.expertise_areas.slice(0, 3)
+        : [];
+    
+    const specialtyTags = expertiseAreas.length > 0
+        ? expertiseAreas.map(area => `<span class="specialty-tag">${area}</span>`).join('')
+        : '<span class="specialty-tag">General Legal</span>';
+    
+    // Generate star rating
+    const rating = expert.average_rating || 4.5;
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    let starsHTML = '';
+    for (let i = 0; i < fullStars; i++) {
+        starsHTML += '<i class="ti ti-star-filled star"></i>';
+    }
+    if (hasHalfStar) {
+        starsHTML += '<i class="ti ti-star-half-filled star"></i>';
+    }
+    
+    // Profile picture or initials
+    const avatarContent = expert.profile_picture && expert.profile_picture !== '/static/assets/images/default-avatar.png'
+        ? `<img src="${expert.profile_picture}" alt="${expert.full_name}" onerror="this.style.display='none'; this.parentElement.textContent='${initials}';">`
+        : initials;
+    
+    return `
+        <div class="expert-card" data-expertise="${expertiseAreas.join(' ').toLowerCase()}">
+            <div class="expert-header">
+                <div class="expert-profile">
+                    <div class="expert-avatar">${avatarContent}</div>
+                    <div class="expert-info">
+                        <h3>${expert.full_name || 'Expert'}</h3>
+                        <p class="expert-title">${expert.job_title || expert.specialization || 'Legal Expert'}</p>
+                        ${certBadge}
+                    </div>
+                </div>
+            </div>
+            <div class="expert-body">
+                <div class="expert-specialties">
+                    <div class="specialty-tags">
+                        ${specialtyTags}
+                    </div>
+                </div>
+                
+                <div class="expert-stats">
+                    <div class="expert-stat">
+                        <span class="expert-stat-value">${expert.total_consultations || 0}</span>
+                        <span class="expert-stat-label">Consultations</span>
+                    </div>
+                    <div class="expert-stat">
+                        <span class="expert-stat-value">${expert.years_of_experience || 0}y</span>
+                        <span class="expert-stat-label">Experience</span>
+                    </div>
+                    <div class="expert-stat">
+                        <span class="expert-stat-value">${rating.toFixed(1)}</span>
+                        <span class="expert-stat-label">Rating</span>
+                    </div>
+                </div>
+                
+                <div class="expert-availability">
+                    <div class="availability-status">
+                        <span class="status-dot ${availabilityClass}"></span>
+                        <span>${availabilityText}</span>
+                    </div>
+                    <div class="expert-rating">
+                        ${starsHTML}
+                        <span class="rating-value">${rating.toFixed(1)}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="expert-actions">
+                <button class="btn btn-secondary" onclick="viewProfile('${expert.expert_id}')">
+                    <i class="ti ti-user"></i>
+                    View Profile
+                </button>
+                <button class="btn btn-primary" onclick="scheduleConsultation('${expert.expert_id}')">
+                    <i class="ti ti-calendar-plus"></i>
+                    Schedule
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// Get Initials from Name
+function getInitials(name) {
+    if (!name) return '??';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+}
+
+// Render Empty State
+function renderEmptyState() {
+    const grid = document.getElementById('expertsGrid');
+    grid.innerHTML = `
+        <div class="empty-state">
+            <i class="ti ti-user-search"></i>
+            <h3>No Experts Found</h3>
+            <p>Try adjusting your search or filter criteria</p>
+            <button class="btn btn-primary" onclick="resetFilters()">
+                <i class="ti ti-refresh"></i> Reset Filters
+            </button>
+        </div>
+    `;
+}
+
+// View Expert Profile
+async function viewProfile(expertId) {
+    try {
+        console.log('👤 Viewing profile:', expertId);
+        
+        const response = await fetch(`/api/experts/profile/${expertId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load expert profile');
+        }
+        
+        const expert = await response.json();
+        console.log('✅ Profile loaded:', expert);
+        
+        showExpertProfileModal(expert);
+        
+    } catch (error) {
+        console.error('❌ Error loading profile:', error);
+        showToast('Failed to load expert profile', 'error');
+    }
+}
+
+// Show Expert Profile Modal
+function showExpertProfileModal(expert) {
+    const initials = getInitials(expert.full_name);
+    const expertiseHTML = expert.expertise_areas && expert.expertise_areas.length > 0
+        ? expert.expertise_areas.map(area => `<span style="padding: 0.5rem 1rem; background: var(--info-bg); color: var(--info-color); border-radius: 12px; font-size: 0.875rem;">${area}</span>`).join('')
+        : '<span style="color: var(--text-muted);">No specialties listed</span>';
+    
+    const certBadge = expert.qfcra_certified
+        ? '<span style="padding: 0.25rem 0.75rem; background: var(--success-bg); color: var(--success-color); border-radius: 6px; font-size: 0.75rem; font-weight: 600;"><i class="ti ti-shield-check"></i> QFCRA Licensed</span>'
+        : '';
+    
+    const modal = document.createElement('div');
+    modal.id = 'expertProfileModal';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; animation: fadeIn 0.3s ease;';
+    
+    modal.innerHTML = `
+        <div style="background: white; border-radius: 16px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto;">
+            <div style="padding: 2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 style="margin: 0;">Expert Profile</h2>
+                    <button onclick="closeModal('expertProfileModal')" style="background: none; border: none; cursor: pointer; font-size: 1.5rem;">
+                        <i class="ti ti-x"></i>
+                    </button>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem;">
+                    <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; font-weight: 600;">
+                        ${initials}
+                    </div>
+                    <div>
+                        <h3 style="margin: 0 0 0.5rem 0;">${expert.full_name}</h3>
+                        <p style="margin: 0; color: var(--text-muted);">${expert.job_title || expert.specialization || 'Legal Expert'}</p>
+                        <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                            ${certBadge}
+                        </div>
+                    </div>
+                </div>
+                
+                ${expert.bio ? `
+                <div style="margin-bottom: 2rem;">
+                    <h4 style="margin-bottom: 0.5rem;">About</h4>
+                    <p style="color: var(--text-muted); line-height: 1.6;">${expert.bio}</p>
+                </div>
+                ` : ''}
+                
+                <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem; margin-bottom: 1.5rem;">
+                    <h4 style="margin-bottom: 1rem;">Expertise Areas</h4>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        ${expertiseHTML}
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; padding: 1.5rem; background: var(--background-light); border-radius: 12px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);">${expert.total_consultations || 0}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Consultations</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);">${expert.years_of_experience || 0}y</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Experience</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);">${(expert.average_rating || 4.5).toFixed(1)} ⭐</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Rating</div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn btn-secondary" style="flex: 1;" onclick="closeModal('expertProfileModal')">
+                        <i class="ti ti-x"></i> Close
+                    </button>
+                    <button class="btn btn-primary" style="flex: 1;" onclick="scheduleConsultation('${expert.expert_id}')">
+                        <i class="ti ti-calendar-plus"></i> Schedule Consultation
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeModal('expertProfileModal');
+        }
+    });
+}
+
+// Close Modal
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => modal.remove(), 300);
+    }
+}
+
+// Schedule Consultation
+function scheduleConsultation(expertId) {
+    closeModal('expertProfileModal');
+    window.location.href = `/ask-expert?expert=${expertId}&action=schedule`;
+}
+
+// Refresh Experts
+async function refreshExperts() {
+    console.log('🔄 Refreshing experts...');
+    currentSearch = '';
+    currentFilter = 'all';
+    
+    document.getElementById('expertSearch').value = '';
+    document.querySelectorAll('.filter-tag').forEach(tag => tag.classList.remove('active'));
+    document.querySelector('[data-filter="all"]').classList.add('active');
+    
+    await loadExpertStats();
+    await loadExperts();
+    
+    showToast('Experts refreshed successfully', 'success');
+}
+
+// Reset Filters
+function resetFilters() {
+    refreshExperts();
+}
+
+// Show Toast Notification
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        padding: 1rem 1.5rem;
+        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10000;
+        animation: slideInRight 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    `;
+    
+    const icon = type === 'success' ? 'check-circle' : type === 'error' ? 'alert-circle' : 'info-circle';
+    toast.innerHTML = `<i class="ti ti-${icon}"></i><span>${message}</span>`;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+    }
+    @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(100%); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slideOutRight {
+        from { opacity: 1; transform: translateX(0); }
+        to { opacity: 0; transform: translateX(100%); }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

@@ -1,0 +1,1290 @@
+{% extends "base.html" %}
+
+{% block title %}User Settings{% endblock %}
+
+{% block head %}
+<style>
+    /* User Settings Specific Styles */
+    .settings-container {
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-title h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin: 0;
+    }
+
+    .page-title i {
+        font-size: 2rem;
+        color: var(--primary-color);
+    }
+
+    .settings-layout {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 2rem;
+    }
+
+    .settings-sidebar {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        height: fit-content;
+        position: sticky;
+        top: calc(var(--header-height) + 2rem);
+    }
+
+    .user-info-card {
+        padding: 1.5rem;
+        text-align: center;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .user-avatar-large {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+        font-weight: 600;
+        margin: 0 auto 1rem;
+    }
+
+    .user-type-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background: var(--info-bg);
+        color: var(--info-color);
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+        text-transform: uppercase;
+    }
+
+    .settings-nav {
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .settings-nav-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1rem;
+        border-radius: 8px;
+        color: var(--text-color);
+        cursor: pointer;
+        transition: var(--transition);
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+        font-size: 0.925rem;
+    }
+
+    .settings-nav-item:hover {
+        background: var(--background-light);
+        color: var(--primary-color);
+    }
+
+    .settings-nav-item.active {
+        background: rgba(39, 98, 203, 0.08);
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+
+    .settings-content {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        overflow: hidden;
+    }
+
+    .settings-section {
+        display: none;
+        padding: 2rem;
+    }
+
+    .settings-section.active {
+        display: block;
+    }
+
+    .section-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin: 0 0 0.5rem 0;
+    }
+
+    .section-description {
+        color: var(--text-muted);
+        font-size: 0.925rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--text-color);
+        font-size: 0.875rem;
+    }
+
+    .required {
+        color: var(--danger-color);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 0.925rem;
+        transition: var(--transition);
+        font-family: inherit;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
+    }
+
+    .form-control:disabled {
+        background: var(--background-light);
+        cursor: not-allowed;
+    }
+
+    .form-hint {
+        font-size: 0.813rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+    }
+
+    .document-upload-card {
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        background: var(--background-light);
+    }
+
+    .document-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .document-title {
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    .document-status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.813rem;
+    }
+
+    .status-valid {
+        color: var(--success-color);
+    }
+
+    .status-expired {
+        color: var(--danger-color);
+    }
+
+    .upload-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1rem;
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .upload-btn:hover {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .toggle-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        background: var(--background-light);
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .toggle-label {
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    .toggle-description {
+        font-size: 0.813rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+    }
+
+    .toggle-switch {
+        position: relative;
+        width: 48px;
+        height: 24px;
+    }
+
+    .toggle-switch input {
+        display: none;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        inset: 0;
+        background: var(--border-color);
+        transition: 0.3s;
+        border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background: white;
+        transition: 0.3s;
+        border-radius: 50%;
+    }
+
+    input:checked + .toggle-slider {
+        background: var(--success-color);
+    }
+
+    input:checked + .toggle-slider:before {
+        transform: translateX(24px);
+    }
+
+    .license-card {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(39, 98, 203, 0.05), rgba(115, 180, 224, 0.05));
+        border-radius: 8px;
+        border: 1px solid rgba(39, 98, 203, 0.2);
+        margin-bottom: 1.5rem;
+    }
+
+    .license-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .license-type {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+
+    .license-details {
+        display: flex;
+        gap: 2rem;
+        font-size: 0.875rem;
+    }
+
+    .license-detail-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .license-detail-label {
+        color: var(--text-muted);
+    }
+
+    .license-detail-value {
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-size: 0.925rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #1e4ba8;
+    }
+
+    .btn-secondary {
+        background: white;
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+        background: var(--background-light);
+    }
+
+    .settings-actions {
+        padding: 1.5rem 2rem;
+        background: var(--background-light);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .loading-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 10000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .loading-overlay.active {
+        display: flex;
+    }
+
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 1024px) {
+        .settings-layout {
+            grid-template-columns: 1fr;
+        }
+        
+        .settings-sidebar {
+            position: static;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-title">
+            <i class="ti ti-user-cog"></i>
+            <h1>User Settings</h1>
+        </div>
+        <p style="color: var(--text-muted);">Manage your profile and account preferences</p>
+    </div>
+
+    <!-- Settings Layout -->
+    <div class="settings-layout">
+        <!-- Settings Sidebar -->
+        <div class="settings-sidebar">
+            <!-- User Info Card -->
+            <div class="user-info-card">
+                <div class="user-avatar-large" id="userAvatar">{{ user.avatar_initial if user else 'U' }}</div>
+                <div class="user-name" id="userName">{{ user.full_name if user else 'Loading...' }}</div>
+                <div style="font-size: 0.875rem; color: var(--text-muted);" id="userEmail">{{ user.email if user else '' }}</div>
+                <div class="user-type-badge" id="userType">{{ user.user_type if user else 'USER' }}</div>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="settings-nav">
+                <button class="settings-nav-item active" onclick="switchSection('personal')" data-section="personal">
+                    <i class="ti ti-user"></i>
+                    <span>Personal Information</span>
+                </button>
+                <button class="settings-nav-item" onclick="switchSection('company')" data-section="company">
+                    <i class="ti ti-building"></i>
+                    <span>Company Information</span>
+                </button>
+                <button class="settings-nav-item" onclick="switchSection('security')" data-section="security">
+                    <i class="ti ti-shield"></i>
+                    <span>Security</span>
+                </button>
+                <button class="settings-nav-item" onclick="switchSection('preferences')" data-section="preferences">
+                    <i class="ti ti-adjustments"></i>
+                    <span>Account Preferences</span>
+                </button>
+                <button class="settings-nav-item" onclick="switchSection('license')" data-section="license">
+                    <i class="ti ti-certificate"></i>
+                    <span>License & Users</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Settings Content -->
+        <div class="settings-content">
+            <!-- Personal Information Section -->
+            <div class="settings-section active" id="personalSection">
+                <div class="section-header">
+                    <h2 class="section-title">Personal Information</h2>
+                    <p class="section-description">Update your personal details</p>
+                </div>
+
+                <form id="personalInfoForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">
+                                First Name <span class="required">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="firstName" name="first_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">
+                                Last Name <span class="required">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="lastName" name="last_name" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Email Address <span class="required">*</span>
+                        </label>
+                        <input type="email" class="form-control" id="email" disabled>
+                        <span class="form-hint">Contact support to change email address</span>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Job Title</label>
+                            <input type="text" class="form-control" id="jobTitle" name="job_title">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Country/Region</label>
+                        <select class="form-control" id="country" name="country">
+                            <option value="qatar" selected>Qatar</option>
+                            <option value="uae">United Arab Emirates</option>
+                            <option value="saudi">Saudi Arabia</option>
+                            <option value="kuwait">Kuwait</option>
+                            <option value="bahrain">Bahrain</option>
+                            <option value="oman">Oman</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Company Information Section -->
+            <div class="settings-section" id="companySection">
+                <div class="section-header">
+                    <h2 class="section-title">Company Information</h2>
+                    <p class="section-description">Manage your organization details and compliance documents</p>
+                </div>
+
+                <form id="companyInfoForm">
+                    <div class="form-group">
+                        <label class="form-label">Company Name</label>
+                        <input type="text" class="form-control" id="companyName" disabled>
+                        <span class="form-hint">Contact admin to update company name</span>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Industry</label>
+                            <select class="form-control" id="industry" name="industry">
+                                <option value="construction">Construction</option>
+                                <option value="oil-gas">Oil & Gas</option>
+                                <option value="technology">Technology</option>
+                                <option value="healthcare">Healthcare</option>
+                                <option value="finance">Finance</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Company Size</label>
+                            <select class="form-control" id="companySize" name="company_size">
+                                <option value="1-10">1-10 employees</option>
+                                <option value="11-50">11-50 employees</option>
+                                <option value="51-200">51-200 employees</option>
+                                <option value="201-500">201-500 employees</option>
+                                <option value="501-1000">501-1000 employees</option>
+                                <option value="1000+">1000+ employees</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Company Website</label>
+                        <input type="url" class="form-control" id="website" name="website">
+                    </div>
+
+                    <!-- CR Document -->
+                    <div class="document-upload-card">
+                        <div class="document-header">
+                            <div>
+                                <div class="document-title">Commercial Registration (CR)</div>
+                                <div style="font-size: 0.813rem; color: var(--text-muted);" id="crNumber">CR Number: -</div>
+                            </div>
+                            <div class="document-status status-valid" id="crStatus">
+                                <i class="ti ti-circle-check"></i>
+                                <span>Not uploaded</span>
+                            </div>
+                        </div>
+                        <button type="button" class="upload-btn" onclick="document.getElementById('crUpload').click()">
+                            <i class="ti ti-upload"></i>
+                            Update CR Document
+                        </button>
+                        <input type="file" id="crUpload" hidden accept=".pdf,.jpg,.jpeg,.png">
+                    </div>
+
+                    <!-- QID Document -->
+                    <div class="document-upload-card">
+                        <div class="document-header">
+                            <div>
+                                <div class="document-title">Qatar ID (QID)</div>
+                                <div style="font-size: 0.813rem; color: var(--text-muted);" id="qidNumber">QID: -</div>
+                            </div>
+                            <div class="document-status status-valid" id="qidStatus">
+                                <i class="ti ti-circle-check"></i>
+                                <span>Not uploaded</span>
+                            </div>
+                        </div>
+                        <button type="button" class="upload-btn" onclick="document.getElementById('qidUpload').click()">
+                            <i class="ti ti-upload"></i>
+                            Update QID Document
+                        </button>
+                        <input type="file" id="qidUpload" hidden accept=".pdf,.jpg,.jpeg,.png">
+                    </div>
+                </form>
+            </div>
+
+            <!-- Security Section -->
+            <div class="settings-section" id="securitySection">
+                <div class="section-header">
+                    <h2 class="section-title">Security Settings</h2>
+                    <p class="section-description">Keep your account secure</p>
+                </div>
+
+                <h3 style="margin-bottom: 1rem; font-size: 1.125rem;">Change Password</h3>
+                
+                <form id="passwordForm">
+                    <div class="form-group">
+                        <label class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="currentPassword" name="current_password" placeholder="Enter current password">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="newPassword" name="new_password" placeholder="Enter new password">
+                            <span class="form-hint">Minimum 8 characters with letters and numbers</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirmPassword" name="confirm_password" placeholder="Confirm new password">
+                        </div>
+                    </div>
+                </form>
+
+                <h3 style="margin: 2rem 0 1rem 0; font-size: 1.125rem;">Security Settings</h3>
+
+                <div class="toggle-item">
+                    <div>
+                        <div class="toggle-label">Two-Factor Authentication</div>
+                        <div class="toggle-description">Add an extra layer of security to your account</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="twoFA">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Account Preferences Section -->
+            <div class="settings-section" id="preferencesSection">
+                <div class="section-header">
+                    <h2 class="section-title">Account Preferences</h2>
+                    <p class="section-description">Customize your experience</p>
+                </div>
+
+                <form id="preferencesForm">
+                    <div class="form-group">
+                        <label class="form-label">User Type</label>
+                        <select class="form-control" id="userTypeField" disabled>
+                            <option value="client">Client</option>
+                            <option value="contractor">Contractor</option>
+                            <option value="subcontractor">Sub-Contractor</option>
+                            <option value="consultant">Consultant</option>
+                            <option value="supplier">Supplier</option>
+                            <option value="pmo">PMO</option>
+                        </select>
+                        <span class="form-hint">User type cannot be changed after registration</span>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Language Preference</label>
+                            <select class="form-control" id="languagePreference" name="language_preference">
+                                <option value="en">English</option>
+                                <option value="ar">العربية (Arabic)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Time Zone</label>
+                            <select class="form-control" id="timezone" name="timezone">
+                                <option value="Asia/Qatar">Asia/Qatar (UTC+03:00)</option>
+                                <option value="Asia/Dubai">Asia/Dubai (UTC+04:00)</option>
+                                <option value="Asia/Riyadh">Asia/Riyadh (UTC+03:00)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h3 style="margin: 2rem 0 1rem 0; font-size: 1.125rem;">Notifications</h3>
+
+                    <div class="toggle-item">
+                        <div>
+                            <div class="toggle-label">Email Notifications</div>
+                            <div class="toggle-description">Receive updates about contracts and deadlines</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="emailNotifications" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="toggle-item">
+                        <div>
+                            <div class="toggle-label">Newsletter</div>
+                            <div class="toggle-description">Receive product updates and announcements</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="newsletter">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="toggle-item">
+                        <div>
+                            <div class="toggle-label">SMS Notifications</div>
+                            <div class="toggle-description">Get critical alerts via SMS</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="smsNotifications">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </form>
+            </div>
+
+            <!-- License & Users Section -->
+            <div class="settings-section" id="licenseSection">
+                <div class="section-header">
+                    <h2 class="section-title">License & Users</h2>
+                    <p class="section-description">Manage your subscription and user seats</p>
+                </div>
+
+                <div class="license-card">
+                    <div class="license-header">
+                        <div class="license-type" id="licenseType">Corporate License</div>
+                        <button class="btn btn-primary">Upgrade Plan</button>
+                    </div>
+                    <div class="license-details">
+                        <div class="license-detail-item">
+                            <span class="license-detail-label">Contract Limit</span>
+                            <span class="license-detail-value" id="contractLimit">Unlimited</span>
+                        </div>
+                        <div class="license-detail-item">
+                            <span class="license-detail-label">User Seats</span>
+                            <span class="license-detail-value" id="userSeats">6-10 Users</span>
+                        </div>
+                        <div class="license-detail-item">
+                            <span class="license-detail-label">Active Users</span>
+                            <span class="license-detail-value" id="activeUsers">1 / 10</span>
+                        </div>
+                        <div class="license-detail-item">
+                            <span class="license-detail-label">Renewal Date</span>
+                            <span class="license-detail-value" id="renewalDate">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Actions -->
+            <div class="settings-actions">
+                <div id="lastSaved" style="color: var(--text-muted); font-size: 0.875rem;">
+                    Loading...
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn btn-secondary" onclick="location.reload()">Cancel</button>
+                    <button class="btn btn-primary" onclick="saveCurrentSection()">
+                        <i class="ti ti-device-floppy"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Global state
+let currentSettings = {};
+let currentSection = 'personal';
+
+// Load user settings on page load
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadUserSettings();
+});
+
+// Load user settings from API
+async function loadUserSettings() {
+    try {
+        showLoading(true);
+        
+        const response = await fetch('/api/user/settings', {
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load settings');
+        }
+        
+        const result = await response.json();
+        currentSettings = result.data;
+        
+        // Populate form fields
+        populatePersonalInfo(currentSettings.personal);
+        populateCompanyInfo(currentSettings.company);
+        populateSecuritySettings(currentSettings.security);
+        populatePreferences(currentSettings.preferences);
+        populateLicenseInfo(currentSettings.license);
+        
+        // Update sidebar
+        updateSidebar(currentSettings.personal);
+        
+        document.getElementById('lastSaved').textContent = 'Settings loaded';
+        
+    } catch (error) {
+        console.error('Error loading settings:', error);
+        showToast('Failed to load settings', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Populate Personal Information
+function populatePersonalInfo(data) {
+    if (!data) return;
+    
+    document.getElementById('firstName').value = data.first_name || '';
+    document.getElementById('lastName').value = data.last_name || '';
+    document.getElementById('email').value = data.email || '';
+    document.getElementById('phone').value = data.phone || '';
+    document.getElementById('jobTitle').value = data.job_title || '';
+}
+
+// Populate Company Information
+function populateCompanyInfo(data) {
+    if (!data) {
+        document.getElementById('companyName').value = 'No Company';
+        return;
+    }
+    
+    document.getElementById('companyName').value = data.company_name || '';
+    document.getElementById('industry').value = data.industry || '';
+    document.getElementById('website').value = data.website || '';
+    
+    if (data.cr_number) {
+        document.getElementById('crNumber').textContent = `CR Number: ${data.cr_number}`;
+    }
+    
+    if (data.qid_number) {
+        document.getElementById('qidNumber').textContent = `QID: ${data.qid_number}`;
+    }
+}
+
+// Populate Security Settings
+function populateSecuritySettings(data) {
+    if (!data) return;
+    
+    document.getElementById('twoFA').checked = data.two_factor_enabled || false;
+}
+
+// Populate Preferences
+function populatePreferences(data) {
+    if (!data) return;
+    
+    document.getElementById('userTypeField').value = data.user_type || '';
+    document.getElementById('languagePreference').value = data.language_preference || 'en';
+    document.getElementById('timezone').value = data.timezone || 'Asia/Qatar';
+    document.getElementById('emailNotifications').checked = data.email_notifications !== false;
+    document.getElementById('newsletter').checked = data.newsletter || false;
+    document.getElementById('smsNotifications').checked = data.sms_notifications || false;
+}
+
+// Populate License Information
+function populateLicenseInfo(data) {
+    if (!data) return;
+    
+    document.getElementById('licenseType').textContent = data.type || 'Individual';
+    document.getElementById('contractLimit').textContent = data.max_contracts || '10';
+    document.getElementById('userSeats').textContent = `${data.max_users || 1} Users`;
+    document.getElementById('activeUsers').textContent = `${data.active_users || 1} / ${data.max_users || 1}`;
+    
+    if (data.expiry) {
+        const expiryDate = new Date(data.expiry);
+        document.getElementById('renewalDate').textContent = expiryDate.toLocaleDateString();
+    }
+}
+
+// Update Sidebar
+function updateSidebar(data) {
+    if (!data) return;
+    
+    const initials = `${data.first_name?.[0] || ''}${data.last_name?.[0] || ''}`.toUpperCase();
+    document.getElementById('userAvatar').textContent = initials || 'U';
+    document.getElementById('userName').textContent = `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'User';
+    document.getElementById('userEmail').textContent = data.email || '';
+}
+
+// Switch Section
+function switchSection(sectionName) {
+    currentSection = sectionName;
+    
+    // Update navigation
+    document.querySelectorAll('.settings-nav-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.section === sectionName);
+    });
+
+    // Update content
+    document.querySelectorAll('.settings-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    
+    const targetSection = document.getElementById(sectionName + 'Section');
+    if (targetSection) {
+        targetSection.classList.add('active');
+    }
+}
+
+// Save Current Section
+async function saveCurrentSection() {
+    switch(currentSection) {
+        case 'personal':
+            await savePersonalInfo();
+            break;
+        case 'company':
+            await saveCompanyInfo();
+            break;
+        case 'security':
+            await saveSecuritySettings();
+            break;
+        case 'preferences':
+            await savePreferences();
+            break;
+        default:
+            showToast('Nothing to save in this section', 'info');
+    }
+}
+
+// Save Personal Information
+async function savePersonalInfo() {
+    try {
+        const formData = {
+            first_name: document.getElementById('firstName').value,
+            last_name: document.getElementById('lastName').value,
+            phone: document.getElementById('phone').value,
+            job_title: document.getElementById('jobTitle').value,
+            country: document.getElementById('country').value
+        };
+        
+        showLoading(true);
+        
+        const response = await fetch('/api/user/settings/personal', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('Personal information updated successfully', 'success');
+            await loadUserSettings(); // Reload to refresh sidebar
+        } else {
+            throw new Error(result.message || 'Failed to update');
+        }
+        
+    } catch (error) {
+        console.error('Error saving personal info:', error);
+        showToast('Failed to update personal information', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Save Company Information
+async function saveCompanyInfo() {
+    try {
+        const formData = {
+            industry: document.getElementById('industry').value,
+            company_size: document.getElementById('companySize').value,
+            website: document.getElementById('website').value
+        };
+        
+        showLoading(true);
+        
+        const response = await fetch('/api/user/settings/company', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('Company information updated successfully', 'success');
+        } else {
+            throw new Error(result.message || 'Failed to update');
+        }
+        
+    } catch (error) {
+        console.error('Error saving company info:', error);
+        showToast('Failed to update company information', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Save Security Settings (Password)
+async function saveSecuritySettings() {
+    const currentPass = document.getElementById('currentPassword').value;
+    const newPass = document.getElementById('newPassword').value;
+    const confirmPass = document.getElementById('confirmPassword').value;
+    
+    // If password fields are filled, validate and save password
+    if (currentPass || newPass || confirmPass) {
+        if (!currentPass) {
+            showToast('Please enter your current password', 'error');
+            return;
+        }
+        
+        if (newPass !== confirmPass) {
+            showToast('New passwords do not match', 'error');
+            return;
+        }
+        
+        if (newPass.length < 8) {
+            showToast('Password must be at least 8 characters', 'error');
+            return;
+        }
+        
+        try {
+            showLoading(true);
+            
+            const response = await fetch('/api/user/settings/password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    current_password: currentPass,
+                    new_password: newPass,
+                    confirm_password: confirmPass
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // Clear password fields
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+                showToast('Password updated successfully', 'success');
+            } else {
+                throw new Error(result.message || 'Failed to update password');
+            }
+            
+        } catch (error) {
+            console.error('Error changing password:', error);
+            showToast(error.message || 'Failed to change password', 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+    
+    // Save 2FA setting
+    try {
+        showLoading(true);
+        
+        const response = await fetch('/api/user/settings/security', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                two_factor_enabled: document.getElementById('twoFA').checked
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('Security settings updated', 'success');
+        }
+        
+    } catch (error) {
+        console.error('Error updating security settings:', error);
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Save Preferences
+async function savePreferences() {
+    try {
+        const formData = {
+            language_preference: document.getElementById('languagePreference').value,
+            timezone: document.getElementById('timezone').value,
+            email_notifications: document.getElementById('emailNotifications').checked,
+            newsletter: document.getElementById('newsletter').checked,
+            sms_notifications: document.getElementById('smsNotifications').checked
+        };
+        
+        showLoading(true);
+        
+        const response = await fetch('/api/user/settings/preferences', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('Preferences updated successfully', 'success');
+        } else {
+            throw new Error(result.message || 'Failed to update');
+        }
+        
+    } catch (error) {
+        console.error('Error saving preferences:', error);
+        showToast('Failed to update preferences', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Handle CR Document Upload
+document.getElementById('crUpload')?.addEventListener('change', async function(e) {
+    if (!e.target.files[0]) return;
+    
+    try {
+        showLoading(true);
+        
+        const formData = new FormData();
+        formData.append('file', e.target.files[0]);
+        
+        const response = await fetch('/api/user/settings/upload-document?document_type=cr', {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('CR document uploaded successfully', 'success');
+        } else {
+            throw new Error(result.message || 'Upload failed');
+        }
+        
+    } catch (error) {
+        console.error('Error uploading CR:', error);
+        showToast('Failed to upload CR document', 'error');
+    } finally {
+        showLoading(false);
+    }
+});
+
+// Handle QID Document Upload
+document.getElementById('qidUpload')?.addEventListener('change', async function(e) {
+    if (!e.target.files[0]) return;
+    
+    try {
+        showLoading(true);
+        
+        const formData = new FormData();
+        formData.append('file', e.target.files[0]);
+        
+        const response = await fetch('/api/user/settings/upload-document?document_type=qid', {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('QID document uploaded successfully', 'success');
+        } else {
+            throw new Error(result.message || 'Upload failed');
+        }
+        
+    } catch (error) {
+        console.error('Error uploading QID:', error);
+        showToast('Failed to upload QID document', 'error');
+    } finally {
+        showLoading(false);
+    }
+});
+
+// Show Loading Overlay
+function showLoading(show) {
+    const overlay = document.getElementById('loadingOverlay');
+    if (show) {
+        overlay.classList.add('active');
+    } else {
+        overlay.classList.remove('active');
+    }
+}
+
+// Show Toast Notification
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        padding: 1rem 1.5rem;
+        background: ${type === 'success' ? 'var(--success-color)' : type === 'error' ? 'var(--danger-color)' : 'var(--info-color)'};
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10001;
+        animation: slideInUp 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        max-width: 400px;
+    `;
+    
+    const icon = type === 'success' ? 'check' : type === 'error' ? 'x' : 'info-circle';
+    toast.innerHTML = `<i class="ti ti-${icon}"></i> ${message}`;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Add animation styles
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/negotiation/MOD_046_clause_history.js

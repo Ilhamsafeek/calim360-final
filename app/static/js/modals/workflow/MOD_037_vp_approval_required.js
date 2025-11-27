@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/workflow/MOD_037_vp_approval_required.js

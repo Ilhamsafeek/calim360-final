@@ -1,0 +1,51 @@
+<!-- placeholder for: docker-compose.yml -->
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: smrt_clm_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your_secure_password_here
+      POSTGRES_DB: smrt_clm_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - smrt_clm_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: smrt_clm_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - smrt_clm_network
+
+  app:
+    build: .
+    container_name: smrt_clm_app
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./app:/app
+      - ./uploads:/app/uploads
+    networks:
+      - smrt_clm_network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  postgres_data:
+
+networks:
+  smrt_clm_network:
+    driver: bridge

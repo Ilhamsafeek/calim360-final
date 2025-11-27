@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/screens/obligations/SCR_040_ai_obligations.js

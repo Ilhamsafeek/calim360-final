@@ -1,0 +1,1 @@
+// placeholder for: app/static/js/modals/obligations/MOD_058_obligation_details.js

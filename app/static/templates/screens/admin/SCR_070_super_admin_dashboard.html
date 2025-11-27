@@ -1,0 +1,423 @@
+{% extends "base.html" %}
+{% block title %}Super Admin Dashboard - CALIM 360{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1 class="page-title">
+                <i class="ti ti-shield-check"></i>
+                Super Admin Dashboard
+            </h1>
+            <p class="page-subtitle">System-wide administration and monitoring</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-outline" onclick="refreshStats()">
+                <i class="ti ti-refresh"></i> Refresh
+            </button>
+            <button class="btn btn-primary" onclick="exportReport()">
+                <i class="ti ti-download"></i> Export Report
+            </button>
+        </div>
+    </div>
+
+    <!-- System Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon primary">
+                <i class="ti ti-building"></i>
+            </div>
+            <div class="stat-content">
+                <span class="stat-value" id="totalCompanies">-</span>
+                <span class="stat-label">Total Companies</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon success">
+                <i class="ti ti-users"></i>
+            </div>
+            <div class="stat-content">
+                <span class="stat-value" id="totalUsers">-</span>
+                <span class="stat-label">Total Users</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon info">
+                <i class="ti ti-file-text"></i>
+            </div>
+            <div class="stat-content">
+                <span class="stat-value" id="totalContracts">-</span>
+                <span class="stat-label">Total Contracts</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon warning">
+                <i class="ti ti-clock"></i>
+            </div>
+            <div class="stat-content">
+                <span class="stat-value" id="pendingApprovals">-</span>
+                <span class="stat-label">Pending Approvals</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon danger">
+                <i class="ti ti-git-merge"></i>
+            </div>
+            <div class="stat-content">
+                <span class="stat-value" id="activeWorkflows">-</span>
+                <span class="stat-label">Active Workflows</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon secondary">
+                <i class="ti ti-login"></i>
+            </div>
+            <div class="stat-content">
+                <span class="stat-value" id="todayLogins">-</span>
+                <span class="stat-label">Today's Logins</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="section-card">
+        <h3 class="section-title">
+            <i class="ti ti-bolt"></i> Quick Actions
+        </h3>
+        <div class="quick-actions-grid">
+            <a href="/admin/companies" class="action-card">
+                <i class="ti ti-building-plus"></i>
+                <span>Manage Companies</span>
+            </a>
+            <a href="/admin/all-users" class="action-card">
+                <i class="ti ti-user-plus"></i>
+                <span>Manage Users</span>
+            </a>
+            <a href="/admin/roles" class="action-card">
+                <i class="ti ti-shield"></i>
+                <span>Roles & Permissions</span>
+            </a>
+            <a href="/audit-trail" class="action-card">
+                <i class="ti ti-history"></i>
+                <span>Audit Logs</span>
+            </a>
+            <a href="/admin/settings" class="action-card">
+                <i class="ti ti-settings"></i>
+                <span>System Settings</span>
+            </a>
+            <a href="/reports" class="action-card">
+                <i class="ti ti-chart-bar"></i>
+                <span>Analytics</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Tables Row -->
+    <div class="tables-row">
+        <!-- Recent Companies -->
+        <div class="section-card half">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="ti ti-building"></i> Recent Companies
+                </h3>
+                <a href="/admin/companies" class="btn btn-sm btn-link">View All</a>
+            </div>
+            <table class="data-table" id="companiesTable">
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Users</th>
+                        <th>Contracts</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Recent Users -->
+        <div class="section-card half">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="ti ti-users"></i> Recent Users
+                </h3>
+                <a href="/admin/all-users" class="btn btn-sm btn-link">View All</a>
+            </div>
+            <table class="data-table" id="usersTable">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Company</th>
+                        <th>Role</th>
+                        <th>Last Login</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Contracts by Status Chart -->
+    <div class="section-card">
+        <h3 class="section-title">
+            <i class="ti ti-chart-pie"></i> Contracts by Status
+        </h3>
+        <div class="chart-container">
+            <canvas id="statusChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<style>
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--card-background);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.stat-icon.primary { background: rgba(26, 95, 122, 0.1); color: var(--primary-color); }
+.stat-icon.success { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+.stat-icon.info { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.stat-icon.warning { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+.stat-icon.danger { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+.stat-icon.secondary { background: rgba(107, 114, 128, 0.1); color: #6b7280; }
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: block;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.action-card {
+    padding: 1.5rem;
+    background: var(--background-light);
+    border-radius: 12px;
+    text-align: center;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: all 0.2s;
+    border: 1px solid var(--border-color);
+}
+
+.action-card:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.action-card i {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.tables-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.section-card.half {
+    min-height: 300px;
+}
+
+.chart-container {
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 1024px) {
+    .tables-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const API_BASE = '/api/admin';
+let statusChart = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadStatistics();
+    loadCompanies();
+    loadUsers();
+});
+
+async function loadStatistics() {
+    try {
+        const response = await fetch(`${API_BASE}/statistics`);
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('totalCompanies').textContent = data.data.total_companies || 0;
+            document.getElementById('totalUsers').textContent = data.data.total_users || 0;
+            document.getElementById('totalContracts').textContent = data.data.total_contracts || 0;
+            document.getElementById('pendingApprovals').textContent = data.data.pending_approvals || 0;
+            document.getElementById('activeWorkflows').textContent = data.data.active_workflows || 0;
+            document.getElementById('todayLogins').textContent = data.data.today_logins || 0;
+            
+            // Render chart
+            renderStatusChart(data.data.contracts_by_status || {});
+        }
+    } catch (error) {
+        console.error('Error loading statistics:', error);
+    }
+}
+
+function renderStatusChart(statusData) {
+    const ctx = document.getElementById('statusChart').getContext('2d');
+    
+    if (statusChart) {
+        statusChart.destroy();
+    }
+    
+    const labels = Object.keys(statusData);
+    const values = Object.values(statusData);
+    const colors = [
+        '#1a5f7a', '#22c55e', '#3b82f6', '#f59e0b', 
+        '#ef4444', '#8b5cf6', '#ec4899', '#6b7280'
+    ];
+    
+    statusChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: colors.slice(0, labels.length),
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
+}
+
+async function loadCompanies() {
+    try {
+        const response = await fetch(`${API_BASE}/companies?limit=5`);
+        const data = await response.json();
+        
+        const tbody = document.querySelector('#companiesTable tbody');
+        tbody.innerHTML = '';
+        
+        if (data.success && data.data) {
+            data.data.forEach(company => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${company.company_name}</strong></td>
+                        <td>${company.user_count || 0}</td>
+                        <td>${company.contract_count || 0}</td>
+                        <td>
+                            <span class="status-badge ${company.is_active ? 'success' : 'danger'}">
+                                ${company.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+    } catch (error) {
+        console.error('Error loading companies:', error);
+    }
+}
+
+async function loadUsers() {
+    try {
+        const response = await fetch(`${API_BASE}/users?limit=5`);
+        const data = await response.json();
+        
+        const tbody = document.querySelector('#usersTable tbody');
+        tbody.innerHTML = '';
+        
+        if (data.success && data.data) {
+            data.data.forEach(user => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>
+                            <strong>${user.first_name} ${user.last_name}</strong>
+                            <small class="text-muted d-block">${user.email}</small>
+                        </td>
+                        <td>${user.company_name || '-'}</td>
+                        <td>${(user.roles || []).join(', ') || '-'}</td>
+                        <td>${user.last_login_at ? new Date(user.last_login_at).toLocaleDateString() : 'Never'}</td>
+                    </tr>
+                `;
+            });
+        }
+    } catch (error) {
+        console.error('Error loading users:', error);
+    }
+}
+
+function refreshStats() {
+    loadStatistics();
+    loadCompanies();
+    loadUsers();
+    showNotification('Data refreshed', 'success');
+}
+
+function exportReport() {
+    window.location.href = `${API_BASE}/export-report?format=pdf`;
+}
+</script>
+{% endblock %}
