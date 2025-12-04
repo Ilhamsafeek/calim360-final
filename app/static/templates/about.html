@@ -43,9 +43,6 @@
             overflow-x: hidden;
         }
 
-        /* ============================================
-           NAVIGATION - Same as /
-           ============================================ */
         .navbar {
             position: fixed;
             top: 0; left: 0; right: 0;
@@ -187,9 +184,6 @@
             cursor: pointer;
         }
 
-        /* ============================================
-           PAGE HERO
-           ============================================ */
         .page-hero {
             min-height: 50vh;
             background: var(--gradient-hero);
@@ -265,9 +259,6 @@
             margin-right: auto;
         }
 
-        /* ============================================
-           SECTIONS COMMON
-           ============================================ */
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -307,9 +298,6 @@
             line-height: 1.7;
         }
 
-        /* ============================================
-           MISSION SECTION
-           ============================================ */
         .mission-section {
             padding: 6rem 0;
             background: white;
@@ -412,9 +400,6 @@
             display: block;
         }
 
-        /* ============================================
-           VALUES SECTION
-           ============================================ */
         .values-section {
             padding: 6rem 0;
             background: var(--background-light);
@@ -476,9 +461,6 @@
             line-height: 1.6;
         }
 
-        /* ============================================
-           STORY SECTION
-           ============================================ */
         .story-section {
             padding: 6rem 0;
             background: white;
@@ -520,9 +502,6 @@
             margin: 0;
         }
 
-        /* ============================================
-           EXPERTISE SECTION
-           ============================================ */
         .expertise-section {
             padding: 6rem 0;
             background: var(--gradient-hero);
@@ -610,9 +589,6 @@
             font-size: 16px;
         }
 
-        /* ============================================
-           TECHNOLOGY SECTION
-           ============================================ */
         .technology-section {
             padding: 6rem 0;
             background: var(--background-light);
@@ -657,73 +633,90 @@
             color: var(--text-muted);
         }
 
-        /* ============================================
-           TEAM SECTION
-           ============================================ */
         .team-section {
             padding: 6rem 0;
             background: white;
         }
 
         .team-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
         }
 
         .team-card {
             background: var(--background-light);
-            border-radius: 20px;
-            overflow: hidden;
+            border-radius: 16px;
+            padding: 2rem 2.5rem;
+            display: grid;
+            grid-template-columns: 280px 1fr auto;
+            align-items: center;
+            gap: 2rem;
             transition: var(--transition);
+            border: 2px solid transparent;
         }
 
         .team-card:hover {
-            transform: translateY(-8px);
+            transform: translateX(8px);
             box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+            background: white;
         }
 
-        .team-avatar {
-            height: 200px;
-            background: var(--gradient-primary);
+        .team-info-left {
             display: flex;
-            align-items: center;
-            justify-content: center;
+            flex-direction: column;
         }
 
-        .team-avatar i {
-            font-size: 80px;
-            color: rgba(255,255,255,0.3);
-        }
-
-        .team-info {
-            padding: 1.5rem;
-            text-align: center;
-        }
-
-        .team-info h4 {
-            font-size: 1.1rem;
+        .team-info-left h4 {
+            font-size: 1.15rem;
             font-weight: 700;
             color: var(--text-color);
             margin-bottom: 0.25rem;
         }
 
-        .team-info .role {
-            font-size: 0.9rem;
+        .team-info-left .role {
+            font-size: 0.95rem;
             color: var(--primary-color);
-            font-weight: 500;
-            margin-bottom: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
         }
 
-        .team-info p {
-            font-size: 0.85rem;
+        .team-info-left .credentials {
+            font-size: 0.8rem;
             color: var(--text-muted);
-            line-height: 1.5;
+            font-weight: 500;
+            letter-spacing: 0.3px;
         }
 
-        /* ============================================
-           COMPLIANCE SECTION
-           ============================================ */
+        .team-description {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        .team-social {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .team-social a {
+            width: 36px;
+            height: 36px;
+            background: rgba(39,98,203,0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            transition: var(--transition);
+        }
+
+        .team-social a:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
         .compliance-section {
             padding: 6rem 0;
             background: linear-gradient(135deg, #1a0f2e 0%, #2d1b4e 50%, #3d2b5f 100%);
@@ -791,9 +784,6 @@
             line-height: 1.5;
         }
 
-        /* ============================================
-           CTA SECTION
-           ============================================ */
         .cta-section {
             padding: 6rem 0;
             background: var(--gradient-primary);
@@ -823,9 +813,6 @@
             flex-wrap: wrap;
         }
 
-        /* ============================================
-           FOOTER
-           ============================================ */
         .footer {
             background: #0f1729;
             color: rgba(255,255,255,0.7);
@@ -908,17 +895,25 @@
 
         .footer-socials a:hover { background: var(--primary-color); }
 
-        /* ============================================
-           RESPONSIVE
-           ============================================ */
         @media (max-width: 1200px) {
             .mission-grid { grid-template-columns: 1fr; gap: 3rem; }
             .values-grid { grid-template-columns: repeat(2, 1fr); }
             .expertise-grid { grid-template-columns: repeat(2, 1fr); }
             .tech-grid { grid-template-columns: repeat(3, 1fr); }
-            .team-grid { grid-template-columns: repeat(2, 1fr); }
+            .team-card { grid-template-columns: 220px 1fr auto; }
             .compliance-grid { grid-template-columns: repeat(2, 1fr); }
             .footer-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 992px) {
+            .team-card {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 1rem;
+            }
+            .team-social {
+                justify-content: center;
+            }
         }
 
         @media (max-width: 768px) {
@@ -931,7 +926,6 @@
             .values-grid { grid-template-columns: 1fr; }
             .expertise-grid { grid-template-columns: 1fr; }
             .tech-grid { grid-template-columns: repeat(2, 1fr); }
-            .team-grid { grid-template-columns: 1fr; }
             .compliance-grid { grid-template-columns: 1fr; }
             .footer-grid { grid-template-columns: 1fr; text-align: center; }
             .footer-brand { max-width: 100%; margin: 0 auto; }
@@ -947,18 +941,17 @@
     </style>
 </head>
 <body>
-    <!-- Navigation - Same as / -->
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <a href="/" class="logo">
                 <img src="/static/img/contriq-logo.png" alt="CALIM 360" class="logo-img">
             </a>
             <ul class="nav-menu">
-                  <li><a href="/#features" class="nav-link">Features</a></li>
+                <li><a href="/#features" class="nav-link">Features</a></li>
                 <li><a href="/#blockchain" class="nav-link">Blockchain</a></li>
                 <li><a href="/#modules" class="nav-link">Modules</a></li>
                 <li><a href="/#industries" class="nav-link">Industries</a></li>
-                <li><a href="/about" class="nav-link">About</a></li>
+                <li><a href="/about" class="nav-link active">About</a></li>
             </ul>
             <div class="nav-actions">
                 <a href="/login" class="btn btn-ghost"><i class="ti ti-login"></i> Login</a>
@@ -970,7 +963,6 @@
         </div>
     </nav>
 
-    <!-- Page Hero -->
     <section class="page-hero">
         <div class="hero-bg-pattern"></div>
         <div class="hero-grid"></div>
@@ -991,7 +983,6 @@
         </div>
     </section>
 
-    <!-- Mission Section -->
     <section class="mission-section">
         <div class="container">
             <div class="mission-grid">
@@ -1048,7 +1039,6 @@
         </div>
     </section>
 
-    <!-- Values Section -->
     <section class="values-section">
         <div class="container">
             <div class="section-header">
@@ -1081,7 +1071,6 @@
         </div>
     </section>
 
-    <!-- Story Section -->
     <section class="story-section">
         <div class="container">
             <div class="story-content">
@@ -1112,7 +1101,6 @@
         </div>
     </section>
 
-    <!-- Expertise Section -->
     <section class="expertise-section">
         <div class="container">
             <div class="section-header">
@@ -1150,7 +1138,6 @@
                     <ul class="expertise-list">
                         <li><i class="ti ti-check"></i> Hyperledger Fabric Blockchain</li>
                         <li><i class="ti ti-check"></i> Claude AI Integration</li>
-                        <!-- <li><i class="ti ti-check"></i> DocuSign E-Signatures</li> -->
                         <li><i class="ti ti-check"></i> ISO 27001 Compliance</li>
                     </ul>
                 </div>
@@ -1158,7 +1145,6 @@
         </div>
     </section>
 
-    <!-- Technology Section -->
     <section class="technology-section">
         <div class="container">
             <div class="section-header">
@@ -1177,11 +1163,6 @@
                     <h4>Hyperledger Fabric</h4>
                     <span>Blockchain</span>
                 </div>
-                <!-- <div class="tech-item">
-                    <i class="ti ti-writing-sign"></i>
-                    <h4>DocuSign</h4>
-                    <span>E-Signatures</span>
-                </div> -->
                 <div class="tech-item">
                     <i class="ti ti-database"></i>
                     <h4>MySQL</h4>
@@ -1197,64 +1178,78 @@
                     <h4>Cloud Native</h4>
                     <span>Infrastructure</span>
                 </div>
+                <div class="tech-item">
+                    <i class="ti ti-lock"></i>
+                    <h4>End-to-End</h4>
+                    <span>Encryption</span>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Team Section -->
+    <!-- Executive Directors Section -->
     <section class="team-section">
         <div class="container">
             <div class="section-header">
-                <span class="section-badge"><i class="ti ti-users-group"></i> Leadership Team</span>
-                <h2 class="section-title">Meet Our Experts</h2>
-                <p class="section-subtitle">Industry veterans with decades of combined experience in contracts, technology, and legal advisory.</p>
+                <span class="section-badge"><i class="ti ti-users-group"></i> Executive Directors</span>
+                <h2 class="section-title">Meet Our Leadership</h2>
+                <p class="section-subtitle">Industry veterans with decades of combined experience in contracts, technology, legal advisory, and enterprise solutions.</p>
             </div>
             <div class="team-grid">
                 <div class="team-card">
-                    <div class="team-avatar">
-                        <i class="ti ti-user"></i>
+                    <div class="team-info-left">
+                        <h4>Dr. Varghese Koshy Panicker</h4>
+                        <div class="role">Chief Executive Officer</div>
                     </div>
-                    <div class="team-info">
-                        <h4>Ilham Safeek</h4>
+                    <div class="team-description">
+                        Visionary leader driving strategic growth and innovation in contract lifecycle management across the GCC region. With extensive experience in procurement and supply chain management, Dr. Panicker leads CALIM's mission to transform how organizations manage contracts and claims.
+                    </div>
+                   
+                </div>
+                <div class="team-card">
+                    <div class="team-info-left">
+                        <h4>Tins Varghese</h4>
+                        <div class="role">Chief Commercial Officer</div>
+                    </div>
+                    <div class="team-description">
+                        Leading commercial strategy, business development, and client partnerships to deliver measurable value. Tins brings deep expertise in building lasting relationships with enterprise clients and driving revenue growth across diverse market segments.
+                    </div>
+                   
+                </div>
+                <div class="team-card">
+                    <div class="team-info-left">
+                        <h4>Adv. Jayakumar Madapattu</h4>
+                        <div class="role">Chief Legal Officer</div>
+                    </div>
+                    <div class="team-description">
+                        Expert in construction law, FIDIC contracts, dispute resolution, and regulatory compliance across multiple jurisdictions. Adv. Jayakumar provides strategic legal guidance ensuring CALIM's platform meets the highest standards of legal and contractual integrity.
+                    </div>
+                   
+                </div>
+                <div class="team-card">
+                    <div class="team-info-left">
+                        <h4>Davis Varghese</h4>
                         <div class="role">Chief Technology Officer</div>
-                        <p>Enterprise software architect with expertise in AI and blockchain systems.</p>
                     </div>
+                    <div class="team-description">
+                        With 27 years of global experience, Davis is a seasoned technology and business leader with proven expertise in program and delivery management, digital transformation, and strategic planning across diverse industries. Having successfully led large-scale, multi-phased projects and built offshore and nearshore delivery practices, he also played a key role in the  the FIFA World Cup™️ 2022 ICT Program. At CALIM, Davis drives the digitalization and automation of products and services, ensuring operational excellence, innovation, and scalable growth.
+                    </div>
+                   
                 </div>
                 <div class="team-card">
-                    <div class="team-avatar">
-                        <i class="ti ti-user"></i>
+                    <div class="team-info-left">
+                        <h4>Ilham Safeek</h4>
+                        <div class="role">Chief Architect</div>
                     </div>
-                    <div class="team-info">
-                        <h4>Legal Advisory</h4>
-                        <div class="role">Head of Legal</div>
-                        <p>Qatar law specialist with 15+ years in construction contracts and dispute resolution.</p>
+                    <div class="team-description">
+                        Enterprise software architect specializing in AI integration, blockchain systems, and scalable CLM solutions. Ilham leads the technical architecture of CALIM 360, ensuring robust, secure, and innovative solutions that meet enterprise-grade requirements.
                     </div>
-                </div>
-                <div class="team-card">
-                    <div class="team-avatar">
-                        <i class="ti ti-user"></i>
-                    </div>
-                    <div class="team-info">
-                        <h4>Project Management</h4>
-                        <div class="role">Head of Operations</div>
-                        <p>Former mega-project director with expertise in EPC contract management.</p>
-                    </div>
-                </div>
-                <div class="team-card">
-                    <div class="team-avatar">
-                        <i class="ti ti-user"></i>
-                    </div>
-                    <div class="team-info">
-                        <h4>Client Success</h4>
-                        <div class="role">Head of Customer Success</div>
-                        <p>Dedicated to ensuring client outcomes and platform adoption success.</p>
-                    </div>
+                   
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Compliance Section -->
     <section class="compliance-section">
         <div class="container">
             <div class="section-header">
@@ -1287,7 +1282,6 @@
         </div>
     </section>
 
-    <!-- CTA Section -->
     <section class="cta-section">
         <div class="container">
             <h2>Ready to Transform Your Contract Management?</h2>
@@ -1303,7 +1297,6 @@
         </div>
     </section>
 
-    <!-- Footer - Same as / -->
     <footer class="footer">
         <div class="container">
             <div class="footer-grid">
@@ -1355,7 +1348,6 @@
                 <p class="footer-copyright">© 2025 CALIM 360. All rights reserved. | Secure. Scalable. Blockchain-Verified. Audit-Ready.</p>
                 <div class="footer-socials">
                     <a href="#"><i class="ti ti-brand-linkedin"></i></a>
-                    <!-- <a href="#"><i class="ti ti-brand-twitter"></i></a> -->
                     <a href="#"><i class="ti ti-brand-youtube"></i></a>
                 </div>
             </div>
@@ -1363,7 +1355,6 @@
     </footer>
 
     <script>
-        // Navbar scroll effect
         window.addEventListener('scroll', () => {
             const navbar = document.getElementById('navbar');
             if (window.scrollY > 50) {
@@ -1373,7 +1364,6 @@
             }
         });
 
-        // Smooth scroll for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -1384,13 +1374,11 @@
             });
         });
 
-        // Mobile menu toggle
         function toggleMobileMenu() {
             const menu = document.querySelector('.nav-menu');
             menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
         }
 
-        // Animate on scroll
         const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
