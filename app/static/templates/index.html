@@ -2093,6 +2093,613 @@
                 font-size: 1.5rem;
             }
         }
+
+
+        /* 
+============================================
+MODULE DETAILS MODAL STYLES
+Add this to your <style> section
+============================================
+*/
+
+        .module-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .module-modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .module-modal-content {
+            background: white;
+            border-radius: 24px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+        }
+
+        .module-modal-overlay.active .module-modal-content {
+            transform: translateY(0);
+        }
+
+        .module-modal-close {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.05);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            z-index: 10;
+        }
+
+        .module-modal-close:hover {
+            background: var(--danger-color);
+            color: white;
+            transform: rotate(90deg);
+        }
+
+        .module-modal-close i {
+            font-size: 24px;
+        }
+
+        .module-modal-header {
+            padding: 3rem 3rem 2rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .module-modal-header h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-color);
+            margin-bottom: 0.75rem;
+        }
+
+        .module-modal-header p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .module-modal-body {
+            padding: 2.5rem 3rem;
+        }
+
+        .module-modal-section {
+            margin-bottom: 2.5rem;
+        }
+
+        .module-modal-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .module-modal-section h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .module-modal-section h3 i {
+            color: var(--primary-color);
+            font-size: 28px;
+        }
+
+        .module-features-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .module-features-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--background-light);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: var(--text-color);
+            transition: var(--transition);
+        }
+
+        .module-features-list li:hover {
+            background: rgba(39, 98, 203, 0.05);
+        }
+
+        .module-features-list li i {
+            color: var(--success-color);
+            font-size: 20px;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .module-benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .benefit-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1.25rem;
+            background: var(--background-light);
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-color);
+            transition: var(--transition);
+            border: 2px solid transparent;
+        }
+
+        .benefit-item:hover {
+            background: white;
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .benefit-item i {
+            color: var(--success-color);
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+
+        .module-modal-footer {
+            padding: 2rem 3rem 3rem;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Responsive Modal */
+        @media (max-width: 768px) {
+            .module-modal-overlay {
+                padding: 1rem;
+            }
+
+            .module-modal-content {
+                max-height: 95vh;
+            }
+
+            .module-modal-header,
+            .module-modal-body,
+            .module-modal-footer {
+                padding-left: 2rem;
+                padding-right: 2rem;
+            }
+
+            .module-modal-header {
+                padding-top: 2.5rem;
+            }
+
+            .module-modal-header h2 {
+                font-size: 1.5rem;
+                padding-right: 2rem;
+            }
+
+            .module-features-list,
+            .module-benefits-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .module-modal-close {
+                top: 1rem;
+                right: 1rem;
+            }
+        }
+
+        /* Smooth scrolling for modal content */
+        .module-modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .module-modal-content::-webkit-scrollbar-track {
+            background: var(--background-light);
+            border-radius: 4px;
+        }
+
+        .module-modal-content::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        .module-modal-content::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-color);
+        }
+
+        /* ============================================
+   PREMIUM MODULES SHOWCASE
+   ============================================ */
+
+        .modules-showcase-section {
+            padding: 6rem 0;
+            background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 50%, #f8f9fa 100%);
+            position: relative;
+        }
+
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .module-card {
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .module-card:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 20px 60px rgba(39, 98, 203, 0.2);
+            border-color: var(--primary-color);
+        }
+
+        /* Featured Module */
+        .module-card.featured {
+            border-color: var(--primary-color);
+            box-shadow: 0 8px 40px rgba(39, 98, 203, 0.15);
+        }
+
+        .module-card.featured::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .module-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--gradient-primary);
+            color: white;
+            padding: 0.4rem 0.9rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(39, 98, 203, 0.3);
+        }
+
+        .module-header {
+            padding: 2rem 2rem 1.5rem;
+            text-align: center;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            position: relative;
+        }
+
+        .module-icon-wrapper {
+            margin-bottom: 1.5rem;
+        }
+
+        .module-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: var(--transition);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .module-card:hover .module-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        /* Icon Colors */
+        .module-icon.clm {
+            background: linear-gradient(135deg, #2762cb 0%, #1e4bb8 100%);
+        }
+
+        .module-icon.correspondence {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .module-icon.risk {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .module-icon.obligations {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        }
+
+        .module-icon.reports {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        }
+
+        .module-icon.blockchain {
+            background: linear-gradient(135deg, #6c4dc4 0%, #5035a3 100%);
+        }
+
+        .module-icon.expert {
+            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+        }
+
+        .module-icon i {
+            font-size: 36px;
+            color: white;
+        }
+
+        .module-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+        }
+
+        .module-tagline {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .module-content {
+            padding: 0 2rem 1.5rem;
+            flex: 1;
+        }
+
+        .module-description {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        .module-features-compact {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-color);
+        }
+
+        .feature-item i {
+            color: var(--success-color);
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .module-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            padding: 1.25rem;
+            background: var(--background-light);
+            border-radius: 12px;
+            margin-top: 1.5rem;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            display: block;
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+            line-height: 1;
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .module-footer {
+            padding: 0 2rem 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .module-cta {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px rgba(39, 98, 203, 0.3);
+        }
+
+        .module-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(39, 98, 203, 0.4);
+        }
+
+        .module-learn-more {
+            text-align: center;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .module-learn-more:hover {
+            color: var(--secondary-color);
+        }
+
+        .module-learn-more i {
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .module-learn-more:hover i {
+            transform: translateX(4px);
+        }
+
+        /* CTA Section at Bottom */
+        .modules-cta-section {
+            margin-top: 4rem;
+            background: var(--gradient-primary);
+            border-radius: 24px;
+            padding: 3rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modules-cta-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .modules-cta-content {
+            position: relative;
+            z-index: 10;
+        }
+
+        .modules-cta-content h3 {
+            font-size: 2rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .modules-cta-content p {
+            font-size: 1.15rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .modules-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .modules-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .module-features-compact {
+                grid-template-columns: 1fr;
+            }
+
+            .module-title {
+                font-size: 1.25rem;
+            }
+
+            .modules-cta-content h3 {
+                font-size: 1.5rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+            }
+
+            .cta-buttons .btn {
+                width: 100%;
+            }
+        }
+
+        /* Animation for module cards on scroll */
+        .module-card {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .module-card.animate-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
     </style>
 </head>
 
@@ -2290,73 +2897,525 @@
         </div>
     </section>
 
-    <!-- Three Pillars -->
-    <section class="pillars-section" id="modules">
+
+    <!-- PREMIUM MODULES SHOWCASE SECTION -->
+    <section class="modules-showcase-section" id="modules">
         <div class="container">
             <div class="section-header">
-                <span class="section-badge"><i class="ti ti-stack-3"></i> Platform Pillars</span>
-                <h2 class="section-title">Your Entire Ecosystem - Connected, Intelligent & Always in Sync.</h2>
-                <p class="section-subtitle">Three integrated pillars working in perfect harmony to deliver end-to-end
-                    project and contract excellence.</p>
+                <span class="section-badge">
+                    <i class="ti ti-apps"></i> Our Modules
+                </span>
+                <h2 class="section-title">Complete Suite of Intelligent Solutions</h2>
+                <p class="section-subtitle">
+                    Seven powerful modules working in perfect harmony to deliver end-to-end contract and compliance
+                    excellence.
+                    Each module is AI-powered, blockchain-secured, and designed for the most demanding projects.
+                </p>
             </div>
-            <div class="pillars-grid">
-                <!-- Pillar 1: Project Management 360 -->
-                <div class="pillar-card">
-                    <div class="pillar-header">
-                        <div class="pillar-icon"><i class="ti ti-clipboard-list"></i></div>
-                        <h3>Project Management 360</h3>
+
+            <!-- Modules Grid -->
+            <div class="modules-grid">
+
+                <!-- Module 1: Smart Contract Lifecycle Management -->
+                <div class="module-card featured" data-module="clm">
+                    <div class="module-badge">Most Popular</div>
+                    <div class="module-header">
+                        <div class="module-icon-wrapper">
+                            <div class="module-icon clm">
+                                <i class="ti ti-file-certificate"></i>
+                            </div>
+                        </div>
+                        <h3 class="module-title">Smart Contract Lifecycle Management</h3>
+                        <p class="module-tagline">End-to-end contract intelligence</p>
                     </div>
-                    <div class="pillar-content">
-                        <ul class="pillar-list">
-                            <li><i class="ti ti-check"></i><span>Real-time dashboards</span></li>
-                            <li><i class="ti ti-check"></i><span>Delay analysis</span></li>
-                            <li><i class="ti ti-check"></i><span>Scope monitoring</span></li>
-                            <li><i class="ti ti-check"></i><span>Cost forecasting</span></li>
-                            <li><i class="ti ti-check"></i><span>Resource performance analytics</span></li>
-                        </ul>
+
+                    <div class="module-content">
+                        <p class="module-description">
+                            Complete contract lifecycle automation from creation to execution. AI-powered drafting,
+                            intelligent clause analysis, automated workflows, and blockchain-secured audit trails.
+                        </p>
+
+                        <div class="module-features-compact">
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>AI Contract Generation</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Automated Workflows</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>E-Signature Integration</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Version Control</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Multi-Party Negotiation</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Blockchain Audit Trail</span>
+                            </div>
+                        </div>
+
+                        <div class="module-stats">
+                            <div class="stat">
+                                <span class="stat-value">70%</span>
+                                <span class="stat-label">Faster Processing</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value">100%</span>
+                                <span class="stat-label">Compliance Rate</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="module-footer">
+                        <button class="module-cta" onclick="selectModule('clm')">
+                            <i class="ti ti-rocket"></i>
+                            Get Started
+                        </button>
+                        <a href="#" class="module-learn-more" onclick="showModuleDetails('clm', event)">
+                            Learn More <i class="ti ti-arrow-right"></i>
+                        </a>
                     </div>
                 </div>
-                <!-- Pillar 2: Contract & Claims 360 -->
-                <div class="pillar-card">
-                    <div class="pillar-header">
-                        <div class="pillar-icon"><i class="ti ti-file-certificate"></i></div>
-                        <h3>Contract & Claims 360</h3>
+
+                <!-- Module 2: Correspondence Management -->
+                <div class="module-card" data-module="correspondence">
+                    <div class="module-header">
+                        <div class="module-icon-wrapper">
+                            <div class="module-icon correspondence">
+                                <i class="ti ti-mail"></i>
+                            </div>
+                        </div>
+                        <h3 class="module-title">Correspondence Management</h3>
+                        <p class="module-tagline">Centralized communication hub</p>
                     </div>
-                    <div class="pillar-content">
-                        <ul class="pillar-list">
-                            <li><i class="ti ti-check"></i><span>Smart drafting</span></li>
-                            <li><i class="ti ti-check"></i><span>Risk scoring</span></li>
-                            <li><i class="ti ti-check"></i><span>Change order tracking</span></li>
-                            <li><i class="ti ti-check"></i><span>Claims prediction</span></li>
-                            <li><i class="ti ti-check"></i><span>Evidence consolidation</span></li>
-                        </ul>
+
+                    <div class="module-content">
+                        <p class="module-description">
+                            AI-powered document analysis and correspondence tracking. Automatically classify, link,
+                            and manage all contract-related communications with intelligent insights.
+                        </p>
+
+                        <div class="module-features-compact">
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>AI Document Analysis</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Auto Classification</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Smart Linking</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Response Templates</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Full-Text Search</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Timeline Tracking</span>
+                            </div>
+                        </div>
+
+                        <div class="module-stats">
+                            <div class="stat">
+                                <span class="stat-value">90%</span>
+                                <span class="stat-label">Time Saved</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value">Zero</span>
+                                <span class="stat-label">Lost Emails</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="module-footer">
+                        <button class="module-cta" onclick="selectModule('correspondence')">
+                            <i class="ti ti-rocket"></i>
+                            Get Started
+                        </button>
+                        <a href="#" class="module-learn-more" onclick="showModuleDetails('correspondence', event)">
+                            Learn More <i class="ti ti-arrow-right"></i>
+                        </a>
                     </div>
                 </div>
-                <!-- Pillar 3: Compliance & Governance 360 -->
-                <div class="pillar-card">
-                    <div class="pillar-header">
-                        <div class="pillar-icon"><i class="ti ti-shield-lock"></i></div>
-                        <h3>Compliance & Governance 360</h3>
+
+                <!-- Module 3: Risk Analysis & Assessment -->
+                <div class="module-card" data-module="risk">
+                    <div class="module-header">
+                        <div class="module-icon-wrapper">
+                            <div class="module-icon risk">
+                                <i class="ti ti-shield-check"></i>
+                            </div>
+                        </div>
+                        <h3 class="module-title">Risk Analysis & Assessment</h3>
+                        <p class="module-tagline">Proactive risk intelligence</p>
                     </div>
-                    <div class="pillar-content">
-                        <ul class="pillar-list">
-                            <li><i class="ti ti-check"></i><span>Obligation tracking</span></li>
-                            <li><i class="ti ti-check"></i><span>Approvals and workflows</span></li>
-                            <li><i class="ti ti-check"></i><span>Regulatory mapping</span></li>
-                            <li><i class="ti ti-check"></i><span>Compliance health score</span></li>
-                            <li><i class="ti ti-check"></i><span>Automated escalations</span></li>
-                        </ul>
+
+                    <div class="module-content">
+                        <p class="module-description">
+                            AI-driven risk scoring for every clause. Identify liabilities, compliance gaps, and
+                            financial exposure with predictive analytics and actionable recommendations.
+                        </p>
+
+                        <div class="module-features-compact">
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>AI Risk Scoring</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Compliance Mapping</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Financial Analysis</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Dispute Prediction</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Risk Heatmaps</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Mitigation Strategies</span>
+                            </div>
+                        </div>
+
+                        <div class="module-stats">
+                            <div class="stat">
+                                <span class="stat-value">50%</span>
+                                <span class="stat-label">Disputes Reduced</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value">95%</span>
+                                <span class="stat-label">Risk Detection</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="module-footer">
+                        <button class="module-cta" onclick="selectModule('risk')">
+                            <i class="ti ti-rocket"></i>
+                            Get Started
+                        </button>
+                        <a href="#" class="module-learn-more" onclick="showModuleDetails('risk', event)">
+                            Learn More <i class="ti ti-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Module 4: Obligation Tracking -->
+                <div class="module-card" data-module="obligations">
+                    <div class="module-header">
+                        <div class="module-icon-wrapper">
+                            <div class="module-icon obligations">
+                                <i class="ti ti-checkbox"></i>
+                            </div>
+                        </div>
+                        <h3 class="module-title">Obligation Tracking</h3>
+                        <p class="module-tagline">Never miss a deadline</p>
+                    </div>
+
+                    <div class="module-content">
+                        <p class="module-description">
+                            AI-extracted obligations with automated tracking, alerts, and escalations. Monitor
+                            deliverables, milestones, and compliance requirements in real-time.
+                        </p>
+
+                        <div class="module-features-compact">
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>AI Extraction</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Smart Alerts</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Calendar Integration</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Progress Tracking</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Auto Escalation</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Performance Analytics</span>
+                            </div>
+                        </div>
+
+                        <div class="module-stats">
+                            <div class="stat">
+                                <span class="stat-value">100%</span>
+                                <span class="stat-label">On-Time Rate</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value">24/7</span>
+                                <span class="stat-label">Monitoring</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="module-footer">
+                        <button class="module-cta" onclick="selectModule('obligations')">
+                            <i class="ti ti-rocket"></i>
+                            Get Started
+                        </button>
+                        <a href="#" class="module-learn-more" onclick="showModuleDetails('obligations', event)">
+                            Learn More <i class="ti ti-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Module 5: Reports & Analytics -->
+                <div class="module-card" data-module="reports">
+                    <div class="module-header">
+                        <div class="module-icon-wrapper">
+                            <div class="module-icon reports">
+                                <i class="ti ti-chart-dots-3"></i>
+                            </div>
+                        </div>
+                        <h3 class="module-title">Reports & Analytics</h3>
+                        <p class="module-tagline">Data-driven insights</p>
+                    </div>
+
+                    <div class="module-content">
+                        <p class="module-description">
+                            Comprehensive dashboards and custom reports. Visualize contract performance, compliance
+                            status, risk trends, and financial metrics with interactive analytics.
+                        </p>
+
+                        <div class="module-features-compact">
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Real-Time Dashboards</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Custom Reports</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>KPI Tracking</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Trend Analysis</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Export to PDF/Excel</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Scheduled Reports</span>
+                            </div>
+                        </div>
+
+                        <div class="module-stats">
+                            <div class="stat">
+                                <span class="stat-value">50+</span>
+                                <span class="stat-label">Report Types</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value">Live</span>
+                                <span class="stat-label">Data Updates</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="module-footer">
+                        <button class="module-cta" onclick="selectModule('reports')">
+                            <i class="ti ti-rocket"></i>
+                            Get Started
+                        </button>
+                        <a href="#" class="module-learn-more" onclick="showModuleDetails('reports', event)">
+                            Learn More <i class="ti ti-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Module 6: Blockchain Verification -->
+                <div class="module-card" data-module="blockchain">
+                    <div class="module-header">
+                        <div class="module-icon-wrapper">
+                            <div class="module-icon blockchain">
+                                <i class="ti ti-shield-lock"></i>
+                            </div>
+                        </div>
+                        <h3 class="module-title">Blockchain Verification</h3>
+                        <p class="module-tagline">Immutable security</p>
+                    </div>
+
+                    <div class="module-content">
+                        <p class="module-description">
+                            Hyperledger Fabric powered audit trails. Every action is cryptographically secured,
+                            timestamped, and immutable for complete legal defensibility.
+                        </p>
+
+                        <div class="module-features-compact">
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>SHA-256 Hashing</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Immutable Records</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Instant Verification</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Tamper Detection</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Legal Validity</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>QFCRA Compliant</span>
+                            </div>
+                        </div>
+
+                        <div class="module-stats">
+                            <div class="stat">
+                                <span class="stat-value">∞</span>
+                                <span class="stat-label">Permanence</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value">256-bit</span>
+                                <span class="stat-label">Encryption</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="module-footer">
+                        <button class="module-cta" onclick="selectModule('blockchain')">
+                            <i class="ti ti-rocket"></i>
+                            Get Started
+                        </button>
+                        <a href="#" class="module-learn-more" onclick="showModuleDetails('blockchain', event)">
+                            Learn More <i class="ti ti-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Module 7: Expert Collaboration -->
+                <div class="module-card" data-module="expert">
+                    <div class="module-header">
+                        <div class="module-icon-wrapper">
+                            <div class="module-icon expert">
+                                <i class="ti ti-users"></i>
+                            </div>
+                        </div>
+                        <h3 class="module-title">Expert Collaboration</h3>
+                        <p class="module-tagline">Human expertise on demand</p>
+                    </div>
+
+                    <div class="module-content">
+                        <p class="module-description">
+                            Connect with legal experts and consultants when you need them. Get professional
+                            guidance, second opinions, and specialized advice for complex contracts.
+                        </p>
+
+                        <div class="module-features-compact">
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Live Expert Chat</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Video Consultation</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Document Review</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>AI Chatbot</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Expert Directory</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="ti ti-check"></i>
+                                <span>Session Recording</span>
+                            </div>
+                        </div>
+
+                        <div class="module-stats">
+                            <div class="stat">
+                                <span class="stat-value">24/7</span>
+                                <span class="stat-label">Availability</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value">50+</span>
+                                <span class="stat-label">Experts</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="module-footer">
+                        <button class="module-cta" onclick="selectModule('expert')">
+                            <i class="ti ti-rocket"></i>
+                            Get Started
+                        </button>
+                        <a href="#" class="module-learn-more" onclick="showModuleDetails('expert', event)">
+                            Learn More <i class="ti ti-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+            </div> <!-- End modules-grid -->
+
+            <!-- Call to Action -->
+            <div class="modules-cta-section">
+                <div class="modules-cta-content">
+                    <h3>Need Multiple Modules?</h3>
+                    <p>Get our complete suite with all 7 modules and save up to 40% with our enterprise plan.</p>
+                    <div class="cta-buttons">
+                        <button class="btn btn-white btn-large" onclick="selectModule('enterprise')">
+                            <i class="ti ti-package"></i>
+                            View Enterprise Plans
+                        </button>
+                        <button class="btn ghost btn-large" onclick="scrollToContact()">
+                            <i class="ti ti-phone"></i>
+                            Talk to Sales
+                        </button>
                     </div>
                 </div>
             </div>
-            <!-- CTA: See How It Works -->
-            <div class="pillars-cta">
-                <a href="#" class="btn btn-primary btn-large">
-                    <i class="ti ti-player-play"></i> See How It Works
-                </a>
-            </div>
+
         </div>
     </section>
+
 
     <!-- Features Grid - CALIM 360 FEATURE GRID -->
     <section class="features-section">
@@ -2922,6 +3981,323 @@
         if (impactSection) {
             impactObserver.observe(impactSection);
         }
+
+
+
+        /**
+ * ============================================
+ * ADD THIS JAVASCRIPT TO YOUR <script> SECTION
+ * Place it with your other JavaScript functions
+ * ============================================
+ */
+
+        // Handle module selection
+        function selectModule(moduleType) {
+            const token = localStorage.getItem('access_token');
+
+            if (token) {
+                // User is logged in - redirect to dashboard with module selection
+                window.location.href = `/dashboard?module=${moduleType}`;
+            } else {
+                // User is not logged in - redirect to registration with module parameter
+                window.location.href = `/auth/register?module=${moduleType}`;
+            }
+        }
+
+        // Show module details (can be expanded to show modal with more info)
+        function showModuleDetails(moduleType, event) {
+            event.preventDefault();
+
+            // Module details data
+            const moduleDetails = {
+                clm: {
+                    title: "Smart Contract Lifecycle Management",
+                    description: "Complete contract lifecycle automation from creation to execution",
+                    keyFeatures: [
+                        "AI-powered contract generation from templates",
+                        "Intelligent clause analysis and risk scoring",
+                        "Multi-party negotiation and collaboration",
+                        "Automated approval workflows with RBAC",
+                        "E-signature integration (DocuSign)",
+                        "Version control and change tracking",
+                        "Blockchain-secured audit trail",
+                        "Obligation extraction and tracking"
+                    ],
+                    benefits: [
+                        "70% faster contract processing",
+                        "50% reduction in disputes",
+                        "100% compliance rate",
+                        "Eliminate manual errors"
+                    ]
+                },
+                correspondence: {
+                    title: "Correspondence Management",
+                    description: "Centralized hub for all contract-related communications",
+                    keyFeatures: [
+                        "AI-powered document classification",
+                        "Automatic linking to contracts",
+                        "Full-text search and filtering",
+                        "Response templates with AI suggestions",
+                        "Timeline view of all communications",
+                        "Attachment management",
+                        "Email integration",
+                        "Complete audit trail"
+                    ],
+                    benefits: [
+                        "90% time saved on document search",
+                        "Zero lost communications",
+                        "Complete transparency",
+                        "Instant access to history"
+                    ]
+                },
+                risk: {
+                    title: "Risk Analysis & Assessment",
+                    description: "Proactive risk intelligence for every contract",
+                    keyFeatures: [
+                        "AI-driven clause risk scoring",
+                        "Compliance and regulatory mapping",
+                        "Financial exposure analysis",
+                        "Predictive dispute modeling",
+                        "Risk heatmaps and dashboards",
+                        "Mitigation recommendations",
+                        "Jurisdiction-specific analysis",
+                        "Red flag detection"
+                    ],
+                    benefits: [
+                        "50% reduction in disputes",
+                        "95% risk detection accuracy",
+                        "Proactive issue prevention",
+                        "Legal defensibility"
+                    ]
+                },
+                obligations: {
+                    title: "Obligation Tracking",
+                    description: "Never miss a deadline or deliverable",
+                    keyFeatures: [
+                        "AI extraction from contracts",
+                        "Smart alerts and reminders",
+                        "Calendar integration",
+                        "Progress tracking and updates",
+                        "Automatic escalation",
+                        "Performance analytics",
+                        "Team collaboration",
+                        "Mobile notifications"
+                    ],
+                    benefits: [
+                        "100% on-time delivery rate",
+                        "24/7 automated monitoring",
+                        "No missed obligations",
+                        "Complete accountability"
+                    ]
+                },
+                reports: {
+                    title: "Reports & Analytics",
+                    description: "Data-driven insights for better decisions",
+                    keyFeatures: [
+                        "Real-time dashboards",
+                        "Custom report builder",
+                        "KPI tracking",
+                        "Trend analysis",
+                        "Export to PDF/Excel",
+                        "Scheduled reports",
+                        "Interactive charts",
+                        "Drill-down analysis"
+                    ],
+                    benefits: [
+                        "50+ report types",
+                        "Live data updates",
+                        "Actionable insights",
+                        "Executive summaries"
+                    ]
+                },
+                blockchain: {
+                    title: "Blockchain Verification",
+                    description: "Immutable security and legal validity",
+                    keyFeatures: [
+                        "Hyperledger Fabric integration",
+                        "SHA-256 cryptographic hashing",
+                        "Immutable audit records",
+                        "Instant verification",
+                        "Tamper detection",
+                        "Legal validity proof",
+                        "QFCRA compliance",
+                        "Distributed ledger"
+                    ],
+                    benefits: [
+                        "100% tamper-proof",
+                        "Permanent records",
+                        "Legal defensibility",
+                        "Regulatory compliance"
+                    ]
+                },
+                expert: {
+                    title: "Expert Collaboration",
+                    description: "Human expertise when you need it",
+                    keyFeatures: [
+                        "Live expert chat",
+                        "Video consultation",
+                        "Document review service",
+                        "AI chatbot assistant",
+                        "Expert directory",
+                        "Session recording",
+                        "Booking system",
+                        "Multi-language support"
+                    ],
+                    benefits: [
+                        "24/7 availability",
+                        "50+ legal experts",
+                        "Instant guidance",
+                        "Second opinions"
+                    ]
+                }
+            };
+
+            const details = moduleDetails[moduleType];
+
+            if (!details) {
+                console.error('Module details not found:', moduleType);
+                return;
+            }
+
+            // Create and show modal (you can customize this)
+            showModuleModal(details);
+        }
+
+        // Show module details in modal
+        function showModuleModal(details) {
+            // Remove existing modal if any
+            const existingModal = document.getElementById('moduleModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            // Create modal HTML
+            const modalHTML = `
+        <div id="moduleModal" class="module-modal-overlay" onclick="closeModuleModal(event)">
+            <div class="module-modal-content" onclick="event.stopPropagation()">
+                <button class="module-modal-close" onclick="closeModuleModal()">
+                    <i class="ti ti-x"></i>
+                </button>
+                
+                <div class="module-modal-header">
+                    <h2>${details.title}</h2>
+                    <p>${details.description}</p>
+                </div>
+                
+                <div class="module-modal-body">
+                    <div class="module-modal-section">
+                        <h3><i class="ti ti-star"></i> Key Features</h3>
+                        <ul class="module-features-list">
+                            ${details.keyFeatures.map(feature => `
+                                <li><i class="ti ti-check"></i>${feature}</li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="module-modal-section">
+                        <h3><i class="ti ti-rocket"></i> Key Benefits</h3>
+                        <div class="module-benefits-grid">
+                            ${details.benefits.map(benefit => `
+                                <div class="benefit-item">
+                                    <i class="ti ti-circle-check"></i>
+                                    <span>${benefit}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="module-modal-footer">
+                    <button class="btn btn-primary btn-large" onclick="selectModuleFromModal('${details.title.toLowerCase().replace(/ /g, '-')}')">
+                        <i class="ti ti-rocket"></i>
+                        Get Started with This Module
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+
+            // Animate in
+            setTimeout(() => {
+                document.getElementById('moduleModal').classList.add('active');
+            }, 10);
+        }
+
+        // Close module modal
+        function closeModuleModal(event) {
+            if (event && event.target.id !== 'moduleModal') return;
+
+            const modal = document.getElementById('moduleModal');
+            if (modal) {
+                modal.classList.remove('active');
+                setTimeout(() => {
+                    modal.remove();
+                    document.body.style.overflow = '';
+                }, 300);
+            }
+        }
+
+        // Select module from modal
+        function selectModuleFromModal(moduleSlug) {
+            closeModuleModal();
+            // Convert slug back to module type
+            const moduleMap = {
+                'smart-contract-lifecycle-management': 'clm',
+                'correspondence-management': 'correspondence',
+                'risk-analysis-&-assessment': 'risk',
+                'obligation-tracking': 'obligations',
+                'reports-&-analytics': 'reports',
+                'blockchain-verification': 'blockchain',
+                'expert-collaboration': 'expert'
+            };
+
+            const moduleType = moduleMap[moduleSlug] || moduleSlug;
+            selectModule(moduleType);
+        }
+
+        // Scroll to contact section
+        function scrollToContact() {
+            // Scroll to footer or contact section
+            const footer = document.querySelector('.footer');
+            if (footer) {
+                footer.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // Animate module cards on scroll
+        const moduleObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => {
+                        entry.target.classList.add('animate-in');
+                    }, index * 100); // Stagger animation
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        });
+
+        // Observe all module cards
+        document.addEventListener('DOMContentLoaded', function () {
+            const moduleCards = document.querySelectorAll('.module-card');
+            moduleCards.forEach(card => {
+                moduleObserver.observe(card);
+            });
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeModuleModal();
+            }
+        });
     </script>
 </body>
 

@@ -1,0 +1,213 @@
+/**
+ * Authentication Navigation Styles
+ * Add these styles to your existing CSS or include as a separate stylesheet
+ */
+
+/* User Profile Dropdown Container */
+.user-profile-dropdown {
+    position: relative;
+    display: none;
+}
+
+.user-profile-dropdown.show {
+    display: block;
+}
+
+/* Profile Button */
+.profile-btn {
+    background: rgba(39, 98, 203, 0.1);
+    color: var(--primary-color, #2762cb);
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+}
+
+.profile-btn:hover {
+    background: rgba(39, 98, 203, 0.15);
+    transform: translateY(-1px);
+}
+
+.profile-btn i {
+    font-size: 18px;
+}
+
+.profile-btn i:last-child {
+    font-size: 16px;
+    transition: transform 0.3s ease;
+}
+
+.profile-btn:hover i:last-child {
+    transform: rotate(180deg);
+}
+
+/* Profile Dropdown Menu */
+.profile-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    min-width: 220px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.profile-dropdown-menu.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.profile-dropdown-menu a {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.25rem;
+    color: var(--text-color, #333);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid var(--border-color, #e9ecef);
+    font-size: 0.95rem;
+}
+
+.profile-dropdown-menu a:last-child {
+    border-bottom: none;
+}
+
+.profile-dropdown-menu a:hover {
+    background: var(--background-light, #f8f9fa);
+    color: var(--primary-color, #2762cb);
+    padding-left: 1.5rem;
+}
+
+.profile-dropdown-menu a i {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+/* Dashboard Button in Navigation */
+.nav-actions .btn.btn-ghost {
+    display: inline-flex;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .profile-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .profile-btn span {
+        display: none;
+    }
+    
+    .profile-dropdown-menu {
+        min-width: 180px;
+        right: -10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-actions {
+        gap: 0.5rem;
+    }
+    
+    .btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+    
+    .btn i {
+        font-size: 16px;
+    }
+}
+
+/* Animation for dropdown items */
+.profile-dropdown-menu.active a {
+    animation: slideInFromTop 0.3s ease forwards;
+}
+
+.profile-dropdown-menu.active a:nth-child(1) {
+    animation-delay: 0.05s;
+}
+
+.profile-dropdown-menu.active a:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.profile-dropdown-menu.active a:nth-child(3) {
+    animation-delay: 0.15s;
+}
+
+@keyframes slideInFromTop {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading state for navigation */
+.nav-actions.loading {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* User avatar placeholder (if you want to add profile pictures later) */
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2762cb 0%, #1e4bb8 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.profile-btn .user-avatar {
+    margin-right: 0.25rem;
+}
+
+/* Notification badge (for future use) */
+.notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #dc3545;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.15rem 0.35rem;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+}
+
+/* Theme for scrolled navbar */
+.navbar.scrolled .profile-btn {
+    background: rgba(39, 98, 203, 0.1);
+    color: var(--primary-color, #2762cb);
+}
+
+.navbar.scrolled .profile-dropdown-menu {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
