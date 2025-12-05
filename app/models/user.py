@@ -6,6 +6,8 @@
 from sqlalchemy import Column, String, Boolean, DateTime, Integer, ForeignKey, Text, Date
 from sqlalchemy.orm import relationship
 from datetime import datetime
+from sqlalchemy.orm import relationship
+
 
 from app.core.database import Base
 
@@ -46,6 +48,11 @@ class Company(Base):
     updated_at = Column(DateTime)
     created_by = Column(Integer)
     updated_by = Column(Integer)
+    module_subscriptions = relationship(
+        "CompanyModuleSubscription", 
+        back_populates="company",
+        cascade="all, delete-orphan"
+    )
 
 
 class User(Base):

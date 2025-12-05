@@ -3,7 +3,7 @@ Registration Backend - Fixed response format
 File: app/api/api_v1/auth/registration.py
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 import secrets
@@ -16,6 +16,9 @@ from app.core.email import send_verification_email
 from app.core.security import hash_password
 import logging
 
+from app.models.subscription import CompanyModuleSubscription
+
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["authentication"])
@@ -24,11 +27,12 @@ router = APIRouter(prefix="/api/auth", tags=["authentication"])
 @router.post("/register", response_model=RegistrationResponse)
 async def register_user(
     user_data: UserRegistration,
+    module: str = Query(default="clm", description="Module to subscribe to"),  # ✅ ADDED
     db: Session = Depends(get_db)
 ):
-    """Register new user"""
+    """Register new user with automatic module subscription"""
     try:
-        logger.info(f"📝 Starting registration for: {user_data.email}")
+        logger.info(f"📝 Starting registration for: {user_data.email} with module: {module}")
         
         # VALIDATION
         existing_user = db.query(User).filter(
@@ -76,7 +80,7 @@ async def register_user(
             license_type=user_data.licenseType,
             number_of_users=user_data.numberOfUsers,
             qid_number=user_data.authRepQID if user_data.authRepQID else None,
-            company_type=user_data.userType,  # ✅ CRITICAL FIX
+            company_type=user_data.userType,
             industry=user_data.industry,
             company_size=user_data.companySize,
             company_website=user_data.website if user_data.website else None,
@@ -158,6 +162,34 @@ async def register_user(
         db.add(new_user)
         new_company.created_by = new_user.id
         
+        # =====================================================
+        # ✅ CREATE MODULE SUBSCRIPTION (AUTOMATIC)
+        # =====================================================
+        valid_modules = [
+            'clm', 'correspondence', 'risk', 'obligations', 
+            'reports', 'blockchain', 'expert'
+        ]
+        
+        # Validate module code and default to CLM if invalid
+        if module not in valid_modules:
+            logger.warning(f"⚠️ Invalid module '{module}', defaulting to 'clm'")
+            module = 'clm'
+        
+        subscription = CompanyModuleSubscription(
+            company_id=new_company.id,
+            module_code=module,
+            is_active=True,
+            subscribed_date=datetime.utcnow(),
+            expiry_date=None,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        
+        db.add(subscription)
+        
+        logger.info(f"📦 Subscribed company {new_company.id} to module: {module}")
+        # =====================================================
+        
         # COMMIT
         try:
             db.commit()
@@ -166,6 +198,7 @@ async def register_user(
             
             logger.info(f"✅ User: {new_user.id}, Email: {new_user.email}")
             logger.info(f"✅ Company: {new_company.id}, Type: {new_company.company_type}")
+            logger.info(f"✅ Subscription: Module={module}")
             
         except IntegrityError as e:
             db.rollback()
@@ -216,7 +249,7 @@ async def register_user(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Registration failed."
         )
-
+        
 
 @router.get("/check-availability")
 async def check_availability(

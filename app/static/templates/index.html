@@ -2777,6 +2777,55 @@ Add this to your <style> section
                 max-width: 100px;
             }
         }
+
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        .module-cta.disabled {
+            opacity: 0.5 !important;
+            cursor: not-allowed !important;
+            pointer-events: none !important;
+        }
+
+        .module-badge.warning {
+            background: #ff9800 !important;
+            color: white;
+        }
+
+        .module-badge.subscribed {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #4caf50;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 10;
+        }
     </style>
 </head>
 
@@ -4380,6 +4429,35 @@ Add this to your <style> section
         // ============================================
         // CHECK USER AUTHENTICATION ON PAGE LOAD (Cookie-based)
         // ============================================
+
+
+
+        // =====================================================
+        // ADD THIS JAVASCRIPT TO index.html <script> section
+        // =====================================================
+        let userSubscriptions = [];
+        let isUserLoggedIn = false;
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            try {
+                const response = await fetch('/api/subscriptions/my-modules', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const modules = await response.json();
+                    isUserLoggedIn = true;
+                    userSubscriptions = modules.filter(m => m.subscribed).map(m => m.code);
+                    updateModuleButtons();
+                }
+            } catch (error) {
+                isUserLoggedIn = false;
+            }
+        });
+
+
+
         document.addEventListener('DOMContentLoaded', async function () {
             const navActions = document.querySelector('.nav-actions');
 
@@ -4434,21 +4512,69 @@ Add this to your <style> section
 
         // Handle module selection with cookie-based auth check
         async function selectModule(moduleType) {
+            console.log('🚀 Module selected:', moduleType);
+
+            if (isUserLoggedIn) {
+                // User is logged in
+                if (userSubscriptions.includes(moduleType)) {
+                    // Already subscribed
+                    showToast('info', `You are already subscribed to the ${moduleType.toUpperCase()} module!`);
+                    return;
+                } else {
+                    // Not subscribed - Subscribe directly via API
+                    await subscribeToModule(moduleType);
+                }
+            } else {
+                // User not logged in - go to registration
+                window.location.href = `/register?module=${moduleType}`;
+            }
+        }
+
+
+        async function subscribeToModule(moduleCode) {
             try {
-                const response = await fetch('/api/auth/me', {
-                    credentials: 'include'
+                // Show loading state
+                const button = document.querySelector(`[data-module="${moduleCode}"] .module-cta`);
+                const originalHTML = button.innerHTML;
+                button.innerHTML = '<i class="ti ti-loader rotating"></i> Subscribing...';
+                button.disabled = true;
+
+                console.log(`📦 Subscribing to ${moduleCode}...`);
+
+                const response = await fetch(`/api/subscriptions/subscribe/${moduleCode}`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 });
 
-                if (response.ok) {
-                    // User is logged in - redirect to dashboard with module selection
-                    window.location.href = `/dashboard?module=${moduleType}`;
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    console.log(`✅ Successfully subscribed to ${moduleCode}`);
+
+                    // Update local subscriptions array
+                    userSubscriptions.push(moduleCode);
+
+                    // Update UI
+                    updateModuleButtons();
+
+                    // Show success message
+                    showToast('success', `Successfully subscribed to ${moduleCode.toUpperCase()}! You can now access this module.`);
                 } else {
-                    // User is not logged in - redirect to registration
-                    window.location.href = `/register?module=${moduleType}`;
+                    throw new Error(data.detail || 'Subscription failed');
                 }
+
             } catch (error) {
-                // On error, assume not logged in
-                window.location.href = `/register?module=${moduleType}`;
+                console.error('❌ Subscription error:', error);
+
+                // Restore button
+                const button = document.querySelector(`[data-module="${moduleCode}"] .module-cta`);
+                button.innerHTML = '<i class="ti ti-rocket"></i> Get Started';
+                button.disabled = false;
+
+                showToast('error', `Failed to subscribe to ${moduleCode.toUpperCase()}. Please try again.`);
             }
         }
         document.addEventListener('DOMContentLoaded', async function () {
@@ -4521,6 +4647,95 @@ Add this to your <style> section
                     console.error('Error checking auth in mobile menu:', error);
                 }
             }
+        }
+
+
+        function updateModuleButtons() {
+            document.querySelectorAll('.module-card').forEach(card => {
+                const moduleCode = card.getAttribute('data-module');
+                const button = card.querySelector('.module-cta');
+
+                if (!moduleCode || !button) return;
+
+                const isSubscribed = userSubscriptions.includes(moduleCode);
+
+                if (isSubscribed) {
+                    // SUBSCRIBED - Gray it out
+                    button.classList.add('disabled');
+                    button.style.opacity = '0.5';
+                    button.style.cursor = 'not-allowed';
+                    button.disabled = true;
+                    button.innerHTML = '<i class="ti ti-check"></i> Subscribed';
+
+                    // Add green badge
+                    if (!card.querySelector('.module-badge.subscribed')) {
+                        const badge = document.createElement('div');
+                        badge.className = 'module-badge subscribed';
+                        badge.innerHTML = '<i class="ti ti-check-circle"></i> Subscribed';
+                        badge.style.cssText = `
+                    position: absolute; top: 12px; right: 12px;
+                    background: #4caf50; color: white;
+                    padding: 6px 14px; border-radius: 20px;
+                    font-size: 11px; font-weight: 600; z-index: 10;
+                    display: flex; align-items: center; gap: 4px;
+                    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+                `;
+                        card.style.position = 'relative';
+                        card.appendChild(badge);
+                    }
+                } else {
+                    // NOT SUBSCRIBED - Normal button
+                    button.classList.remove('disabled');
+                    button.style.opacity = '1';
+                    button.style.cursor = 'pointer';
+                    button.disabled = false;
+                    button.innerHTML = '<i class="ti ti-rocket"></i> Get Started';
+
+                    const oldBadge = card.querySelector('.module-badge.subscribed');
+                    if (oldBadge) oldBadge.remove();
+                }
+            });
+        }
+
+        function selectModule(moduleType) {
+            if (isUserLoggedIn && userSubscriptions.includes(moduleType)) {
+                alert(`You are already subscribed to ${moduleType.toUpperCase()}!`);
+                return;
+            }
+            window.location.href = `/register?module=${moduleType}`;
+        }
+
+
+        // ✅ 4. HELPER: Show Toast Notification
+        function showToast(type, message) {
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'error' ? '#f44336' : '#4caf50'};
+        color: white;
+        padding: 16px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+    `;
+
+            toast.innerHTML = `
+        <i class="ti ti-${type === 'error' ? 'alert-circle' : 'check-circle'}"></i>
+        ${message}
+    `;
+
+            document.body.appendChild(toast);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
         }
     </script>
 

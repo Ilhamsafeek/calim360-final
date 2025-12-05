@@ -19,6 +19,8 @@ from app.models.workflow import Workflow, WorkflowStep
 from app.models.audit import AuditLog
 from app.models.notification import Notification
 
+from app.models.subscription import Module, CompanyModuleSubscription
+
 # Consultation/Expert models
 from app.models.consultation import (
     ExpertProfile,

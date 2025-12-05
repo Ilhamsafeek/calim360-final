@@ -17,6 +17,8 @@ from datetime import datetime, timedelta
 import logging
 import uvicorn
 from sqlalchemy import text
+from app.routers import subscription_router
+from app.core.subscription_guard import require_module_subscription, ModuleCodes
 
 # Core imports
 from app.core.dependencies import get_current_user
@@ -25,6 +27,7 @@ from app.core.database import engine, get_db, init_db, test_connection
 from app.models import Base
 from app.models.user import User
 from app.api.api_v1.chatbot.routes import router as chatbot_router
+
 
 
 # Configure logging FIRST
@@ -313,6 +316,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Add audit logging middleware (if available)
 if audit_middleware:
     app.add_middleware(audit_middleware)
@@ -436,12 +440,17 @@ if correspondence_router:
 
 logger.info("✅ All available API routers registered successfully")
 
+
+app.include_router(subscription_router.router)
+
 # =====================================================
 # STATIC FILES AND TEMPLATES
 # =====================================================
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.mount("/app/static", StaticFiles(directory="app/static"), name="app_static")
 app.mount("/uploads", StaticFiles(directory="app/uploads"), name="uploads")
+
+
 
 templates = Jinja2Templates(directory="app/static/templates")
 
