@@ -550,7 +550,7 @@
 
     <div class="registration-card">
 
-       
+
         <div class="form-container">
             <div class="form-header">
                 <h1 class="form-title">
@@ -559,13 +559,13 @@
                 <!-- <p class="form-subtitle">Join Smart CLM to streamline your contract management</p> -->
             </div>
 
-             <!-- Only shows banner IF module_name exists -->
-        {% if module_name %}
-        <div class="module-banner" role="alert">
-            <i class="ti ti-info-circle me-2"></i>
-            <strong>You're signing up for:</strong> {{ module_name }}
-        </div>
-        {% endif %}
+            <!-- Only shows banner IF module_name exists -->
+            {% if module_name %}
+            <div class="module-banner" role="alert">
+                <i class="ti ti-info-circle me-2"></i>
+                <strong>You're signing up for:</strong> {{ module_name }}
+            </div>
+            {% endif %}
 
             <!-- Progress Steps -->
             <div class="progress-steps">
@@ -673,14 +673,18 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">
-                                Phone Number
+                                Phone Number <span class="required">*</span>
                                 <span class="tooltip">
                                     <i class="ti ti-info-circle"></i>
-                                    <span class="tooltip-text">Optional, but useful for support</span>
+                                    <span class="tooltip-text">Required for account verification and support</span>
                                 </span>
                             </label>
-                            <input type="tel" class="form-input" name="phone" placeholder="+974 XXXX XXXX">
+                            <input type="tel" class="form-input" name="phone" placeholder="+974 XXXX XXXX" required>
                             <i class="ti ti-phone input-icon"></i>
+                            <span class="error-message">
+                                <i class="ti ti-alert-circle"></i>
+                                Please enter your phone number
+                            </span>
                         </div>
                     </div>
 

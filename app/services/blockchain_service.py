@@ -53,7 +53,7 @@ class BlockchainService:
         self.channel_name = "calimchannel"
         self.chaincode_name = "calim-contracts"
         self.network_name = "hyperledger-fabric"
-        self.mock_mode = True  # Set to False when Hyperledger is deployed
+        self.mock_mode = False  # Set to False when Hyperledger is deployed
         self.mock_ledger = {}
         
         logger.info(f"🔗 Blockchain Service initialized ({'MOCK MODE' if self.mock_mode else 'LIVE MODE'})")
