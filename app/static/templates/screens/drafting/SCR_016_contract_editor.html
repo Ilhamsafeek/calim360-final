@@ -2052,6 +2052,29 @@
                             Automatically send to predefined reviewers in sequence
                         </p>
                     </div>
+
+                    
+                </label>
+            </div>
+
+             <div style="margin-bottom: 1.5rem;">
+                <label
+                    style="display: flex; align-items: center; cursor: pointer; padding: 1rem; border: 2px solid var(--border-color); border-radius: 8px; transition: all 0.3s ease;"
+                    onmouseover="this.style.borderColor='var(--primary-color)'; this.style.background='var(--background-light)'"
+                    onmouseout="this.style.borderColor='var(--border-color)'; this.style.background='white'">
+                    <input type="radio" name="reviewOption" id="masterWorkflow" value="masterWorkflow"
+                        style="margin-right: 0.75rem; width: 18px; height: 18px; cursor: pointer;">
+                    <div>
+                        <span
+                            style="font-weight: 600; font-size: 0.95rem; color: var(--text-color); text-decoration: underline;">
+                            USE CUSTOM WORKFLOW
+                        </span>
+                        <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);">
+                            Automatically send to predefined reviewers in sequence
+                        </p>
+                    </div>
+
+                    
                 </label>
             </div>
 
@@ -2936,7 +2959,7 @@
                     <div class="ai-loader"></div>
                     <div class="loader-text">
                         <h4 style="margin: 1rem 0 0.5rem; color: var(--text-color);">Analyzing Contract with AI</h4>
-                        <p style="color: var(--text-muted); font-size: 0.875rem;">Claude AI is reviewing your contract
+                        <p style="color: var(--text-muted); font-size: 0.875rem;">We are reviewing your contract
                             for potential risks...</p>
                     </div>
                 </div>
@@ -2955,9 +2978,9 @@
                     <button class="btn btn-outline-primary" onclick="runRiskAnalysis()">
                         <i class="ti ti-refresh"></i> Re-analyze
                     </button>
-                    <button class="btn btn-primary" onclick="applyRiskMitigation()">
+                    <!-- <button class="btn btn-primary" onclick="applyRiskMitigation()">
                         <i class="ti ti-shield-check"></i> Apply Mitigations
-                    </button>
+                    </button> -->
                 </div>
             </div>
         </div>
@@ -3213,10 +3236,10 @@
         <div class="modal-body">
             <p style="margin-bottom: 2rem; color: var(--text-muted);">
                 Choose how you would like to proceed with this contract:
-            </p>
+           </p>
 
             <div style="display: grid; gap: 1.5rem;">
-                <button class="action-btn" onclick="generateRiskSummary()" style="text-align: left; padding: 1.5rem;">
+                 <button class="action-btn" onclick="generateRiskSummary()" style="text-align: left; padding: 1.5rem;">
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <div
                             style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--warning-color), #ffc107); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white;">
@@ -3241,7 +3264,7 @@
                     style="text-align: left; padding: 1.5rem;">
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <div
-                            style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white;">
+                            style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); border-radius: 12px; display: flex; align-items: center; justify-content: left; color: white;">
                             <i class="ti ti-video" style="font-size: 24px;"></i>
                         </div>
                         <div>
@@ -3509,7 +3532,7 @@
                 <i class="ti ti-device-floppy"></i> Save Draft
             </button>
             <button class="btn btn-primary" onclick="submitForReview()">
-                <i class="ti ti-send"></i> Submit for Review
+                <i class="ti ti-send"></i> Submit for Internal Review
             </button>`;
         } else if (contract.status === 'review') {
             // Review stage
@@ -3593,7 +3616,7 @@
                 </span>
             </div>
             <button class="workflow-setup-btn" onclick="openWorkflowSetupModal()">
-                <i class="ti ti-settings-automation"></i> Setup Workflow
+                <i class="ti ti-settings-automation"></i> Setup Custom Workflow
             </button>
         </div>
 
@@ -3881,13 +3904,35 @@
     // =====================================================
 
     // Save Draft - CONNECTED TO BACKEND
+
+    // Save Draft - FIXED VERSION
     async function saveAsDraft() {
         try {
-            console.log('💾 Auto-saving draft...');
+            console.log('💾 Saving draft...');
 
-            // Get contract content
-            const content = {
-                content: getContractContent() // Your function to get content
+            // ✅ FIX: Get content directly from the editor element
+            const editor = document.getElementById('contractContent');
+
+            if (!editor) {
+                console.error('❌ Contract editor not found!');
+                showNotification('Contract editor not found', 'error');
+                return;
+            }
+
+            // Get the content (innerHTML for contenteditable div, or value for textarea)
+            const contractContent = editor.innerHTML || editor.value || '';
+
+            if (!contractContent || contractContent.trim() === '') {
+                console.warn('⚠️ Contract content is empty!');
+                showNotification('Cannot save empty contract', 'warning');
+                return;
+            }
+
+            console.log('📝 Content length:', contractContent.length, 'characters');
+
+            // Prepare data to save
+            const data = {
+                content: contractContent
             };
 
             // Save draft
@@ -3895,32 +3940,39 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`
                 },
-                body: JSON.stringify(content)
+                credentials: 'include',
+                body: JSON.stringify(data)
             });
 
-            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
 
-            console.log('📦 Save response:', result);
+            const result = await response.json();
+            console.log('✅ Save response:', result);
 
             if (result.success) {
-                // ✅ ADD THIS: Display blockchain activities
+                // Display blockchain activities if available
                 if (result.blockchain_activities && result.blockchain_activities.length > 0) {
                     console.log('🔗 Blockchain activities received:', result.blockchain_activities.length);
-                    displayBlockchainActivities(result.blockchain_activities);
-                } else {
-                    console.warn('⚠️ No blockchain activities in response');
+                    if (typeof displayBlockchainActivities === 'function') {
+                        displayBlockchainActivities(result.blockchain_activities);
+                    }
                 }
 
                 showNotification('Draft saved successfully', 'success');
+            } else {
+                throw new Error(result.message || 'Save failed');
             }
 
         } catch (error) {
             console.error('❌ Error saving draft:', error);
-            showNotification('Error saving draft', 'error');
+            showNotification('Error saving draft: ' + error.message, 'error');
         }
     }
+
 
     // Submit for Review - CONNECTED TO BACKEND
     async function submitForReview() {
@@ -4271,28 +4323,220 @@
         });
     }
 
-    function acceptSuggestion() {
-        if (window.currentSuggestions && window.currentSuggestions[selectedSuggestionIndex]) {
-            const suggestion = window.currentSuggestions[selectedSuggestionIndex];
+function acceptSuggestion() {
+    if (!window.currentSuggestions || !window.currentSuggestions[selectedSuggestionIndex]) {
+        showNotification('No suggestion selected', 'warning');
+        return;
+    }
 
-            // Replace selected text with suggestion
-            if (currentClauseText) {
-                const content = document.getElementById('contractContent');
-                content.innerHTML = content.innerHTML.replace(currentClauseText, suggestion.suggested);
+    const suggestion = window.currentSuggestions[selectedSuggestionIndex];
+    
+    if (!currentClauseText) {
+        showNotification('No clause text to replace', 'warning');
+        return;
+    }
 
-                // Track this change
-                if (trackChangesEnabled) {
-                    trackChange('replace', currentClauseText, suggestion.suggested);
-                }
+    try {
+        const content = document.getElementById('contractContent');
+        
+        if (!content) {
+            throw new Error('Contract editor not found');
+        }
+
+        console.log('🔍 Looking for text:', currentClauseText);
+        console.log('📝 Replacing with:', suggestion.suggested);
+
+        // ✅ METHOD 1: Try direct innerHTML replacement first
+        let originalContent = content.innerHTML;
+        let plainOriginal = content.innerText || content.textContent || '';
+        
+        // Check if the text exists in plain text form
+        if (!plainOriginal.includes(currentClauseText)) {
+            console.error('❌ Text not found in plain content');
+            console.log('Expected:', currentClauseText);
+            console.log('Available:', plainOriginal.substring(0, 200) + '...');
+            showNotification('Could not find the original text to replace', 'error');
+            return;
+        }
+
+        // ✅ METHOD 2: Try simple string replacement (handles HTML tags)
+        let newContent = originalContent.replace(currentClauseText, suggestion.suggested);
+        
+        // If simple replacement didn't work, try with normalized whitespace
+        if (newContent === originalContent) {
+            console.log('⚠️ Simple replacement failed, trying normalized...');
+            
+            // Normalize both strings (remove extra whitespace, trim)
+            const normalizedClause = currentClauseText.trim().replace(/\s+/g, ' ');
+            const normalizedContent = originalContent.replace(/\s+/g, ' ');
+            
+            newContent = normalizedContent.replace(normalizedClause, suggestion.suggested);
+            
+            // Restore original whitespace structure somewhat
+            if (newContent !== normalizedContent) {
+                // Replacement worked with normalized text
+                originalContent = normalizedContent;
             }
+        }
 
-            showNotification('AI suggestion applied successfully', 'success');
-            closeModal('clauseSuggestionModal');
+        // If still no change, try regex with escaped characters
+        if (newContent === originalContent) {
+            console.log('⚠️ Normalized replacement failed, trying regex...');
+            
+            // Escape special characters for regex
+            const escapedText = currentClauseText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(escapedText, 'i'); // case insensitive
+            
+            newContent = originalContent.replace(regex, suggestion.suggested);
+        }
 
+        // ✅ METHOD 3: Last resort - replace in the visible text area
+        if (newContent === originalContent) {
+            console.log('⚠️ All replacements failed, trying innerText...');
+            
+            let textContent = content.innerText || content.textContent || '';
+            
+            if (textContent.includes(currentClauseText)) {
+                // Replace in plain text
+                textContent = textContent.replace(currentClauseText, suggestion.suggested);
+                
+                // Update as plain text (will lose formatting but works)
+                content.innerText = textContent;
+                newContent = content.innerHTML; // Get the updated HTML
+                
+                console.log('✅ Applied via innerText');
+            } else {
+                throw new Error('Text not found in any format');
+            }
+        }
+
+        // ✅ Apply the changes
+        content.innerHTML = newContent;
+        
+        // ✅ Force browser to recognize the change
+        content.dispatchEvent(new Event('input', { bubbles: true }));
+        content.dispatchEvent(new Event('change', { bubbles: true }));
+
+        // ✅ Verify by checking if the NEW text exists (not the old text)
+        const verifyContent = content.innerText || content.textContent || '';
+        const suggestionExists = verifyContent.includes(suggestion.suggested);
+        const originalGone = !verifyContent.includes(currentClauseText);
+        
+        console.log('Verification:', {
+            suggestionExists,
+            originalGone,
+            newTextSnippet: verifyContent.substring(0, 100)
+        });
+
+        if (suggestionExists || originalGone) {
+            console.log('✅ Suggestion applied successfully');
+            
+            // Scroll to show the change
+            content.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Track this change
+            if (trackChangesEnabled && typeof trackChange === 'function') {
+                trackChange('ai_suggestion', currentClauseText, suggestion.suggested);
+            }
+            
+            // Mark as modified
+            if (typeof markAsDirty === 'function') {
+                markAsDirty();
+            }
+            
+            showNotification('✓ AI suggestion applied successfully', 'success');
+            
             // Save draft after applying suggestion
             saveAsDraft();
+            
+            // Close modal
+            setTimeout(() => {
+                closeModal('clauseSuggestionModal');
+            }, 500);
+            
+        } else {
+            // Still failed - show what we tried
+            console.error('❌ Verification failed');
+            console.log('Original text:', currentClauseText);
+            console.log('Replacement text:', suggestion.suggested);
+            console.log('Current content snippet:', verifyContent.substring(0, 200));
+            
+            throw new Error('Could not verify the replacement was applied');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error applying suggestion:', error);
+        showNotification('Failed to apply suggestion: ' + error.message, 'error');
+        
+        // Offer alternative
+        setTimeout(() => {
+            if (confirm('Would you like to copy the suggestion to clipboard instead?')) {
+                copyToClipboard(suggestion.suggested);
+                showNotification('Suggestion copied to clipboard', 'info');
+            }
+        }, 1000);
+    }
+}
+
+// Helper to copy text to clipboard
+function copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+    } else {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+    }
+}
+    // Helper function to highlight the replaced text
+    function highlightReplacedText(text) {
+        const content = document.getElementById('contractContent');
+        if (!content) return;
+
+        try {
+            // Temporarily highlight the new text
+            const tempHighlight = `<mark style="background: #90EE90; animation: fadeOut 3s forwards;">${text}</mark>`;
+            const regex = new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+
+            content.innerHTML = content.innerHTML.replace(
+                regex,
+                (match) => tempHighlight.replace(text, match)
+            );
+
+            // Scroll to the highlighted text
+            const mark = content.querySelector('mark');
+            if (mark) {
+                mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Remove highlight after 3 seconds
+                setTimeout(() => {
+                    if (mark && mark.parentNode) {
+                        const textNode = document.createTextNode(mark.textContent);
+                        mark.parentNode.replaceChild(textNode, mark);
+                    }
+                }, 3000);
+            }
+        } catch (e) {
+            console.log('Could not highlight text:', e);
         }
     }
+
+    // Add this CSS for the fade animation
+    const style = document.createElement('style');
+    style.textContent = `
+    @keyframes fadeOut {
+        0% { background: #90EE90; }
+        70% { background: #90EE90; }
+        100% { background: transparent; }
+    }
+`;
+    document.head.appendChild(style);
 
     function editClauseManually() {
         closeModal('clauseSuggestionModal');
@@ -6031,22 +6275,22 @@ ${(riskAnalysisData.risk_items || []).map(item => `
 
 
     function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.style.display = 'none';
-        document.body.style.overflow = 'auto';
-        
-        // ✅ If closing workflow modal, reset it
-        if (modalId === 'contractWorkflowModal') {
-            // Don't reset completely, just clear table to prevent duplicates
-            const tbody = document.getElementById('contractWorkflowSteps');
-            if (tbody) {
-                tbody.innerHTML = '';
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+
+            // ✅ If closing workflow modal, reset it
+            if (modalId === 'contractWorkflowModal') {
+                // Don't reset completely, just clear table to prevent duplicates
+                const tbody = document.getElementById('contractWorkflowSteps');
+                if (tbody) {
+                    tbody.innerHTML = '';
+                }
+                contractWorkflowStepCount = 0;
             }
-            contractWorkflowStepCount = 0;
         }
     }
-}
 
     function showLoader() {
         const loader = document.getElementById('loadingOverlay');
@@ -6631,44 +6875,42 @@ How it works:
 
     // let riskAnalysisData = null;
 
-    // Run AI Risk Analysis
     async function runRiskAnalysis() {
-        const contentEl = document.getElementById('riskAnalysisContent');
-        const loadingEl = document.getElementById('riskLoadingState');
+        const modal = document.getElementById('riskAnalysisModal');
+        const content = document.getElementById('riskAnalysisContent');
         const badgeEl = document.getElementById('aiPoweredBadge');
 
-        // Show modal with loading state
-        openModal('riskAnalysisModal');
+        if (!contractId) {
+            showNotification('No contract selected', 'error');
+            return;
+        }
 
-        // Reset to loading state
-        contentEl.innerHTML = `
-        <div id="riskLoadingState" class="text-center" style="padding: 3rem;">
-            <div class="loader-container">
-                <div class="ai-loader"></div>
-                <div class="loader-text">
-                    <h4 style="margin: 1rem 0 0.5rem; color: var(--text-color);">Analyzing Contract with AI</h4>
-                    <p style="color: var(--text-muted); font-size: 0.875rem;">Claude AI is reviewing your contract for potential risks...</p>
-                    <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.5rem;">This may take 10-30 seconds...</p>
-                </div>
+        // Show loading state
+        content.innerHTML = `
+        <div class="text-center" style="padding: 3rem;">
+            <div class="spinner-border" role="status" style="width: 3rem; height: 3rem; border-width: 0.25rem;">
+                <span class="visually-hidden">Loading...</span>
             </div>
+            <h4 style="margin-top: 1.5rem; color: var(--text-color);">Analyzing Contract</h4>
+            <p style="color: var(--text-muted);">AI is analyzing your contract for potential risks...</p>
         </div>
     `;
 
-        if (badgeEl) badgeEl.style.display = 'none';
+        openModal('riskAnalysisModal');
 
         try {
-            console.log('🔍 Starting AI risk analysis for contract:', contractId);
-
+            console.log(`🔍 Requesting risk analysis for contract ${contractId}`);
             const response = await fetch(`/api/contracts/risk-analysis/${contractId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`
-                }
+                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                },
+                credentials: 'include'
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
             const data = await response.json();
@@ -6683,197 +6925,226 @@ How it works:
                 }
 
                 // Display the analysis
-                displayRiskAnalysis(data.analysis, data.ai_powered, data.model);
+                displayRiskAnalysis(data.analysis);
 
                 // Update timestamp
-                document.getElementById('analysisTimestamp').innerHTML = `
-                <i class="ti ti-clock"></i> 
-                Analyzed: ${new Date().toLocaleString()}
-                ${data.ai_powered ? `<span style="margin-left: 0.5rem; color: var(--primary-color);">• ${data.model || 'Claude AI'}</span>` : ''}
-            `;
+                const timestampEl = document.getElementById('analysisTimestamp');
+                if (timestampEl) {
+                    timestampEl.innerHTML = `
+                    <i class="ti ti-clock"></i> 
+                    Analyzed: ${new Date().toLocaleString()}
+                    ${data.ai_powered ? '<span class="badge badge-ai"><i class="ti ti-robot"></i> AI Powered</span>' : ''}
+                `;
+                }
 
-                showNotification('Risk analysis completed successfully', 'success');
+                showNotification('Risk analysis completed', 'success');
             } else {
-                throw new Error(data.detail || 'Analysis failed');
+                throw new Error(data.message || 'Failed to analyze contract');
             }
 
         } catch (error) {
             console.error('❌ Error in risk analysis:', error);
-            displayRiskAnalysisError(error.message);
+            content.innerHTML = `
+            <div class="text-center" style="padding: 3rem;">
+                <div style="width: 80px; height: 80px; background: rgba(220, 53, 69, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                    <i class="ti ti-alert-triangle" style="font-size: 2.5rem; color: var(--danger-color);"></i>
+                </div>
+                <h4 style="color: var(--text-color); margin-bottom: 0.5rem;">Analysis Failed</h4>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem;">${error.message}</p>
+                <button class="btn btn-primary" onclick="runRiskAnalysis()">
+                    <i class="ti ti-refresh"></i> Try Again
+                </button>
+            </div>
+        `;
             showNotification('Risk analysis failed: ' + error.message, 'error');
         }
     }
 
-    // Display Risk Analysis Results
-    function displayRiskAnalysis(analysis, aiPowered = false, model = null) {
+    // Display Risk Analysis - FIXED VERSION
+    function displayRiskAnalysis(analysis) {
         const content = document.getElementById('riskAnalysisContent');
 
-        // Calculate score circle progress
-        const circumference = 2 * Math.PI * 36;
-        const progress = circumference - (analysis.overall_score / 100) * circumference;
+        // Safely get values with defaults
+        const highRisks = analysis.high_risks || 0;
+        const mediumRisks = analysis.medium_risks || 0;
+        const lowRisks = analysis.low_risks || 0;
+        const safetyScore = analysis.overall_score || 0;
+        const riskItems = analysis.risk_items || [];
+        const executiveSummary = analysis.executive_summary || 'No summary available.';
+        const riskLevel = analysis.risk_level || 'Unknown';
 
-        // Determine score color
-        let scoreColor = 'var(--success-color)';
-        if (analysis.overall_score < 50) scoreColor = 'var(--danger-color)';
-        else if (analysis.overall_score < 70) scoreColor = 'var(--warning-color)';
+        console.log('📊 Displaying risk analysis:', {
+            highRisks,
+            mediumRisks,
+            lowRisks,
+            safetyScore,
+            itemCount: riskItems.length
+        });
 
         content.innerHTML = `
-        <!-- Risk Stats Grid -->
-        <div class="risk-stats-grid">
-            <div class="risk-stat-card high">
-                <div class="risk-stat-value">${analysis.high_risks || 0}</div>
-                <div class="risk-stat-label">High Risk</div>
+        <!-- Risk Statistics Header -->
+        <div class="risk-stats-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem;">
+            <div class="risk-stat-card high" style="background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%); padding: 1.25rem; border-radius: 12px; border: 2px solid rgba(220, 53, 69, 0.2); text-align: center;">
+                <div class="risk-stat-value" style="font-size: 2.5rem; font-weight: 700; color: #dc3545; margin-bottom: 0.5rem;">${highRisks}</div>
+                <div class="risk-stat-label" style="font-size: 0.875rem; color: #6c757d; text-transform: uppercase; font-weight: 600;">HIGH RISK</div>
             </div>
-            <div class="risk-stat-card medium">
-                <div class="risk-stat-value">${analysis.medium_risks || 0}</div>
-                <div class="risk-stat-label">Medium Risk</div>
+            
+            <div class="risk-stat-card medium" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%); padding: 1.25rem; border-radius: 12px; border: 2px solid rgba(255, 193, 7, 0.2); text-align: center;">
+                <div class="risk-stat-value" style="font-size: 2.5rem; font-weight: 700; color: #ffc107; margin-bottom: 0.5rem;">${mediumRisks}</div>
+                <div class="risk-stat-label" style="font-size: 0.875rem; color: #6c757d; text-transform: uppercase; font-weight: 600;">MEDIUM RISK</div>
             </div>
-            <div class="risk-stat-card low">
-                <div class="risk-stat-value">${analysis.low_risks || 0}</div>
-                <div class="risk-stat-label">Low Risk</div>
+            
+            <div class="risk-stat-card low" style="background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%); padding: 1.25rem; border-radius: 12px; border: 2px solid rgba(40, 167, 69, 0.2); text-align: center;">
+                <div class="risk-stat-value" style="font-size: 2.5rem; font-weight: 700; color: #28a745; margin-bottom: 0.5rem;">${lowRisks}</div>
+                <div class="risk-stat-label" style="font-size: 0.875rem; color: #6c757d; text-transform: uppercase; font-weight: 600;">LOW RISK</div>
             </div>
-            <div class="risk-stat-card score">
-                <div class="score-ring">
-                    <svg width="80" height="80">
-                        <circle class="bg" cx="40" cy="40" r="36"></circle>
-                        <circle class="progress" cx="40" cy="40" r="36" 
-                            stroke="${scoreColor}"
-                            stroke-dasharray="${circumference}" 
-                            stroke-dashoffset="${progress}">
-                        </circle>
-                    </svg>
-                    <div class="score-value" style="color: ${scoreColor}">${analysis.overall_score}</div>
-                </div>
-                <div class="risk-stat-label" style="margin-top: 0.5rem;">Safety Score</div>
+            
+            <div class="risk-stat-card safety" style="background: linear-gradient(135deg, rgba(0, 123, 255, 0.1) 0%, rgba(0, 123, 255, 0.05) 100%); padding: 1.25rem; border-radius: 12px; border: 2px solid rgba(0, 123, 255, 0.2); text-align: center;">
+                <div class="risk-stat-value" style="font-size: 2.5rem; font-weight: 700; color: #007bff; margin-bottom: 0.5rem;">${safetyScore}</div>
+                <div class="risk-stat-label" style="font-size: 0.875rem; color: #6c757d; text-transform: uppercase; font-weight: 600;">SAFETY SCORE</div>
             </div>
         </div>
         
         <!-- Executive Summary -->
-        ${analysis.executive_summary ? `
-        <div class="executive-summary">
-            <h4><i class="ti ti-report-analytics"></i> Executive Summary</h4>
-            <p style="color: var(--text-color); line-height: 1.6; margin: 0;">${analysis.executive_summary}</p>
+        ${executiveSummary ? `
+        <div class="executive-summary" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); padding: 1.5rem; border-radius: 12px; border-left: 4px solid #007bff; margin-bottom: 2rem;">
+            <h4 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; color: #212529;">
+                <i class="ti ti-report-analytics"></i> Executive Summary
+            </h4>
+            <p style="color: #495057; line-height: 1.8; margin: 0;">${executiveSummary}</p>
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #dee2e6;">
+                <span class="badge" style="background: ${getRiskLevelColor(riskLevel)}; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.875rem;">
+                    Overall Risk Level: ${riskLevel.toUpperCase()}
+                </span>
+            </div>
         </div>
         ` : ''}
         
-        <!-- Risk Items -->
+        <!-- Detailed Risk Analysis -->
         <div class="risk-items-container">
-            <h4 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <h4 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; color: #212529;">
                 <i class="ti ti-list-details"></i>
                 Detailed Risk Analysis
-                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">
-                    (${(analysis.risk_items || []).length} items identified)
+                <span style="background: #007bff; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">
+                    ${riskItems.length} ${riskItems.length === 1 ? 'item' : 'items'} identified
                 </span>
             </h4>
             
-            ${(analysis.risk_items || []).map((risk, index) => `
-                <div class="risk-item ${risk.severity}" id="riskItem${index}">
-                    <div class="risk-item-header" onclick="toggleRiskItem(${index})">
-                        <div class="risk-item-title">
-                            <i class="ti ti-${getRiskIcon(risk.type)}"></i>
-                            <span>${risk.issue}</span>
+            ${riskItems.length > 0 ? riskItems.map((risk, index) => {
+            const severity = (risk.severity || 'medium').toLowerCase();
+            const severityColor = getSeverityColor(severity);
+            const severityBg = getSeverityBackground(severity);
+
+            return `
+                <div class="risk-item" id="riskItem${index}" style="background: white; border: 2px solid ${severityBg}; border-radius: 12px; margin-bottom: 1rem; overflow: hidden; transition: all 0.3s ease;">
+                    <div class="risk-item-header" onclick="toggleRiskItem(${index})" style="padding: 1.25rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: ${severityBg};">
+                        <div class="risk-item-title" style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
+                            <i class="ti ti-${getRiskIcon(risk.type)}" style="font-size: 1.5rem; color: ${severityColor};"></i>
+                            <div>
+                                <div style="font-weight: 600; color: #212529; font-size: 1rem;">${risk.issue || 'Unknown Risk'}</div>
+                                <div style="font-size: 0.75rem; color: #6c757d; margin-top: 0.25rem;">
+                                    ${formatRiskType(risk.type)} • ${risk.clause_reference || 'General'}
+                                </div>
+                            </div>
                         </div>
-                        <div class="risk-item-badges">
-                            <span class="type-badge">${formatRiskType(risk.type)}</span>
-                            <span class="severity-badge ${risk.severity}">${risk.severity}</span>
-                            <span style="font-size: 0.8rem; color: var(--text-muted);">
-                                Score: ${risk.score || 'N/A'}
+                        <div class="risk-item-badges" style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span class="severity-badge" style="background: ${severityColor}; color: white; padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">
+                                ${severity}
                             </span>
-                            <i class="ti ti-chevron-down" id="chevron${index}"></i>
+                            ${risk.score ? `
+                            <span style="background: white; color: ${severityColor}; padding: 0.4rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; border: 2px solid ${severityColor};">
+                                Score: ${risk.score}
+                            </span>
+                            ` : ''}
+                            <i class="ti ti-chevron-down" id="chevron${index}" style="font-size: 1.25rem; color: ${severityColor}; transition: transform 0.3s ease;"></i>
                         </div>
                     </div>
-                    <div class="risk-item-content">
-                        <p style="margin-bottom: 1rem; color: var(--text-color);">${risk.description}</p>
+                    
+                    <div class="risk-item-content" id="riskContent${index}" style="padding: 1.5rem; display: none; border-top: 1px solid ${severityBg};">
+                        <p style="color: #495057; line-height: 1.8; margin-bottom: 1.5rem;">${risk.description || 'No description available.'}</p>
                         
-                        <div class="risk-detail-grid">
-                            <div class="risk-detail-item">
-                                <div class="risk-detail-label">Clause Reference</div>
-                                <div class="risk-detail-value">${risk.clause_reference || 'General'}</div>
+                        ${risk.mitigation ? `
+                        <div style="background: #e7f3ff; padding: 1.25rem; border-radius: 8px; border-left: 4px solid #007bff; margin-bottom: 1.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <i class="ti ti-bulb" style="color: #007bff;"></i>
+                                <strong style="color: #007bff;">Recommended Mitigation:</strong>
                             </div>
-                            <div class="risk-detail-item">
-                                <div class="risk-detail-label">Business Impact</div>
-                                <div class="risk-detail-value">${formatBusinessImpact(risk.business_impact)}</div>
+                            <p style="margin: 0; color: #495057; line-height: 1.6;">${risk.mitigation}</p>
+                        </div>
+                        ` : ''}
+                        
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem;">
+                            ${risk.likelihood ? `
+                            <div style="padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                                <div style="font-size: 0.75rem; color: #6c757d; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">Likelihood</div>
+                                <div style="color: #212529; font-weight: 600;">${risk.likelihood}</div>
                             </div>
-                            ${risk.qatar_law_reference ? `
-                            <div class="risk-detail-item">
-                                <div class="risk-detail-label">Qatar Law Reference</div>
-                                <div class="risk-detail-value">${risk.qatar_law_reference}</div>
+                            ` : ''}
+                            ${risk.business_impact ? `
+                            <div style="padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                                <div style="font-size: 0.75rem; color: #6c757d; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">Business Impact</div>
+                                <div style="color: #212529; font-weight: 600;">${risk.business_impact}</div>
                             </div>
                             ` : ''}
                         </div>
                         
-                        <div class="recommendation-box">
-                            <h5><i class="ti ti-bulb"></i> Recommendation</h5>
-                            <p style="margin: 0; color: var(--text-color);">${risk.recommendation}</p>
+                        <div style="display: flex; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid #dee2e6;">
+                            // <button class="btn btn-sm btn-primary" onclick="applyMitigation(${index})" style="padding: 0.5rem 1rem; border-radius: 6px;">
+                            //     <i class="ti ti-check"></i> Apply Mitigation
+                            // </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="viewClause('${risk.clause_reference}')" style="padding: 0.5rem 1rem; border-radius: 6px;">
+                                <i class="ti ti-file-text"></i> View Clause
+                            </button>
                         </div>
                     </div>
                 </div>
-            `).join('')}
-        </div>
-        
-        <!-- Compliance Status -->
-        ${analysis.compliance_status ? `
-        <div class="compliance-section">
-            <h4 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0;">
-                <i class="ti ti-certificate"></i>
-                Compliance Status
-            </h4>
-            <div class="compliance-grid">
-                <div class="compliance-item">
-                    <div class="compliance-icon ${analysis.compliance_status.qfcra_compliant ? 'pass' : 'fail'}">
-                        <i class="ti ti-${analysis.compliance_status.qfcra_compliant ? 'check' : 'x'}"></i>
-                    </div>
-                    <div>
-                        <div style="font-weight: 600;">QFCRA</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">Financial Regulation</div>
-                    </div>
+                `;
+        }).join('') : `
+                <div class="text-center" style="padding: 3rem; background: #f8f9fa; border-radius: 12px;">
+                    <i class="ti ti-circle-check" style="font-size: 4rem; color: #28a745; margin-bottom: 1rem;"></i>
+                    <h5 style="color: #212529; margin-bottom: 0.5rem;">No Significant Risks Detected</h5>
+                    <p style="color: #6c757d;">This contract appears to have minimal risk factors.</p>
                 </div>
-                <div class="compliance-item">
-                    <div class="compliance-icon ${analysis.compliance_status.qatar_civil_code_aligned ? 'pass' : 'fail'}">
-                        <i class="ti ti-${analysis.compliance_status.qatar_civil_code_aligned ? 'check' : 'x'}"></i>
-                    </div>
-                    <div>
-                        <div style="font-weight: 600;">Qatar Civil Code</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">Law No. 22 of 2004</div>
-                    </div>
-                </div>
-                <div class="compliance-item">
-                    <div class="compliance-icon ${analysis.compliance_status.data_protection_compliant ? 'pass' : 'pending'}">
-                        <i class="ti ti-${analysis.compliance_status.data_protection_compliant ? 'check' : 'alert-circle'}"></i>
-                    </div>
-                    <div>
-                        <div style="font-weight: 600;">Data Protection</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">Privacy Compliance</div>
-                    </div>
-                </div>
-            </div>
-            ${analysis.compliance_status.notes ? `
-                <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--text-muted); font-style: italic;">
-                    <i class="ti ti-info-circle"></i> ${analysis.compliance_status.notes}
-                </p>
-            ` : ''}
+            `}
         </div>
-        ` : ''}
-        
-        <!-- Recommendations Summary -->
-        ${analysis.recommendations_summary && analysis.recommendations_summary.length > 0 ? `
-        <div style="padding: 1.5rem; border-top: 1px solid var(--border-color);">
-            <h4 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
-                <i class="ti ti-checklist"></i>
-                Key Recommendations
-            </h4>
-            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                ${analysis.recommendations_summary.map((rec, i) => `
-                    <div style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; background: var(--background-light); border-radius: 8px;">
-                        <span style="width: 24px; height: 24px; background: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; flex-shrink: 0;">${i + 1}</span>
-                        <span style="color: var(--text-color);">${rec}</span>
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-        ` : ''}
     `;
     }
+
+
+    // Helper Functions
+    function getSeverityColor(severity) {
+        const colors = {
+            'critical': '#dc3545',
+            'high': '#dc3545',
+            'medium': '#ffc107',
+            'low': '#28a745'
+        };
+        return colors[severity] || '#6c757d';
+    }
+
+
+
+    function getSeverityBackground(severity) {
+        const backgrounds = {
+            'critical': 'rgba(220, 53, 69, 0.08)',
+            'high': 'rgba(220, 53, 69, 0.08)',
+            'medium': 'rgba(255, 193, 7, 0.08)',
+            'low': 'rgba(40, 167, 69, 0.08)'
+        };
+        return backgrounds[severity] || 'rgba(108, 117, 125, 0.08)';
+    }
+
+    function getRiskLevelColor(level) {
+        const colors = {
+            'Critical': '#dc3545',
+            'High': '#fd7e14',
+            'Medium': '#ffc107',
+            'Low': '#28a745'
+        };
+        return colors[level] || '#6c757d';
+    }
+
+
 
     // Display Error State
     function displayRiskAnalysisError(message) {
@@ -6892,49 +7163,106 @@ How it works:
     `;
     }
 
-    // Toggle Risk Item Expansion
+    // Toggle Risk Item
     function toggleRiskItem(index) {
-        const item = document.getElementById(`riskItem${index}`);
+        const content = document.getElementById(`riskContent${index}`);
         const chevron = document.getElementById(`chevron${index}`);
 
-        if (item) {
-            item.classList.toggle('expanded');
-            if (chevron) {
-                chevron.style.transform = item.classList.contains('expanded') ? 'rotate(180deg)' : 'rotate(0)';
+        if (content && chevron) {
+            const isExpanded = content.style.display === 'block';
+            content.style.display = isExpanded ? 'none' : 'block';
+            chevron.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+    }
+
+    // Apply Mitigation
+    function applyMitigation(index) {
+        if (!riskAnalysisData || !riskAnalysisData.risk_items || !riskAnalysisData.risk_items[index]) {
+            showNotification('Mitigation not available', 'warning');
+            return;
+        }
+
+        const risk = riskAnalysisData.risk_items[index];
+
+        if (!risk.mitigation) {
+            showNotification('No mitigation strategy available for this risk', 'warning');
+            return;
+        }
+
+        if (confirm(`Apply mitigation for: ${risk.issue}?\n\nThis will add a mitigation note to the contract.`)) {
+            try {
+                const editor = document.getElementById('contractContent');
+
+                if (!editor) {
+                    showNotification('Contract editor not found', 'error');
+                    return;
+                }
+
+                // Get current content
+                let currentContent = editor.value || editor.innerHTML || '';
+
+                // Build mitigation note
+                const mitigationNote = `\n\n[RISK MITIGATION NOTE - ${new Date().toLocaleString()}]
+═══════════════════════════════════════════════════
+Issue: ${risk.issue}
+Severity: ${risk.severity.toUpperCase()}
+Affected Clause: ${risk.clause_reference || 'General'}
+
+⚠️ RECOMMENDED MITIGATION:
+${risk.mitigation}
+═══════════════════════════════════════════════════\n`;
+
+                // Append mitigation to contract
+                const updatedContent = currentContent + mitigationNote;
+
+                // Update editor
+                if (editor.value !== undefined) {
+                    editor.value = updatedContent;
+                } else {
+                    editor.innerHTML = updatedContent;
+                }
+
+                // Mark as modified
+                if (typeof markAsDirty === 'function') {
+                    markAsDirty();
+                }
+
+                // Save as draft
+                saveAsDraft();
+
+                showNotification(`✓ Mitigation applied for: ${risk.issue}`, 'success');
+
+            } catch (error) {
+                console.error('Error applying mitigation:', error);
+                showNotification('Failed to apply mitigation: ' + error.message, 'error');
             }
         }
+    }
+    // View Clause
+    function viewClause(clauseReference) {
+        showNotification(`Navigating to clause: ${clauseReference}`, 'info');
+        // Add your clause navigation logic here
     }
 
     // Helper Functions
     function getRiskIcon(type) {
         const icons = {
-            'termination': 'door-exit',
-            'liability': 'scale',
-            'payment': 'currency-dollar',
-            'compliance': 'certificate',
-            'confidentiality': 'lock',
-            'intellectual_property': 'bulb',
-            'indemnification': 'shield',
-            'force_majeure': 'cloud-storm',
-            'dispute_resolution': 'gavel',
-            'regulatory': 'building-bank'
+            'Legal': 'scale',
+            'Financial': 'currency-dollar',
+            'Operational': 'settings',
+            'Compliance': 'shield-check',
+            'Dispute': 'gavel',
+            'General': 'alert-circle'
         };
-        return icons[type] || 'alert-circle';
+        return icons[type] || 'alert-triangle';
     }
 
     function formatRiskType(type) {
-        if (!type) return 'General';
-        return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        return (type || 'General').replace(/_/g, ' ');
     }
 
     function formatBusinessImpact(impact) {
-        const impacts = {
-            'financial': '💰 Financial',
-            'operational': '⚙️ Operational',
-            'reputational': '🏢 Reputational',
-            'legal': '⚖️ Legal'
-        };
-        return impacts[impact] || impact || 'Not specified';
+        return impact || 'To be assessed';
     }
 
     // Export Risk Report
@@ -7005,7 +7333,6 @@ ${riskAnalysisData.compliance_status?.notes ? `Note: ${riskAnalysisData.complian
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Generated by CALIM 360 Smart CLM
-Powered by Claude AI
 © ${new Date().getFullYear()} All Rights Reserved
     `;
 
@@ -7022,30 +7349,6 @@ Powered by Claude AI
         showNotification('Risk report exported successfully', 'success');
     }
 
-    // Apply Risk Mitigation
-    function applyRiskMitigation() {
-        if (!riskAnalysisData || !riskAnalysisData.risk_items) {
-            showNotification('No risk mitigation available', 'warning');
-            return;
-        }
-
-        const highRisks = riskAnalysisData.risk_items.filter(r => r.severity === 'high');
-
-        if (highRisks.length === 0) {
-            showNotification('No high-risk items to mitigate', 'info');
-            return;
-        }
-
-        if (confirm(`Apply AI-suggested mitigation for ${highRisks.length} high-risk item(s)? This will add recommendations as comments.`)) {
-            highRisks.forEach(risk => {
-                console.log(`Applying mitigation for: ${risk.issue}`);
-                showNotification(`Added mitigation note: ${risk.issue}`, 'info');
-            });
-
-            showNotification('Risk mitigation notes added successfully', 'success');
-            closeModal('riskAnalysisModal');
-        }
-    }
 
     // Show Risk Summary (Alternative View)
     function showRiskSummary() {
