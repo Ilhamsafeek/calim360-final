@@ -825,10 +825,10 @@ async def get_contracts(
     if module == "drafting":
         query = query.filter(
             or_(
-                Contract.workflow_status.in_(['draft', 'internal_review', 'clause_analysis']),
+                Contract.workflow_status.in_(['draft', 'internal_review','counterparty_internal_review', 'clause_analysis']),
                 and_(
                     Contract.workflow_status.is_(None),
-                    Contract.status.in_(['draft', 'pending_review', 'in_progress', 'review'])
+                    Contract.status.in_(['draft', 'pending_review', 'in_progress', 'review','counterparty_internal_review'])
                 ),
                 Contract.status == 'draft'
             )
@@ -1055,6 +1055,7 @@ async def get_contract_editor_data(
                 c.contract_type,
                 c.status,
                 c.created_at,
+                c.created_by as created_by_id,
                 c.updated_at,
                 comp.company_name,
                 c.company_id,
@@ -1078,6 +1079,24 @@ async def get_contract_editor_data(
         
         if not result:
             raise HTTPException(status_code=404, detail="Contract not found")
+        
+
+        is_initiator = current_user.id == result.created_by_id
+        # Check if current user belongs to counterparty company
+        counterparty_query = text("""
+            SELECT company_id 
+            FROM contract_parties 
+            WHERE contract_id = :contract_id 
+            AND party_type = 'counterparty'
+            LIMIT 1
+        """)
+        
+        counterparty_result = db.execute(counterparty_query, {"contract_id": contract_id}).fetchone()
+        
+        # User is counterparty if their company matches the counterparty company
+        is_counterparty = False
+        if counterparty_result and counterparty_result.company_id:
+            is_counterparty = current_user.company_id == counterparty_result.company_id
         
         # Get workflow instance
         workflow_query = text("""
@@ -1118,6 +1137,7 @@ async def get_contract_editor_data(
                 cv.version_number,
                 cv.created_at,
                 cv.change_summary,
+                cv.created_by,
                 CONCAT(u.first_name, ' ', u.last_name) as created_by_name
             FROM contract_versions cv
             LEFT JOIN users u ON cv.created_by = u.id
@@ -1140,9 +1160,12 @@ async def get_contract_editor_data(
                 "company_name": result.company_name,
                 "company_id": result.company_id,
                 "created_by": result.created_by_name,
+                "created_by_id": result.created_by_id,
                 "created_at": result.created_at.isoformat() if result.created_at else None,
                 "updated_at": result.updated_at.isoformat() if result.updated_at else None,
-                "current_version": result.current_version if result.current_version else 1
+                "current_version": result.current_version if result.current_version else 1,
+                "is_initiator": is_initiator,
+                "is_counterparty": is_counterparty 
             },
             "workflow": {
                 "status": workflow.workflow_status if workflow else "not_configured",
@@ -1159,6 +1182,7 @@ async def get_contract_editor_data(
                 }
                 for v in versions
             ]
+        
         }
         
     except HTTPException:
@@ -3066,7 +3090,6 @@ def send_notification(db: Session, user_id: int, title: str, message: str, type:
 # Add these endpoints at the end of app/api/api_v1/contracts/contracts.py
 # Before the last line of the file
 # =====================================================
-
 @router.post("/send-to-counterparty")
 async def send_to_counterparty(
     request: Request,
@@ -3076,8 +3099,13 @@ async def send_to_counterparty(
     """Send contract to counter-party for review and negotiation"""
     try:
         data = await request.json()
+        
+        # Simple - just get the flat fields
         contract_id = data.get('contract_id')
         counterparty_email = data.get('counterparty_email')
+        counterparty_user_id = data.get('counterparty_user_id')
+        counterparty_company_id = data.get('counterparty_company_id')
+        counterparty_company_name = data.get('counterparty_company_name')
         message = data.get('message', '')
         
         # Get contract
@@ -3085,12 +3113,17 @@ async def send_to_counterparty(
         if not contract:
             raise HTTPException(status_code=404, detail="Contract not found")
         
-        # Update contract status to negotiation
+        # Update contract status
         contract.status = 'counterparty_internal_review'
+        contract.party_b_id = counterparty_company_id
         contract.updated_at = datetime.now()
         
         # Log the action
         logger.info(f"Contract {contract_id} sent to counter-party: {counterparty_email}")
+        if counterparty_company_name:
+            logger.info(f"Counter-party company: {counterparty_company_name} (ID: {counterparty_company_id}, User ID: {counterparty_user_id})")
+        else:
+            logger.info(f"External counter-party email: {counterparty_email}")
         
         db.commit()
         
@@ -3101,7 +3134,8 @@ async def send_to_counterparty(
             "success": True,
             "message": "Contract sent to counter-party successfully",
             "contract_status": "negotiation",
-            "counterparty_email": counterparty_email
+            "counterparty_email": counterparty_email,
+            "counterparty_company_name": counterparty_company_name
         }
         
     except HTTPException as he:

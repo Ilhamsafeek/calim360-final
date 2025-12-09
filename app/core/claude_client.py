@@ -20,7 +20,7 @@ class ClaudeAPIClient:
     """
     
     def __init__(self):
-        self.api_key = settings.ANTHROPIC_API_KEY
+        self.api_key = settings.CLAUDE_API_KEY
         self.api_url = "https://api.anthropic.com/v1/messages"
         self.model = settings.CLAUDE_MODEL
         self.timeout = settings.API_TIMEOUT

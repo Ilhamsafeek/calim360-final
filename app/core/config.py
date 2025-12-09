@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     
     # Session Settings
     SESSION_COOKIE_NAME: str = "smrt_clm_session"
@@ -65,10 +65,10 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE: int = 104857600
     
     # AI Configuration - OpenAI
-    OPENAI_API_KEY: Optional[str] = None
+    # OPENAI_API_KEY: Optional[str] = None
     
     # AI Configuration - Claude/Anthropic (Primary AI Engine)
-    ANTHROPIC_API_KEY: Optional[str] = None
+    # ANTHROPIC_API_KEY: Optional[str] = None
     CLAUDE_API_KEY: Optional[str] = None  # ✅ ADD THIS LINE
     CLAUDE_MODEL: str = "claude-sonnet-4-20250514"
     CLAUDE_MAX_TOKENS: int = 4000  # ✅ ADD THIS LINE

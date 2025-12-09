@@ -192,6 +192,7 @@ async def get_company_users(
         for user in users:
             user_data = {
                 "id": user.id,
+                "company_id": user.company_id,
                 "first_name": user.first_name or "",
                 "last_name": user.last_name or "",
                 "email": user.email or "",

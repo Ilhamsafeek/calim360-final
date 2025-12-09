@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Contract Editor - CONTRIQ{% endblock %}
+{% block title %}Contract Editor - CALIM360{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="/app/static/css/contract-edit.css">
@@ -238,14 +238,14 @@
         align-items: center;
         gap: 0.25rem;
         padding: 0 0.5rem;
-        border-left: 2px solid var(--primary-color);
+        /* border-left: 2px solid var(--primary-color); */
     }
 
     .ai-toolbar-btn {
         background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
         color: white;
         border: none;
-        padding: 0.375rem 0.75rem;
+        padding: 0.5rem 1rem;
         border-radius: 6px;
         cursor: pointer;
         transition: all 0.3s ease;
@@ -3176,9 +3176,20 @@
                     style="font-weight: 600; font-size: 0.95rem; color: var(--text-color); display: block; margin-bottom: 0.75rem;">
                     Counter-Party Email: <span style="color: var(--danger-color);">*</span>
                 </label>
-                <input type="email" id="counterPartyEmail" placeholder="Enter counter-party email address"
-                    style="width: 100%; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 8px; font-size: 0.95rem;"
-                    required>
+                <div style="position: relative;">
+                    <input type="email" id="counterPartyEmail" placeholder="Search or enter counter-party email address"
+                        style="width: 100%; padding: 0.75rem; padding-right: 2.5rem; border: 2px solid var(--border-color); border-radius: 8px; font-size: 0.95rem;"
+                        autocomplete="off" oninput="searchCounterPartyUsers(this.value)"
+                        onfocus="searchCounterPartyUsers(this.value)" required>
+                    <i class="ti ti-search"
+                        style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;"></i>
+
+                    <!-- Email Suggestions Dropdown -->
+                    <div id="counterPartyEmailSuggestions"
+                        style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid var(--border-color); border-top: none; border-radius: 0 0 8px 8px; max-height: 250px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                        <!-- Suggestions will be populated here -->
+                    </div>
+                </div>
                 <small style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem; display: block;">
                     The counter-party will receive an email notification with access to review and negotiate this
                     contract.
@@ -3534,9 +3545,11 @@
             <button class="btn btn-primary" onclick="submitForReview()">
                 <i class="ti ti-send"></i> Submit for Internal Review
             </button>`;
-        } else if (contract.status === 'review') {
+        } else if ((contract.status === 'review')) {
             // Review stage
-            actionButtons = `
+
+            if ((contract.is_initiator === true)) {
+                actionButtons = `
             <button class="btn signature-btn" onclick="saveAsDraft()">
                 <i class="ti ti-device-floppy"></i> Save Draft
             </button>
@@ -3544,13 +3557,24 @@
                 <i class="ti ti-send"></i> Send to Counter-Party
             </button>`;
 
+            } else {
+                actionButtons = `
+            <button class="btn signature-btn" onclick="#">
+                <i class="ti ti-check"></i> Approve
+            </button>
+            <button class="btn btn-danger" onclick="#">
+                <i class="ti ti-send"></i> Reject
+            </button>`;
+            }
         } else if (contract.status === 'counterparty_internal_review') {
+
+            if(contract.is_counterparty===true){
             actionButtons = `
         <button class="btn btn-success" onclick="markCounterpartyReviewComplete()">
             <i class="ti ti-check"></i> Mark Review Complete
         </button>
     `;
-
+    }
 
 
         } else if (contract.status === 'negotiation') {
@@ -3569,7 +3593,7 @@
             // Approved stage
             actionButtons = `
             <button class="btn btn-primary" onclick="sendForSignature()">
-                <i class="ti ti-writing-sign"></i> Send for Signature
+                <i class="ti ti-writing-sign"></i> Initiate Approval Workflow
             </button>`;
         } else if (contract.status === 'signature') {
             // Signature stage
@@ -3609,13 +3633,11 @@
                 <input type="hidden" name="contract_number" value="${contract.contract_number || 'No Number'}"> 
             </div>
             <div class="page-header-right" style="display: flex; gap: 1rem;">
-                ${actionButtons}
+${actionButtons}
             </div>
         </div>
-
         <!-- Workflow Stepper -->
-        ${renderWorkflowStepper(contract.status)}
-
+${renderWorkflowStepper(contract.status)}
         <!-- Workflow Status Bar -->
         <div class="workflow-status-bar">
             <div class="workflow-status-info">
@@ -3625,23 +3647,32 @@
                     <span id="workflowStatusText">${workflow ? workflow.status : 'Not Configured'}</span>
                 </span>
             </div>
-            <button class="workflow-setup-btn" onclick="openWorkflowSetupModal()">
-                <i class="ti ti-settings-automation"></i> Setup Custom Workflow
-            </button>
+             <div class="ai-toolbar-group">
+                 <button class="workflow-setup-btn" onclick="openWorkflowSetupModal()">
+                    <i class="ti ti-settings-automation"></i> Setup Custom Workflow
+                </button>
+                ${!contract.is_counterparty ? `
+                <button class="ai-toolbar-btn" onclick="openRiskAnalysisModal()">
+                    <i class="ti ti-alert-triangle"></i> Risk Analysis
+                </button>
+                <button class="ai-toolbar-btn" onclick="openClauseAnalysisModal()">
+                    <i class="ti ti-file-text"></i> Clause Analysis
+                </button>
+                ` : `<button class="ai-toolbar-btn" onclick="openClauseAnalysisModal()">
+                    <i class="ti ti-file-text"></i> Risk Summary
+                </button>`}
+            </div>
         </div>
-
         <div class="editor-container">
             <div class="editor-main">
                 <!-- Editor Toolbar -->
-                ${renderEditorToolbar()}
-
+${renderEditorToolbar()}
                 <!-- Document Info Bar -->
-                ${renderDocumentInfo(contract, versions)}
-
+${renderDocumentInfo(contract, versions)}
                 <!-- Editor Content Area -->
                 <div class="editor-content">
                     <div class="editor-paper" contenteditable="true" id="contractContent">
-                        ${contract.content && contract.content.trim() !== '' ?
+${contract.content && contract.content.trim() !== '' ?
                 (contract.content.includes('signature-field') ? contract.content : contract.content + signature_block)
                 : getDefaultContractContent()}
                     </div>
@@ -3649,6 +3680,7 @@
             </div>
         </div>
     `;
+
     }
 
     function renderWorkflowStepper(status) {
@@ -3787,14 +3819,7 @@
                 </button>
             </div>
             
-            <div class="ai-toolbar-group">
-                <button class="ai-toolbar-btn" onclick="openRiskAnalysisModal()">
-                    <i class="ti ti-alert-triangle"></i> Risk Analysis
-                </button>
-                <button class="ai-toolbar-btn" onclick="openClauseAnalysisModal()">
-                    <i class="ti ti-file-text"></i> Clause Analysis
-                </button>
-            </div>
+           
         </div>
     `;
     }
@@ -5037,7 +5062,7 @@
                 // 🆕 Check if both parties have signed
                 if (data.both_signed && data.status === 'signed') {
                     // Both parties signed - status is now 'signed'
-                    showNotification('🎉 Both parties have signed! Contract status changed to SIGNED.', 'success');
+                    showNotification('Both parties have signed! Contract status changed to SIGNED.', 'success');
 
                     // Update contract status in memory
                     if (contractData && contractData.contract) {
@@ -6453,18 +6478,14 @@ ${(riskAnalysisData.risk_items || []).map(item => `
         const email = document.getElementById('counterPartyEmail')?.value.trim();
         const message = document.getElementById('counterPartyMessage')?.value.trim() || '';
 
-        // Validation
         if (!email) {
             showNotification('Please enter a counter-party email address', 'error');
-            document.getElementById('counterPartyEmail')?.focus();
             return;
         }
 
-        // Basic email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             showNotification('Please enter a valid email address', 'error');
-            document.getElementById('counterPartyEmail')?.focus();
             return;
         }
 
@@ -6476,6 +6497,9 @@ ${(riskAnalysisData.risk_items || []).map(item => `
                 body: JSON.stringify({
                     contract_id: contractId,
                     counterparty_email: email,
+                    counterparty_user_id: selectedCounterPartyEmail ? selectedCounterPartyEmail.userId : null,
+                    counterparty_company_id: selectedCounterPartyEmail ? selectedCounterPartyEmail.companyId : null,
+                    counterparty_company_name: selectedCounterPartyEmail ? selectedCounterPartyEmail.companyName : null,
                     message: message
                 })
             });
@@ -6485,15 +6509,10 @@ ${(riskAnalysisData.risk_items || []).map(item => `
             if (data.success) {
                 showNotification('Contract sent to counter-party successfully!', 'success');
                 closeModal('sendToCounterPartyModal');
-
-                // Clear form
                 document.getElementById('counterPartyEmail').value = '';
                 document.getElementById('counterPartyMessage').value = '';
-
-                // Reload page to show updated status and buttons
-                setTimeout(() => {
-                    location.reload();
-                }, 1500);
+                selectedCounterPartyEmail = null;
+                setTimeout(() => location.reload(), 1500);
             } else {
                 showNotification(data.message || 'Failed to send contract to counter-party', 'error');
             }
@@ -6504,7 +6523,6 @@ ${(riskAnalysisData.risk_items || []).map(item => `
             hideLoader();
         }
     }
-
     // =====================================================
     // COUNTER-PARTY ACTION FUNCTIONS (for negotiation stage)
     // =====================================================
@@ -6657,7 +6675,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
             const data = await response.json();
 
             if (data.success) {
-                 showNotification('Review completed successfully!', 'success');
+                showNotification('Review completed successfully!', 'success');
                 setTimeout(() => location.reload(), 1500);
             } else {
                 showError(data.message);
@@ -7853,6 +7871,151 @@ Generated by CALIM 360 Smart CLM
         console.log('🧪 Testing with mock data...');
         displayBlockchainActivities(mockActivities);
     }
+
+    // =====================================================
+    // COUNTER-PARTY EMAIL SEARCH FUNCTIONS
+    // =====================================================
+
+    let searchTimeout;
+    let selectedCounterPartyEmail = null;
+
+    /**
+     * Search users from database for counter-party email
+     */
+    async function searchCounterPartyUsers(query) {
+        const suggestionsDiv = document.getElementById('counterPartyEmailSuggestions');
+
+        // Clear previous timeout
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
+
+        // Hide suggestions if query is empty
+        if (!query || query.trim().length === 0) {
+            suggestionsDiv.style.display = 'none';
+            return;
+        }
+
+        // Debounce search - wait 300ms after user stops typing
+        searchTimeout = setTimeout(async () => {
+            try {
+                // Show loading state
+                suggestionsDiv.innerHTML = `
+                    <div style="padding: 1rem; text-align: center; color: var(--text-muted);">
+                        <i class="ti ti-loader" style="animation: spin 1s linear infinite;"></i>
+                        Searching users...
+                    </div>
+                `;
+                suggestionsDiv.style.display = 'block';
+
+                // Call API to search users
+                const response = await fetch(`/api/users/company?search=${encodeURIComponent(query)}&limit=10`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to search users');
+                }
+
+                const data = await response.json();
+                const users = data.users || [];
+
+                // Display results
+                if (users.length === 0) {
+                    suggestionsDiv.innerHTML = `
+                        <div style="padding: 1rem; text-align: center; color: var(--text-muted);">
+                            <i class="ti ti-user-x" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+                            <div>No users found matching "${query}"</div>
+                            <small style="display: block; margin-top: 0.25rem;">You can still enter the email manually</small>
+                        </div>
+                    `;
+                } else {
+                    suggestionsDiv.innerHTML = users.map(user => {
+                        const fullName = `${user.first_name} ${user.last_name}`.trim();
+                        const userType = user.user_type ? ` (${user.user_type})` : '';
+                        const department = user.department ? ` - ${user.department}` : '';
+                        const companyName = (user.company_name || 'Unknown Company').replace(/'/g, "\\'");
+
+
+                        return `
+                            <div onclick="selectCounterPartyEmail('${user.email}', '${companyName}', ${user.id}, ${user.company_id || 'null'})" 
+                                style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid var(--border-color); transition: background 0.2s;"
+                                onmouseover="this.style.background='var(--background-light)'" 
+                                onmouseout="this.style.background='transparent'">
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.875rem;">
+                                        ${user.first_name.charAt(0)}${user.last_name.charAt(0)}
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600; color: var(--text-color); margin-bottom: 0.125rem;">
+                                            ${fullName}${userType}
+                                        </div>
+                                        <div style="font-size: 0.85rem; color: var(--text-muted);">
+                                            <i class="ti ti-mail" style="font-size: 0.875rem;"></i> ${user.email}${department}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                suggestionsDiv.style.display = 'block';
+
+            } catch (error) {
+                console.error('Error searching users:', error);
+                suggestionsDiv.innerHTML = `
+                    <div style="padding: 1rem; text-align: center; color: var(--danger-color);">
+                        <i class="ti ti-alert-circle" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+                        <div>Error searching users</div>
+                        <small style="display: block; margin-top: 0.25rem;">You can still enter the email manually</small>
+                    </div>
+                `;
+                suggestionsDiv.style.display = 'block';
+            }
+        }, 300); // 300ms debounce
+    }
+
+    /**
+     * Select an email from the suggestions
+     */
+    function selectCounterPartyEmail(email, companyName, userId, companyId) {
+        const emailInput = document.getElementById('counterPartyEmail');
+        const suggestionsDiv = document.getElementById('counterPartyEmailSuggestions');
+
+        // Set the email value
+        emailInput.value = email;
+
+        // Store all the data
+        selectedCounterPartyEmail = {
+            email: email,
+            companyName: companyName,
+            userId: userId,
+            companyId: companyId
+        };
+
+        // Hide suggestions
+        suggestionsDiv.style.display = 'none';
+
+        // Show notification with company name
+        showNotification(`Selected: ${companyName} (${email})`, 'success');
+    }
+    /**
+     * Close suggestions when clicking outside
+     */
+    document.addEventListener('click', function (event) {
+        const emailInput = document.getElementById('counterPartyEmail');
+        const suggestionsDiv = document.getElementById('counterPartyEmailSuggestions');
+
+        if (emailInput && suggestionsDiv &&
+            !emailInput.contains(event.target) &&
+            !suggestionsDiv.contains(event.target)) {
+            suggestionsDiv.style.display = 'none';
+        }
+    });
 </script>
 
 {% endblock %}

@@ -26,7 +26,7 @@ class ChatbotClaudeService:
     def __init__(self):
         """Initialize Anthropic Claude client for chatbot"""
         try:
-            api_key = settings.CLAUDE_API_KEY or settings.ANTHROPIC_API_KEY
+            api_key = settings.CLAUDE_API_KEY
             if not api_key:
                 logger.warning("⚠️ CLAUDE_API_KEY not set - chatbot will use mock responses")
                 self.client = None

@@ -1742,18 +1742,14 @@ async def analyze_correspondence(
         try:
             db.execute(text("""
                 INSERT INTO ai_query_history 
-                (user_id, query_text, response_text, 
-                 confidence_score, tokens_used, processing_time_ms, created_at)
+                (user_id, query_text, response_text, response_time_ms, created_at)
                 VALUES 
-                (:user_id, :query_text, :response_text,
-                 :confidence_score, :tokens_used, :processing_time_ms, :created_at)
+                (:user_id, :query_text, :response_text, :response_time_ms, :created_at)
             """), {
                 "user_id": current_user.id,
                 "query_text": query_text,
-                "response_text": analysis_text[:5000],  # Truncate if too long
-                "confidence_score": confidence_score,
-                "tokens_used": tokens_used,
-                "processing_time_ms": processing_time_ms,
+                "response_text": analysis_text[:5000],
+                "response_time_ms": processing_time_ms,
                 "created_at": datetime.utcnow()
             })
             db.commit()
@@ -1886,9 +1882,7 @@ async def get_correspondence_history(
                 id,
                 query_text,
                 response_text,
-                confidence_score,
-                tokens_used,
-                processing_time_ms,
+                response_time_ms,
                 created_at
             FROM ai_query_history
             WHERE user_id = :user_id
@@ -1914,9 +1908,7 @@ async def get_correspondence_history(
                     "id": h.id,
                     "query": h.query_text,
                     "response": h.response_text[:200] + "..." if len(h.response_text) > 200 else h.response_text,
-                    "confidence": h.confidence_score,
-                    "tokens": h.tokens_used,
-                    "processing_time": h.processing_time_ms,
+                    "processing_time": h.response_time_ms,
                     "created_at": h.created_at.isoformat() if h.created_at else None
                 }
                 for h in history

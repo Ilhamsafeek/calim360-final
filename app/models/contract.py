@@ -23,7 +23,7 @@ class Contract(Base):
     template_id = Column(Integer, nullable=True)
     parent_contract_id = Column(Integer, ForeignKey("contracts.id"), nullable=True)
     
-    # ✅ ADD THESE PARTY FIELDS
+    # PARTY FIELDS
     party_a_name = Column(String(255))
     party_a_id = Column(Integer)
     party_b_name = Column(String(255))  # ← THIS IS THE KEY ONE
@@ -40,8 +40,8 @@ class Contract(Base):
     signing_date = Column(Date)
     effective_date = Column(Date)
     expiry_date = Column(Date)
-    renewal_date = Column(Date)  # ✅ ADD
-    signed_date = Column(Date)  # ✅ ADD
+    renewal_date = Column(Date)
+    signed_date = Column(Date)
     
     # Renewal
     auto_renewal = Column(Boolean, default=False)
@@ -51,8 +51,8 @@ class Contract(Base):
     # Status
     status = Column(String(50), default='draft')
     workflow_status = Column(String(50))
-    approval_status = Column(String(50))  # ✅ ADD
-    signature_status = Column(String(50))  # ✅ ADD
+    approval_status = Column(String(50))  
+    signature_status = Column(String(50))
     current_version = Column(Integer, default=1)
     
     # Locking
