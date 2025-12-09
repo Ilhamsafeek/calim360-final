@@ -838,3 +838,5 @@ def generate_contract_with_ai(
     db.refresh(new_contract)
     
     return new_contract
+
+

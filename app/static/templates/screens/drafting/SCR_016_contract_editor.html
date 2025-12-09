@@ -2053,11 +2053,11 @@
                         </p>
                     </div>
 
-                    
+
                 </label>
             </div>
 
-             <div style="margin-bottom: 1.5rem;">
+            <div style="margin-bottom: 1.5rem;">
                 <label
                     style="display: flex; align-items: center; cursor: pointer; padding: 1rem; border: 2px solid var(--border-color); border-radius: 8px; transition: all 0.3s ease;"
                     onmouseover="this.style.borderColor='var(--primary-color)'; this.style.background='var(--background-light)'"
@@ -2074,7 +2074,7 @@
                         </p>
                     </div>
 
-                    
+
                 </label>
             </div>
 
@@ -3236,10 +3236,10 @@
         <div class="modal-body">
             <p style="margin-bottom: 2rem; color: var(--text-muted);">
                 Choose how you would like to proceed with this contract:
-           </p>
+            </p>
 
             <div style="display: grid; gap: 1.5rem;">
-                 <button class="action-btn" onclick="generateRiskSummary()" style="text-align: left; padding: 1.5rem;">
+                <button class="action-btn" onclick="generateRiskSummary()" style="text-align: left; padding: 1.5rem;">
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <div
                             style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--warning-color), #ffc107); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white;">
@@ -3543,6 +3543,16 @@
             <button class="btn btn-primary" onclick="openSendToCounterPartyModal()">
                 <i class="ti ti-send"></i> Send to Counter-Party
             </button>`;
+
+        } else if (contract.status === 'counterparty_internal_review') {
+            actionButtons = `
+        <button class="btn btn-success" onclick="markCounterpartyReviewComplete()">
+            <i class="ti ti-check"></i> Mark Review Complete
+        </button>
+    `;
+
+
+
         } else if (contract.status === 'negotiation') {
             // Negotiation stage
             actionButtons = `
@@ -3642,50 +3652,48 @@
     }
 
     function renderWorkflowStepper(status) {
-        // Define all 6 steps with CORRECTED logic
         const steps = [
             {
-                key: 'draft',
-                icon: 'file-text',
-                label: 'Draft',
-                status: 'completed' // Always completed if we're viewing
+                key: 'draft', icon: 'file-text', label: 'Draft',
+                status: 'completed'
             },
+
             {
-                key: 'review',
-                icon: 'users',
-                label: 'Internal Review',
-                status: status === 'draft' ? 'pending' : 'completed'
+                key: 'review', icon: 'users', label: 'Internal Review',
+                status: status === 'draft' ? 'pending' : status === 'review' ? 'active' : 'completed'
             },
+
+            // ← NEW STEP ADDED HERE
             {
-                key: 'negotiation',
-                icon: 'message-circle',
-                label: 'Negotiation',
+                key: 'counterparty_internal_review', icon: 'building', label: 'Counterparty Review',
                 status: ['draft', 'review'].includes(status) ? 'pending' :
+                    status === 'counterparty_internal_review' ? 'active' : 'completed'
+            },
+
+            {
+                key: 'negotiation', icon: 'message-circle', label: 'Negotiation',
+                status: ['draft', 'review', 'counterparty_internal_review'].includes(status) ? 'pending' :
                     status === 'negotiation' ? 'active' : 'completed'
             },
+
             {
-                key: 'approval',
-                icon: 'circle-check',
-                label: 'Approval',
-                status: ['draft', 'review', 'negotiation'].includes(status) ? 'pending' :
+                key: 'approval', icon: 'circle-check', label: 'Approval',
+                status: ['draft', 'review', 'counterparty_internal_review', 'negotiation'].includes(status) ? 'pending' :
                     status === 'approved' ? 'active' : 'completed'
             },
+
             {
-                key: 'signature',
-                icon: 'writing-sign',
-                label: 'Signature',
-                status: ['draft', 'review', 'negotiation', 'approved'].includes(status) ? 'pending' :
-                    status === 'signature' ? 'active' :
-                        ['signed', 'executed'].includes(status) ? 'completed' : 'pending'
+                key: 'signature', icon: 'writing-sign', label: 'Signature',
+                status: ['draft', 'review', 'counterparty_internal_review', 'negotiation', 'approved'].includes(status) ? 'pending' :
+                    status === 'signed' ? 'active' : 'completed'
             },
+
             {
-                key: 'executed',
-                icon: 'file-check',
-                label: 'Executed',
-                status: status === 'executed' ? 'completed' :
-                    status === 'signed' ? 'active' : 'pending'
+                key: 'executed', icon: 'file-check', label: 'Executed',
+                status: status === 'executed' ? 'completed' : 'pending'
             }
         ];
+
 
         return `
         <div class="workflow-stepper">
@@ -3819,13 +3827,14 @@
     // =====================================================
     function getProgressWidth(status) {
         const progress = {
-            'draft': 16,        // Step 1 complete
-            'review': 33,       // Step 2 complete
-            'negotiation': 50,  // Step 3 complete
-            'approved': 66,     // Step 4 complete
-            'signature': 83,    // Step 5 in progress (awaiting signatures)
-            'signed': 83,       // Step 5 complete (both signed, ready for execution)
-            'executed': 100     // Step 6 complete (fully executed)
+            'draft': 0,
+            'internal_review': 16.67,
+            'counterparty_internal_review': 33.33,  // ← ADD THIS LINE
+            'negotiation': 50,
+            'approved': 66.67,
+            'signed': 83.33,
+            'active': 83.33,
+            'executed': 100
         };
         return progress[status] || 0;
     }
@@ -3903,9 +3912,7 @@
     // CONNECTED API FUNCTIONS - ALL BACKEND INTEGRATION
     // =====================================================
 
-    // Save Draft - CONNECTED TO BACKEND
-
-    // Save Draft - FIXED VERSION
+    // Save Draft
     async function saveAsDraft() {
         try {
             console.log('💾 Saving draft...');
@@ -4220,80 +4227,141 @@
     }
 
 
-    // Clause Analysis - CONNECTED TO AI BACKEND
     async function openClauseAnalysisModal() {
+        // Get user's selected text (if any)
         const selection = window.getSelection();
-        currentClauseText = selection.toString() || '';
+        let selectedText = selection.toString().trim();
 
+        // Get the full contract content from the editor
+        const contractEditor = document.getElementById('contractContentEditor');
+        let fullContent = '';
+
+        if (contractEditor) {
+            // Get innerHTML (preserves HTML structure) or innerText (plain text)
+            fullContent = contractEditor.innerText || contractEditor.textContent || '';
+            fullContent = fullContent.trim();
+        }
+
+        // Determine what content to analyze
+        let contentToAnalyze = '';
+
+        if (selectedText && selectedText.length > 0) {
+            // User has selected specific text - analyze that
+            contentToAnalyze = selectedText;
+            currentClauseText = selectedText;
+            console.log('📝 Analyzing selected text:', contentToAnalyze.substring(0, 100) + '...');
+        } else if (fullContent && fullContent.length > 0) {
+            // No selection - analyze the entire contract content
+            contentToAnalyze = fullContent;
+            currentClauseText = fullContent;
+            console.log('📄 Analyzing full contract content (', fullContent.length, 'characters)');
+        } else {
+            // No content available
+            showNotification('Please select clause to analyze', 'warning');
+            return;
+        }
+
+        // Validate we have content
+        if (!contentToAnalyze || contentToAnalyze.length < 10) {
+            showNotification('Please add contract content or select text to analyze', 'warning');
+            return;
+        }
+
+        // Open the modal
         openModal('clauseSuggestionModal');
 
-        // Get AI suggestions for selected text or current clause
+        // Get AI suggestions for the content
         try {
+            showLoader('AI is analyzing the clause...');
+
             const response = await fetch('/api/contracts/clause-suggestions', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getAuthToken()}`
+                },
                 body: JSON.stringify({
-                    clause_text: currentClauseText || 'Either party may terminate this Agreement upon thirty (30) days written notice.',
-                    clause_type: 'termination',
+                    clause_text: contentToAnalyze,
+                    clause_type: 'general',
                     contract_id: contractId
                 })
             });
 
+            hideLoader();
+
+            if (!response.ok) {
+                throw new Error('Failed to get clause suggestions from AI');
+            }
+
             const data = await response.json();
 
-            if (data.success && data.suggestions) {
+            if (data.success && data.suggestions && data.suggestions.length > 0) {
                 displayClauseSuggestions(data.suggestions);
             } else {
-                showDefaultClauseSuggestions();
+                // No suggestions returned - close modal and show error
+                closeModal('clauseSuggestionModal');
+                showNotification('AI could not generate suggestions for this content. Please try again or contact support.', 'error');
             }
+
         } catch (error) {
-            console.error('Error fetching clause suggestions:', error);
-            showDefaultClauseSuggestions();
+            console.error('Error getting clause suggestions:', error);
+            hideLoader();
+            closeModal('clauseSuggestionModal');
+
+            // Show honest error message
+            showNotification('Failed to analyze clause. Please check your connection and try again.', 'error');
         }
     }
-
     function viewClauseSuggestions(clauseType) {
         closeModal('riskAnalysisModal');
         setTimeout(() => openClauseAnalysisModal(), 300);
     }
 
+    // Helper function to display suggestions (keep existing function)
     function displayClauseSuggestions(suggestions) {
-        const content = document.getElementById('clauseSuggestionContent');
-        const firstSuggestion = suggestions[0] || {};
+        const container = document.getElementById('clauseSuggestionContent');
 
-        content.innerHTML = `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-            <div>
-                <h5 style="margin-bottom: 0.75rem; color: var(--danger-color);">
-                    <i class="ti ti-file-text"></i> Original Clause
-                </h5>
-                <div style="background: var(--background-light); padding: 1rem; border-radius: 6px; border-left: 4px solid var(--danger-color);">
-                    "${firstSuggestion.original || currentClauseText}"
-                </div>
-            </div>
-            <div>
-                <h5 style="margin-bottom: 0.75rem; color: var(--success-color);">
-                    <i class="ti ti-sparkles"></i> AI Suggested Clause
-                </h5>
-                <div style="background: var(--background-light); padding: 1rem; border-radius: 6px; border-left: 4px solid var(--success-color);">
-                    "${firstSuggestion.suggested}"
-                </div>
-            </div>
+        container.innerHTML = `
+        <div style="background: var(--background-light); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+            <h4 style="margin: 0 0 0.5rem 0; color: var(--text-color);">
+                <i class="ti ti-file-text"></i> Original Clause
+            </h4>
+            <p style="margin: 0; color: var(--text-muted); line-height: 1.6;">
+                ${escapeHtml(currentClauseText || 'No text selected')}
+            </p>
         </div>
-
-        <div>
-            <h5 style="margin-bottom: 1rem;">Alternative Suggestions</h5>
+        
+        <h4 style="margin: 0 0 1rem 0; color: var(--text-color);">
+            <i class="ti ti-sparkles"></i> AI Suggestions
+        </h4>
+        
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
             ${suggestions.map((sug, idx) => `
-                <div style="border: 2px solid var(--primary-color); border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; cursor: pointer; background: rgba(39, 98, 203, 0.05);" onclick="selectSuggestion(${idx})">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <strong>Option ${idx + 1}</strong>
-                        <div style="font-size: 0.875rem;">
-                            Legal: ${'★'.repeat(sug.legal_score || 4)}${'☆'.repeat(5 - (sug.legal_score || 4))} | 
-                            Business: ${'★'.repeat(sug.business_score || 4)}${'☆'.repeat(5 - (sug.business_score || 4))}
+                <div onclick="selectSuggestion(${idx})" style="cursor: pointer; padding: 1.25rem; background: rgba(39, 98, 203, 0.05); border-radius: 8px; border: 2px solid transparent; transition: all 0.3s ease;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem;">
+                        <h5 style="margin: 0; color: var(--primary-color); font-size: 1rem;">
+                            Option ${idx + 1}
+                        </h5>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <span style="background: var(--success-bg); color: var(--success-color); padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem;">
+                                Legal: ${sug.legal_score || 5}/5
+                            </span>
+                            <span style="background: var(--info-bg); color: var(--info-color); padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem;">
+                                Business: ${sug.business_score || 4}/5
+                            </span>
                         </div>
                     </div>
-                    <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: var(--text-muted);">
-                        ${sug.reasoning}. ${sug.compliance || ''}
+                    
+                    <p style="margin: 0 0 0.75rem 0; color: var(--text-color); line-height: 1.6; font-weight: 500;">
+                        ${escapeHtml(sug.suggested)}
+                    </p>
+                    
+                    <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem; line-height: 1.5;">
+                        <i class="ti ti-info-circle"></i> <strong>Reasoning:</strong> ${escapeHtml(sug.reasoning)}
+                    </p>
+                    
+                    <p style="margin: 0.75rem 0 0 0; color: var(--success-color); font-size: 0.85rem;">
+                        <i class="ti ti-shield-check"></i> ${sug.compliance || 'Compliant with standard practices'}
                     </p>
                 </div>
             `).join('')}
@@ -4303,15 +4371,12 @@
         window.currentSuggestions = suggestions;
     }
 
-    function showDefaultClauseSuggestions() {
-        displayClauseSuggestions([{
-            original: currentClauseText || "Either party may terminate this Agreement upon thirty (30) days written notice.",
-            suggested: "Either party may terminate for convenience with ninety (90) days notice. Termination for cause requires thirty (30) days notice with fifteen (15) day cure period.",
-            reasoning: "Provides balanced termination rights with appropriate notice periods",
-            legal_score: 5,
-            business_score: 4,
-            compliance: "Complies with Qatar Labor Law Article 61"
-        }]);
+
+    // Helper function to escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     let selectedSuggestionIndex = 0;
@@ -4323,177 +4388,177 @@
         });
     }
 
-function acceptSuggestion() {
-    if (!window.currentSuggestions || !window.currentSuggestions[selectedSuggestionIndex]) {
-        showNotification('No suggestion selected', 'warning');
-        return;
-    }
-
-    const suggestion = window.currentSuggestions[selectedSuggestionIndex];
-    
-    if (!currentClauseText) {
-        showNotification('No clause text to replace', 'warning');
-        return;
-    }
-
-    try {
-        const content = document.getElementById('contractContent');
-        
-        if (!content) {
-            throw new Error('Contract editor not found');
-        }
-
-        console.log('🔍 Looking for text:', currentClauseText);
-        console.log('📝 Replacing with:', suggestion.suggested);
-
-        // ✅ METHOD 1: Try direct innerHTML replacement first
-        let originalContent = content.innerHTML;
-        let plainOriginal = content.innerText || content.textContent || '';
-        
-        // Check if the text exists in plain text form
-        if (!plainOriginal.includes(currentClauseText)) {
-            console.error('❌ Text not found in plain content');
-            console.log('Expected:', currentClauseText);
-            console.log('Available:', plainOriginal.substring(0, 200) + '...');
-            showNotification('Could not find the original text to replace', 'error');
+    function acceptSuggestion() {
+        if (!window.currentSuggestions || !window.currentSuggestions[selectedSuggestionIndex]) {
+            showNotification('No suggestion selected', 'warning');
             return;
         }
 
-        // ✅ METHOD 2: Try simple string replacement (handles HTML tags)
-        let newContent = originalContent.replace(currentClauseText, suggestion.suggested);
-        
-        // If simple replacement didn't work, try with normalized whitespace
-        if (newContent === originalContent) {
-            console.log('⚠️ Simple replacement failed, trying normalized...');
-            
-            // Normalize both strings (remove extra whitespace, trim)
-            const normalizedClause = currentClauseText.trim().replace(/\s+/g, ' ');
-            const normalizedContent = originalContent.replace(/\s+/g, ' ');
-            
-            newContent = normalizedContent.replace(normalizedClause, suggestion.suggested);
-            
-            // Restore original whitespace structure somewhat
-            if (newContent !== normalizedContent) {
-                // Replacement worked with normalized text
-                originalContent = normalizedContent;
+        const suggestion = window.currentSuggestions[selectedSuggestionIndex];
+
+        if (!currentClauseText) {
+            showNotification('No clause text to replace', 'warning');
+            return;
+        }
+
+        try {
+            const content = document.getElementById('contractContent');
+
+            if (!content) {
+                throw new Error('Contract editor not found');
             }
-        }
 
-        // If still no change, try regex with escaped characters
-        if (newContent === originalContent) {
-            console.log('⚠️ Normalized replacement failed, trying regex...');
-            
-            // Escape special characters for regex
-            const escapedText = currentClauseText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regex = new RegExp(escapedText, 'i'); // case insensitive
-            
-            newContent = originalContent.replace(regex, suggestion.suggested);
-        }
+            console.log('🔍 Looking for text:', currentClauseText);
+            console.log('📝 Replacing with:', suggestion.suggested);
 
-        // ✅ METHOD 3: Last resort - replace in the visible text area
-        if (newContent === originalContent) {
-            console.log('⚠️ All replacements failed, trying innerText...');
-            
-            let textContent = content.innerText || content.textContent || '';
-            
-            if (textContent.includes(currentClauseText)) {
-                // Replace in plain text
-                textContent = textContent.replace(currentClauseText, suggestion.suggested);
-                
-                // Update as plain text (will lose formatting but works)
-                content.innerText = textContent;
-                newContent = content.innerHTML; // Get the updated HTML
-                
-                console.log('✅ Applied via innerText');
+            // ✅ METHOD 1: Try direct innerHTML replacement first
+            let originalContent = content.innerHTML;
+            let plainOriginal = content.innerText || content.textContent || '';
+
+            // Check if the text exists in plain text form
+            if (!plainOriginal.includes(currentClauseText)) {
+                console.error('❌ Text not found in plain content');
+                console.log('Expected:', currentClauseText);
+                console.log('Available:', plainOriginal.substring(0, 200) + '...');
+                showNotification('Could not find the original text to replace', 'error');
+                return;
+            }
+
+            // ✅ METHOD 2: Try simple string replacement (handles HTML tags)
+            let newContent = originalContent.replace(currentClauseText, suggestion.suggested);
+
+            // If simple replacement didn't work, try with normalized whitespace
+            if (newContent === originalContent) {
+                console.log('⚠️ Simple replacement failed, trying normalized...');
+
+                // Normalize both strings (remove extra whitespace, trim)
+                const normalizedClause = currentClauseText.trim().replace(/\s+/g, ' ');
+                const normalizedContent = originalContent.replace(/\s+/g, ' ');
+
+                newContent = normalizedContent.replace(normalizedClause, suggestion.suggested);
+
+                // Restore original whitespace structure somewhat
+                if (newContent !== normalizedContent) {
+                    // Replacement worked with normalized text
+                    originalContent = normalizedContent;
+                }
+            }
+
+            // If still no change, try regex with escaped characters
+            if (newContent === originalContent) {
+                console.log('⚠️ Normalized replacement failed, trying regex...');
+
+                // Escape special characters for regex
+                const escapedText = currentClauseText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(escapedText, 'i'); // case insensitive
+
+                newContent = originalContent.replace(regex, suggestion.suggested);
+            }
+
+            // ✅ METHOD 3: Last resort - replace in the visible text area
+            if (newContent === originalContent) {
+                console.log('⚠️ All replacements failed, trying innerText...');
+
+                let textContent = content.innerText || content.textContent || '';
+
+                if (textContent.includes(currentClauseText)) {
+                    // Replace in plain text
+                    textContent = textContent.replace(currentClauseText, suggestion.suggested);
+
+                    // Update as plain text (will lose formatting but works)
+                    content.innerText = textContent;
+                    newContent = content.innerHTML; // Get the updated HTML
+
+                    console.log('✅ Applied via innerText');
+                } else {
+                    throw new Error('Text not found in any format');
+                }
+            }
+
+            // ✅ Apply the changes
+            content.innerHTML = newContent;
+
+            // ✅ Force browser to recognize the change
+            content.dispatchEvent(new Event('input', { bubbles: true }));
+            content.dispatchEvent(new Event('change', { bubbles: true }));
+
+            // ✅ Verify by checking if the NEW text exists (not the old text)
+            const verifyContent = content.innerText || content.textContent || '';
+            const suggestionExists = verifyContent.includes(suggestion.suggested);
+            const originalGone = !verifyContent.includes(currentClauseText);
+
+            console.log('Verification:', {
+                suggestionExists,
+                originalGone,
+                newTextSnippet: verifyContent.substring(0, 100)
+            });
+
+            if (suggestionExists || originalGone) {
+                console.log('✅ Suggestion applied successfully');
+
+                // Scroll to show the change
+                content.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Track this change
+                if (trackChangesEnabled && typeof trackChange === 'function') {
+                    trackChange('ai_suggestion', currentClauseText, suggestion.suggested);
+                }
+
+                // Mark as modified
+                if (typeof markAsDirty === 'function') {
+                    markAsDirty();
+                }
+
+                showNotification('✓ AI suggestion applied successfully', 'success');
+
+                // Save draft after applying suggestion
+                saveAsDraft();
+
+                // Close modal
+                setTimeout(() => {
+                    closeModal('clauseSuggestionModal');
+                }, 500);
+
             } else {
-                throw new Error('Text not found in any format');
-            }
-        }
+                // Still failed - show what we tried
+                console.error('❌ Verification failed');
+                console.log('Original text:', currentClauseText);
+                console.log('Replacement text:', suggestion.suggested);
+                console.log('Current content snippet:', verifyContent.substring(0, 200));
 
-        // ✅ Apply the changes
-        content.innerHTML = newContent;
-        
-        // ✅ Force browser to recognize the change
-        content.dispatchEvent(new Event('input', { bubbles: true }));
-        content.dispatchEvent(new Event('change', { bubbles: true }));
-
-        // ✅ Verify by checking if the NEW text exists (not the old text)
-        const verifyContent = content.innerText || content.textContent || '';
-        const suggestionExists = verifyContent.includes(suggestion.suggested);
-        const originalGone = !verifyContent.includes(currentClauseText);
-        
-        console.log('Verification:', {
-            suggestionExists,
-            originalGone,
-            newTextSnippet: verifyContent.substring(0, 100)
-        });
-
-        if (suggestionExists || originalGone) {
-            console.log('✅ Suggestion applied successfully');
-            
-            // Scroll to show the change
-            content.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            // Track this change
-            if (trackChangesEnabled && typeof trackChange === 'function') {
-                trackChange('ai_suggestion', currentClauseText, suggestion.suggested);
+                throw new Error('Could not verify the replacement was applied');
             }
-            
-            // Mark as modified
-            if (typeof markAsDirty === 'function') {
-                markAsDirty();
-            }
-            
-            showNotification('✓ AI suggestion applied successfully', 'success');
-            
-            // Save draft after applying suggestion
-            saveAsDraft();
-            
-            // Close modal
+
+        } catch (error) {
+            console.error('❌ Error applying suggestion:', error);
+            showNotification('Failed to apply suggestion: ' + error.message, 'error');
+
+            // Offer alternative
             setTimeout(() => {
-                closeModal('clauseSuggestionModal');
-            }, 500);
-            
-        } else {
-            // Still failed - show what we tried
-            console.error('❌ Verification failed');
-            console.log('Original text:', currentClauseText);
-            console.log('Replacement text:', suggestion.suggested);
-            console.log('Current content snippet:', verifyContent.substring(0, 200));
-            
-            throw new Error('Could not verify the replacement was applied');
+                if (confirm('Would you like to copy the suggestion to clipboard instead?')) {
+                    copyToClipboard(suggestion.suggested);
+                    showNotification('Suggestion copied to clipboard', 'info');
+                }
+            }, 1000);
         }
-        
-    } catch (error) {
-        console.error('❌ Error applying suggestion:', error);
-        showNotification('Failed to apply suggestion: ' + error.message, 'error');
-        
-        // Offer alternative
-        setTimeout(() => {
-            if (confirm('Would you like to copy the suggestion to clipboard instead?')) {
-                copyToClipboard(suggestion.suggested);
-                showNotification('Suggestion copied to clipboard', 'info');
-            }
-        }, 1000);
     }
-}
 
-// Helper to copy text to clipboard
-function copyToClipboard(text) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text);
-    } else {
-        // Fallback for older browsers
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
+    // Helper to copy text to clipboard
+    function copyToClipboard(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text);
+        } else {
+            // Fallback for older browsers
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
     }
-}
     // Helper function to highlight the replaced text
     function highlightReplacedText(text) {
         const content = document.getElementById('contractContent');
@@ -6570,7 +6635,39 @@ ${(riskAnalysisData.risk_items || []).map(item => `
         }
     }
 
+    async function markCounterpartyReviewComplete() {
+        if (!confirm('Do you want to confirm review?')) {
+            return;
+        }
 
+        try {
+            showLoader('Completing counterparty review...');
+
+            const response = await fetch(
+                `/api/contracts/${contractId}/complete-counterparty-review`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            const data = await response.json();
+
+            if (data.success) {
+                 showNotification('Review completed successfully!', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showError(data.message);
+            }
+        } catch (error) {
+            showError('Failed to complete review');
+        } finally {
+            hideLoader();
+        }
+    }
 
     // Execute Contract - CONNECTED TO BACKEND
     async function executeContract() {

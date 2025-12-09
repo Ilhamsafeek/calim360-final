@@ -23,6 +23,7 @@ class ProfileType(str, Enum):
 class ContractStatus(str, Enum):
     DRAFT = "draft"
     UNDER_REVIEW = "under_review"
+    COUNTERPARTY_INTERNAL_REVIEW = "counterparty_internal_review"
     APPROVED = "approved"
     ACTIVE = "active"
     EXPIRED = "expired"

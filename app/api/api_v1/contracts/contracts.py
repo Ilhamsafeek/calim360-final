@@ -814,9 +814,12 @@ async def get_contracts(
     
     # Base query
     query = db.query(Contract).filter(
+    or_(
         Contract.company_id == company_id,
-        Contract.is_deleted == False
-    )
+        Contract.party_b_id == company_id
+    ),
+    Contract.is_deleted == False
+)
     
     # Module filter - FIXED to include review status
     if module == "drafting":
@@ -856,7 +859,7 @@ async def get_contracts(
                 or_(
                     Contract.status == 'review',
                     Contract.status == 'pending_review',
-                    Contract.workflow_status == 'internal_review'
+                    Contract.workflow_status == 'review'
                 )
             )
         elif status == "expiring":
@@ -909,7 +912,7 @@ async def get_contracts(
             "id": contract.id,
             "contract_number": contract.contract_number,
             "title": contract.contract_title,
-            "counterparty": contract.party_b_name or "Not specified",  # ✅ NOW THIS WORKS
+            "counterparty": contract.party_b_name or "Not specified",
             "status": contract.status,
             "contract_type": contract.contract_type,
             "module": module,
@@ -3083,7 +3086,7 @@ async def send_to_counterparty(
             raise HTTPException(status_code=404, detail="Contract not found")
         
         # Update contract status to negotiation
-        contract.status = 'negotiation'
+        contract.status = 'counterparty_internal_review'
         contract.updated_at = datetime.now()
         
         # Log the action
@@ -3165,3 +3168,54 @@ async def quick_approve_contract(
         logger.error(f"❌ Error approving contract: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+
+@router.post("/{contract_id}/complete-counterparty-review")
+async def complete_counterparty_review(
+    contract_id: int,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Complete counterparty review - moves to negotiation"""
+    
+    # Get client IP
+    client_ip = request.client.host if request.client else "unknown"
+    
+    try:
+        # Update status to negotiation
+        update_query = text("""
+            UPDATE contracts 
+            SET status = 'negotiation', 
+                updated_at = NOW() 
+            WHERE id = :id
+        """)
+        db.execute(update_query, {"id": contract_id})
+        
+        # Log the action using your audit_logs schema
+        audit_query = text("""
+            INSERT INTO audit_logs (user_id, contract_id, action_type, action_details, ip_address, created_at)
+            VALUES (:user_id, :contract_id, :action_type, :action_details, :ip_address, NOW())
+        """)
+        db.execute(audit_query, {
+            "user_id": current_user.id,
+            "contract_id": contract_id,
+            "action_type": "COMPLETE_COUNTERPARTY_REVIEW",
+            "action_details": json.dumps({
+                "status_changed_from": "counterparty_internal_review",
+                "status_changed_to": "negotiation"
+            }),
+            "ip_address": client_ip
+        })
+        
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": "Review completed",
+            "new_status": "negotiation"
+        }
+        
+    except Exception as e:
+        db.rollback()
+        return {"success": False, "message": str(e)}
