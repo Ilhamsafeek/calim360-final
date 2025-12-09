@@ -376,7 +376,7 @@
         z-index: 100;
     } */
 
-    
+
     .comment-author {
         font-weight: 600;
         color: var(--primary-color);
@@ -3599,13 +3599,17 @@
             </button>`;
 
             } else {
-                actionButtons = `
+
+                if (workflow.is_my_workflow_turn === true) {
+                    actionButtons = `
             <button class="btn signature-btn" onclick="#">
                 <i class="ti ti-check"></i> Approve
             </button>
             <button class="btn btn-danger" onclick="#">
                 <i class="ti ti-send"></i> Reject
             </button>`;
+                }
+
             }
         } else if (contract.status === 'counterparty_internal_review') {
 
@@ -5973,7 +5977,7 @@ ${contract.content && contract.content.trim() !== '' ?
     // =====================================================
     // Initialize When Document is Ready
     // =====================================================
-   
+
 
     // Auto-save functionality
     function startAutoSave() {
@@ -7590,25 +7594,25 @@ ${(riskAnalysisData.risk_items || []).map(item => `
             }, 1000);
 
 
-             if (typeof contractId !== 'undefined' && contractId) {
-            // Wait a bit for content to load
-            setTimeout(() => {
-                loadExistingComments();
-            }, 500);
-        }
+            if (typeof contractId !== 'undefined' && contractId) {
+                // Wait a bit for content to load
+                setTimeout(() => {
+                    loadExistingComments();
+                }, 500);
+            }
         }
     });
 
 
-    window.refreshComments = function() {
-    console.log('🔄 Manually refreshing comments...');
-    
-    // Remove old bubbles
-    document.querySelectorAll('.comment-bubble').forEach(b => b.remove());
-    
-    // Reload
-    loadExistingComments();
-};
+    window.refreshComments = function () {
+        console.log('🔄 Manually refreshing comments...');
+
+        // Remove old bubbles
+        document.querySelectorAll('.comment-bubble').forEach(b => b.remove());
+
+        // Reload
+        loadExistingComments();
+    };
 
     // Wrapper function for verify button
     function verifyContractNow() {
