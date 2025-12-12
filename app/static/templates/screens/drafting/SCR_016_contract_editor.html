@@ -3766,7 +3766,7 @@
         } else if (contract.status === 'approved') {
 
             if ((contract.is_counterparty === false)) {
-                if ((workflow && workflow.is_my_workflow_turn === true) && (workflow && workflow.status != 'completed')) {
+                if ((workflow && workflow.is_my_workflow_turn === false) && (workflow && workflow.status != 'completed')) {
 
                     actionButtons = `
         <button class="btn signature-btn" onclick="approveWorkflow(${contract.id})">
@@ -3829,8 +3829,6 @@
             </button>`;
         }
 
-        // Add View as Counter Party button for non-negotiation stages
-
 
         document.getElementById('contractEditor').innerHTML = `
         <!-- Page Header -->
@@ -3866,7 +3864,7 @@ ${renderWorkflowStepper(contract.status)}
                 <button class="ai-toolbar-btn" onclick="openClauseAnalysisModal()">
                     <i class="ti ti-file-text"></i> Clause Analysis
                 </button>
-                ` : `<button class="ai-toolbar-btn" onclick="openClauseAnalysisModal()">
+                ` : `<button class="ai-toolbar-btn" onclick="showRiskSummary()">
                     <i class="ti ti-file-text"></i> Risk Summary
                 </button>`}
             </div>
@@ -4460,150 +4458,877 @@ ${contract.content && contract.content.trim() !== '' ?
     }
 
 
-    async function openClauseAnalysisModal() {
-        // Get user's selected text (if any)
-        const selection = window.getSelection();
-        let selectedText = selection.toString().trim();
+let currentAnalysisData = null; // Store complete analysis
+let clauseReplacementMap = new Map(); // Track replacements
 
-        // Get the full contract content from the editor
-        const contractEditor = document.getElementById('contractContentEditor');
-        let fullContent = '';
 
-        if (contractEditor) {
-            // Get innerHTML (preserves HTML structure) or innerText (plain text)
-            fullContent = contractEditor.innerText || contractEditor.textContent || '';
-            fullContent = fullContent.trim();
+async function openClauseAnalysisModal() {
+    console.log('🔍 Starting full contract clause analysis...');
+    
+    // Get the full contract content from the editor
+    const contractEditor = document.getElementById('contractContent') || 
+                          document.getElementById('contractContentEditor') ||
+                          document.querySelector('.editor-paper[contenteditable="true"]');
+    
+    if (!contractEditor) {
+        showNotification('Contract editor not found', 'error');
+        return;
+    }
+    
+    // Get the full content (innerText for plain text, preserving structure)
+    let fullContent = contractEditor.innerText || contractEditor.textContent || '';
+    fullContent = fullContent.trim();
+    
+    // Validate we have content
+    if (!fullContent || fullContent.length < 50) {
+        showNotification('Please add contract content before analyzing clauses', 'warning');
+        return;
+    }
+    
+    console.log(`📄 Analyzing full contract content (${fullContent.length} characters)`);
+    
+    // Show loading state and open modal
+    openModal('clauseSuggestionModal');
+    
+    // Show loading indicator in the modal
+    const container = document.getElementById('clauseSuggestionContent');
+    container.innerHTML = `
+        <div style="text-align: center; padding: 3rem;">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p style="margin-top: 1.5rem; color: var(--text-muted); font-size: 1.1rem;">
+                <i class="ti ti-sparkles"></i> AI is analyzing all clauses in your contract...
+            </p>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">
+                This may take 10-20 seconds depending on contract length
+            </p>
+        </div>
+    `;
+    
+    try {
+        showLoader('AI is analyzing all clauses in your contract...');
+        
+        // Call the new full contract analysis endpoint
+        const response = await fetch('/api/contracts/analyze-full-contract', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getAuthToken()}`
+            },
+            body: JSON.stringify({
+                contract_text: fullContent,
+                contract_id: contractId
+            })
+        });
+        
+        hideLoader();
+        
+        if (!response.ok) {
+            throw new Error('Failed to analyze contract clauses');
         }
-
-        // Determine what content to analyze
-        let contentToAnalyze = '';
-
-        if (selectedText && selectedText.length > 0) {
-            // User has selected specific text - analyze that
-            contentToAnalyze = selectedText;
-            currentClauseText = selectedText;
-            console.log('📝 Analyzing selected text:', contentToAnalyze.substring(0, 100) + '...');
-        } else if (fullContent && fullContent.length > 0) {
-            // No selection - analyze the entire contract content
-            contentToAnalyze = fullContent;
-            currentClauseText = fullContent;
-            console.log('📄 Analyzing full contract content (', fullContent.length, 'characters)');
+        
+        const data = await response.json();
+        
+        if (data.success && data.clauses_identified && data.clauses_identified.length > 0) {
+            // Store analysis data globally for later use
+            currentAnalysisData = data;
+            clauseReplacementMap.clear(); // Reset replacement tracking
+            
+            // Display the comprehensive clause analysis
+            displayFullClauseAnalysis(data);
         } else {
-            // No content available
-            showNotification('Please select clause to analyze', 'warning');
-            return;
-        }
-
-        // Validate we have content
-        if (!contentToAnalyze || contentToAnalyze.length < 10) {
-            showNotification('Please add contract content or select text to analyze', 'warning');
-            return;
-        }
-
-        // Open the modal
-        openModal('clauseSuggestionModal');
-
-        // Get AI suggestions for the content
-        try {
-            showLoader('AI is analyzing the clause...');
-
-            const response = await fetch('/api/contracts/clause-suggestions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${getAuthToken()}`
-                },
-                body: JSON.stringify({
-                    clause_text: contentToAnalyze,
-                    clause_type: 'general',
-                    contract_id: contractId
-                })
-            });
-
-            hideLoader();
-
-            if (!response.ok) {
-                throw new Error('Failed to get clause suggestions from AI');
-            }
-
-            const data = await response.json();
-
-            if (data.success && data.suggestions && data.suggestions.length > 0) {
-                displayClauseSuggestions(data.suggestions);
-            } else {
-                // No suggestions returned - close modal and show error
-                closeModal('clauseSuggestionModal');
-                showNotification('AI could not generate suggestions for this content. Please try again or contact support.', 'error');
-            }
-
-        } catch (error) {
-            console.error('Error getting clause suggestions:', error);
-            hideLoader();
             closeModal('clauseSuggestionModal');
-
-            // Show honest error message
-            showNotification('Failed to analyze clause. Please check your connection and try again.', 'error');
+            showNotification('No clauses could be identified in the contract. Please ensure the contract has proper content.', 'warning');
         }
+        
+    } catch (error) {
+        console.error('Error analyzing contract clauses:', error);
+        hideLoader();
+        closeModal('clauseSuggestionModal');
+        showNotification('Failed to analyze contract clauses. Please try again or contact support.', 'error');
     }
-    function viewClauseSuggestions(clauseType) {
-        closeModal('riskAnalysisModal');
-        setTimeout(() => openClauseAnalysisModal(), 300);
-    }
+}
 
-    // Helper function to display suggestions (keep existing function)
-    function displayClauseSuggestions(suggestions) {
-        const container = document.getElementById('clauseSuggestionContent');
-
-        container.innerHTML = `
-        <div style="background: var(--background-light); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-            <h4 style="margin: 0 0 0.5rem 0; color: var(--text-color);">
-                <i class="ti ti-file-text"></i> Original Clause
-            </h4>
+function displayFullClauseAnalysis(analysisData) {
+    const container = document.getElementById('clauseSuggestionContent');
+    const clauses = analysisData.clauses_identified || [];
+    const totalClauses = clauses.length;
+    
+    let html = `
+        <!-- Header Section -->
+        <div style="background: linear-gradient(135deg, var(--primary-color) 0%, #1e4d8b 100%); 
+                    color: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="margin: 0 0 0.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="ti ti-file-analytics"></i>
+                        Contract Clause Analysis Report
+                    </h3>
+                    <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">
+                        ${totalClauses} clause${totalClauses !== 1 ? 's' : ''} identified and analyzed
+                    </p>
+                </div>
+                <div style="text-align: right;">
+                    <div style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 8px;">
+                        <div style="font-size: 0.85rem; opacity: 0.9;">AI-Powered Analysis</div>
+                        <div style="font-size: 1.2rem; font-weight: 600;">
+                            <i class="ti ti-robot"></i> ${analysisData.ai_powered ? 'Claude AI' : 'Pattern Match'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Overall Assessment -->
+        ${analysisData.overall_assessment ? `
+        <div style="background: var(--background-light); padding: 1.25rem; border-radius: 10px; 
+                    border-left: 4px solid var(--info-color); margin-bottom: 1.5rem;">
+            <h5 style="margin: 0 0 0.75rem 0; color: var(--text-color); display: flex; align-items: center; gap: 0.5rem;">
+                <i class="ti ti-info-circle"></i> Overall Assessment
+            </h5>
             <p style="margin: 0; color: var(--text-muted); line-height: 1.6;">
-                ${escapeHtml(currentClauseText || 'No text selected')}
+                ${escapeHtml(analysisData.overall_assessment)}
+            </p>
+        </div>
+        ` : ''}
+        
+        <!-- Missing Clauses Alert -->
+        ${analysisData.missing_clauses && analysisData.missing_clauses.length > 0 ? `
+        <div style="background: #fff3cd; padding: 1.25rem; border-radius: 10px; 
+                    border-left: 4px solid #ffc107; margin-bottom: 1.5rem;">
+            <h5 style="margin: 0 0 0.75rem 0; color: #856404; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="ti ti-alert-triangle"></i> Recommended Additions
+            </h5>
+            <ul style="margin: 0; padding-left: 1.5rem; color: #856404;">
+                ${analysisData.missing_clauses.map(clause => `<li>${escapeHtml(clause)}</li>`).join('')}
+            </ul>
+        </div>
+        ` : ''}
+        
+        <h4 style="margin: 0 0 1.25rem 0; color: var(--text-color);">
+            <i class="ti ti-list-details"></i> Identified Clauses & Suggestions
+        </h4>
+        
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;" id="clausesContainer">
+    `;
+    
+    // Add each clause
+    clauses.forEach((clause, index) => {
+        const riskColor = {
+            'low': 'var(--success-color)',
+            'medium': 'var(--warning-color)',
+            'high': 'var(--danger-color)'
+        }[clause.risk_level.toLowerCase()] || 'var(--info-color)';
+        
+        const riskBgColor = {
+            'low': 'var(--success-bg)',
+            'medium': 'var(--warning-bg)',
+            'high': 'var(--danger-bg)'
+        }[clause.risk_level.toLowerCase()] || 'var(--info-bg)';
+        
+        const isReplaced = clauseReplacementMap.has(index);
+        
+        html += `
+            <div id="clause-item-${index}" style="background: ${isReplaced ? '#e8f5e9' : 'white'}; 
+                     border: 2px solid ${isReplaced ? '#4caf50' : '#e9ecef'}; 
+                     border-radius: 12px; padding: 1.5rem; transition: all 0.3s ease;">
+                
+                ${isReplaced ? `
+                <div style="background: #4caf50; color: white; padding: 0.5rem 1rem; 
+                            border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="ti ti-check"></i>
+                    <strong>Suggestion Applied</strong>
+                </div>
+                ` : ''}
+                
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                    <h5 style="margin: 0; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="ti ti-file-text"></i> ${escapeHtml(clause.clause_name)}
+                    </h5>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <span style="background: ${riskBgColor}; color: ${riskColor}; 
+                                     padding: 0.35rem 0.85rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                            ${clause.risk_level.toUpperCase()} RISK
+                        </span>
+                        <span style="background: var(--info-bg); color: var(--info-color); 
+                                     padding: 0.35rem 0.85rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                            ${clause.current_score}/5
+                        </span>
+                    </div>
+                </div>
+                
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 600;">
+                        <i class="ti ti-file-description"></i> CURRENT TEXT:
+                    </div>
+                    <p style="margin: 0; line-height: 1.6; font-size: 0.95rem;">
+                        ${escapeHtml(clause.clause_text)}
+                    </p>
+                </div>
+                
+                ${clause.suggestions && clause.suggestions.length > 0 ? `
+                <div style="margin-bottom: 1rem;">
+                    <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.75rem; font-weight: 600;">
+                        <i class="ti ti-bulb"></i> AI SUGGESTIONS:
+                    </div>
+                    <ul style="margin: 0; padding-left: 1.5rem; line-height: 1.8;">
+                        ${clause.suggestions.map(sug => `<li>${escapeHtml(sug)}</li>`).join('')}
+                    </ul>
+                </div>
+                ` : ''}
+                
+                ${clause.improved_version && clause.improved_version !== 'AI analysis unavailable - legal review recommended' ? `
+                <div style="background: rgba(39, 98, 203, 0.05); padding: 1rem; border-radius: 8px; 
+                            border-left: 3px solid var(--primary-color); margin-bottom: 1rem;">
+                    <div style="font-size: 0.9rem; color: var(--primary-color); margin-bottom: 0.75rem; font-weight: 600;">
+                        <i class="ti ti-sparkles"></i> SUGGESTED IMPROVED VERSION:
+                    </div>
+                    <p style="margin: 0; line-height: 1.6; font-size: 0.95rem;">
+                        ${escapeHtml(clause.improved_version)}
+                    </p>
+                </div>
+                ` : ''}
+                
+                ${clause.compliance_note ? `
+                <div style="background: var(--success-bg); padding: 0.85rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <div style="font-size: 0.85rem; color: var(--success-color); font-weight: 600;">
+                        <i class="ti ti-shield-check"></i> Qatar Law Compliance:
+                    </div>
+                    <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem;">
+                        ${escapeHtml(clause.compliance_note)}
+                    </p>
+                </div>
+                ` : ''}
+                
+                ${!isReplaced ? `
+                <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+                    <button class="btn btn-success btn-sm" 
+                            onclick="acceptClauseSuggestion(${index}, '${escapeHtml(clause.clause_name)}', '${escapeHtml(clause.improved_version || '')}', '${escapeHtml(clause.clause_text)}')"
+                            style="flex: 1;">
+                        <i class="ti ti-check"></i> Accept Suggestion
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm" 
+                            onclick="editClauseManually(${index}, '${escapeHtml(clause.clause_name)}', '${escapeHtml(clause.clause_text)}')"
+                            style="flex: 1;">
+                        <i class="ti ti-edit"></i> Edit Manually
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" 
+                            onclick="skipClauseSuggestion(${index})"
+                            style="flex: 1;">
+                        <i class="ti ti-x"></i> Skip
+                    </button>
+                </div>
+                ` : ''}
+            </div>
+        `;
+    });
+    
+    html += `
+        </div>
+        
+        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid #e9ecef; 
+                    display: flex; gap: 1rem; justify-content: space-between;">
+            <button class="btn btn-outline-secondary" onclick="closeModal('clauseSuggestionModal')">
+                <i class="ti ti-x"></i> Close
+            </button>
+            <div style="display: flex; gap: 0.75rem;">
+                <button class="btn btn-outline-primary" onclick="downloadClauseAnalysis()">
+                    <i class="ti ti-download"></i> Download Report
+                </button>
+                <button class="btn btn-primary" onclick="applyAllSuggestions()">
+                    <i class="ti ti-checks"></i> Apply All Suggestions
+                </button>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+
+
+function acceptClauseSuggestion(index, clauseName, improvedVersion, originalText) {
+    if (!improvedVersion || improvedVersion === 'AI analysis unavailable - legal review recommended') {
+        showNotification('No improved version available for this clause', 'warning');
+        return;
+    }
+    
+    try {
+        // Get the contract editor
+        const editor = document.getElementById('contractContent') || 
+                      document.getElementById('contractContentEditor') ||
+                      document.querySelector('.editor-paper[contenteditable="true"]');
+        
+        if (!editor) {
+            showNotification('Contract editor not found', 'error');
+            return;
+        }
+        
+        // Get current content
+        let content = editor.innerHTML;
+        
+        // Try to find and replace the original clause text
+        // We need to handle both plain text and HTML content
+        const originalTextEscaped = escapeHtml(originalText);
+        
+        // Try direct replacement first (for HTML content)
+        if (content.includes(originalTextEscaped)) {
+            content = content.replace(originalTextEscaped, escapeHtml(improvedVersion));
+        } 
+        // Try plain text replacement
+        else if (content.includes(originalText)) {
+            content = content.replace(originalText, improvedVersion);
+        }
+        // Try approximate match (remove extra whitespace)
+        else {
+            const cleanOriginal = originalText.replace(/\s+/g, ' ').trim();
+            const cleanContent = content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
+            
+            if (cleanContent.includes(cleanOriginal)) {
+                // Find the approximate location and replace
+                const startIdx = cleanContent.indexOf(cleanOriginal);
+                if (startIdx !== -1) {
+                    // Create a highlighted version
+                    const beforeText = content.substring(0, startIdx);
+                    const afterText = content.substring(startIdx + cleanOriginal.length);
+                    
+                    content = beforeText + 
+                             `<span style="background: #e8f5e9; padding: 0.25rem; border-left: 3px solid #4caf50;">` +
+                             improvedVersion + 
+                             `</span>` + 
+                             afterText;
+                } else {
+                    // If exact replacement fails, append to end with clear marking
+                    content += `
+                    
+<div style="background: #e8f5e9; padding: 1rem; margin-top: 1rem; border-left: 4px solid #4caf50; border-radius: 8px;">
+    <h5 style="color: #2e7d32; margin-bottom: 0.5rem;">
+        <i class="ti ti-sparkles"></i> ${clauseName} - Improved Version
+    </h5>
+    <p style="margin: 0; line-height: 1.6;">
+        ${improvedVersion}
+    </p>
+    <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #666;">
+        <strong>Note:</strong> Please replace the original ${clauseName} clause with this improved version.
+    </p>
+</div>`;
+                }
+            } else {
+                // Last resort: append at the end
+                content += `
+
+<div style="background: #e8f5e9; padding: 1rem; margin-top: 1rem; border-left: 4px solid #4caf50; border-radius: 8px;">
+    <h5 style="color: #2e7d32; margin-bottom: 0.5rem;">
+        <i class="ti ti-sparkles"></i> ${clauseName} - Improved Version
+    </h5>
+    <p style="margin: 0; line-height: 1.6;">
+        ${improvedVersion}
+    </p>
+    <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #666;">
+        <strong>Note:</strong> Original clause not found. Please integrate this improved clause manually.
+    </p>
+</div>`;
+            }
+        }
+        
+        // Update the editor
+        editor.innerHTML = content;
+        
+        // Mark this clause as replaced
+        clauseReplacementMap.set(index, {
+            originalText: originalText,
+            improvedVersion: improvedVersion,
+            clauseName: clauseName
+        });
+        
+        // Update the UI to show it's been accepted
+        const clauseItem = document.getElementById(`clause-item-${index}`);
+        if (clauseItem) {
+            clauseItem.style.background = '#e8f5e9';
+            clauseItem.style.borderColor = '#4caf50';
+            
+            // Hide action buttons
+            const buttonContainer = clauseItem.querySelector('div[style*="display: flex"]');
+            if (buttonContainer && buttonContainer.textContent.includes('Accept Suggestion')) {
+                buttonContainer.innerHTML = `
+                    <div style="background: #4caf50; color: white; padding: 0.75rem; border-radius: 8px; text-align: center;">
+                        <i class="ti ti-check"></i> Suggestion Applied to Contract
+                    </div>
+                `;
+            }
+        }
+        
+        showNotification(`${clauseName} suggestion accepted and added to contract!`, 'success');
+        
+        // Auto-save the contract (if auto-save function exists)
+        if (typeof autoSaveContract === 'function') {
+            autoSaveContract();
+        }
+        
+    } catch (error) {
+        console.error('Error accepting clause suggestion:', error);
+        showNotification('Failed to apply suggestion. Please try manual editing.', 'error');
+    }
+}
+
+// =====================================================
+// EDIT CLAUSE MANUALLY
+// =====================================================
+
+function editClauseManually(index, clauseName, clauseText) {
+    try {
+        // Close the modal
+        closeModal('clauseSuggestionModal');
+        
+        // Get the editor
+        const editor = document.getElementById('contractContent') || 
+                      document.getElementById('contractContentEditor') ||
+                      document.querySelector('.editor-paper[contenteditable="true"]');
+        
+        if (!editor) {
+            showNotification('Contract editor not found', 'error');
+            return;
+        }
+        
+        // Try to find and highlight the clause text
+        const content = editor.innerHTML;
+        const cleanClauseText = clauseText.replace(/\s+/g, ' ').trim().substring(0, 100); // First 100 chars
+        
+        // Search for the text
+        if (content.toLowerCase().includes(cleanClauseText.toLowerCase())) {
+            // Highlight it
+            const regex = new RegExp(escapeRegExp(cleanClauseText), 'gi');
+            editor.innerHTML = content.replace(regex, match => 
+                `<span style="background: yellow; padding: 0.25rem;">${match}</span>`
+            );
+            
+            // Scroll to the highlighted text
+            const highlighted = editor.querySelector('span[style*="background: yellow"]');
+            if (highlighted) {
+                highlighted.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+        
+        // Focus the editor
+        editor.focus();
+        
+        showNotification(`Please manually edit the "${clauseName}" clause in the highlighted section`, 'info');
+        
+    } catch (error) {
+        console.error('Error in manual edit:', error);
+        closeModal('clauseSuggestionModal');
+        showNotification(`Please locate and edit the "${clauseName}" clause manually`, 'info');
+    }
+}
+
+// =====================================================
+// SKIP CLAUSE SUGGESTION
+// =====================================================
+
+function skipClauseSuggestion(index) {
+    const clauseItem = document.getElementById(`clause-item-${index}`);
+    if (clauseItem) {
+        clauseItem.style.opacity = '0.5';
+    }
+    showNotification('Suggestion skipped', 'info');
+}
+
+
+
+
+async function applyAllSuggestions() {
+    if (!currentAnalysisData || !currentAnalysisData.clauses_identified) {
+        showNotification('No analysis data available', 'error');
+        return;
+    }
+    
+    const clauses = currentAnalysisData.clauses_identified;
+    let appliedCount = 0;
+    let skippedCount = 0;
+    
+    showLoader('Applying all suggestions to contract...');
+    
+    try {
+        // Get the editor
+        const editor = document.getElementById('contractContent') || 
+                      document.getElementById('contractContentEditor') ||
+                      document.querySelector('.editor-paper[contenteditable="true"]');
+        
+        if (!editor) {
+            throw new Error('Contract editor not found');
+        }
+        
+        let content = editor.innerHTML;
+        const improvements = [];
+        
+        // Process each clause
+        clauses.forEach((clause, index) => {
+            // Skip if already replaced
+            if (clauseReplacementMap.has(index)) {
+                return;
+            }
+            
+            const improvedVersion = clause.improved_version;
+            const originalText = clause.clause_text;
+            const clauseName = clause.clause_name;
+            
+            // Skip if no improved version
+            if (!improvedVersion || improvedVersion === 'AI analysis unavailable - legal review recommended') {
+                skippedCount++;
+                return;
+            }
+            
+            // Store for batch append if direct replacement fails
+            improvements.push({
+                index: index,
+                clauseName: clauseName,
+                originalText: originalText,
+                improvedVersion: improvedVersion
+            });
+        });
+        
+        // Append all improvements at the end with clear section
+        if (improvements.length > 0) {
+            content += `
+
+<div style="background: linear-gradient(to bottom, #e8f5e9, #ffffff); padding: 2rem; margin-top: 2rem; border: 2px solid #4caf50; border-radius: 12px;">
+    <h3 style="color: #2e7d32; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+        <i class="ti ti-sparkles"></i> AI-Suggested Clause Improvements
+    </h3>
+    <p style="color: #666; margin-bottom: 1.5rem; font-size: 0.95rem;">
+        The following clauses have been improved by AI analysis. Please review and integrate them into your contract.
+    </p>
+`;
+            
+            improvements.forEach(item => {
+                content += `
+    <div style="background: white; padding: 1.5rem; margin-bottom: 1.5rem; border-left: 4px solid #4caf50; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h5 style="color: var(--primary-color); margin-bottom: 1rem;">
+            <i class="ti ti-file-text"></i> ${escapeHtml(item.clauseName)}
+        </h5>
+        
+        <div style="background: #f8f9fa; padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem;">
+            <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem; font-weight: 600;">Original:</div>
+            <p style="margin: 0; font-size: 0.9rem; color: #333;">
+                ${escapeHtml(item.originalText.substring(0, 200))}${item.originalText.length > 200 ? '...' : ''}
             </p>
         </div>
         
-        <h4 style="margin: 0 0 1rem 0; color: var(--text-color);">
-            <i class="ti ti-sparkles"></i> AI Suggestions
-        </h4>
-        
-        <div style="display: flex; flex-direction: column; gap: 1rem;">
-            ${suggestions.map((sug, idx) => `
-                <div onclick="selectSuggestion(${idx})" style="cursor: pointer; padding: 1.25rem; background: rgba(39, 98, 203, 0.05); border-radius: 8px; border: 2px solid transparent; transition: all 0.3s ease;">
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem;">
-                        <h5 style="margin: 0; color: var(--primary-color); font-size: 1rem;">
-                            Option ${idx + 1}
-                        </h5>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <span style="background: var(--success-bg); color: var(--success-color); padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem;">
-                                Legal: ${sug.legal_score || 5}/5
-                            </span>
-                            <span style="background: var(--info-bg); color: var(--info-color); padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem;">
-                                Business: ${sug.business_score || 4}/5
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <p style="margin: 0 0 0.75rem 0; color: var(--text-color); line-height: 1.6; font-weight: 500;">
-                        ${escapeHtml(sug.suggested)}
-                    </p>
-                    
-                    <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem; line-height: 1.5;">
-                        <i class="ti ti-info-circle"></i> <strong>Reasoning:</strong> ${escapeHtml(sug.reasoning)}
-                    </p>
-                    
-                    <p style="margin: 0.75rem 0 0 0; color: var(--success-color); font-size: 0.85rem;">
-                        <i class="ti ti-shield-check"></i> ${sug.compliance || 'Compliant with standard practices'}
-                    </p>
-                </div>
-            `).join('')}
+        <div style="background: #e8f5e9; padding: 0.75rem; border-radius: 6px;">
+            <div style="font-size: 0.85rem; color: #2e7d32; margin-bottom: 0.5rem; font-weight: 600;">
+                <i class="ti ti-sparkles"></i> Improved Version:
+            </div>
+            <p style="margin: 0; font-size: 0.95rem; line-height: 1.6; color: #333;">
+                ${escapeHtml(item.improvedVersion)}
+            </p>
         </div>
-    `;
-
-        window.currentSuggestions = suggestions;
+    </div>
+`;
+                
+                // Mark as replaced
+                clauseReplacementMap.set(item.index, {
+                    originalText: item.originalText,
+                    improvedVersion: item.improvedVersion,
+                    clauseName: item.clauseName
+                });
+                
+                appliedCount++;
+            });
+            
+            content += `
+    <div style="background: #fff3cd; padding: 1rem; border-radius: 8px; margin-top: 1.5rem;">
+        <p style="margin: 0; color: #856404; font-size: 0.9rem;">
+            <i class="ti ti-info-circle"></i> <strong>Note:</strong> Please review these improvements and integrate them into the appropriate sections of your contract.
+        </p>
+    </div>
+</div>
+`;
+        }
+        
+        // Update the editor
+        editor.innerHTML = content;
+        
+        hideLoader();
+        
+        // Close modal
+        closeModal('clauseSuggestionModal');
+        
+        // Show summary
+        showNotification(
+            `Applied ${appliedCount} suggestion(s) to contract. ${skippedCount > 0 ? `Skipped ${skippedCount} clause(s).` : ''} Please review and save.`,
+            'success'
+        );
+        
+        // Auto-save if available
+        setTimeout(() => {
+            if (typeof autoSaveContract === 'function') {
+                autoSaveContract();
+            }
+        }, 1000);
+        
+    } catch (error) {
+        hideLoader();
+        console.error('Error applying all suggestions:', error);
+        showNotification('Failed to apply all suggestions. Please try individual acceptance.', 'error');
     }
+}
 
+
+
+
+async function downloadClauseAnalysis() {
+    if (!currentAnalysisData || !currentAnalysisData.clauses_identified) {
+        showNotification('No analysis data to download', 'error');
+        return;
+    }
+    
+    showLoader('Generating clause analysis report...');
+    
+    try {
+        const clauses = currentAnalysisData.clauses_identified;
+        const contractTitle = document.querySelector('h1')?.textContent || 'Contract';
+        const currentDate = new Date().toLocaleDateString('en-GB');
+        
+        // Generate HTML report
+        let htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Clause Analysis Report - ${escapeHtml(contractTitle)}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            color: #333;
+            line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(135deg, #2762cb 0%, #1e4d8b 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2em;
+        }
+        .header p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        .info-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 4px solid #2762cb;
+        }
+        .clause-item {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            page-break-inside: avoid;
+        }
+        .clause-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .clause-title {
+            color: #2762cb;
+            font-size: 1.3em;
+            font-weight: 600;
+            margin: 0;
+        }
+        .badges {
+            display: flex;
+            gap: 10px;
+        }
+        .badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .badge-low { background: #d4edda; color: #155724; }
+        .badge-medium { background: #fff3cd; color: #856404; }
+        .badge-high { background: #f8d7da; color: #721c24; }
+        .badge-score { background: #d1ecf1; color: #0c5460; }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-weight: 600;
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .current-text {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            font-size: 0.95em;
+        }
+        .improved-text {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 3px solid #4caf50;
+            font-size: 0.95em;
+        }
+        .suggestions {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .suggestions li {
+            padding: 8px 0 8px 25px;
+            position: relative;
+        }
+        .suggestions li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #4caf50;
+            font-weight: bold;
+        }
+        .compliance {
+            background: #e8f5e9;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            color: #2e7d32;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e9ecef;
+            text-align: center;
+            color: #666;
+            font-size: 0.85em;
+        }
+        @media print {
+            body { padding: 20px; }
+            .clause-item { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 Contract Clause Analysis Report</h1>
+        <p><strong>Contract:</strong> ${escapeHtml(contractTitle)}</p>
+        <p><strong>Analysis Date:</strong> ${currentDate}</p>
+        <p><strong>Clauses Analyzed:</strong> ${clauses.length}</p>
+        <p><strong>AI Engine:</strong> ${currentAnalysisData.ai_powered ? 'Claude AI' : 'Pattern Matching'}</p>
+    </div>
+    
+    ${currentAnalysisData.overall_assessment ? `
+    <div class="info-box">
+        <h3 style="margin-top: 0;">Overall Assessment</h3>
+        <p>${escapeHtml(currentAnalysisData.overall_assessment)}</p>
+    </div>
+    ` : ''}
+    
+    ${currentAnalysisData.missing_clauses && currentAnalysisData.missing_clauses.length > 0 ? `
+    <div class="info-box" style="background: #fff3cd; border-left-color: #ffc107;">
+        <h3 style="margin-top: 0; color: #856404;">⚠️ Recommended Clause Additions</h3>
+        <ul>
+            ${currentAnalysisData.missing_clauses.map(c => `<li>${escapeHtml(c)}</li>`).join('')}
+        </ul>
+    </div>
+    ` : ''}
+    
+    <h2>Detailed Clause Analysis</h2>
+`;
+        
+        // Add each clause analysis
+        clauses.forEach((clause, index) => {
+            const riskClass = `badge-${clause.risk_level.toLowerCase()}`;
+            
+            htmlContent += `
+    <div class="clause-item">
+        <div class="clause-header">
+            <h3 class="clause-title">${index + 1}. ${escapeHtml(clause.clause_name)}</h3>
+            <div class="badges">
+                <span class="badge ${riskClass}">${clause.risk_level.toUpperCase()} RISK</span>
+                <span class="badge badge-score">Score: ${clause.current_score}/5</span>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Current Clause Text</div>
+            <div class="current-text">${escapeHtml(clause.clause_text)}</div>
+        </div>
+        
+        ${clause.suggestions && clause.suggestions.length > 0 ? `
+        <div class="section">
+            <div class="section-title">AI Recommendations</div>
+            <ul class="suggestions">
+                ${clause.suggestions.map(s => `<li>${escapeHtml(s)}</li>`).join('')}
+            </ul>
+        </div>
+        ` : ''}
+        
+        ${clause.improved_version && clause.improved_version !== 'AI analysis unavailable - legal review recommended' ? `
+        <div class="section">
+            <div class="section-title">Suggested Improved Version</div>
+            <div class="improved-text">${escapeHtml(clause.improved_version)}</div>
+        </div>
+        ` : ''}
+        
+        ${clause.compliance_note ? `
+        <div class="section">
+            <div class="section-title">Qatar Law Compliance</div>
+            <div class="compliance">
+                <strong>🛡️ Compliance Note:</strong> ${escapeHtml(clause.compliance_note)}
+            </div>
+        </div>
+        ` : ''}
+    </div>
+`;
+        });
+        
+        htmlContent += `
+    <div class="footer">
+        <p><strong>Generated by CALIM 360 Smart CLM</strong></p>
+        <p>This AI-powered analysis is for reference purposes only. Please consult with legal counsel for final review.</p>
+        <p>© ${new Date().getFullYear()} CALIM 360. All rights reserved.</p>
+    </div>
+</body>
+</html>
+`;
+        
+        // Create blob and download
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Clause_Analysis_Report_${contractTitle.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.html`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        hideLoader();
+        showNotification('Clause analysis report downloaded successfully!', 'success');
+        
+    } catch (error) {
+        hideLoader();
+        console.error('Error generating report:', error);
+        showNotification('Failed to generate report. Please try again.', 'error');
+    }
+}
 
     // Helper function to escape HTML
     function escapeHtml(text) {

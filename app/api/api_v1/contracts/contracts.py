@@ -17,6 +17,7 @@ from pathlib import Path
 import asyncio
 import sys
 
+
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
@@ -3436,3 +3437,307 @@ async def complete_counterparty_review(
     except Exception as e:
         db.rollback()
         return {"success": False, "message": str(e)}
+
+
+
+
+"""
+Fixed Clause Analysis API Endpoint - app/api/api_v1/contracts/contracts.py
+
+Add this endpoint to your contracts.py file to properly analyze all clauses
+"""
+@router.post("/analyze-full-contract")
+async def analyze_full_contract(
+    request: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Analyze all clauses in the full contract content and provide suggestions
+    for each identified clause.
+    
+    This endpoint:
+    1. Takes the full contract text
+    2. Uses Claude AI to identify ALL major clauses
+    3. Provides specific suggestions for each clause
+    4. Returns risk assessment and compliance notes
+    """
+    try:
+        contract_text = request.get("contract_text", "")
+        contract_id = request.get("contract_id")
+        
+        # Validate input
+        if not contract_text or len(contract_text) < 50:
+            raise HTTPException(
+                status_code=400, 
+                detail="Contract content is too short to analyze (minimum 50 characters)"
+            )
+        
+        logger.info(f"📋 Analyzing full contract content ({len(contract_text)} characters)")
+        
+        # Initialize Claude service
+        claude_service = ClaudeService()
+        
+        if not claude_service.client:
+            logger.warning("Claude client not available, using fallback analysis")
+            return get_fallback_clause_analysis(contract_text)
+        
+        # Prepare comprehensive prompt for Claude
+        prompt = f"""You are an expert contract analyst specializing in Qatar jurisdiction. Analyze the following complete contract and identify ALL major clauses.
+
+CONTRACT TEXT:
+{contract_text[:8000]}
+
+Your task:
+1. Identify and extract ALL major clauses in this contract including:
+   - Governing Law & Jurisdiction
+   - Payment Terms & Conditions
+   - Term & Termination
+   - Warranties & Representations
+   - Indemnification & Liability
+   - Confidentiality & Non-Disclosure
+   - Dispute Resolution & Arbitration
+   - Force Majeure
+   - Intellectual Property Rights
+   - Insurance Requirements
+   - Service Level Agreements
+   - Change Management
+   - Any other significant clauses
+
+2. For EACH clause identified, provide:
+   - The exact clause name/title
+   - The actual clause text from the contract (extract verbatim if possible)
+   - A risk assessment: "low", "medium", or "high"
+   - 2-4 specific, actionable suggestions for improvement
+   - Compliance notes specific to Qatar Civil and Commercial Law
+   - A legal protection score from 1-5
+   - An improved version of the clause text
+
+3. Also identify:
+   - Important clauses that are MISSING from the contract
+   - Overall assessment of the contract quality
+   - Total number of clauses analyzed
+
+CRITICAL: Respond in VALID JSON format ONLY. No markdown, no code blocks, no extra text.
+
+Expected JSON structure:
+{{
+    "clauses_identified": [
+        {{
+            "clause_name": "Governing Law and Jurisdiction",
+            "clause_text": "This Agreement shall be governed by and construed in accordance with the laws of...",
+            "risk_level": "medium",
+            "current_score": 3,
+            "suggestions": [
+                "Specify Qatar Courts or QICCA arbitration for dispute venue",
+                "Add choice of law provision explicitly referencing Qatar Civil Code Articles",
+                "Include language regarding bilingual contract interpretation"
+            ],
+            "compliance_note": "Complies with Qatar Civil Code Article 1 on governing law. Consider adding specific reference to Qatar Courts jurisdiction under Law No. 13 of 1990.",
+            "improved_version": "This Agreement shall be governed by and construed in accordance with the laws of the State of Qatar. Any dispute arising out of or in connection with this Agreement shall be subject to the exclusive jurisdiction of the Qatar Courts, or alternatively shall be referred to and finally resolved by arbitration under the Qatar International Centre for Conciliation and Arbitration (QICCA) Rules."
+        }}
+    ],
+    "overall_assessment": "This contract demonstrates moderate legal protection with clear commercial terms. Key areas requiring attention include dispute resolution mechanisms and liability limitations. The contract would benefit from enhanced termination provisions and more specific performance obligations.",
+    "missing_clauses": [
+        "Force Majeure provisions compliant with Qatar Civil Code Article 215",
+        "Insurance requirements and coverage specifications",
+        "Intellectual Property rights assignment or licensing terms",
+        "Data protection and privacy compliance with Qatar Law"
+    ],
+    "total_clauses": 8
+}}
+
+Begin your analysis now. Respond with ONLY the JSON object."""
+
+        try:
+            # Call Claude API
+            response = claude_service.client.messages.create(
+                model=claude_service.model,
+                max_tokens=4000,
+                temperature=0.3,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            )
+            
+            # Extract response text
+            response_text = response.content[0].text.strip()
+            logger.info(f"📥 Received response from Claude ({len(response_text)} characters)")
+            
+            # Remove markdown code blocks if present
+            if response_text.startswith("```json"):
+                response_text = response_text.replace("```json", "").replace("```", "").strip()
+            elif response_text.startswith("```"):
+                response_text = response_text.replace("```", "").strip()
+            
+            # Try to extract JSON if there's any preamble
+            json_match = re.search(r'\{[\s\S]*\}', response_text)
+            if json_match:
+                response_text = json_match.group()
+            
+            # Parse JSON response
+            result = json.loads(response_text)
+            
+            # Validate response structure
+            if "clauses_identified" not in result:
+                logger.error("Invalid response structure: missing clauses_identified")
+                raise ValueError("Invalid response structure from AI")
+            
+            clauses = result.get("clauses_identified", [])
+            
+            if not clauses:
+                logger.warning("No clauses identified by AI, using fallback")
+                raise ValueError("No clauses identified in the contract")
+            
+            logger.info(f"✅ Successfully identified {len(clauses)} clauses")
+            
+            # Ensure all required fields are present in each clause
+            for idx, clause in enumerate(clauses):
+                # Set defaults for missing fields
+                if "clause_name" not in clause:
+                    clause["clause_name"] = f"Clause {idx + 1}"
+                if "clause_text" not in clause:
+                    clause["clause_text"] = "Text not extracted"
+                if "risk_level" not in clause:
+                    clause["risk_level"] = "medium"
+                if "current_score" not in clause:
+                    clause["current_score"] = 3
+                if "suggestions" not in clause:
+                    clause["suggestions"] = ["Review clause for completeness"]
+                if "compliance_note" not in clause:
+                    clause["compliance_note"] = "Legal review recommended"
+                if "improved_version" not in clause:
+                    clause["improved_version"] = "Improved version not available"
+            
+            # Log the analysis to audit trail
+            try:
+                audit_log = text("""
+                    INSERT INTO audit_logs 
+                    (user_id, action_type, action_details, ip_address, user_agent, created_at)
+                    VALUES 
+                    (:user_id, :action_type, :action_details, :ip_address, :user_agent, NOW())
+                """)
+                
+                db.execute(audit_log, {
+                    "user_id": current_user.id,
+                    "action_type": "AI_FULL_CONTRACT_ANALYSIS",
+                    "action_details": json.dumps({
+                        "contract_id": contract_id,
+                        "contract_length": len(contract_text),
+                        "clauses_identified": len(clauses),
+                        "ai_powered": True
+                    }),
+                    "ip_address": "system",
+                    "user_agent": "Claude AI"
+                })
+                db.commit()
+            except Exception as audit_error:
+                logger.error(f"Failed to log audit trail: {str(audit_error)}")
+                # Continue even if audit logging fails
+            
+            return {
+                "success": True,
+                "clauses_identified": clauses,
+                "overall_assessment": result.get("overall_assessment", "Contract analyzed successfully"),
+                "missing_clauses": result.get("missing_clauses", []),
+                "total_clauses": len(clauses),
+                "ai_powered": True
+            }
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON parsing error: {str(e)}")
+            logger.error(f"Response text (first 500 chars): {response_text[:500]}")
+            logger.warning("Falling back to pattern matching analysis")
+            return get_fallback_clause_analysis(contract_text)
+            
+        except Exception as e:
+            logger.error(f"Claude API error: {str(e)}")
+            logger.warning("Falling back to pattern matching analysis")
+            return get_fallback_clause_analysis(contract_text)
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in full contract analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+
+def get_fallback_clause_analysis(contract_text: str):
+    """
+    Provide fallback clause analysis when AI is unavailable
+    Uses pattern matching to identify common clauses
+    """
+    clauses = []
+    
+    # Common clause patterns
+    clause_patterns = {
+        "Governing Law": ["governing law", "applicable law", "governed by"],
+        "Payment Terms": ["payment", "compensation", "fees", "invoice"],
+        "Termination": ["termination", "terminate", "cancellation"],
+        "Confidentiality": ["confidential", "non-disclosure", "proprietary"],
+        "Indemnification": ["indemnify", "indemnification", "hold harmless"],
+        "Warranties": ["warrant", "representation", "guarantee"],
+        "Liability": ["liability", "liable", "damages"],
+        "Dispute Resolution": ["dispute", "arbitration", "mediation"],
+        "Force Majeure": ["force majeure", "act of god", "beyond control"]
+    }
+    
+    contract_lower = contract_text.lower()
+    
+    for clause_name, patterns in clause_patterns.items():
+        # Check if any pattern exists in the contract
+        if any(pattern in contract_lower for pattern in patterns):
+            # Try to extract a snippet of text around the clause
+            for pattern in patterns:
+                if pattern in contract_lower:
+                    start_idx = contract_lower.find(pattern)
+                    # Extract 200 characters around the pattern
+                    snippet_start = max(0, start_idx - 50)
+                    snippet_end = min(len(contract_text), start_idx + 250)
+                    clause_text = contract_text[snippet_start:snippet_end].strip()
+                    
+                    clauses.append({
+                        "clause_name": clause_name,
+                        "clause_text": f"...{clause_text}...",
+                        "risk_level": "medium",
+                        "current_score": 3,
+                        "suggestions": [
+                            f"Review {clause_name.lower()} clause for completeness",
+                            "Ensure compliance with Qatar Civil and Commercial Law",
+                            "Consider legal review for risk mitigation"
+                        ],
+                        "compliance_note": "Requires legal review for Qatar law compliance",
+                        "improved_version": "AI analysis unavailable - legal review recommended"
+                    })
+                    break
+    
+    if not clauses:
+        # Default response if no clauses found
+        clauses = [{
+            "clause_name": "General Contract",
+            "clause_text": contract_text[:300] + "...",
+            "risk_level": "medium",
+            "current_score": 3,
+            "suggestions": [
+                "Add standard contract clauses (Governing Law, Payment Terms, Termination)",
+                "Include dispute resolution provisions",
+                "Add confidentiality and indemnification clauses"
+            ],
+            "compliance_note": "Review for Qatar law compliance",
+            "improved_version": "Structure contract with standard clauses"
+        }]
+    
+    return {
+        "success": True,
+        "clauses_identified": clauses,
+        "overall_assessment": "Basic clause analysis completed. AI-powered analysis unavailable.",
+        "missing_clauses": [
+            "Consider adding standard clauses if not present",
+            "Legal review recommended"
+        ],
+        "total_clauses": len(clauses),
+        "ai_powered": False
+    }

@@ -138,12 +138,12 @@ async def get_company_users(
     status_filter: Optional[str] = Query(None, description="Filter by status"),
     role_filter: Optional[str] = Query(None, description="Filter by role"),
     db: Session = Depends(get_db),
-    # TEMPORARILY DISABLED FOR TESTING - UNCOMMENT WHEN READY:
-    # current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)  # ✅ ENABLED AUTHENTICATION
 ):
     """
-    Get users for company - matches your frontend expectations
-    TEMPORARILY WITHOUT AUTHENTICATION FOR TESTING
+    Get users for company
+    - Internal users: See ALL users across all companies
+    - Regular users: See only users from their company
     """
     try:
         logger.info(f"Fetching company users with skip={skip}, limit={limit}")
@@ -151,10 +151,23 @@ async def get_company_users(
         # Build base query
         query = db.query(User)
         
-        # For now, get all users (or filter by a default company)
-        # Later you can uncomment authentication and use: current_user.company_id
-        # if current_user and current_user.company_id:
-        #     query = query.filter(User.company_id == current_user.company_id)
+        # ✅ INTERNAL USER CHECK - Show all users if internal
+        if current_user.user_type != 'internal':
+            # Not internal user - filter by company_id
+            if current_user.company_id:
+                query = query.filter(User.company_id == current_user.company_id)
+                logger.info(f"Filtering by company_id={current_user.company_id} for non-internal user")
+            else:
+                # User has no company - return empty
+                logger.warning(f"User {current_user.id} has no company_id")
+                return {
+                    "users": [],
+                    "total": 0,
+                    "skip": skip,
+                    "limit": limit
+                }
+        else:
+            logger.info(f"Internal user {current_user.id} - showing all users")
         
         # Apply search filter
         if search:
@@ -212,7 +225,7 @@ async def get_company_users(
             }
             user_list.append(user_data)
         
-        logger.info(f"Successfully returning {len(user_list)} users")
+        logger.info(f"Successfully returning {len(user_list)} users (total: {total_users})")
         
         return {
             "users": user_list,
@@ -223,14 +236,10 @@ async def get_company_users(
         
     except Exception as e:
         logger.error(f"Error in get_company_users: {str(e)}", exc_info=True)
-        # Return empty list instead of error for now
-        return {
-            "users": [],
-            "total": 0,
-            "skip": skip,
-            "limit": limit
-        }
-
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch users: {str(e)}"
+        )
 # =====================================================
 # CREATE USER ENDPOINT (Enhanced with Expert Profile Support)
 # =====================================================
