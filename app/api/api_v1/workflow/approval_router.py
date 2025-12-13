@@ -41,7 +41,6 @@ async def approve_reject_workflow(
         workflow = db.execute(workflow_query, {"contract_id": request.contract_id}).first()
         db.commit()
         
-        
         if not workflow:
             raise HTTPException(status_code=404, detail="No active workflow found for this contract")
         
@@ -67,11 +66,35 @@ async def approve_reject_workflow(
                 """)
                 db.execute(update_workflow, {"workflow_id": workflow.id})
                 
+                # 🔥 UPDATE CONTRACT STATUS TO 'review_completed'
+                update_contract_status = text("""
+                    UPDATE contracts
+                    SET status = 'review_completed',
+                        updated_at = NOW()
+                    WHERE id = :contract_id
+                """)
+                db.execute(update_contract_status, {"contract_id": request.contract_id})
                 
                 message = "Workflow completed successfully"
             else:
                 # Move to next step
                 next_step = workflow.current_step + 1
+                
+                # 🔥 GET NEXT APPROVER'S NAME
+                next_approver_query = text("""
+                    SELECT u.first_name, u.last_name, u.email
+                    FROM workflow_steps ws
+                    INNER JOIN users u ON ws.assignee_user_id = u.id
+                    WHERE ws.workflow_id = :workflow_id
+                    AND ws.step_number = :next_step
+                    LIMIT 1
+                """)
+                next_approver = db.execute(next_approver_query, {
+                    "workflow_id": workflow.workflow_id,
+                    "next_step": next_step
+                }).first()
+                
+                # Update workflow to next step
                 update_workflow = text("""
                     UPDATE workflow_instances
                     SET current_step = :next_step
@@ -82,7 +105,15 @@ async def approve_reject_workflow(
                     "workflow_id": workflow.id
                 })
                 
-                message = f"Approved and Moved to step {next_step}"
+                # 🔥 CREATE MESSAGE WITH USER'S NAME
+                if next_approver:
+                    approver_name = f"{next_approver.first_name} {next_approver.last_name}".strip()
+                    if not approver_name:  # If no name, use email
+                        approver_name = next_approver.email
+                    message = f"Sent to {approver_name} for further approval"
+                else:
+                    # Fallback if no user found
+                    message = f"Approved and moved to step {next_step}"
             
             # Save approval record (optional - you can remove this if not needed)
             if request.comments:

@@ -482,12 +482,13 @@ async function loadProjects() {
     }
 }
 
+
 function populateProjectSelect(projects) {
     const projectSelect = document.getElementById('projectSelect');
     if (!projectSelect) return;
 
     // Clear existing options
-    projectSelect.innerHTML = '<option value="">Select Project</option>';
+    projectSelect.innerHTML = '<option value="">Select Project (Optional)</option>'; // ← UPDATED
 
     // Add projects
     projects.forEach(project => {
@@ -506,7 +507,12 @@ function populateProjectSelect(projects) {
     projectSelect.appendChild(createOption);
 
     console.log(`✅ Populated ${projects.length} projects`);
+
+    // 🔥 ADD EVENT LISTENER - Add these 2 lines
+    projectSelect.removeEventListener('change', handleProjectSelectChange);
+    projectSelect.addEventListener('change', handleProjectSelectChange);
 }
+
 
 // =====================================================
 // Event Handlers
@@ -1045,7 +1051,17 @@ async function proceedToNext() {
     }
 }
 
+
+// =====================================================
+// Updated saveContract() Function with Loading Indicator
+// Replace the existing saveContract() in contract-creation.js
+// =====================================================
+
 async function saveContract() {
+    // Get the save button
+    const saveButton = document.querySelector('#saveContractModal .btn-primary');
+    const originalButtonHTML = '<i class="ti ti-device-floppy"></i> Save & Continue';
+    
     try {
         console.log('💾 Starting contract save process...');
         console.log('Current method:', selectedCreationMethod);
@@ -1065,44 +1081,108 @@ async function saveContract() {
 
         const contractName = contractNameInput.value.trim();
         const projectId = projectSelect.value;
-        const tags = tagsInput ? tagsInput.value.split(',').map(tag => tag.trim()).filter(Boolean) : [];
+        const tags = tagsInput ? tagsInput.value.split(',').map(t => t.trim()).filter(Boolean) : [];
 
-        // Validate inputs
+        // Validate
         if (!contractName) {
             showNotification('Please enter a contract name', 'error');
+            contractNameInput.focus();
             return;
         }
 
-        if (!projectId || projectId === '') {
-            showNotification('Please select a project', 'error');
-            return;
+        // 🔥 DISABLE BUTTON AND SHOW LOADING
+        if (saveButton) {
+            saveButton.disabled = true;
+            saveButton.innerHTML = '<i class="ti ti-loader" style="animation: spin 1s linear infinite;"></i> Saving Contract...';
         }
 
-        showNotification('Creating contract...', 'info');
+        // Show loader overlay
+        showLoader('Saving contract...');
 
         let contractId = null;
-        let result = null;
 
-        // =====================================================
-        // HANDLE DIFFERENT CREATION METHODS
-        // =====================================================
+        // Handle different creation methods
+        if (selectedCreationMethod === 'template' && selectedTemplate) {
+            // Create from template
+            console.log('📋 Creating from template:', selectedTemplate);
+            contractId = await createContractFromTemplate(selectedTemplate);
 
-        if (selectedCreationMethod === 'template') {
-            console.log('📄 Creating from template:', selectedTemplate);
+        } else if (selectedCreationMethod === 'upload' && uploadedFile) {
+            // Upload and create
+            console.log('📤 Uploading contract file...');
+            const formData = new FormData();
+            formData.append('file', uploadedFile);
+            formData.append('contract_name', contractName);
+            formData.append('profile_type', selectedProfile);
+            if (projectId && projectId !== 'create_new' && projectId !== '') {
+                formData.append('project_id', projectId);
+            }
 
+            const response = await authenticatedFetch('/api/contracts/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to upload contract');
+            }
+
+            const result = await response.json();
+            contractId = result.id || result.contract_id;
+
+        } else if (selectedCreationMethod === 'ai') {
+            // AI-generated contract
+            console.log('🤖 Creating AI-generated contract...');
+            
             const contractData = {
                 contract_title: contractName,
-                template_id: selectedTemplate,
+                contract_type: selectedContractType || 'general',
                 profile_type: selectedProfile || 'contractor',
-                project_id: parseInt(projectId),
+                template_id: null,
+                project_id: projectId && projectId !== 'create_new' && projectId !== '' 
+                    ? parseInt(projectId) 
+                    : null,
                 tags: tags,
-                status: 'draft',
-                workflow_status: 'draft'
+                ai_prompt: buildAIPrompt(),
+                clause_selections: selectedClauses
             };
 
-            console.log('📤 Creating contract with template:', contractData);
+            const response = await authenticatedFetch('/api/contracts/ai-generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(contractData)
+            });
 
-            const response = await authenticatedFetch(`${API_BASE}/`, {
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to generate contract');
+            }
+
+            const result = await response.json();
+            contractId = result.id || result.contract_id;
+
+        } else {
+            // Standard contract creation
+            console.log('📝 Creating standard contract...');
+            
+            const contractData = {
+                contract_title: contractName,
+                contract_type: selectedContractType || 'general',
+                profile_type: selectedProfile || 'contractor',
+                template_id: selectedTemplate ? parseInt(selectedTemplate) : null,
+                project_id: projectId && projectId !== 'create_new' && projectId !== '' 
+                    ? parseInt(projectId) 
+                    : null,
+                tags: tags,
+                status: 'draft'
+            };
+
+            console.log('📤 Sending contract data:', contractData);
+
+            const response = await authenticatedFetch('/api/contracts/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1115,148 +1195,204 @@ async function saveContract() {
                 throw new Error(error.detail || 'Failed to create contract');
             }
 
-            result = await response.json();
-            contractId = result.id;
-            console.log('✅ Contract created from template with ID:', contractId);
-
-        } else if (selectedCreationMethod === 'upload' && uploadedFile) {
-            console.log('📤 Uploading contract file:', uploadedFile.name);
-
-            const formData = new FormData();
-            formData.append('file', uploadedFile);
-            formData.append('contract_title', contractName);
-            formData.append('profile_type', selectedProfile);
-            formData.append('project_id', projectId);
-            formData.append('tags', JSON.stringify(tags));
-
-            const response = await authenticatedFetch(
-                `${API_BASE}/upload-contract`,  // This becomes /api/contracts/upload-contract
-                {
-                    method: 'POST',
-                    body: formData
-                    // Don't set Content-Type header - browser sets it automatically with boundary for FormData
-                }
-            );
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.detail || 'Failed to upload contract');
-            }
-
-            result = await response.json();
-            contractId = result.id;
-            console.log('✅ Contract uploaded with ID:', contractId);
-
-        } else if (selectedCreationMethod === 'ai') {
-            console.log('🤖 Generating contract with AI');
-
-            // Validate contract type selection
-            if (!selectedContractType || selectedContractType === '') {
-                showNotification('Please select a contract type first', 'error');
-                return;
-            }
-
-            // Build comprehensive AI prompt
-            const fullPrompt = buildAIPrompt();
-
-            if (!fullPrompt || fullPrompt.trim() === '') {
-                showNotification('Please provide contract requirements', 'error');
-                return;
-            }
-
-            // Get clause selections
-            console.log('🔍 Getting clause selections...');
-            console.log('📋 Global selectedClauses:', selectedClauses);
-
-            const clauseData = getClauseSelections();
-            console.log(`📊 Clause selections prepared: ${clauseData.count} clauses`);
-
-            // Get contract type text
-            const contractTypeSelect = document.getElementById('contractTypeSelect');
-            const contractTypeText = contractTypeSelect.options[contractTypeSelect.selectedIndex].text;
-
-            // Prepare AI request payload with AI Assistant data
-            const aiPayload = {
-                contract_title: contractName,
-                contract_type: contractTypeText,
-                profile_type: selectedProfile || 'contractor',
-                prompt: fullPrompt,
-                selected_clauses: clauseData.selections,
-                ai_assistant_data: {
-                    duration: document.getElementById('aiDuration')?.value || null,
-                    payment_structure: document.getElementById('aiPaymentStructure')?.value || null,
-                    special_requirements: document.getElementById('aiSpecialRequirements')?.value || null
-                },
-                metadata: {
-                    project_id: parseInt(projectId),
-                    tags: tags
-                },
-                jurisdiction: 'Qatar',
-                language: 'en'
-            };
-
-            console.log('📤 AI Request Payload:', JSON.stringify(aiPayload, null, 2));
-
-            // Show generating status
-            const promptStatus = document.getElementById('promptStatus');
-            if (promptStatus) {
-                promptStatus.textContent = 'Generating...';
-                promptStatus.className = 'prompt-status waiting';
-            }
-
-            // Call AI generation API
-            const response = await authenticatedFetch(`${API_BASE}/ai-generate`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(aiPayload)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || 'Failed to generate contract');
-            }
-
-            result = await response.json();
+            const result = await response.json();
             contractId = result.id || result.contract_id;
-            console.log('✅ AI generation response:', result);
-
-            if (result.clauses_included) {
-                console.log(`✅ ${result.clauses_included} clauses successfully included in contract`);
-            }
         }
 
-        // Validate contract ID
+        // Verify we got a contract ID
         if (!contractId) {
-            throw new Error('Contract created but no ID returned');
+            throw new Error('Contract created but no ID returned from server');
         }
+
+        console.log('✅ Contract created with ID:', contractId);
+
+        // Hide loader
+        hideLoader();
+
+        // 🔥 RE-ENABLE BUTTON AND RESTORE TEXT
+        if (saveButton) {
+            saveButton.disabled = false;
+            saveButton.innerHTML = originalButtonHTML;
+        }
+
+        // Show success message
+        showNotification('Contract saved successfully! Redirecting...', 'success');
 
         // Close modal
         closeModal('saveContractModal');
 
-        // Success message
-        showNotification('Contract created successfully! Redirecting...', 'success');
-
-        // Redirect to contract edit page
+        // Redirect to contract editor
         setTimeout(() => {
             window.location.href = `/contract/edit/${contractId}`;
-        }, 1500);
+        }, 1000);
 
         return contractId;
 
     } catch (error) {
         console.error('❌ Error saving contract:', error);
+        
+        // Hide loader
+        hideLoader();
+        
+        // 🔥 RE-ENABLE BUTTON AND RESTORE TEXT ON ERROR
+        if (saveButton) {
+            saveButton.disabled = false;
+            saveButton.innerHTML = originalButtonHTML;
+        }
+        
+        // Show error
         showNotification(error.message || 'Failed to save contract. Please try again.', 'error');
 
-        // Reset status
-        const promptStatus = document.getElementById('promptStatus');
-        if (promptStatus) {
-            promptStatus.textContent = 'AI Ready';
-            promptStatus.className = 'prompt-status ready';
-        }
-
         return null;
+    }
+}
+
+
+// =====================================================
+// Project Select Change Handler
+// =====================================================
+
+function handleProjectSelectChange(event) {
+    const selectedValue = event.target.value;
+    
+    console.log('📌 Project select changed:', selectedValue);
+    
+    if (selectedValue === 'create_new') {
+        // Reset the select to empty
+        event.target.value = '';
+        
+        // Open the create project modal
+        openCreateProjectModal();
+    }
+}
+
+// =====================================================
+// Create Project Modal Functions
+// =====================================================
+
+function openCreateProjectModal() {
+    console.log('🚀 Opening create project modal...');
+    
+    const modal = document.getElementById('createProjectModal');
+    if (!modal) {
+        console.error('❌ Create project modal not found');
+        showNotification('Create project modal not found. Please refresh the page.', 'error');
+        return;
+    }
+    
+    // Reset form
+    const form = document.getElementById('createProjectForm');
+    if (form) {
+        form.reset();
+    }
+    
+    // Generate project code
+    const projectCode = generateProjectCode();
+    const projectCodeInput = document.getElementById('newProjectCode');
+    if (projectCodeInput) {
+        projectCodeInput.value = projectCode;
+    }
+    
+    // Show modal
+    modal.style.display = 'flex';
+    
+    // Focus on title input
+    setTimeout(() => {
+        const titleInput = document.getElementById('newProjectTitle');
+        if (titleInput) {
+            titleInput.focus();
+        }
+    }, 100);
+}
+
+function closeCreateProjectModal() {
+    const modal = document.getElementById('createProjectModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function generateProjectCode() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `PRJ-${year}${month}-${random}`;
+}
+
+async function createNewProject() {
+    try {
+        console.log('📝 Creating new project...');
+        
+        const titleInput = document.getElementById('newProjectTitle');
+        const codeInput = document.getElementById('newProjectCode');
+        const descriptionInput = document.getElementById('newProjectDescription');
+        
+        if (!titleInput || !codeInput) {
+            showNotification('Form elements not found', 'error');
+            return;
+        }
+        
+        const title = titleInput.value.trim();
+        const code = codeInput.value.trim();
+        const description = descriptionInput ? descriptionInput.value.trim() : '';
+        
+        // Validate
+        if (!title) {
+            showNotification('Please enter a project title', 'error');
+            titleInput.focus();
+            return;
+        }
+        
+        if (!code) {
+            showNotification('Please enter a project code', 'error');
+            codeInput.focus();
+            return;
+        }
+        
+        showLoader('Creating project...');
+        
+        // Create project via API
+        const response = await authenticatedFetch('/api/projects/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                title: title,
+                code: code,
+                description: description,
+                status: 'planning'
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Failed to create project');
+        }
+        
+        const result = await response.json();
+        console.log('✅ Project created:', result);
+        
+        hideLoader();
+        showNotification('Project created successfully!', 'success');
+        
+        // Close create project modal
+        closeCreateProjectModal();
+        
+        // Reload projects dropdown
+        await loadProjects();
+        
+        // Auto-select the newly created project
+        const projectSelect = document.getElementById('projectSelect');
+        if (projectSelect && result.id) {
+            projectSelect.value = result.id;
+        }
+        
+    } catch (error) {
+        hideLoader();
+        showNotification('Error creating project: ' + error.message, 'error');
+        console.error('Create project error:', error);
     }
 }
 
@@ -1268,7 +1404,7 @@ async function createContractFromTemplate(templateId) {
 
         // Prepare contract data
         const contractData = {
-            contract_title: document.getElementById('contractTitle')?.value || `Contract from Template ${templateId}`,
+            contract_title: document.getElementById('contractNameInput')?.value || `Contract from Template ${templateId}`,
             contract_type: 'general',
             profile_type: selectedProfile || 'contractor',
             template_id: parseInt(templateId),
@@ -1297,7 +1433,7 @@ async function createContractFromTemplate(templateId) {
 
         // CRITICAL: Check for ID in response
         const contractId = result.id || result.contract?.id;
-        
+
         if (!contractId) {
             console.error('❌ Response missing ID:', result);
             throw new Error('Contract created but no ID returned from server');
@@ -1335,7 +1471,7 @@ async function proceedWithReview() {
 // Utility Functions
 // =====================================================
 
-function showLoader(message = 'Loading...') {
+function showLoader(message = 'Please wait...') {
     hideLoader(); // Remove existing loader
 
     const loader = document.createElement('div');
@@ -1344,7 +1480,7 @@ function showLoader(message = 'Loading...') {
     loader.innerHTML = `
         <div class="loader-content">
             <div class="spinner-border text-primary" role="status">
-                <span class="sr-only">Loading...</span>
+                <span class="sr-only">Please wait...</span>
             </div>
             <p class="mt-3">${message}</p>
         </div>
@@ -1505,6 +1641,8 @@ function debugClauseSelection() {
     console.log('========================');
 }
 
+
+
 // =====================================================
 // Global Exports
 // =====================================================
@@ -1517,7 +1655,12 @@ window.contractCreation = {
     handleContractTypeChange,
     toggleAiAssistant,
     hideAiAssistant,
-    buildAIPrompt
+    buildAIPrompt,
+    handleProjectSelectChange,      
+    openCreateProjectModal,         
+    closeCreateProjectModal,  
+    createNewProject,         
+    generateProjectCode      
 };
 
 window.openModal = openModal;
@@ -1538,5 +1681,9 @@ window.debugClauseSelection = debugClauseSelection;
 window.hideAiAssistant = hideAiAssistant;
 window.toggleAiAssistant = toggleAiAssistant;
 window.handleContractTypeChange = handleContractTypeChange;
+window.handleProjectSelectChange = handleProjectSelectChange;  
+window.openCreateProjectModal = openCreateProjectModal;      
+window.closeCreateProjectModal = closeCreateProjectModal;  
+window.createNewProject = createNewProject;              
 
 console.log('✅ Contract creation script loaded successfully with AI Assistant');

@@ -1925,11 +1925,11 @@
         </div>
         <div class="modal-body" style="padding: 2rem;">
             <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
-                Choose how approvals should be handled for this specific contract:
+                Setup a custom workflow for this specific contract:
             </p>
 
             <!-- Option 1: Use Master Workflow -->
-            <div class="workflow-option-card" id="masterWorkflowOption" onclick="selectContractWorkflow('master')">
+            <!-- <div class="workflow-option-card" id="masterWorkflowOption" onclick="selectContractWorkflow('master')">
                 <div style="display: flex; gap: 1rem;">
                     <div
                         style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;">
@@ -1941,8 +1941,7 @@
                             Apply the default company workflow configured by your administrator
                         </p>
 
-                        <!-- Master Workflow Preview -->
-                        <!-- <div class="workflow-step-preview"
+                        <div class="workflow-step-preview"
                             style="background: var(--background-light); padding: 1rem; border-radius: 8px;">
                             <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;">
                                 <span
@@ -1957,13 +1956,13 @@
                                     style="background: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 600;">3</span>
                                 <span>Executive Sign-off</span>
                             </div>
-                        </div> -->
+                        </div>
                     </div>
                 </div>
-            </div>
+            </div> -->
 
             <!-- Option 2: Custom Workflow -->
-            <div class="workflow-option-card" id="customWorkflowOption" onclick="selectContractWorkflow('custom')">
+            <div class="workflow-option-card selected" id="customWorkflowOption">
                 <div style="display: flex; gap: 1rem;">
                     <div
                         style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;">
@@ -1980,7 +1979,7 @@
 
             <!-- Custom Workflow Configuration -->
             <div id="customWorkflowConfig"
-                style="display: none; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+                style="display: block; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
                 <h4 style="margin-bottom: 1rem;">Configure Workflow Steps</h4>
 
                 <table style="width: 100%; border-collapse: collapse;">
@@ -3423,7 +3422,8 @@
                             <i class="ti ti-video" style="font-size: 24px;"></i>
                         </div>
                         <div>
-                            <div class="action-btn-title" style="font-size: 1rem;">Live Negotiation within Counter-party Team</div>
+                            <div class="action-btn-title" style="font-size: 1rem;">Live Negotiation within Counter-party
+                                Team</div>
                             <div class="action-btn-desc">Real-time discussion with the team</div>
                         </div>
                     </div>
@@ -3714,15 +3714,8 @@
         } else if ((contract.status === 'review')) {
             // Review stage
 
-            if ((contract.is_initiator === true) && (workflow && workflow.status === 'completed') && (workflow && workflow.current_stage === 1)) {
-                actionButtons = `
-            <button class="btn signature-btn" onclick="saveAsDraft()">
-                <i class="ti ti-device-floppy"></i> Save Contract
-            </button>
-            <button class="btn btn-primary" onclick="openSendToCounterPartyModal()">
-                <i class="ti ti-send"></i> Send to Counter-Party
-            </button>`;
-
+            if ((contract.is_initiator === true)) {
+              actionButtons = ``;
             } else {
 
                 if ((workflow && workflow.is_my_workflow_turn === true) && (workflow && workflow.status != 'completed')) {
@@ -3737,7 +3730,19 @@
                 }
 
             }
-        } else if (contract.status === 'counterparty_internal_review') {
+             } else if ((contract.status === 'review_completed')) {
+  actionButtons = `
+            <button class="btn signature-btn" onclick="saveAsDraft()">
+                <i class="ti ti-device-floppy"></i> Save Contract
+            </button>
+            <button class="btn btn-primary" onclick="openSendToCounterPartyModal()">
+                <i class="ti ti-send"></i> Send to Counter-Party
+            </button>`;
+
+
+        }
+        
+        else if (contract.status === 'counterparty_internal_review') {
 
             if (contract.is_counterparty === true) {
                 actionButtons = `
@@ -3792,12 +3797,12 @@
             <button class="btn btn-primary" onclick="initiateApprovalWorkflow()">
                 <i class="ti ti-writing-sign"></i> Initiate Approval Workflow
             </button>`;
-                        }else{
+                        } else {
 
                             actionButtons = `
             <span class="comment-count-badge" style="background: rgb(255, 243, 205); color: rgb(133, 100, 4); padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-left: 8px; display: inline-flex;">Waiting for Workflow Approval</span>`;
 
-                            
+
                         }
                     }
                 }
@@ -3888,52 +3893,77 @@ ${contract.content && contract.content.trim() !== '' ?
     `;
 
     }
+function renderWorkflowStepper(status) {
+    const steps = [
+        {
+            key: 'draft', 
+            icon: 'file-text', 
+            label: 'Draft',
+            status: 'completed'
+        },
+        {
+            key: 'review',
+            icon: 'users',
+            label: 'Internal Review',
+            status: status === 'draft' ? 'pending' :
+                    status === 'review' ? 'active' :
+                    status === 'review_completed' ? 'completed' :
+                    'pending'
+        },
+        {
+            key: 'counterparty_internal_review', 
+            icon: 'building', 
+            label: 'Counterparty Review',
+            status: ['draft', 'review', 'review_completed'].includes(status) ? 'pending' :
+                    status === 'counterparty_internal_review' ? 'active' :
+                    status === 'counterparty_review_completed' ? 'completed' :
+                    (status === 'negotiation' || status === 'negotiation_completed' || 
+                     status === 'approval' || status === 'approved' || 
+                     status === 'signing' || status === 'signed' || 
+                     status === 'executed') ? 'completed' :
+                    'pending'
+        },
+        {
+            key: 'negotiation', 
+            icon: 'message-circle', 
+            label: 'Negotiation',
+            status: ['draft', 'review', 'review_completed', 'counterparty_internal_review', 'counterparty_review_completed'].includes(status) ? 'pending' :
+                    status === 'negotiation' ? 'active' :
+                    status === 'negotiation_completed' ? 'completed' :
+                    (status === 'approval' || status === 'approved' || 
+                     status === 'signing' || status === 'signed' || 
+                     status === 'executed') ? 'completed' :
+                    'pending'
+        },
+        {
+            key: 'approval', 
+            icon: 'circle-check', 
+            label: 'Approval',
+            status: ['draft', 'review', 'review_completed', 'counterparty_internal_review', 'counterparty_review_completed', 'negotiation', 'negotiation_completed'].includes(status) ? 'pending' :
+                    status === 'approval' ? 'active' :
+                    status === 'approved' ? 'completed' :
+                    (status === 'signing' || status === 'signed' || status === 'executed') ? 'completed' :
+                    'pending'
+        },
+        {
+            key: 'signature', 
+            icon: 'writing-sign', 
+            label: 'Signature',
+            status: ['draft', 'review', 'review_completed', 'counterparty_internal_review', 'counterparty_review_completed', 'negotiation', 'negotiation_completed', 'approval', 'approved'].includes(status) ? 'pending' :
+                    status === 'signing' ? 'active' :
+                    status === 'signed' ? 'completed' :
+                    status === 'executed' ? 'completed' :
+                    'pending'
+        },
+        {
+            key: 'executed', 
+            icon: 'file-check', 
+            label: 'Executed',
+            status: status === 'executed' ? 'completed' : 'pending'
+        }
+    ];
 
-    function renderWorkflowStepper(status) {
-        const steps = [
-            {
-                key: 'draft', icon: 'file-text', label: 'Draft',
-                status: 'completed'
-            },
-
-            {
-                key: 'review', icon: 'users', label: 'Internal Review',
-                status: status === 'draft' ? 'pending' : status === 'review' ? 'active' : 'completed'
-            },
-
-            // ← NEW STEP ADDED HERE
-            {
-                key: 'counterparty_internal_review', icon: 'building', label: 'Counterparty Review',
-                status: ['draft', 'review'].includes(status) ? 'pending' :
-                    status === 'counterparty_internal_review' ? 'active' : 'completed'
-            },
-
-            {
-                key: 'negotiation', icon: 'message-circle', label: 'Negotiation',
-                status: ['draft', 'review', 'counterparty_internal_review'].includes(status) ? 'pending' :
-                    status === 'negotiation' ? 'active' : 'completed'
-            },
-
-            {
-                key: 'approval', icon: 'circle-check', label: 'Approval',
-                status: ['draft', 'review', 'counterparty_internal_review', 'negotiation'].includes(status) ? 'pending' :
-                    status === 'approved' ? 'active' : 'completed'
-            },
-
-            {
-                key: 'signature', icon: 'writing-sign', label: 'Signature',
-                status: ['draft', 'review', 'counterparty_internal_review', 'negotiation', 'approved'].includes(status) ? 'pending' :
-                    status === 'signed' ? 'active' : 'completed'
-            },
-
-            {
-                key: 'executed', icon: 'file-check', label: 'Executed',
-                status: status === 'executed' ? 'completed' : 'pending'
-            }
-        ];
-
-
-        return `
+    return `
         <div class="workflow-stepper">
             <div class="stepper-container">
                 <div class="stepper-line">
@@ -3946,16 +3976,15 @@ ${contract.content && contract.content.trim() !== '' ?
                         </div>
                         <span class="step-label">${step.label}</span>
                         <span class="step-date">${step.status === 'completed' ? 'Completed' :
-                step.status === 'active' ? 'In Progress' :
-                    'Pending'
-            }</span>
+                                                    step.status === 'active' ? 'In Progress' :
+                                                    'Pending'
+                        }</span>
                     </div>
                 `).join('')}
             </div>
         </div>
     `;
-    }
-
+}
 
 
     function renderEditorToolbar() {
@@ -4458,41 +4487,41 @@ ${contract.content && contract.content.trim() !== '' ?
     }
 
 
-let currentAnalysisData = null; // Store complete analysis
-let clauseReplacementMap = new Map(); // Track replacements
+    let currentAnalysisData = null; // Store complete analysis
+    let clauseReplacementMap = new Map(); // Track replacements
 
 
-async function openClauseAnalysisModal() {
-    console.log('🔍 Starting full contract clause analysis...');
-    
-    // Get the full contract content from the editor
-    const contractEditor = document.getElementById('contractContent') || 
-                          document.getElementById('contractContentEditor') ||
-                          document.querySelector('.editor-paper[contenteditable="true"]');
-    
-    if (!contractEditor) {
-        showNotification('Contract editor not found', 'error');
-        return;
-    }
-    
-    // Get the full content (innerText for plain text, preserving structure)
-    let fullContent = contractEditor.innerText || contractEditor.textContent || '';
-    fullContent = fullContent.trim();
-    
-    // Validate we have content
-    if (!fullContent || fullContent.length < 50) {
-        showNotification('Please add contract content before analyzing clauses', 'warning');
-        return;
-    }
-    
-    console.log(`📄 Analyzing full contract content (${fullContent.length} characters)`);
-    
-    // Show loading state and open modal
-    openModal('clauseSuggestionModal');
-    
-    // Show loading indicator in the modal
-    const container = document.getElementById('clauseSuggestionContent');
-    container.innerHTML = `
+    async function openClauseAnalysisModal() {
+        console.log('🔍 Starting full contract clause analysis...');
+
+        // Get the full contract content from the editor
+        const contractEditor = document.getElementById('contractContent') ||
+            document.getElementById('contractContentEditor') ||
+            document.querySelector('.editor-paper[contenteditable="true"]');
+
+        if (!contractEditor) {
+            showNotification('Contract editor not found', 'error');
+            return;
+        }
+
+        // Get the full content (innerText for plain text, preserving structure)
+        let fullContent = contractEditor.innerText || contractEditor.textContent || '';
+        fullContent = fullContent.trim();
+
+        // Validate we have content
+        if (!fullContent || fullContent.length < 50) {
+            showNotification('Please add contract content before analyzing clauses', 'warning');
+            return;
+        }
+
+        console.log(`📄 Analyzing full contract content (${fullContent.length} characters)`);
+
+        // Show loading state and open modal
+        openModal('clauseSuggestionModal');
+
+        // Show loading indicator in the modal
+        const container = document.getElementById('clauseSuggestionContent');
+        container.innerHTML = `
         <div style="text-align: center; padding: 3rem;">
             <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
                 <span class="visually-hidden">Loading...</span>
@@ -4505,57 +4534,57 @@ async function openClauseAnalysisModal() {
             </p>
         </div>
     `;
-    
-    try {
-        showLoader('AI is analyzing all clauses in your contract...');
-        
-        // Call the new full contract analysis endpoint
-        const response = await fetch('/api/contracts/analyze-full-contract', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getAuthToken()}`
-            },
-            body: JSON.stringify({
-                contract_text: fullContent,
-                contract_id: contractId
-            })
-        });
-        
-        hideLoader();
-        
-        if (!response.ok) {
-            throw new Error('Failed to analyze contract clauses');
-        }
-        
-        const data = await response.json();
-        
-        if (data.success && data.clauses_identified && data.clauses_identified.length > 0) {
-            // Store analysis data globally for later use
-            currentAnalysisData = data;
-            clauseReplacementMap.clear(); // Reset replacement tracking
-            
-            // Display the comprehensive clause analysis
-            displayFullClauseAnalysis(data);
-        } else {
-            closeModal('clauseSuggestionModal');
-            showNotification('No clauses could be identified in the contract. Please ensure the contract has proper content.', 'warning');
-        }
-        
-    } catch (error) {
-        console.error('Error analyzing contract clauses:', error);
-        hideLoader();
-        closeModal('clauseSuggestionModal');
-        showNotification('Failed to analyze contract clauses. Please try again or contact support.', 'error');
-    }
-}
 
-function displayFullClauseAnalysis(analysisData) {
-    const container = document.getElementById('clauseSuggestionContent');
-    const clauses = analysisData.clauses_identified || [];
-    const totalClauses = clauses.length;
-    
-    let html = `
+        try {
+            showLoader('AI is analyzing all clauses in your contract...');
+
+            // Call the new full contract analysis endpoint
+            const response = await fetch('/api/contracts/analyze-full-contract', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getAuthToken()}`
+                },
+                body: JSON.stringify({
+                    contract_text: fullContent,
+                    contract_id: contractId
+                })
+            });
+
+            hideLoader();
+
+            if (!response.ok) {
+                throw new Error('Failed to analyze contract clauses');
+            }
+
+            const data = await response.json();
+
+            if (data.success && data.clauses_identified && data.clauses_identified.length > 0) {
+                // Store analysis data globally for later use
+                currentAnalysisData = data;
+                clauseReplacementMap.clear(); // Reset replacement tracking
+
+                // Display the comprehensive clause analysis
+                displayFullClauseAnalysis(data);
+            } else {
+                closeModal('clauseSuggestionModal');
+                showNotification('No clauses could be identified in the contract. Please ensure the contract has proper content.', 'warning');
+            }
+
+        } catch (error) {
+            console.error('Error analyzing contract clauses:', error);
+            hideLoader();
+            closeModal('clauseSuggestionModal');
+            showNotification('Failed to analyze contract clauses. Please try again or contact support.', 'error');
+        }
+    }
+
+    function displayFullClauseAnalysis(analysisData) {
+        const container = document.getElementById('clauseSuggestionContent');
+        const clauses = analysisData.clauses_identified || [];
+        const totalClauses = clauses.length;
+
+        let html = `
         <!-- Header Section -->
         <div style="background: linear-gradient(135deg, var(--primary-color) 0%, #1e4d8b 100%); 
                     color: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
@@ -4612,24 +4641,24 @@ function displayFullClauseAnalysis(analysisData) {
         
         <div style="display: flex; flex-direction: column; gap: 1.5rem;" id="clausesContainer">
     `;
-    
-    // Add each clause
-    clauses.forEach((clause, index) => {
-        const riskColor = {
-            'low': 'var(--success-color)',
-            'medium': 'var(--warning-color)',
-            'high': 'var(--danger-color)'
-        }[clause.risk_level.toLowerCase()] || 'var(--info-color)';
-        
-        const riskBgColor = {
-            'low': 'var(--success-bg)',
-            'medium': 'var(--warning-bg)',
-            'high': 'var(--danger-bg)'
-        }[clause.risk_level.toLowerCase()] || 'var(--info-bg)';
-        
-        const isReplaced = clauseReplacementMap.has(index);
-        
-        html += `
+
+        // Add each clause
+        clauses.forEach((clause, index) => {
+            const riskColor = {
+                'low': 'var(--success-color)',
+                'medium': 'var(--warning-color)',
+                'high': 'var(--danger-color)'
+            }[clause.risk_level.toLowerCase()] || 'var(--info-color)';
+
+            const riskBgColor = {
+                'low': 'var(--success-bg)',
+                'medium': 'var(--warning-bg)',
+                'high': 'var(--danger-bg)'
+            }[clause.risk_level.toLowerCase()] || 'var(--info-bg)';
+
+            const isReplaced = clauseReplacementMap.has(index);
+
+            html += `
             <div id="clause-item-${index}" style="background: ${isReplaced ? '#e8f5e9' : 'white'}; 
                      border: 2px solid ${isReplaced ? '#4caf50' : '#e9ecef'}; 
                      border-radius: 12px; padding: 1.5rem; transition: all 0.3s ease;">
@@ -4722,9 +4751,9 @@ function displayFullClauseAnalysis(analysisData) {
                 ` : ''}
             </div>
         `;
-    });
-    
-    html += `
+        });
+
+        html += `
         </div>
         
         <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid #e9ecef; 
@@ -4742,65 +4771,65 @@ function displayFullClauseAnalysis(analysisData) {
             </div>
         </div>
     `;
-    
-    container.innerHTML = html;
-}
 
-
-
-function acceptClauseSuggestion(index, clauseName, improvedVersion, originalText) {
-    if (!improvedVersion || improvedVersion === 'AI analysis unavailable - legal review recommended') {
-        showNotification('No improved version available for this clause', 'warning');
-        return;
+        container.innerHTML = html;
     }
-    
-    try {
-        // Get the contract editor
-        const editor = document.getElementById('contractContent') || 
-                      document.getElementById('contractContentEditor') ||
-                      document.querySelector('.editor-paper[contenteditable="true"]');
-        
-        if (!editor) {
-            showNotification('Contract editor not found', 'error');
+
+
+
+    function acceptClauseSuggestion(index, clauseName, improvedVersion, originalText) {
+        if (!improvedVersion || improvedVersion === 'AI analysis unavailable - legal review recommended') {
+            showNotification('No improved version available for this clause', 'warning');
             return;
         }
-        
-        // Get current content
-        let content = editor.innerHTML;
-        
-        // Try to find and replace the original clause text
-        // We need to handle both plain text and HTML content
-        const originalTextEscaped = escapeHtml(originalText);
-        
-        // Try direct replacement first (for HTML content)
-        if (content.includes(originalTextEscaped)) {
-            content = content.replace(originalTextEscaped, escapeHtml(improvedVersion));
-        } 
-        // Try plain text replacement
-        else if (content.includes(originalText)) {
-            content = content.replace(originalText, improvedVersion);
-        }
-        // Try approximate match (remove extra whitespace)
-        else {
-            const cleanOriginal = originalText.replace(/\s+/g, ' ').trim();
-            const cleanContent = content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
-            
-            if (cleanContent.includes(cleanOriginal)) {
-                // Find the approximate location and replace
-                const startIdx = cleanContent.indexOf(cleanOriginal);
-                if (startIdx !== -1) {
-                    // Create a highlighted version
-                    const beforeText = content.substring(0, startIdx);
-                    const afterText = content.substring(startIdx + cleanOriginal.length);
-                    
-                    content = beforeText + 
-                             `<span style="background: #e8f5e9; padding: 0.25rem; border-left: 3px solid #4caf50;">` +
-                             improvedVersion + 
-                             `</span>` + 
-                             afterText;
-                } else {
-                    // If exact replacement fails, append to end with clear marking
-                    content += `
+
+        try {
+            // Get the contract editor
+            const editor = document.getElementById('contractContent') ||
+                document.getElementById('contractContentEditor') ||
+                document.querySelector('.editor-paper[contenteditable="true"]');
+
+            if (!editor) {
+                showNotification('Contract editor not found', 'error');
+                return;
+            }
+
+            // Get current content
+            let content = editor.innerHTML;
+
+            // Try to find and replace the original clause text
+            // We need to handle both plain text and HTML content
+            const originalTextEscaped = escapeHtml(originalText);
+
+            // Try direct replacement first (for HTML content)
+            if (content.includes(originalTextEscaped)) {
+                content = content.replace(originalTextEscaped, escapeHtml(improvedVersion));
+            }
+            // Try plain text replacement
+            else if (content.includes(originalText)) {
+                content = content.replace(originalText, improvedVersion);
+            }
+            // Try approximate match (remove extra whitespace)
+            else {
+                const cleanOriginal = originalText.replace(/\s+/g, ' ').trim();
+                const cleanContent = content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
+
+                if (cleanContent.includes(cleanOriginal)) {
+                    // Find the approximate location and replace
+                    const startIdx = cleanContent.indexOf(cleanOriginal);
+                    if (startIdx !== -1) {
+                        // Create a highlighted version
+                        const beforeText = content.substring(0, startIdx);
+                        const afterText = content.substring(startIdx + cleanOriginal.length);
+
+                        content = beforeText +
+                            `<span style="background: #e8f5e9; padding: 0.25rem; border-left: 3px solid #4caf50;">` +
+                            improvedVersion +
+                            `</span>` +
+                            afterText;
+                    } else {
+                        // If exact replacement fails, append to end with clear marking
+                        content += `
                     
 <div style="background: #e8f5e9; padding: 1rem; margin-top: 1rem; border-left: 4px solid #4caf50; border-radius: 8px;">
     <h5 style="color: #2e7d32; margin-bottom: 0.5rem;">
@@ -4813,10 +4842,10 @@ function acceptClauseSuggestion(index, clauseName, improvedVersion, originalText
         <strong>Note:</strong> Please replace the original ${clauseName} clause with this improved version.
     </p>
 </div>`;
-                }
-            } else {
-                // Last resort: append at the end
-                content += `
+                    }
+                } else {
+                    // Last resort: append at the end
+                    content += `
 
 <div style="background: #e8f5e9; padding: 1rem; margin-top: 1rem; border-left: 4px solid #4caf50; border-radius: 8px;">
     <h5 style="color: #2e7d32; margin-bottom: 0.5rem;">
@@ -4829,168 +4858,168 @@ function acceptClauseSuggestion(index, clauseName, improvedVersion, originalText
         <strong>Note:</strong> Original clause not found. Please integrate this improved clause manually.
     </p>
 </div>`;
+                }
             }
-        }
-        
-        // Update the editor
-        editor.innerHTML = content;
-        
-        // Mark this clause as replaced
-        clauseReplacementMap.set(index, {
-            originalText: originalText,
-            improvedVersion: improvedVersion,
-            clauseName: clauseName
-        });
-        
-        // Update the UI to show it's been accepted
-        const clauseItem = document.getElementById(`clause-item-${index}`);
-        if (clauseItem) {
-            clauseItem.style.background = '#e8f5e9';
-            clauseItem.style.borderColor = '#4caf50';
-            
-            // Hide action buttons
-            const buttonContainer = clauseItem.querySelector('div[style*="display: flex"]');
-            if (buttonContainer && buttonContainer.textContent.includes('Accept Suggestion')) {
-                buttonContainer.innerHTML = `
+
+            // Update the editor
+            editor.innerHTML = content;
+
+            // Mark this clause as replaced
+            clauseReplacementMap.set(index, {
+                originalText: originalText,
+                improvedVersion: improvedVersion,
+                clauseName: clauseName
+            });
+
+            // Update the UI to show it's been accepted
+            const clauseItem = document.getElementById(`clause-item-${index}`);
+            if (clauseItem) {
+                clauseItem.style.background = '#e8f5e9';
+                clauseItem.style.borderColor = '#4caf50';
+
+                // Hide action buttons
+                const buttonContainer = clauseItem.querySelector('div[style*="display: flex"]');
+                if (buttonContainer && buttonContainer.textContent.includes('Accept Suggestion')) {
+                    buttonContainer.innerHTML = `
                     <div style="background: #4caf50; color: white; padding: 0.75rem; border-radius: 8px; text-align: center;">
                         <i class="ti ti-check"></i> Suggestion Applied to Contract
                     </div>
                 `;
+                }
             }
+
+            showNotification(`${clauseName} suggestion accepted and added to contract!`, 'success');
+
+            // Auto-save the contract (if auto-save function exists)
+            if (typeof autoSaveContract === 'function') {
+                autoSaveContract();
+            }
+
+        } catch (error) {
+            console.error('Error accepting clause suggestion:', error);
+            showNotification('Failed to apply suggestion. Please try manual editing.', 'error');
         }
-        
-        showNotification(`${clauseName} suggestion accepted and added to contract!`, 'success');
-        
-        // Auto-save the contract (if auto-save function exists)
-        if (typeof autoSaveContract === 'function') {
-            autoSaveContract();
-        }
-        
-    } catch (error) {
-        console.error('Error accepting clause suggestion:', error);
-        showNotification('Failed to apply suggestion. Please try manual editing.', 'error');
     }
-}
 
-// =====================================================
-// EDIT CLAUSE MANUALLY
-// =====================================================
+    // =====================================================
+    // EDIT CLAUSE MANUALLY
+    // =====================================================
 
-function editClauseManually(index, clauseName, clauseText) {
-    try {
-        // Close the modal
-        closeModal('clauseSuggestionModal');
-        
-        // Get the editor
-        const editor = document.getElementById('contractContent') || 
-                      document.getElementById('contractContentEditor') ||
-                      document.querySelector('.editor-paper[contenteditable="true"]');
-        
-        if (!editor) {
-            showNotification('Contract editor not found', 'error');
+    function editClauseManually(index, clauseName, clauseText) {
+        try {
+            // Close the modal
+            closeModal('clauseSuggestionModal');
+
+            // Get the editor
+            const editor = document.getElementById('contractContent') ||
+                document.getElementById('contractContentEditor') ||
+                document.querySelector('.editor-paper[contenteditable="true"]');
+
+            if (!editor) {
+                showNotification('Contract editor not found', 'error');
+                return;
+            }
+
+            // Try to find and highlight the clause text
+            const content = editor.innerHTML;
+            const cleanClauseText = clauseText.replace(/\s+/g, ' ').trim().substring(0, 100); // First 100 chars
+
+            // Search for the text
+            if (content.toLowerCase().includes(cleanClauseText.toLowerCase())) {
+                // Highlight it
+                const regex = new RegExp(escapeRegExp(cleanClauseText), 'gi');
+                editor.innerHTML = content.replace(regex, match =>
+                    `<span style="background: yellow; padding: 0.25rem;">${match}</span>`
+                );
+
+                // Scroll to the highlighted text
+                const highlighted = editor.querySelector('span[style*="background: yellow"]');
+                if (highlighted) {
+                    highlighted.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+
+            // Focus the editor
+            editor.focus();
+
+            showNotification(`Please manually edit the "${clauseName}" clause in the highlighted section`, 'info');
+
+        } catch (error) {
+            console.error('Error in manual edit:', error);
+            closeModal('clauseSuggestionModal');
+            showNotification(`Please locate and edit the "${clauseName}" clause manually`, 'info');
+        }
+    }
+
+    // =====================================================
+    // SKIP CLAUSE SUGGESTION
+    // =====================================================
+
+    function skipClauseSuggestion(index) {
+        const clauseItem = document.getElementById(`clause-item-${index}`);
+        if (clauseItem) {
+            clauseItem.style.opacity = '0.5';
+        }
+        showNotification('Suggestion skipped', 'info');
+    }
+
+
+
+
+    async function applyAllSuggestions() {
+        if (!currentAnalysisData || !currentAnalysisData.clauses_identified) {
+            showNotification('No analysis data available', 'error');
             return;
         }
-        
-        // Try to find and highlight the clause text
-        const content = editor.innerHTML;
-        const cleanClauseText = clauseText.replace(/\s+/g, ' ').trim().substring(0, 100); // First 100 chars
-        
-        // Search for the text
-        if (content.toLowerCase().includes(cleanClauseText.toLowerCase())) {
-            // Highlight it
-            const regex = new RegExp(escapeRegExp(cleanClauseText), 'gi');
-            editor.innerHTML = content.replace(regex, match => 
-                `<span style="background: yellow; padding: 0.25rem;">${match}</span>`
-            );
-            
-            // Scroll to the highlighted text
-            const highlighted = editor.querySelector('span[style*="background: yellow"]');
-            if (highlighted) {
-                highlighted.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        const clauses = currentAnalysisData.clauses_identified;
+        let appliedCount = 0;
+        let skippedCount = 0;
+
+        showLoader('Applying all suggestions to contract...');
+
+        try {
+            // Get the editor
+            const editor = document.getElementById('contractContent') ||
+                document.getElementById('contractContentEditor') ||
+                document.querySelector('.editor-paper[contenteditable="true"]');
+
+            if (!editor) {
+                throw new Error('Contract editor not found');
             }
-        }
-        
-        // Focus the editor
-        editor.focus();
-        
-        showNotification(`Please manually edit the "${clauseName}" clause in the highlighted section`, 'info');
-        
-    } catch (error) {
-        console.error('Error in manual edit:', error);
-        closeModal('clauseSuggestionModal');
-        showNotification(`Please locate and edit the "${clauseName}" clause manually`, 'info');
-    }
-}
 
-// =====================================================
-// SKIP CLAUSE SUGGESTION
-// =====================================================
+            let content = editor.innerHTML;
+            const improvements = [];
 
-function skipClauseSuggestion(index) {
-    const clauseItem = document.getElementById(`clause-item-${index}`);
-    if (clauseItem) {
-        clauseItem.style.opacity = '0.5';
-    }
-    showNotification('Suggestion skipped', 'info');
-}
+            // Process each clause
+            clauses.forEach((clause, index) => {
+                // Skip if already replaced
+                if (clauseReplacementMap.has(index)) {
+                    return;
+                }
 
+                const improvedVersion = clause.improved_version;
+                const originalText = clause.clause_text;
+                const clauseName = clause.clause_name;
 
+                // Skip if no improved version
+                if (!improvedVersion || improvedVersion === 'AI analysis unavailable - legal review recommended') {
+                    skippedCount++;
+                    return;
+                }
 
-
-async function applyAllSuggestions() {
-    if (!currentAnalysisData || !currentAnalysisData.clauses_identified) {
-        showNotification('No analysis data available', 'error');
-        return;
-    }
-    
-    const clauses = currentAnalysisData.clauses_identified;
-    let appliedCount = 0;
-    let skippedCount = 0;
-    
-    showLoader('Applying all suggestions to contract...');
-    
-    try {
-        // Get the editor
-        const editor = document.getElementById('contractContent') || 
-                      document.getElementById('contractContentEditor') ||
-                      document.querySelector('.editor-paper[contenteditable="true"]');
-        
-        if (!editor) {
-            throw new Error('Contract editor not found');
-        }
-        
-        let content = editor.innerHTML;
-        const improvements = [];
-        
-        // Process each clause
-        clauses.forEach((clause, index) => {
-            // Skip if already replaced
-            if (clauseReplacementMap.has(index)) {
-                return;
-            }
-            
-            const improvedVersion = clause.improved_version;
-            const originalText = clause.clause_text;
-            const clauseName = clause.clause_name;
-            
-            // Skip if no improved version
-            if (!improvedVersion || improvedVersion === 'AI analysis unavailable - legal review recommended') {
-                skippedCount++;
-                return;
-            }
-            
-            // Store for batch append if direct replacement fails
-            improvements.push({
-                index: index,
-                clauseName: clauseName,
-                originalText: originalText,
-                improvedVersion: improvedVersion
+                // Store for batch append if direct replacement fails
+                improvements.push({
+                    index: index,
+                    clauseName: clauseName,
+                    originalText: originalText,
+                    improvedVersion: improvedVersion
+                });
             });
-        });
-        
-        // Append all improvements at the end with clear section
-        if (improvements.length > 0) {
-            content += `
+
+            // Append all improvements at the end with clear section
+            if (improvements.length > 0) {
+                content += `
 
 <div style="background: linear-gradient(to bottom, #e8f5e9, #ffffff); padding: 2rem; margin-top: 2rem; border: 2px solid #4caf50; border-radius: 12px;">
     <h3 style="color: #2e7d32; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
@@ -5000,9 +5029,9 @@ async function applyAllSuggestions() {
         The following clauses have been improved by AI analysis. Please review and integrate them into your contract.
     </p>
 `;
-            
-            improvements.forEach(item => {
-                content += `
+
+                improvements.forEach(item => {
+                    content += `
     <div style="background: white; padding: 1.5rem; margin-bottom: 1.5rem; border-left: 4px solid #4caf50; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
         <h5 style="color: var(--primary-color); margin-bottom: 1rem;">
             <i class="ti ti-file-text"></i> ${escapeHtml(item.clauseName)}
@@ -5025,18 +5054,18 @@ async function applyAllSuggestions() {
         </div>
     </div>
 `;
-                
-                // Mark as replaced
-                clauseReplacementMap.set(item.index, {
-                    originalText: item.originalText,
-                    improvedVersion: item.improvedVersion,
-                    clauseName: item.clauseName
+
+                    // Mark as replaced
+                    clauseReplacementMap.set(item.index, {
+                        originalText: item.originalText,
+                        improvedVersion: item.improvedVersion,
+                        clauseName: item.clauseName
+                    });
+
+                    appliedCount++;
                 });
-                
-                appliedCount++;
-            });
-            
-            content += `
+
+                content += `
     <div style="background: #fff3cd; padding: 1rem; border-radius: 8px; margin-top: 1.5rem;">
         <p style="margin: 0; color: #856404; font-size: 0.9rem;">
             <i class="ti ti-info-circle"></i> <strong>Note:</strong> Please review these improvements and integrate them into the appropriate sections of your contract.
@@ -5044,54 +5073,54 @@ async function applyAllSuggestions() {
     </div>
 </div>
 `;
-        }
-        
-        // Update the editor
-        editor.innerHTML = content;
-        
-        hideLoader();
-        
-        // Close modal
-        closeModal('clauseSuggestionModal');
-        
-        // Show summary
-        showNotification(
-            `Applied ${appliedCount} suggestion(s) to contract. ${skippedCount > 0 ? `Skipped ${skippedCount} clause(s).` : ''} Please review and save.`,
-            'success'
-        );
-        
-        // Auto-save if available
-        setTimeout(() => {
-            if (typeof autoSaveContract === 'function') {
-                autoSaveContract();
             }
-        }, 1000);
-        
-    } catch (error) {
-        hideLoader();
-        console.error('Error applying all suggestions:', error);
-        showNotification('Failed to apply all suggestions. Please try individual acceptance.', 'error');
+
+            // Update the editor
+            editor.innerHTML = content;
+
+            hideLoader();
+
+            // Close modal
+            closeModal('clauseSuggestionModal');
+
+            // Show summary
+            showNotification(
+                `Applied ${appliedCount} suggestion(s) to contract. ${skippedCount > 0 ? `Skipped ${skippedCount} clause(s).` : ''} Please review and save.`,
+                'success'
+            );
+
+            // Auto-save if available
+            setTimeout(() => {
+                if (typeof autoSaveContract === 'function') {
+                    autoSaveContract();
+                }
+            }, 1000);
+
+        } catch (error) {
+            hideLoader();
+            console.error('Error applying all suggestions:', error);
+            showNotification('Failed to apply all suggestions. Please try individual acceptance.', 'error');
+        }
     }
-}
 
 
 
 
-async function downloadClauseAnalysis() {
-    if (!currentAnalysisData || !currentAnalysisData.clauses_identified) {
-        showNotification('No analysis data to download', 'error');
-        return;
-    }
-    
-    showLoader('Generating clause analysis report...');
-    
-    try {
-        const clauses = currentAnalysisData.clauses_identified;
-        const contractTitle = document.querySelector('h1')?.textContent || 'Contract';
-        const currentDate = new Date().toLocaleDateString('en-GB');
-        
-        // Generate HTML report
-        let htmlContent = `
+    async function downloadClauseAnalysis() {
+        if (!currentAnalysisData || !currentAnalysisData.clauses_identified) {
+            showNotification('No analysis data to download', 'error');
+            return;
+        }
+
+        showLoader('Generating clause analysis report...');
+
+        try {
+            const clauses = currentAnalysisData.clauses_identified;
+            const contractTitle = document.querySelector('h1')?.textContent || 'Contract';
+            const currentDate = new Date().toLocaleDateString('en-GB');
+
+            // Generate HTML report
+            let htmlContent = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -5251,12 +5280,12 @@ async function downloadClauseAnalysis() {
     
     <h2>Detailed Clause Analysis</h2>
 `;
-        
-        // Add each clause analysis
-        clauses.forEach((clause, index) => {
-            const riskClass = `badge-${clause.risk_level.toLowerCase()}`;
-            
-            htmlContent += `
+
+            // Add each clause analysis
+            clauses.forEach((clause, index) => {
+                const riskClass = `badge-${clause.risk_level.toLowerCase()}`;
+
+                htmlContent += `
     <div class="clause-item">
         <div class="clause-header">
             <h3 class="clause-title">${index + 1}. ${escapeHtml(clause.clause_name)}</h3>
@@ -5297,9 +5326,9 @@ async function downloadClauseAnalysis() {
         ` : ''}
     </div>
 `;
-        });
-        
-        htmlContent += `
+            });
+
+            htmlContent += `
     <div class="footer">
         <p><strong>Generated by CALIM 360 Smart CLM</strong></p>
         <p>This AI-powered analysis is for reference purposes only. Please consult with legal counsel for final review.</p>
@@ -5308,27 +5337,27 @@ async function downloadClauseAnalysis() {
 </body>
 </html>
 `;
-        
-        // Create blob and download
-        const blob = new Blob([htmlContent], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `Clause_Analysis_Report_${contractTitle.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.html`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-        hideLoader();
-        showNotification('Clause analysis report downloaded successfully!', 'success');
-        
-    } catch (error) {
-        hideLoader();
-        console.error('Error generating report:', error);
-        showNotification('Failed to generate report. Please try again.', 'error');
+
+            // Create blob and download
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Clause_Analysis_Report_${contractTitle.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.html`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            hideLoader();
+            showNotification('Clause analysis report downloaded successfully!', 'success');
+
+        } catch (error) {
+            hideLoader();
+            console.error('Error generating report:', error);
+            showNotification('Failed to generate report. Please try again.', 'error');
+        }
     }
-}
 
     // Helper function to escape HTML
     function escapeHtml(text) {
@@ -5831,7 +5860,7 @@ async function downloadClauseAnalysis() {
     }
 
 
-     async function initiateApprovalWorkflow() {
+    async function initiateApprovalWorkflow() {
         if (!confirm('Send this contract for internal approval?')) {
             return;
         }
@@ -7330,29 +7359,29 @@ ${(riskAnalysisData.risk_items || []).map(item => `
 
     // Workflow Functions
     function selectContractWorkflow(type) {
-        console.log('🎯 Selecting workflow type:', type);
+        // Only custom workflow is available now
+        console.log('🎯 Setting up custom workflow');
 
-        document.getElementById('masterWorkflowOption').classList.remove('selected');
-        document.getElementById('customWorkflowOption').classList.remove('selected');
+        selectedContractWorkflow = 'custom';
 
-        if (type === 'master') {
-            document.getElementById('masterWorkflowOption').classList.add('selected');
-            document.getElementById('customWorkflowConfig').style.display = 'none';
-        } else {
-            document.getElementById('customWorkflowOption').classList.add('selected');
-            document.getElementById('customWorkflowConfig').style.display = 'block';
+        // Show custom workflow configuration
+        document.getElementById('customWorkflowConfig').style.display = 'block';
 
-            // Add default step if table is empty
-            const tbody = document.getElementById('contractWorkflowSteps');
-            if (tbody && tbody.children.length === 0) {
-                console.log('📝 Adding default step');
-                addContractWorkflowStep();
-            }
+        // Add default step if table is empty
+        const tbody = document.getElementById('contractWorkflowSteps');
+        if (tbody && tbody.children.length === 0) {
+            console.log('📝 Adding default step');
+            addContractWorkflowStep();
         }
 
-        selectedContractWorkflow = type;
-        document.getElementById('saveWorkflowBtn').disabled = false;
+        // 🔥 ENABLE SAVE BUTTON
+        const saveBtn = document.getElementById('saveWorkflowBtn');
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            console.log('✅ Save button enabled');
+        }
     }
+
 
     function addContractWorkflowStep() {
         contractWorkflowStepCount++;
@@ -7363,49 +7392,52 @@ ${(riskAnalysisData.risk_items || []).map(item => `
         const suggestionsId = `suggestions_${Date.now()}_${contractWorkflowStepCount}`;
 
         newRow.innerHTML = `
-        <td style="padding: 0.75rem;">
-            <span style="width: 28px; height: 28px; background: var(--primary-color); color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 600;">${contractWorkflowStepCount}</span>
-        </td>
-        <td style="padding: 0.75rem;">
-            <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem;">
-                <option value="">Select Role</option>
-                <option value="reviewer">Reviewer</option>
-                <option value="approver">Approver</option>
-                <option value="e-sign">E-Sign</option>
-                <option value="counter-party">Counter-Party</option>
-            </select>
-        </td>
-        <td style="padding: 0.75rem; position: relative;">
-            <input type="email" 
-                id="${uniqueId}"
-                placeholder="Type to search users..." 
-                oninput="searchWorkflowUsers(this, '${suggestionsId}')"
-                onfocus="searchWorkflowUsers(this, '${suggestionsId}')"
-                style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem;">
-            <div id="${suggestionsId}" class="email-suggestions" style="display: none;"></div>
-        </td>
-        <td style="padding: 0.75rem;">
-            <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem;">
-                <option value="">Select Department</option>
-                <option value="Legal">Legal</option>
-                <option value="Finance">Finance</option>
-                <option value="Operations">Operations</option>
-                <option value="Executive">Executive</option>
-                <option value="Technical">Technical</option>
-                <option value="Commercial">Commercial</option>
-            </select>
-        </td>
-        <td style="padding: 0.75rem; text-align: center;">
-            <button onclick="removeContractWorkflowStep(this)" 
-                style="background: none; border: none; color: var(--danger-color); cursor: pointer; padding: 0.25rem 0.5rem;">
-                <i class="ti ti-trash" style="font-size: 1.125rem;"></i>
-            </button>
-        </td>
+    <td style="padding: 0.75rem;">
+        <span style="width: 28px; height: 28px; background: var(--primary-color); color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 600;">${contractWorkflowStepCount}</span>
+    </td>
+    <td style="padding: 0.75rem;">
+        <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem;">
+            <option value="">Select Role</option>
+            <option value="reviewer">Reviewer</option>
+            <option value="approver">Approver</option>
+            <option value="e-sign">E-Sign</option>
+            <option value="counter-party">Counter-Party</option>
+        </select>
+    </td>
+    <td style="padding: 0.75rem; position: relative;">
+        <input type="email" 
+            id="${uniqueId}"
+            placeholder="Type to search users..." 
+            oninput="searchWorkflowUsers(this, '${suggestionsId}')"
+            onfocus="searchWorkflowUsers(this, '${suggestionsId}')"
+            style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem;">
+        <div id="${suggestionsId}" class="user-suggestions" style="display: none;"></div>
+    </td>
+    <td style="padding: 0.75rem;">
+        <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem;">
+            <option value="">Select Department</option>
+            <option value="legal">Legal</option>
+            <option value="finance">Finance</option>
+            <option value="operations">Operations</option>
+        </select>
+    </td>
+    <td style="padding: 0.75rem;">
+        <button onclick="removeContractWorkflowStep(this)"
+            style="background: none; border: none; color: var(--danger-color); cursor: pointer;">
+            <i class="ti ti-trash"></i>
+        </button>
+    </td>
     `;
 
         tbody.appendChild(newRow);
-    }
 
+        // 🔥 ENABLE SAVE BUTTON when step is added
+        const saveBtn = document.getElementById('saveWorkflowBtn');
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            console.log('✅ Save button enabled - step added');
+        }
+    }
 
     function removeContractWorkflowStep(button) {
         const tbody = document.getElementById('contractWorkflowSteps');
@@ -7433,7 +7465,6 @@ ${(riskAnalysisData.risk_items || []).map(item => `
         contractWorkflowStepCount = rows.length;
     }
 
-
     async function openWorkflowSetupModal() {
         console.log('🔄 Opening workflow modal for contract:', contractId);
 
@@ -7443,16 +7474,23 @@ ${(riskAnalysisData.risk_items || []).map(item => `
             return;
         }
 
+        // Auto-select custom workflow (only option)
+        selectedContractWorkflow = 'custom';
+
+        // 🔥 ENABLE THE SAVE BUTTON - Since custom workflow is pre-selected
+        const saveBtn = document.getElementById('saveWorkflowBtn');
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            console.log('✅ Save button enabled');
+        }
+
         // Show the modal first
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
 
-        // Then load the data
+        // Then load the existing workflow data
         await loadExistingWorkflow();
     }
-
-
-
 
     async function loadExistingWorkflow() {
         if (!contractId) {
@@ -7463,11 +7501,11 @@ ${(riskAnalysisData.risk_items || []).map(item => `
         console.log('📥 Loading workflow for contract:', contractId);
         showLoader();
 
-        // ✅ FIX: Clear the table FIRST before loading anything
+        // Clear the table FIRST before loading anything
         const tbody = document.getElementById('contractWorkflowSteps');
         if (tbody) {
-            tbody.innerHTML = '';  // ← Clear all existing rows!
-            contractWorkflowStepCount = 0;  // Reset counter
+            tbody.innerHTML = '';
+            contractWorkflowStepCount = 0;
         }
 
         try {
@@ -7481,30 +7519,19 @@ ${(riskAnalysisData.risk_items || []).map(item => `
                 console.log('✅ Workflow loaded:', workflow);
                 console.log('📊 Steps:', workflow.steps);
 
-                // Check if it's a master workflow or custom workflow
-                if (workflow.is_master) {
-                    console.log('🔧 Loading MASTER workflow');
-                    selectContractWorkflow('master');
+                // Only load custom workflows (master workflow removed)
+                console.log('🔧 Loading CUSTOM workflow');
+                selectContractWorkflow('custom');
 
-                    if (workflow.steps && workflow.steps.length > 0) {
-                        updateMasterWorkflowPreview(workflow.steps);
-                    }
-
-                    showNotification(`✓ Master Workflow: ${workflow.workflow_name}`, 'success');
+                if (workflow.steps && workflow.steps.length > 0) {
+                    console.log(`📝 Populating ${workflow.steps.length} custom steps`);
+                    populateCustomWorkflowSteps(workflow.steps);
                 } else {
-                    console.log('🔧 Loading CUSTOM workflow');
-                    selectContractWorkflow('custom');
-
-                    if (workflow.steps && workflow.steps.length > 0) {
-                        console.log(`📝 Populating ${workflow.steps.length} custom steps`);
-                        populateCustomWorkflowSteps(workflow.steps);
-                    } else {
-                        console.log('⚠️ No steps found, adding empty row');
-                        addContractWorkflowStep();  // Only adds 1 row because table is cleared above
-                    }
-
-                    showNotification(`Custom Workflow: ${workflow.workflow_name}`, 'success');
+                    console.log('⚠️ No steps found, adding empty row');
+                    addContractWorkflowStep();
                 }
+
+                showNotification(`Custom Workflow: ${workflow.workflow_name}`, 'success');
 
                 // Update status text
                 const statusEl = document.getElementById('workflowStatusText');
@@ -7513,24 +7540,40 @@ ${(riskAnalysisData.risk_items || []).map(item => `
                 }
             } else {
                 console.log('ℹ️ No workflow found for this contract');
-                // Reset to default
+                // Reset to default (custom workflow only)
                 resetWorkflowModal();
             }
+
+            // 🔥 ALWAYS ENABLE BUTTON AFTER LOADING
+            const saveBtn = document.getElementById('saveWorkflowBtn');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                console.log('✅ Save button enabled after loading');
+            }
+
         } catch (error) {
             console.error('❌ Error loading workflow:', error);
             showNotification('Could not load workflow', 'warning');
+
+            // 🔥 ENABLE BUTTON EVEN ON ERROR
+            const saveBtn = document.getElementById('saveWorkflowBtn');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                console.log('✅ Save button enabled despite error');
+            }
         } finally {
             hideLoader();
         }
     }
+
+
     // STEP 3: ADD this NEW function (resetWorkflowModal)
     function resetWorkflowModal() {
         console.log('🔄 Resetting workflow modal to default state');
 
-        // Clear selections
-        document.getElementById('masterWorkflowOption').classList.remove('selected');
-        document.getElementById('customWorkflowOption').classList.remove('selected');
-        document.getElementById('customWorkflowConfig').style.display = 'none';
+        // Custom workflow is always selected (only option)
+        document.getElementById('customWorkflowOption').classList.add('selected');
+        document.getElementById('customWorkflowConfig').style.display = 'block';
 
         // Clear the table
         const tbody = document.getElementById('contractWorkflowSteps');
@@ -7539,9 +7582,15 @@ ${(riskAnalysisData.risk_items || []).map(item => `
         }
         contractWorkflowStepCount = 0;
 
-        // Reset selection
-        selectedContractWorkflow = null;
-        document.getElementById('saveWorkflowBtn').disabled = true;
+        // Set default to custom workflow
+        selectedContractWorkflow = 'custom';
+
+        // 🔥 KEEP BUTTON ENABLED (changed from disabled = true)
+        const saveBtn = document.getElementById('saveWorkflowBtn');
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            console.log('✅ Save button kept enabled');
+        }
     }
 
     // STEP 4: ADD this NEW function (updateMasterWorkflowPreview)
@@ -8046,15 +8095,15 @@ ${(riskAnalysisData.risk_items || []).map(item => `
     }
 
     // Clean up on page unload
-    window.addEventListener('beforeunload', function (e) {
-        // Check if there are unsaved changes
-        const currentContent = document.getElementById('contractContent')?.innerHTML || '';
-        if (currentContent && currentContent !== originalContent) {
-            e.preventDefault();
-            e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
-            return e.returnValue;
-        }
-    });
+    // window.addEventListener('beforeunload', function (e) {
+    //     // Check if there are unsaved changes
+    //     const currentContent = document.getElementById('contractContent')?.innerHTML || '';
+    //     if (currentContent && currentContent !== originalContent) {
+    //         e.preventDefault();
+    //         e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+    //         return e.returnValue;
+    //     }
+    // });
 
     // Cleanup intervals on page unload
     window.addEventListener('unload', function () {

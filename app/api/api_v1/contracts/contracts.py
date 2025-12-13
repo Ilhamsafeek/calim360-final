@@ -826,10 +826,10 @@ async def get_contracts(
     if module == "drafting":
         query = query.filter(
             or_(
-                Contract.workflow_status.in_(['draft', 'internal_review','counterparty_internal_review', 'clause_analysis']),
+                Contract.workflow_status.in_(['draft','active','pending', 'internal_review','counterparty_internal_review', 'clause_analysis','in_progress']),
                 and_(
                     Contract.workflow_status.is_(None),
-                    Contract.status.in_(['draft', 'pending_review', 'in_progress', 'review','counterparty_internal_review'])
+                    Contract.status.in_(['draft', 'pending_review', 'in_progress', 'review','review_completed','counterparty_internal_review'])
                 ),
                 Contract.status == 'draft'
             )
@@ -1968,7 +1968,8 @@ async def setup_contract_workflow(
                         "step_name": step_label,
                         "step_type": step_label.lower(),
                         "assignee_role": step_label,
-                        "assignee_user_id": assignee_user_id
+                        "assignee_user_id": assignee_user_id,
+                        "department" : department
                     })
                     
                     logger.info(f"✅ Inserted step {step_order} with user_id={assignee_user_id}")
@@ -2080,6 +2081,7 @@ async def get_contract_workflow(
                 ws.step_name,
                 ws.step_type,
                 ws.assignee_role,
+                ws.department,
                 ws.assignee_user_id,
                 ws.sla_hours,
                 ws.is_mandatory,
