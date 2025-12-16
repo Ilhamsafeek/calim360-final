@@ -2248,6 +2248,15 @@
         font-size: 0.85rem;
         color: var(--text-muted);
     }
+
+
+     @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+
+    
 </style>
 
 
@@ -2260,7 +2269,6 @@
     <div class="loading-text">Loading Contract...</div>
 </div>
 
-<!-- {{ user.company_id }} -->
 <!-- Contract Editor - Hidden until data loads -->
 <div id="contractEditor"></div>
 
@@ -2295,11 +2303,13 @@
             <button type="button" class="blockchain-btn blockchain-btn-secondary" onclick="showBlockchainInfo()">
                 <i data-lucide="info"></i>
                 What is this?
-            </button>
-            <button type="button" class="blockchain-btn blockchain-btn-info" onclick="openBlockchainMonitor()">
-                <i class="ti ti-activity"></i>
-                Blockchain Operations Monitor
-            </button>
+            </button>    
+<button 
+    id="openBlockchainMonitorBtn"
+    onclick="openBlockchainMonitor()"
+    class="blockchain-btn blockchain-btn-info">
+    View Blockchain Operations
+</button>
         </div>
 
         <!-- Info Text -->
@@ -2314,168 +2324,65 @@
 <!-- END BLOCKCHAIN VERIFICATION SECTION -->
 
 
-<!-- Blockchain Operations Monitor Modal -->
-<div class="modal" id="blockchainMonitorModal">
-    <div class="modal-content modal-xl" style="max-width: 1100px;">
-        <!-- Modal Header -->
-        <div class="modal-header"
-            style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 1.5rem; border-radius: 12px 12px 0 0;">
-            <div style="display: flex; align-items: center; gap: 1rem; width: 100%;">
-                <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
-                    <i class="ti ti-shield-lock" style="font-size: 1.5rem;"></i>
-                    <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600;">Blockchain Operations Monitor</h3>
-                </div>
-                <div class="live-indicator-modal"
-                    style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(255,255,255,0.2); border-radius: 20px;">
-                    <span class="live-dot-modal"
-                        style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite;"></span>
-                    <span style="font-size: 0.875rem; font-weight: 600;">LIVE</span>
-                </div>
-            </div>
-            <button class="modal-close" onclick="closeBlockchainMonitor()"
-                style="background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 0.25rem;">&times;</button>
+<div id="blockchainMonitorModal" style="display: none;">
+    
+    <!-- ✅ THIS DIV NEEDS THE CLASS "blockchain-monitor-content" -->
+    <div class="blockchain-monitor-content">
+        
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem;">
+            <h3 style="margin: 0; font-size: 1.5rem; color: #1e293b;">
+                <i class="ti ti-blockchain" style="margin-right: 0.5rem; color: #3b82f6;"></i>
+                Blockchain Operations Monitor
+            </h3>
+            <button onclick="closeBlockchainMonitor()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; padding: 0.5rem;">
+                <i class="ti ti-x"></i>
+            </button>
         </div>
-
-        <!-- Modal Body -->
-        <div class="modal-body" style="padding: 1.5rem; max-height: 70vh; overflow-y: auto;">
-            <!-- Network Status Bar -->
-            <div class="network-status-bar-modal"
-                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
-                <div class="status-item-modal" style="display: flex; align-items: center; gap: 0.5rem;">
-                    <i class="ti ti-network" style="color: #0066cc; font-size: 1.25rem;"></i>
-                    <div>
-                        <div
-                            style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">
-                            Network</div>
-                        <div style="font-size: 0.875rem; font-weight: 600; color: #1e293b;">calim360-network</div>
-                    </div>
-                </div>
-                <div class="status-item-modal" style="display: flex; align-items: center; gap: 0.5rem;">
-                    <i class="ti ti-circle-check" style="color: #10b981; font-size: 1.25rem;"></i>
-                    <div>
-                        <div
-                            style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">
-                            Status</div>
-                        <div style="font-size: 0.875rem; font-weight: 600; color: #1e293b;"
-                            id="networkStatusValueModal">Operational</div>
-                    </div>
-                </div>
-                <div class="status-item-modal" style="display: flex; align-items: center; gap: 0.5rem;">
-                    <i class="ti ti-server" style="color: #0066cc; font-size: 1.25rem;"></i>
-                    <div>
-                        <div
-                            style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">
-                            Peers Active</div>
-                        <div style="font-size: 0.875rem; font-weight: 600; color: #1e293b;" id="peersCountModal">3</div>
-                    </div>
-                </div>
-                <div class="status-item-modal" style="display: flex; align-items: center; gap: 0.5rem;">
-                    <i class="ti ti-database" style="color: #8b5cf6; font-size: 1.25rem;"></i>
-                    <div>
-                        <div
-                            style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">
-                            Channel</div>
-                        <div style="font-size: 0.875rem; font-weight: 600; color: #1e293b;">contract-channel</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Activity Stream Header -->
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-                <h4
-                    style="margin: 0; font-size: 1rem; font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 0.5rem;">
-                    <i class="ti ti-timeline"></i>
-                    Activity Timeline
-                </h4>
-                <button onclick="refreshBlockchainActivity()"
-                    style="padding: 0.5rem 1rem; background: white; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #475569;">
-                    <i class="ti ti-refresh"></i>
-                    Refresh
-                </button>
-            </div>
-
-            <!-- Activity Stream -->
-            <div class="activity-stream-modal" id="activityStreamModal"
-                style="min-height: 300px; max-height: 400px; overflow-y: auto; background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
-                <div class="empty-activity-state" id="emptyActivityState"
-                    style="text-align: center; padding: 3rem 1rem; color: #64748b;">
-                    <i class="ti ti-clock-hour-4" style="font-size: 3rem; opacity: 0.3; margin-bottom: 1rem;"></i>
-                    <p style="margin: 0; font-size: 1rem; font-weight: 500;">Waiting for blockchain operations...</p>
-                    <p style="font-size: 0.875rem; margin-top: 0.5rem; opacity: 0.7;">
-                        Save or update the contract to see blockchain activity
-                    </p>
-                </div>
-            </div>
-
-            <!-- Blockchain Statistics -->
-            <div
-                style="margin-top: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
-                <h4
-                    style="margin: 0 0 1rem 0; font-size: 0.875rem; font-weight: 600; color: #1e293b; text-transform: uppercase; letter-spacing: 0.05em;">
-                    Blockchain Statistics
-                </h4>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
-                    <div>
-                        <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.25rem;">Total Transactions
-                        </div>
-                        <div style="font-size: 1.5rem; font-weight: 700; color: #1e293b;" id="totalTransactions">0</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.25rem;">Last Block Hash</div>
-                        <div style="font-size: 0.75rem; font-weight: 600; color: #1e293b; font-family: monospace; overflow: hidden; text-overflow: ellipsis;"
-                            id="lastBlockHash">N/A</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.25rem;">Verification Status
-                        </div>
-                        <div style="font-size: 0.875rem; font-weight: 600; color: #10b981;" id="verificationStatus">
-                            <i class="ti ti-circle-check"></i> Verified
-                        </div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.25rem;">Last Activity</div>
-                        <div style="font-size: 0.75rem; font-weight: 600; color: #1e293b;" id="lastActivityTime">Just
-                            now</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Audit Trail Quick Access -->
-            <div
-                style="margin-top: 1.5rem; padding: 1rem; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-radius: 8px; border: 1px solid #bfdbfe;">
-                <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <div>
-                        <h4 style="margin: 0 0 0.25rem 0; font-size: 0.875rem; font-weight: 600; color: #1e40af;">
-                            <i class="ti ti-file-certificate"></i>
-                            Full Audit Trail Available
-                        </h4>
-                        <p style="margin: 0; font-size: 0.75rem; color: #1e40af; opacity: 0.8;">
-                            View complete blockchain-verified audit logs with timestamps and user actions
-                        </p>
-                    </div>
-                    <button onclick="viewFullAuditTrail()"
-                        style="padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 500; white-space: nowrap;">
-                        View Full Trail
-                    </button>
+        
+        <!-- Activity Stream -->
+        <div style="margin-bottom: 1.5rem;">
+            <h4 style="margin: 0 0 1rem 0; font-size: 1rem; color: #475569;">Activity Timeline</h4>
+            <div id="activityStreamModal">
+                <div class="empty-activity-state">
+                    <i class="ti ti-clock-hour-4" style="font-size: 3rem; color: #cbd5e1;"></i>
+                    <p style="margin: 1rem 0 0 0; color: #64748b;">Waiting for blockchain operations...</p>
                 </div>
             </div>
         </div>
-
-        <!-- Modal Footer -->
-        <div class="modal-footer"
-            style="padding: 1rem 1.5rem; background: #f8fafc; border-top: 1px solid #e2e8f0; border-radius: 0 0 12px 12px; display: flex; justify-content: space-between; align-items: center;">
-            <div style="font-size: 0.75rem; color: #64748b;">
-                <i class="ti ti-info-circle" style="font-size: 0.875rem;"></i>
-                Powered by Hyperledger Fabric & Qatar National Blockchain Framework
+        
+        <!-- Statistics (Optional) -->
+        <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <h4 style="margin: 0 0 1rem 0; font-size: 0.875rem; color: #64748b;">Statistics</h4>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                <div>
+                    <div style="font-size: 0.75rem; color: #64748b;">Total Transactions</div>
+                    <div style="font-size: 1.25rem; font-weight: 600; color: #1e293b;" id="totalTransactions">0</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.75rem; color: #64748b;">Network Status</div>
+                    <div style="font-size: 0.875rem; font-weight: 600; color: #10b981;" id="networkStatusValueModal">Operational</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.75rem; color: #64748b;">Connected Peers</div>
+                    <div style="font-size: 1.25rem; font-weight: 600; color: #1e293b;" id="peersCountModal">3</div>
+                </div>
             </div>
-            <button onclick="closeBlockchainMonitor()"
-                style="padding: 0.5rem 1.5rem; background: #e2e8f0; color: #475569; border: none; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">
+        </div>
+        
+        <!-- Actions -->
+        <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: flex-end;">
+            <button onclick="loadBlockchainHistory()" style="padding: 0.5rem 1rem; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                <i class="ti ti-refresh"></i> Refresh
+            </button>
+            <button onclick="closeBlockchainMonitor()" style="padding: 0.5rem 1rem; background: #64748b; color: white; border: none; border-radius: 6px; cursor: pointer;">
                 Close
             </button>
         </div>
+        
     </div>
+    
 </div>
-
 <!-- MOD-027/028: Contract Workflow Setup Modal -->
 <div class="modal" id="contractWorkflowModal">
     <div class="modal-content modal-lg" style="max-width: 900px;">
@@ -3141,7 +3048,6 @@
     </div>
 </div>
 
-<!-- Add these styles to your <style> section -->
 <style>
     /* Export Modal Hover Effects */
     .export-option-label:hover {
@@ -3723,6 +3629,8 @@
     .btn-outline-secondary:hover {
         background: #f8f9fa;
     }
+
+
 </style>
 
 <!-- MOD-021: Risk Assessment Modal -->
@@ -4298,6 +4206,8 @@
         console.log('Certificate data:', certificate);
         console.log('Certificate workflow:', workflow);
 
+        console.log('trsting');
+
         // Extract signatory data from certificate
         let clientSignatory = { name: '[Name]', signer_type: '[Title]', email: '' };
         let companySignatory = { name: '[Name]', signer_type: '[Title]', email: '' };
@@ -4332,8 +4242,7 @@
             <p><strong>IN WITNESS WHEREOF</strong>, the parties have executed this Agreement.</p>
             <div style="display: flex; justify-content: space-between; margin-top: 3rem;">
                 <div style="flex: 1; margin-right: 2rem;">
-                    <div class="signature-field" id="clientSignature" onclick="openSignature('client')">
-                        <div>
+<div class="signature-field" id="clientSignature" onclick="${(contract.status === 'signature' && contract.is_counterparty) ? "openSignature('client')" : "void(0)"}">                        <div>
                             <i class="ti ti-writing-sign" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
                             <span>Click to Sign (Client)</span>
                         </div>
@@ -4363,9 +4272,9 @@
 
             // Draft stage
             actionButtons = `
-            <button class="btn signature-btn" onclick="saveAsDraft()">
-                <i class="ti ti-device-floppy"></i> Save Draft
-            </button>
+            <button id="saveDraftBtn" class="btn signature-btn" onclick="saveAsDraft()">
+    <i class="ti ti-device-floppy"></i> Save Draft
+</button>
           <button class="btn btn-primary" onclick="submitForReview('${workflow ? workflow.status : 'nothing'}')">
     <i class="ti ti-send"></i> Submit for Internal Review
 </button>`
@@ -4919,73 +4828,96 @@ ${contract.content && contract.content.trim() !== '' ?
     // =====================================================
 
     // Save Draft
-    async function saveAsDraft() {
-        try {
-            console.log('💾 Saving draft...');
+   async function saveAsDraft() {
+    // ✅ GET BUTTON AND SHOW LOADING
+    const saveBtn = document.getElementById('saveDraftBtn');
+    const originalContent = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="ti ti-loader" style="animation: spin 1s linear infinite;"></i> Saving...';
 
-            // ✅ FIX: Get content directly from the editor element
-            const editor = document.getElementById('contractContent');
-
-            if (!editor) {
-                console.error('❌ Contract editor not found!');
-                showNotification('Contract editor not found', 'error');
-                return;
-            }
-
-            // Get the content (innerHTML for contenteditable div, or value for textarea)
-            const contractContent = editor.innerHTML || editor.value || '';
-
-            if (!contractContent || contractContent.trim() === '') {
-                console.warn('⚠️ Contract content is empty!');
-                showNotification('Cannot save empty contract', 'warning');
-                return;
-            }
-
-            console.log('📝 Content length:', contractContent.length, 'characters');
-
-            // Prepare data to save
-            const data = {
-                content: contractContent
-            };
-
-            // Save draft
-            const response = await fetch(`/api/contracts/save-draft/${contractId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`
-                },
-                credentials: 'include',
-                body: JSON.stringify(data)
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            const result = await response.json();
-            console.log('✅ Save response:', result);
-
-            if (result.success) {
-                // Display blockchain activities if available
-                if (result.blockchain_activities && result.blockchain_activities.length > 0) {
-                    console.log('🔗 Blockchain activities received:', result.blockchain_activities.length);
-                    if (typeof displayBlockchainActivities === 'function') {
-                        displayBlockchainActivities(result.blockchain_activities);
-                    }
-                }
-
-                showNotification('Draft saved successfully', 'success');
-            } else {
-                throw new Error(result.message || 'Save failed');
-            }
-
-        } catch (error) {
-            console.error('❌ Error saving draft:', error);
-            showNotification('Error saving draft: ' + error.message, 'error');
+    try {
+        console.log('💾 Saving draft...');
+        
+        // ✅ FIX: Get content directly from the editor element
+        const editor = document.getElementById('contractContent');
+        if (!editor) {
+            console.error('❌ Contract editor not found!');
+            saveBtn.innerHTML = originalContent;
+            saveBtn.disabled = false;
+            showNotification('Contract editor not found', 'error');
+            return;
         }
-    }
 
+        // Get the content (innerHTML for contenteditable div, or value for textarea)
+        const contractContent = editor.innerHTML || editor.value || '';
+        
+        if (!contractContent || contractContent.trim() === '') {
+            console.warn('⚠️ Contract content is empty!');
+            saveBtn.innerHTML = originalContent;
+            saveBtn.disabled = false;
+            showNotification('Cannot save empty contract', 'warning');
+            return;
+        }
+
+        console.log('📝 Content length:', contractContent.length, 'characters');
+
+        // Prepare data to save
+        const data = {
+            content: contractContent
+        };
+
+        // Save draft
+        const response = await fetch(`/api/contracts/save-draft/${contractId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`
+            },
+            credentials: 'include',
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        console.log('✅ Save response:', result);
+
+        if (result.success) {
+            // ✅ SHOW SUCCESS STATE
+            saveBtn.innerHTML = '<i class="ti ti-check"></i> Saved!';
+            
+            // Display blockchain activities if available
+            if (result.blockchain_activities && result.blockchain_activities.length > 0) {
+                console.log('🔗 Blockchain activities received:', result.blockchain_activities.length);
+                if (typeof displayBlockchainActivities === 'function') {
+                    displayBlockchainActivities(result.blockchain_activities);
+                }
+            }
+
+            showNotification('Draft saved successfully', 'success');
+            
+            // ✅ RESTORE BUTTON AFTER 2 SECONDS
+            setTimeout(() => {
+                saveBtn.innerHTML = originalContent;
+                saveBtn.disabled = false;
+            }, 2000);
+
+        } else {
+            throw new Error(result.message || 'Save failed');
+        }
+
+    } catch (error) {
+        console.error('❌ Error saving draft:', error);
+        
+        // ✅ RESTORE BUTTON IMMEDIATELY ON ERROR
+        saveBtn.innerHTML = originalContent;
+        saveBtn.disabled = false;
+        
+        showNotification('Error saving draft: ' + error.message, 'error');
+    }
+}
 
     // Submit for Review - CONNECTED TO BACKEND
     async function submitForReview(workflow_status) {
@@ -9939,12 +9871,411 @@ Generated by CALIM 360 Smart CLM
 
 
 <script>
+
+
+
     // =====================================================
     // BLOCKCHAIN EVIDENCE SHOWCASE JAVASCRIPT
     // =====================================================
 
     // Activity tracking
     let activityLog = [];
+
+
+        // Format timestamp
+   function formatTimestamp(timestamp) {
+    if (!timestamp) return 'Just now';
+    
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+}
+
+
+
+    // Open Blockchain Operations Monitor Modal
+ function openBlockchainMonitor() {
+    console.log('🔍 Opening blockchain monitor...');
+    
+    const modal = document.getElementById('blockchainMonitorModal');
+    if (!modal) {
+        console.error('❌ Blockchain monitor modal not found');
+        showNotification('Blockchain monitor not available', 'error');
+        return;
+    }
+    
+    // Show modal
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+    
+    // Load blockchain history
+    loadBlockchainHistory();
+    
+    // Start auto-refresh
+    startBlockchainMonitoring();
+}
+
+    // Close Blockchain Operations Monitor Modal
+   function closeBlockchainMonitor() {
+    const modal = document.getElementById('blockchainMonitorModal');
+    if (modal) {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+        
+        // Stop monitoring when modal closes
+        stopBlockchainMonitoring();
+    }
+}
+
+    // Start monitoring (auto-refresh)
+   function startBlockchainMonitoring() {
+    if (blockchainMonitorInterval) {
+        clearInterval(blockchainMonitorInterval);
+    }
+    
+    // Initial load
+    loadBlockchainHistory();
+    
+    // Auto-refresh every 15 seconds
+    blockchainMonitorInterval = setInterval(() => {
+        loadBlockchainHistory();
+    }, 15000);
+    
+    console.log('✅ Blockchain monitoring started (15s interval)');
+}
+
+    // Stop monitoring
+    function stopBlockchainMonitoring() {
+        if (blockchainMonitorInterval) {
+            clearInterval(blockchainMonitorInterval);
+            blockchainMonitorInterval = null;
+        }
+    }
+
+    // Load blockchain activity from API
+    async function loadBlockchainActivity() {
+        try {
+
+            // Get auth token
+            const token = getAuthToken();
+
+            // Fetch blockchain activity
+            const response = await fetch(`/api/blockchain/activity/${contractId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch blockchain activity');
+            }
+
+            const data = await response.json();
+
+            // Update network status
+            if (data.network_status) {
+                updateNetworkStatus(data.network_status);
+            }
+
+            // Update activity stream
+            if (data.activities && data.activities.length > 0) {
+                displayActivities(data.activities);
+                updateStatistics(data.statistics);
+            } else {
+                // Show empty state
+                showEmptyActivityState();
+            }
+
+        } catch (error) {
+            console.error('Error loading blockchain activity:', error);
+            showErrorState();
+        }
+    }
+
+    // Update network status display
+    function updateNetworkStatus(status) {
+        const statusValue = document.getElementById('networkStatusValueModal');
+        const peersCount = document.getElementById('peersCountModal');
+
+        if (statusValue) {
+            statusValue.textContent = status.status || 'Operational';
+            statusValue.style.color = status.status === 'Operational' ? '#10b981' : '#ef4444';
+        }
+
+        if (peersCount) {
+            peersCount.textContent = status.peers_count || '3';
+        }
+    }
+
+    // Display blockchain activities
+    function displayActivities(activities) {
+        const streamContainer = document.getElementById('activityStreamModal');
+        const emptyState = document.getElementById('emptyActivityState');
+
+        if (emptyState) {
+            emptyState.style.display = 'none';
+        }
+
+        if (!streamContainer) return;
+
+        // Clear existing activities (except empty state)
+        const existingActivities = streamContainer.querySelectorAll('.activity-item');
+        existingActivities.forEach(item => item.remove());
+
+        // Add new activities
+        activities.forEach(activity => {
+            const activityElement = createActivityElement(activity);
+            streamContainer.insertBefore(activityElement, streamContainer.firstChild);
+        });
+    }
+
+    // Create activity element
+    function createActivityElement(activity) {
+        const div = document.createElement('div');
+        div.className = 'activity-item';
+
+        const icon = getActivityIcon(activity.action);
+        const timestamp = formatTimestamp(activity.timestamp);
+
+        div.innerHTML = `
+        <div class="activity-item-header">
+            <div class="activity-item-type">
+                <i class="ti ${icon}" style="font-size: 1.25rem; color: #3b82f6;"></i>
+                <span>${getActivityTitle(activity.action)}</span>
+            </div>
+            <div class="activity-item-time">${timestamp}</div>
+        </div>
+        <div class="activity-item-details">
+            ${activity.details?.details || 'Blockchain operation completed successfully'}
+        </div>
+        ${activity.details?.transaction_hash ? `
+            <div class="activity-item-hash">
+                TX: ${activity.details.transaction_hash.substring(0, 20)}...
+            </div>
+        ` : ''}
+    `;
+
+        return div;
+    }
+
+    // Get activity icon based on action type
+   function getActivityIcon(action) {
+    const icons = {
+        'blockchain_storage': 'ti ti-database-export',
+        'blockchain_verification': 'ti ti-shield-check',
+        'contract_created': 'ti ti-file-plus',
+        'contract_updated': 'ti ti-edit',
+        'contract_signed': 'ti ti-signature',
+        'document_uploaded': 'ti ti-cloud-upload'
+    };
+    return icons[action] || 'ti ti-activity';
+}
+    // Get activity title
+    function getActivityTitle(action) {
+    const titles = {
+        'blockchain_storage': 'Contract Stored on Blockchain',
+        'blockchain_verification': 'Blockchain Verification',
+        'contract_created': 'Contract Created',
+        'contract_updated': 'Contract Updated',
+        'contract_signed': 'Contract Signed',
+        'document_uploaded': 'Document Uploaded'
+    };
+    return titles[action] || action.split('_').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+}
+
+
+
+async function loadBlockchainHistory() {
+    console.log('🔄 Loading complete blockchain history...');
+
+    const contractId = getContractId();
+    if (!contractId) {
+        console.error('❌ No contract ID found');
+        showEmptyActivityState();
+        return;
+    }
+
+    try {
+        // Show loading state
+        showLoadingState();
+
+        // Fetch complete history from API
+        const token = getAuthToken();
+        const response = await fetch(`/api/blockchain/activity/${contractId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ Blockchain history loaded:', data);
+
+        // Update network status
+        if (data.network_status) {
+            updateNetworkStatus(data.network_status);
+        }
+
+        // Display activities
+        if (data.activities && data.activities.length > 0) {
+            displayBlockchainActivities(data.activities);
+            
+            // Update statistics
+            if (data.statistics) {
+                updateStatistics(data.statistics);
+            }
+        } else {
+            showEmptyActivityState();
+        }
+
+    } catch (error) {
+        console.error('❌ Error loading blockchain history:', error);
+        showErrorState();
+    }
+}
+
+
+
+
+function showLoadingState() {
+    const stream = document.getElementById('activityStreamModal');
+    const emptyState = document.getElementById('emptyActivityState');
+    
+    if (emptyState) {
+        emptyState.style.display = 'none';
+    }
+    
+    if (stream) {
+        stream.innerHTML = `
+            <div style="text-align: center; padding: 3rem 1rem; color: #3b82f6;">
+                <div class="progress-spinner" style="width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+                <p style="margin: 0; font-size: 1rem; font-weight: 500;">Loading blockchain history...</p>
+            </div>
+        `;
+    }
+}
+
+
+
+    // Update statistics
+   function updateStatistics(stats) {
+    if (!stats) return;
+
+    const totalTx = document.getElementById('totalTransactions');
+    const lastHash = document.getElementById('lastBlockHash');
+    const lastActivity = document.getElementById('lastActivityTime');
+
+    if (totalTx) totalTx.textContent = stats.total_transactions || '0';
+    if (lastHash) {
+        const hash = stats.last_block_hash;
+        lastHash.textContent = hash ? `${hash.substring(0, 16)}...` : 'N/A';
+    }
+    if (lastActivity) lastActivity.textContent = stats.last_activity_time || 'Just now';
+}
+
+    // Show empty activity state
+   function showEmptyActivityState() {
+    const emptyState = document.getElementById('emptyActivityState');
+    if (emptyState) {
+        emptyState.style.display = 'block';
+    }
+    
+    // Clear any existing activities
+    const stream = document.getElementById('activityStreamModal');
+    if (stream) {
+        const existingActivities = stream.querySelectorAll('.activity-item');
+        existingActivities.forEach(item => item.remove());
+    }
+}
+
+
+    // Show error state
+   function showErrorState() {
+    const stream = document.getElementById('activityStreamModal');
+    const emptyState = document.getElementById('emptyActivityState');
+    
+    if (emptyState) {
+        emptyState.style.display = 'none';
+    }
+    
+    if (stream) {
+        stream.innerHTML = `
+            <div style="text-align: center; padding: 3rem 1rem; color: #ef4444;">
+                <i class="ti ti-alert-circle" style="font-size: 3rem; opacity: 0.3; margin-bottom: 1rem;"></i>
+                <p style="margin: 0; font-size: 1rem; font-weight: 500;">Failed to load blockchain activity</p>
+                <p style="font-size: 0.875rem; margin-top: 0.5rem; opacity: 0.7;">
+                    Please try refreshing or contact support
+                </p>
+                <button onclick="loadBlockchainHistory()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                    Retry
+                </button>
+            </div>
+        `;
+    }
+}
+
+    // Refresh blockchain activity manually
+    function refreshBlockchainActivity() {
+        loadBlockchainActivity();
+    }
+
+    // View full audit trail
+    function viewFullAuditTrail() {
+        // Redirect to audit trail page or open in new tab
+        window.open('/audit-trail', '_blank');
+    }
+
+    // Get contract ID from URL or form
+    
+    function getContractId() {
+    // Try URL parameter first
+    const urlParams = new URLSearchParams(window.location.search);
+    let contractId = urlParams.get('id') || urlParams.get('contract_id');
+
+    // Try form input
+    if (!contractId) {
+        const contractIdInput = document.querySelector('[name="contract_id"]') || 
+                               document.querySelector('#contract_id');
+        contractId = contractIdInput ? contractIdInput.value : null;
+    }
+
+    return contractId;
+}
+
+    // Close modal when clicking outside
+    window.addEventListener('click', function (event) {
+        const modal = document.getElementById('blockchainMonitorModal');
+        if (event.target === modal) {
+            closeBlockchainMonitor();
+        }
+    });
+
+    // Close modal on ESC key
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            closeBlockchainMonitor();
+        }
+    });
+
+
+
 
     // Toggle panel collapse
     function toggleEvidencePanel() {
@@ -9971,10 +10302,19 @@ Generated by CALIM 360 Smart CLM
     }
 
     // Update network status display
-    function updateNetworkStatus(status) {
-        document.getElementById('networkStatusValue').textContent = status.status || 'Operational';
-        document.getElementById('peersCount').textContent = status.peers_count || 3;
+   function updateNetworkStatus(status) {
+    const statusValue = document.getElementById('networkStatusValueModal');
+    const peersCount = document.getElementById('peersCountModal');
+
+    if (statusValue) {
+        statusValue.textContent = status.status || 'Operational';
+        statusValue.style.color = status.status === 'Operational' ? '#10b981' : '#ef4444';
     }
+
+    if (peersCount) {
+        peersCount.textContent = status.peers_count || '3';
+    }
+}
 
     // Add activity to stream
     function addBlockchainActivity(activity) {
@@ -10109,19 +10449,19 @@ Generated by CALIM 360 Smart CLM
     }
 
     // Get icon for activity step
-    function getBlockchainIcon(step) {
-        const icons = {
-            'data_extraction': 'ti ti-file-search',
-            'hash_generation': 'ti ti-hash',
-            'transaction_preparation': 'ti ti-file-code',
-            'blockchain_submission': 'ti ti-cloud-upload',
-            'database_storage': 'ti ti-database',
-            'audit_logging': 'ti ti-history',
-            'completion': 'ti ti-circle-check',
-            'error': 'ti ti-alert-triangle'
-        };
-        return icons[step] || 'ti ti-point';
-    }
+   function getBlockchainIcon(step) {
+    const icons = {
+        'data_extraction': 'ti ti-file-search',
+        'hash_generation': 'ti ti-hash',
+        'transaction_preparation': 'ti ti-file-code',
+        'blockchain_submission': 'ti ti-cloud-upload',
+        'database_storage': 'ti ti-database',
+        'audit_logging': 'ti ti-history',
+        'completion': 'ti ti-circle-check',
+        'error': 'ti ti-alert-triangle'
+    };
+    return icons[step] || 'ti ti-point';
+}
 
     // Format step name for display
     function formatStepName(step) {
@@ -10168,25 +10508,120 @@ Generated by CALIM 360 Smart CLM
     /**
      * Display blockchain activities in the panel
      */
-    function displayBlockchainActivities(activities) {
-        console.log('📊 Displaying blockchain activities:', activities.length, 'items');
 
-        const stream = document.getElementById('activityStream');
-        if (!stream) {
-            console.error('❌ Activity stream element not found');
-            return;
-        }
+     let blockchainMonitorInterval = null;
+function displayBlockchainActivities(activities) {
+    console.log('📊 Displaying blockchain activities:', activities.length, 'items');
 
-        // Clear empty state
-        stream.innerHTML = '';
-
-        // Display each activity with staggered animation
-        activities.forEach((activity, index) => {
-            setTimeout(() => {
-                addBlockchainActivity(activity);
-            }, index * 300);
-        });
+    // ✅ FIX: Use correct element ID
+    const stream = document.getElementById('activityStreamModal');
+    if (!stream) {
+        console.error('❌ Activity stream element not found');
+        return;
     }
+
+    // Hide empty state
+    const emptyState = document.getElementById('emptyActivityState');
+    if (emptyState) {
+        emptyState.style.display = 'none';
+    }
+
+    // Clear existing activity items (but keep empty state)
+    const existingActivities = stream.querySelectorAll('.activity-item');
+    existingActivities.forEach(item => item.remove());
+
+    // Display each activity with animation
+    activities.forEach((activity, index) => {
+        setTimeout(() => {
+            addBlockchainActivityToStream(activity);
+        }, index * 100); // Reduced delay for faster display
+    });
+
+    console.log('✅ Successfully displayed', activities.length, 'blockchain activities');
+}
+
+
+
+function addBlockchainActivityToStream(activity) {
+    const stream = document.getElementById('activityStreamModal');
+    if (!stream) return;
+
+    console.log('➕ Adding activity to stream:', activity);
+
+    const item = document.createElement('div');
+    item.className = 'activity-item';
+
+    // Determine icon and title based on activity type
+    let icon, title, details;
+    
+    if (activity.step) {
+        // New format from save operation
+        icon = getBlockchainIcon(activity.step);
+        title = formatStepName(activity.step);
+        details = activity.details || 'Blockchain operation completed';
+    } else if (activity.action) {
+        // Format from API history
+        icon = getActivityIcon(activity.action);
+        title = getActivityTitle(activity.action);
+        details = activity.details?.details || activity.details || 'Blockchain operation completed';
+    } else {
+        // Fallback
+        icon = 'ti ti-point';
+        title = 'Blockchain Operation';
+        details = 'Operation completed successfully';
+    }
+
+    const timestamp = formatTimestamp(activity.timestamp);
+
+    // Build metadata display
+    let metadataHtml = '';
+    const metadata = activity.metadata || activity.details;
+    if (metadata && typeof metadata === 'object' && Object.keys(metadata).length > 0) {
+        metadataHtml = '<div class="stream-metadata">';
+        for (const [key, value] of Object.entries(metadata)) {
+            if (key !== 'full_hash' && key !== 'data_size' && value && key !== 'details') {
+                metadataHtml += `
+                    <span class="metadata-tag">
+                        <i class="ti ti-point"></i> 
+                        <strong>${key}:</strong> ${value}
+                    </span>
+                `;
+            }
+        }
+        metadataHtml += '</div>';
+    }
+
+    // Add transaction hash display if available
+    let hashHtml = '';
+    const txHash = activity.details?.transaction_hash || metadata?.transaction_hash || metadata?.transaction_id;
+    if (txHash) {
+        hashHtml = `
+            <div class="activity-item-hash">
+                TX: ${txHash.substring(0, 20)}...
+            </div>
+        `;
+    }
+
+    item.innerHTML = `
+        <div class="activity-item-header">
+            <div class="activity-item-type">
+                <i class="ti ${icon}" style="font-size: 1.25rem; color: #3b82f6;"></i>
+                <span>${title}</span>
+            </div>
+            <div class="activity-item-time">${timestamp}</div>
+        </div>
+        <div class="activity-item-details">
+            ${details}
+        </div>
+        ${hashHtml}
+        ${metadataHtml}
+    `;
+
+    // Insert at top of stream (newest first)
+    stream.insertBefore(item, stream.firstChild);
+}
+
+
 
     /**
      * Add a single activity to the stream
@@ -10300,7 +10735,7 @@ Generated by CALIM 360 Smart CLM
         ];
 
         console.log('🧪 Testing with mock data...');
-        displayBlockchainActivities(mockActivities);
+        // displayBlockchainActivities(mockActivities);
     }
 
     // =====================================================
@@ -10607,278 +11042,6 @@ Generated by CALIM 360 Smart CLM
 
 
 <script>
-    // Open Blockchain Operations Monitor Modal
-    function openBlockchainMonitor() {
-        const modal = document.getElementById('blockchainMonitorModal');
-        if (modal) {
-            modal.classList.add('show');
-            // Load blockchain activity when modal opens
-            loadBlockchainActivity();
-            // Auto-refresh every 10 seconds
-            startBlockchainMonitoring();
-        }
-    }
-
-    // Close Blockchain Operations Monitor Modal
-    function closeBlockchainMonitor() {
-        const modal = document.getElementById('blockchainMonitorModal');
-        if (modal) {
-            modal.classList.remove('show');
-            // Stop auto-refresh
-            stopBlockchainMonitoring();
-        }
-    }
-
-    // Auto-refresh interval ID
-    let blockchainMonitorInterval = null;
-
-    // Start monitoring (auto-refresh)
-    function startBlockchainMonitoring() {
-        if (blockchainMonitorInterval) {
-            clearInterval(blockchainMonitorInterval);
-        }
-        // Refresh every 10 seconds
-        blockchainMonitorInterval = setInterval(() => {
-            loadBlockchainActivity();
-        }, 10000);
-    }
-
-    // Stop monitoring
-    function stopBlockchainMonitoring() {
-        if (blockchainMonitorInterval) {
-            clearInterval(blockchainMonitorInterval);
-            blockchainMonitorInterval = null;
-        }
-    }
-
-    // Load blockchain activity from API
-    async function loadBlockchainActivity() {
-        try {
-
-            // Get auth token
-            const token = getAuthToken();
-
-            // Fetch blockchain activity
-            const response = await fetch(`/api/blockchain/activity/${contractId}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch blockchain activity');
-            }
-
-            const data = await response.json();
-
-            // Update network status
-            if (data.network_status) {
-                updateNetworkStatus(data.network_status);
-            }
-
-            // Update activity stream
-            if (data.activities && data.activities.length > 0) {
-                displayActivities(data.activities);
-                updateStatistics(data.statistics);
-            } else {
-                // Show empty state
-                showEmptyActivityState();
-            }
-
-        } catch (error) {
-            console.error('Error loading blockchain activity:', error);
-            showErrorState();
-        }
-    }
-
-    // Update network status display
-    function updateNetworkStatus(status) {
-        const statusValue = document.getElementById('networkStatusValueModal');
-        const peersCount = document.getElementById('peersCountModal');
-
-        if (statusValue) {
-            statusValue.textContent = status.status || 'Operational';
-            statusValue.style.color = status.status === 'Operational' ? '#10b981' : '#ef4444';
-        }
-
-        if (peersCount) {
-            peersCount.textContent = status.peers_count || '3';
-        }
-    }
-
-    // Display blockchain activities
-    function displayActivities(activities) {
-        const streamContainer = document.getElementById('activityStreamModal');
-        const emptyState = document.getElementById('emptyActivityState');
-
-        if (emptyState) {
-            emptyState.style.display = 'none';
-        }
-
-        if (!streamContainer) return;
-
-        // Clear existing activities (except empty state)
-        const existingActivities = streamContainer.querySelectorAll('.activity-item');
-        existingActivities.forEach(item => item.remove());
-
-        // Add new activities
-        activities.forEach(activity => {
-            const activityElement = createActivityElement(activity);
-            streamContainer.insertBefore(activityElement, streamContainer.firstChild);
-        });
-    }
-
-    // Create activity element
-    function createActivityElement(activity) {
-        const div = document.createElement('div');
-        div.className = 'activity-item';
-
-        const icon = getActivityIcon(activity.action);
-        const timestamp = formatTimestamp(activity.timestamp);
-
-        div.innerHTML = `
-        <div class="activity-item-header">
-            <div class="activity-item-type">
-                <i class="ti ${icon}" style="font-size: 1.25rem; color: #3b82f6;"></i>
-                <span>${getActivityTitle(activity.action)}</span>
-            </div>
-            <div class="activity-item-time">${timestamp}</div>
-        </div>
-        <div class="activity-item-details">
-            ${activity.details?.details || 'Blockchain operation completed successfully'}
-        </div>
-        ${activity.details?.transaction_hash ? `
-            <div class="activity-item-hash">
-                TX: ${activity.details.transaction_hash.substring(0, 20)}...
-            </div>
-        ` : ''}
-    `;
-
-        return div;
-    }
-
-    // Get activity icon based on action type
-    function getActivityIcon(action) {
-        const icons = {
-            'blockchain_storage': 'ti-database-export',
-            'blockchain_verification': 'ti-shield-check',
-            'contract_created': 'ti-file-plus',
-            'contract_updated': 'ti-edit',
-            'contract_signed': 'ti-writing-sign',
-            'default': 'ti-activity'
-        };
-        return icons[action] || icons.default;
-    }
-
-    // Get activity title
-    function getActivityTitle(action) {
-        const titles = {
-            'blockchain_storage': 'Contract Stored on Blockchain',
-            'blockchain_verification': 'Blockchain Verification',
-            'contract_created': 'Contract Created',
-            'contract_updated': 'Contract Updated',
-            'contract_signed': 'Contract Signed',
-            'default': 'Blockchain Activity'
-        };
-        return titles[action] || titles.default;
-    }
-
-    // Format timestamp
-    function formatTimestamp(timestamp) {
-        if (!timestamp) return 'Just now';
-
-        const date = new Date(timestamp);
-        const now = new Date();
-        const diffMs = now - date;
-        const diffMins = Math.floor(diffMs / 60000);
-
-        if (diffMins < 1) return 'Just now';
-        if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
-
-        const diffHours = Math.floor(diffMins / 60);
-        if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-
-        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-    }
-
-    // Update statistics
-    function updateStatistics(stats) {
-        if (!stats) return;
-
-        const totalTx = document.getElementById('totalTransactions');
-        const lastHash = document.getElementById('lastBlockHash');
-        const lastActivity = document.getElementById('lastActivityTime');
-
-        if (totalTx) totalTx.textContent = stats.total_transactions || '0';
-        if (lastHash) lastHash.textContent = stats.last_block_hash ? `${stats.last_block_hash.substring(0, 16)}...` : 'N/A';
-        if (lastActivity) lastActivity.textContent = stats.last_activity_time || 'Just now';
-    }
-
-    // Show empty activity state
-    function showEmptyActivityState() {
-        const emptyState = document.getElementById('emptyActivityState');
-        if (emptyState) {
-            emptyState.style.display = 'block';
-        }
-    }
-
-    // Show error state
-    function showErrorState() {
-        const streamContainer = document.getElementById('activityStreamModal');
-        if (!streamContainer) return;
-
-        streamContainer.innerHTML = `
-        <div style="text-align: center; padding: 3rem 1rem; color: #ef4444;">
-            <i class="ti ti-alert-circle" style="font-size: 3rem; opacity: 0.3; margin-bottom: 1rem;"></i>
-            <p style="margin: 0; font-size: 1rem; font-weight: 500;">Failed to load blockchain activity</p>
-            <p style="font-size: 0.875rem; margin-top: 0.5rem; opacity: 0.7;">
-                Please try refreshing or contact support
-            </p>
-        </div>
-    `;
-    }
-
-    // Refresh blockchain activity manually
-    function refreshBlockchainActivity() {
-        loadBlockchainActivity();
-    }
-
-    // View full audit trail
-    function viewFullAuditTrail() {
-        // Redirect to audit trail page or open in new tab
-        window.open('/audit-trail', '_blank');
-    }
-
-    // Get contract ID from URL or form
-    function getContractId() {
-        // Try to get from URL parameter
-        const urlParams = new URLSearchParams(window.location.search);
-        let contractId = urlParams.get('contract_id');
-
-        // If not in URL, try to get from form
-        if (!contractId) {
-            const contractIdInput = document.querySelector('[name="contract_id"]');
-            contractId = contractIdInput ? contractIdInput.value : null;
-        }
-
-        return contractId;
-    }
-
-    // Close modal when clicking outside
-    window.addEventListener('click', function (event) {
-        const modal = document.getElementById('blockchainMonitorModal');
-        if (event.target === modal) {
-            closeBlockchainMonitor();
-        }
-    });
-
-    // Close modal on ESC key
-    document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape') {
-            closeBlockchainMonitor();
-        }
-    });
-
 
     function getApprovalBadge(current_approver, workflow, step_type) {
         console.log(current_approver);
