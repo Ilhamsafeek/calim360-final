@@ -18,10 +18,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/blockchain-operations.css') }}">
 
     <!-- Modal Center CSS -->
     <link rel="stylesheet" href="/app/static/css/modal-center.css">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="{{ url_for('static', path='js/blockchain-operations.js') }}"></script>
+
     <!-- Base Styles -->
     <style>
         /* CSS Variables */
@@ -1563,7 +1566,7 @@
                             <span class="nav-text">Dashboard</span>
                         </a>
                     </div>
-                     {% if 'clm' in subscriptions %}
+                    {% if 'clm' in subscriptions %}
                     <div class="nav-item">
                         <a href="#" class="nav-link nav-dropdown-toggle"
                             onclick="toggleNavDropdown(event, 'contractsDropdown')">
@@ -1586,7 +1589,7 @@
                             </a>
                         </div>
                     </div>
-                     {% endif %}
+                    {% endif %}
                     {% if 'correspondence' in subscriptions %}
                     <div class="nav-item">
                         <a href="/correspondence" class="nav-link">
@@ -1594,7 +1597,7 @@
                             <span class="nav-text">Correspondence</span>
                         </a>
                     </div>
-                     {% endif %}
+                    {% endif %}
 
                     <div class="nav-item">
                         <a href="/projects" class="nav-link">
@@ -1610,18 +1613,18 @@
                     </div>
                 </div>
 
-                 {% if 'expert' in subscriptions %}
+                {% if 'expert' in subscriptions %}
                 <!-- Expert & Support -->
                 <div class="nav-section">
                     <div class="nav-section-title">Expert Support</div>
-                   
+
                     <div class="nav-item">
                         <a href="/ask-expert" class="nav-link">
                             <i class="ti ti-user-question nav-icon"></i>
                             <span class="nav-text">Ask an Expert</span>
                         </a>
                     </div>
-                   
+
 
                     <div class="nav-item">
                         <a href="/expert-directory" class="nav-link">
@@ -1636,7 +1639,7 @@
                         </a>
                     </div>
                 </div>
-                 {% endif %}
+                {% endif %}
 
                 <!-- Add this in the sidebar navigation, under Settings section -->
                 <div class="nav-section">

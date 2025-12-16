@@ -21,10 +21,18 @@ from sqlalchemy import text
 from datetime import datetime
 import json
 
+import subprocess
+import uuid
+
+
+
+from app.api.api_v1.blockchain.terminal import router as terminal_router
+
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+router.include_router(terminal_router, prefix="/terminal")
 
 # =====================================================
 # REQUEST SCHEMAS

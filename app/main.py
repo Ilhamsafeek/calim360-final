@@ -210,6 +210,8 @@ except ImportError as e:
     logger.warning(f"⚠️ Negotiation router not found: {e}")
 
 
+from app.api.api_v1.blockchain.terminal import router as terminal_router
+
 # =====================================================
 # CREATE REQUIRED DIRECTORIES
 # =====================================================
@@ -353,6 +355,9 @@ app.include_router(
     prefix="/api/v1/workflow",
     tags=["workflow"]
 )
+
+
+app.include_router(terminal_router, prefix="/terminal")
 
 if negotiation_router:
     app.include_router(

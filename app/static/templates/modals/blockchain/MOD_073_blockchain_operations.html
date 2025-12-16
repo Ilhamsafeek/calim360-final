@@ -1,0 +1,299 @@
+<!-- =====================================================
+     BLOCKCHAIN OPERATIONS MONITOR MODAL
+     File: app/static/templates/modals/blockchain/MOD_073_blockchain_operations.html
+     ===================================================== -->
+
+<!-- Blockchain Operations Monitor Modal -->
+<div id="blockchainOperationsModal" class="blockchain-ops-modal" style="display: none;">
+    <div class="blockchain-ops-modal-backdrop" onclick="closeBlockchainOperations()"></div>
+    <div class="blockchain-ops-modal-content">
+        <!-- Modal Header -->
+        <div class="blockchain-ops-header">
+            <div class="blockchain-ops-title">
+                <i class="ti ti-cube-3d-sphere"></i>
+                <h3>Blockchain Operations Monitor</h3>
+                <span class="blockchain-ops-badge">
+                    <span class="status-dot"></span>
+                    Live
+                </span>
+            </div>
+            <div class="blockchain-ops-actions">
+                <button class="btn-icon" onclick="refreshAllTerminals()" title="Refresh All">
+                    <i class="ti ti-refresh"></i>
+                </button>
+                <button class="btn-icon" onclick="clearAllTerminals()" title="Clear All">
+                    <i class="ti ti-eraser"></i>
+                </button>
+                <button class="btn-icon btn-close" onclick="closeBlockchainOperations()">
+                    <i class="ti ti-x"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Network Status Bar -->
+        <div class="blockchain-network-status">
+            <div class="network-status-item">
+                <i class="ti ti-server"></i>
+                <span>Network:</span>
+                <strong id="networkStatusText">Hyperledger Fabric</strong>
+            </div>
+            <div class="network-status-item">
+                <i class="ti ti-activity"></i>
+                <span>Status:</span>
+                <strong id="networkHealthStatus" class="status-online">Operational</strong>
+            </div>
+            <div class="network-status-item">
+                <i class="ti ti-users"></i>
+                <span>Connected Peers:</span>
+                <strong id="connectedPeersCount">4</strong>
+            </div>
+            <div class="network-status-item">
+                <i class="ti ti-clock"></i>
+                <span>Last Block:</span>
+                <strong id="lastBlockTime">2 sec ago</strong>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="blockchain-ops-tabs">
+            <button class="blockchain-ops-tab active" data-tab="docker-containers" onclick="switchTab('docker-containers')">
+                <i class="ti ti-box"></i>
+                <span>Docker Containers</span>
+            </button>
+            <button class="blockchain-ops-tab" data-tab="query-blockchain" onclick="switchTab('query-blockchain')">
+                <i class="ti ti-database-search"></i>
+                <span>Query Blockchain</span>
+            </button>
+            <button class="blockchain-ops-tab" data-tab="verify-hash" onclick="switchTab('verify-hash')">
+                <i class="ti ti-fingerprint"></i>
+                <span>Verify Transaction</span>
+            </button>
+            <button class="blockchain-ops-tab" data-tab="blockchain-logs" onclick="switchTab('blockchain-logs')">
+                <i class="ti ti-file-text"></i>
+                <span>Blockchain Logs</span>
+            </button>
+        </div>
+
+        <!-- Tab Content Panels -->
+        <div class="blockchain-ops-content">
+            
+            <!-- Tab 1: Docker Containers -->
+            <div id="tab-docker-containers" class="blockchain-ops-panel active">
+                <div class="panel-header">
+                    <div class="panel-info">
+                        <h4><i class="ti ti-box"></i> Method 1: Check Docker Containers</h4>
+                        <p>View running Hyperledger Fabric containers to verify the blockchain network is operational.</p>
+                    </div>
+                    <button class="btn-run" onclick="runDockerCommand()">
+                        <i class="ti ti-player-play"></i>
+                        Run Command
+                    </button>
+                </div>
+                <div class="command-preview">
+                    {% raw %}<code><span class="cmd-prompt">$</span> docker ps --filter "name=calim" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"</code>{% endraw %}
+                </div>
+                <div class="terminal-container" id="terminal-docker">
+                    <div class="terminal-header">
+                        <div class="terminal-dots">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                        </div>
+                        <span class="terminal-title">blockchain-terminal@calim360:~</span>
+                    </div>
+                    <div class="terminal-body" id="terminal-docker-output">
+                        <div class="terminal-welcome">
+                            <span class="terminal-line">Welcome to CALIM 360 Blockchain Terminal</span>
+                            <span class="terminal-line dim">Type 'help' for available commands or click 'Run Command' to execute</span>
+                            <span class="terminal-line dim">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="expected-output">
+                    <h5><i class="ti ti-info-circle"></i> Expected Output:</h5>
+                    <ul>
+                        <li><code>peer0.calim.calim360.com</code> - Blockchain Peer Node 1</li>
+                        <li><code>peer1.calim.calim360.com</code> - Blockchain Peer Node 2</li>
+                        <li><code>peer0.client.calim360.com</code> - Client Peer Node</li>
+                        <li><code>orderer.calim360.com</code> - Ordering Service</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Tab 2: Query Blockchain -->
+            <div id="tab-query-blockchain" class="blockchain-ops-panel">
+                <div class="panel-header">
+                    <div class="panel-info">
+                        <h4><i class="ti ti-database-search"></i> Method 2: Query Blockchain Directly</h4>
+                        <p>Query the chaincode to retrieve actual blockchain data for a specific contract.</p>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="queryContractId" placeholder="Contract ID (e.g., 203)" value="">
+                        <button class="btn-run" onclick="runQueryCommand()">
+                            <i class="ti ti-player-play"></i>
+                            Query
+                        </button>
+                    </div>
+                </div>
+                <div class="command-preview">
+                    <code>
+                        <span class="cmd-prompt">$</span> docker exec -it cli bash -c "peer chaincode query -C calimchannel -n calim-contracts -c '{"Args":["GetContractRecord","<span id="queryIdPreview">CONTRACT_ID</span>"]}'"
+                    </code>
+                </div>
+                <div class="terminal-container" id="terminal-query">
+                    <div class="terminal-header">
+                        <div class="terminal-dots">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                        </div>
+                        <span class="terminal-title">blockchain-cli@calim360:~</span>
+                    </div>
+                    <div class="terminal-body" id="terminal-query-output">
+                        <div class="terminal-welcome">
+                            <span class="terminal-line">Chaincode Query Terminal Ready</span>
+                            <span class="terminal-line dim">Enter a Contract ID and click 'Query' to retrieve blockchain data</span>
+                            <span class="terminal-line dim">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-box">
+                    <i class="ti ti-bulb"></i>
+                    <span>This returns the ACTUAL data stored on the blockchain ledger, not from MySQL database.</span>
+                </div>
+            </div>
+
+            <!-- Tab 3: Verify Transaction Hash -->
+            <div id="tab-verify-hash" class="blockchain-ops-panel">
+                <div class="panel-header">
+                    <div class="panel-info">
+                        <h4><i class="ti ti-fingerprint"></i> Method 3: Verify Transaction Hash</h4>
+                        <p>Verify a specific transaction hash exists on the blockchain ledger.</p>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="verifyTxHash" placeholder="Transaction Hash (e.g., tx_79263200e1e24365)">
+                        <button class="btn-run" onclick="runVerifyCommand()">
+                            <i class="ti ti-shield-check"></i>
+                            Verify
+                        </button>
+                    </div>
+                </div>
+                <div class="command-preview">
+                    <code>
+                        <span class="cmd-prompt">$</span> peer chaincode query -C calimchannel -n calim-contracts -c '{"Args":["GetTransactionByHash","<span id="txHashPreview">TX_HASH</span>"]}'
+                    </code>
+                </div>
+                <div class="terminal-container" id="terminal-verify">
+                    <div class="terminal-header">
+                        <div class="terminal-dots">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                        </div>
+                        <span class="terminal-title">hash-verify@calim360:~</span>
+                    </div>
+                    <div class="terminal-body" id="terminal-verify-output">
+                        <div class="terminal-welcome">
+                            <span class="terminal-line">Transaction Hash Verification Terminal</span>
+                            <span class="terminal-line dim">Every blockchain transaction has a unique hash generated by the network</span>
+                            <span class="terminal-line dim">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="recent-hashes">
+                    <h5><i class="ti ti-history"></i> Recent Transaction Hashes:</h5>
+                    <div id="recentHashesList" class="hashes-list">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 4: Blockchain Logs -->
+            <div id="tab-blockchain-logs" class="blockchain-ops-panel">
+                <div class="panel-header">
+                    <div class="panel-info">
+                        <h4><i class="ti ti-file-text"></i> Method 4: Check Blockchain Logs</h4>
+                        <p>View peer logs to see actual blockchain transactions being committed.</p>
+                    </div>
+                    <div class="log-controls">
+                        <select id="peerSelect" class="peer-select">
+                            <option value="peer0.calim.calim360.com">peer0.calim.calim360.com</option>
+                            <option value="peer1.calim.calim360.com">peer1.calim.calim360.com</option>
+                            <option value="peer0.client.calim360.com">peer0.client.calim360.com</option>
+                            <option value="orderer.calim360.com">orderer.calim360.com</option>
+                        </select>
+                        <button class="btn-run" onclick="runLogsCommand()">
+                            <i class="ti ti-player-play"></i>
+                            Stream Logs
+                        </button>
+                        <button class="btn-stop" id="stopLogsBtn" onclick="stopLogsStream()" style="display: none;">
+                            <i class="ti ti-player-stop"></i>
+                            Stop
+                        </button>
+                    </div>
+                </div>
+                <div class="command-preview">
+                    <code>
+                        <span class="cmd-prompt">$</span> docker logs <span id="peerNamePreview">peer0.calim.calim360.com</span> --tail 100 | grep -i "committed|endorsement|block"
+                    </code>
+                </div>
+                <div class="terminal-container terminal-logs" id="terminal-logs">
+                    <div class="terminal-header">
+                        <div class="terminal-dots">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                        </div>
+                        <span class="terminal-title">peer-logs@calim360:~</span>
+                        <span class="log-status" id="logStreamStatus">
+                            <i class="ti ti-circle"></i> Ready
+                        </span>
+                    </div>
+                    <div class="terminal-body terminal-body-logs" id="terminal-logs-output">
+                        <div class="terminal-welcome">
+                            <span class="terminal-line">Blockchain Peer Log Viewer</span>
+                            <span class="terminal-line dim">Select a peer and click 'Stream Logs' to view blockchain commits</span>
+                            <span class="terminal-line dim">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="log-legend">
+                    <h5><i class="ti ti-tags"></i> Log Types:</h5>
+                    <div class="legend-items">
+                        <span class="legend-item"><span class="log-badge committed">COMMITTED</span> Block committed to ledger</span>
+                        <span class="legend-item"><span class="log-badge endorsement">ENDORSEMENT</span> Transaction endorsed</span>
+                        <span class="legend-item"><span class="log-badge block">BLOCK</span> New block created</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="blockchain-ops-footer">
+            <div class="footer-stats">
+                <div class="stat-item">
+                    <i class="ti ti-hash"></i>
+                    <span>Total Blocks: <strong id="totalBlocksCount">12,847</strong></span>
+                </div>
+                <div class="stat-item">
+                    <i class="ti ti-transfer"></i>
+                    <span>Total TXs: <strong id="totalTxCount">45,231</strong></span>
+                </div>
+                <div class="stat-item">
+                    <i class="ti ti-clock-hour-4"></i>
+                    <span>Uptime: <strong id="networkUptime">99.99%</strong></span>
+                </div>
+            </div>
+            <div class="footer-actions">
+                <button class="btn-secondary" onclick="exportTerminalLogs()">
+                    <i class="ti ti-download"></i>
+                    Export Logs
+                </button>
+                <button class="btn-primary" onclick="closeBlockchainOperations()">
+                    <i class="ti ti-check"></i>
+                    Done
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

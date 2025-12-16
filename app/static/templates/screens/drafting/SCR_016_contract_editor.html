@@ -2306,10 +2306,13 @@
             </button>    
 <button 
     id="openBlockchainMonitorBtn"
-    onclick="openBlockchainMonitor()"
+    onclick="openBlockchainOperations()"
     class="blockchain-btn blockchain-btn-info">
+    <i class="ti ti-cube-3d-sphere"></i>
     View Blockchain Operations
 </button>
+
+
         </div>
 
         <!-- Info Text -->
@@ -2324,65 +2327,8 @@
 <!-- END BLOCKCHAIN VERIFICATION SECTION -->
 
 
-<div id="blockchainMonitorModal" style="display: block;">
-    
-    <!-- ✅ THIS DIV NEEDS THE CLASS "blockchain-monitor-content" -->
-    <div class="blockchain-monitor-content">
-        
-        <!-- Header -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem;">
-            <h3 style="margin: 0; font-size: 1.5rem; color: #1e293b;">
-                <i class="ti ti-blockchain" style="margin-right: 0.5rem; color: #3b82f6;"></i>
-                Blockchain Operations Monitor
-            </h3>
-            <button onclick="closeBlockchainMonitor()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; padding: 0.5rem;">
-                <i class="ti ti-x"></i>
-            </button>
-        </div>
-        
-        <!-- Activity Stream -->
-        <div style="margin-bottom: 1.5rem;">
-            <h4 style="margin: 0 0 1rem 0; font-size: 1rem; color: #475569;">Activity Timeline</h4>
-            <div id="activityStreamModal">
-                <div class="empty-activity-state">
-                    <i class="ti ti-clock-hour-4" style="font-size: 3rem; color: #cbd5e1;"></i>
-                    <p style="margin: 1rem 0 0 0; color: #64748b;">Waiting for blockchain operations...</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Statistics (Optional) -->
-        <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0;">
-            <h4 style="margin: 0 0 1rem 0; font-size: 0.875rem; color: #64748b;">Statistics</h4>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
-                <div>
-                    <div style="font-size: 0.75rem; color: #64748b;">Total Transactions</div>
-                    <div style="font-size: 1.25rem; font-weight: 600; color: #1e293b;" id="totalTransactions">0</div>
-                </div>
-                <div>
-                    <div style="font-size: 0.75rem; color: #64748b;">Network Status</div>
-                    <div style="font-size: 0.875rem; font-weight: 600; color: #10b981;" id="networkStatusValueModal">Operational</div>
-                </div>
-                <div>
-                    <div style="font-size: 0.75rem; color: #64748b;">Connected Peers</div>
-                    <div style="font-size: 1.25rem; font-weight: 600; color: #1e293b;" id="peersCountModal">3</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Actions -->
-        <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: flex-end;">
-            <button onclick="loadBlockchainHistory()" style="padding: 0.5rem 1rem; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
-                <i class="ti ti-refresh"></i> Refresh
-            </button>
-            <button onclick="closeBlockchainMonitor()" style="padding: 0.5rem 1rem; background: #64748b; color: white; border: none; border-radius: 6px; cursor: pointer;">
-                Close
-            </button>
-        </div>
-        
-    </div>
-    
-</div>
+{% include 'modals/blockchain/MOD_073_blockchain_operations.html' %}
+
 <!-- MOD-027/028: Contract Workflow Setup Modal -->
 <div class="modal" id="contractWorkflowModal">
     <div class="modal-content modal-lg" style="max-width: 900px;">
