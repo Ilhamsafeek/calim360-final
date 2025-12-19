@@ -644,13 +644,156 @@
 
 
     @keyframes rotate {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
     }
+
     .rotating {
         animation: rotate 1s linear infinite;
     }
+
+    .value.unassigned {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.action-btn.edit {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+}
+
+.action-btn.edit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
 </style>
+
+
+<style>
+.action-btn.edit {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+}
+
+.action-btn.edit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.action-btn.delete {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.action-btn.delete:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.value.unassigned {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.user-search-container {
+    position: relative;
+}
+
+.user-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+    box-shadow: var(--shadow-lg);
+}
+
+.user-suggestion-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.user-suggestion-item:hover {
+    background-color: var(--bg-gray);
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.selected-user {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background-color: var(--bg-gray);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+}
+
+.selected-user .user-info {
+    flex: 1;
+}
+
+.selected-user .user-name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.selected-user .user-email {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.remove-user {
+    padding: 0.25rem;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+}
+
+.remove-user:hover {
+    background-color: var(--danger-color);
+    color: white;
+    border-color: var(--danger-color);
+}
+
+.no-results,
+.error-message {
+    padding: 0.75rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+</style>
+
+
 {% endblock %}
 
 {% block content %}
@@ -660,7 +803,7 @@
         <div class="header-top">
             <h1 class="page-title">
                 <i class="ti ti-sparkles"></i>
-                AI Obligations Generation
+                Generate Obligations
             </h1>
         </div>
         <div class="contract-info" id="contractInfo">
@@ -867,6 +1010,122 @@
         </div>
     </div>
 </div>
+
+
+<!-- Edit Obligation Modal -->
+<div class="modal" id="editObligationModal">
+    <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header" style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white;">
+            <h3 class="modal-title" style="color: white;">
+                <i class="ti ti-edit"></i>
+                Edit Obligation
+            </h3>
+            <button class="modal-close" style="color: white; border-color: rgba(255,255,255,0.3);" onclick="closeEditModal()">
+                <i class="ti ti-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="editObligationForm" onsubmit="saveEditedObligation(event)">
+                <input type="hidden" id="editObligationId">
+
+                <div class="form-group">
+                    <label class="form-label">
+                        Obligation Title <span style="color: var(--danger-color);">*</span>
+                    </label>
+                    <input type="text" class="form-control" id="editObligationTitle" required
+                        placeholder="Enter obligation title">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" id="editObligationDescription" rows="3"
+                        placeholder="Enter detailed description"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Type</label>
+                        <select class="form-control" id="editObligationType">
+                            <option value="payment">Payment</option>
+                            <option value="deliverable">Deliverable</option>
+                            <option value="compliance">Compliance</option>
+                            <option value="reporting">Reporting</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="insurance">Insurance</option>
+                            <option value="coordination">Coordination</option>
+                            <option value="inspection">Inspection</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Priority</label>
+                        <select class="form-control" id="editObligationPriority">
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select class="form-control" id="editObligationStatus">
+                        <option value="initiated">Initiated</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="pending_details">Pending Details</option>
+                        <option value="awaiting_approval">Awaiting Approval</option>
+                        <option value="completed">Completed</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Owner (Search by Email)</label>
+                    <div class="user-search-container">
+                        <input type="text" class="form-control" id="editOwnerSearch"
+                            placeholder="Type email to search users..." oninput="searchEditUsers('owner')"
+                            autocomplete="off">
+                        <div class="user-suggestions" id="editOwnerSuggestions"></div>
+                    </div>
+                    <div id="editSelectedOwner" style="display: none;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Escalation To (Search by Email)</label>
+                    <div class="user-search-container">
+                        <input type="text" class="form-control" id="editEscalationSearch"
+                            placeholder="Type email to search users..." oninput="searchEditUsers('escalation')"
+                            autocomplete="off">
+                        <div class="user-suggestions" id="editEscalationSuggestions"></div>
+                    </div>
+                    <div id="editSelectedEscalation" style="display: none;"></div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Threshold Date</label>
+                        <input type="date" class="form-control" id="editThresholdDate">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Due Date <span style="color: var(--danger-color);">*</span></label>
+                        <input type="date" class="form-control" id="editDueDate" required>
+                    </div>
+                </div>
+
+                <div class="modal-footer" style="margin-top: 1.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">
+                        <i class="ti ti-x"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="ti ti-check"></i> Update Obligation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 
 <!-- New Obligation Modal -->
 <div class="modal" id="newObligationModal">
@@ -1269,7 +1528,7 @@
 
 
 
-     async function loadUsers() {
+    async function loadUsers() {
         try {
             const response = await fetch('/api/users');
             if (!response.ok) throw new Error('Failed to load users');
@@ -1278,7 +1537,7 @@
             console.error('Error loading users:', error);
         }
     }
-    
+
 
     // =====================================================
     // CONTRACT DETAILS
@@ -1362,7 +1621,7 @@
         }
     }
 
-   
+
     // =====================================================
     // RENDER AI OBLIGATIONS IN MODAL
     // =====================================================
@@ -1493,129 +1752,228 @@
     }
 
 
+async function saveEditedObligation(event) {
+    event.preventDefault();
 
-    async function saveEditedObligation(event) {
-        event.preventDefault();
-
-        if (currentEditIndex === null) return;
-
-        // ✅ VALIDATE: Owner and Escalation must be different
-        if (selectedOwner && selectedEscalation) {
-            if (selectedOwner.id === selectedEscalation.id) {
-                showToast('Owner and escalation user must be different', 'error');
-                return;
-            }
-
-            if (selectedOwner.email === selectedEscalation.email) {
-                showToast('Owner and escalation emails must be different', 'error');
-                return;
-            }
-        }
-
-        const title = document.getElementById('editTitle').value.trim();
-        const description = document.getElementById('editDescription').value.trim();
-        const category = document.getElementById('editCategory').value;
-        const priority = document.getElementById('editPriority').value;
-        const thresholdDate = document.getElementById('editThresholdDate').value;
-        const dueDate = document.getElementById('editDueDate').value;
-
-        if (!title || !description) {
-            showToast('Title and description are required', 'error');
-            return;
-        }
-
-        if (!selectedOwner) {
-            showToast('Please assign an owner', 'error');
-            return;
-        }
-
-        if (!dueDate) {
-            showToast('Please set a due date', 'error');
-            return;
-        }
-
-        // Update obligation
-        aiObligations[currentEditIndex] = {
-            ...aiObligations[currentEditIndex],
-            title,
-            description,
-            category,
-            priority,
-            threshold_date: thresholdDate,
-            due_date: dueDate,
-            owner: selectedOwner,
-            escalation: selectedEscalation
-        };
-
-        closeEditModal();
-        displayAIObligations();
-
-        showToast('Obligation updated', 'success');
+    const obligationId = parseInt(document.getElementById('editObligationId').value);
+    
+    if (!obligationId) {
+        showToast('Invalid obligation ID', 'error');
+        return;
     }
 
+    // Validate: Owner and Escalation must be different
+    if (editSelectedOwner && editSelectedEscalation) {
+        if (editSelectedOwner.id === editSelectedEscalation.id) {
+            showToast('Owner and escalation user must be different', 'error');
+            return;
+        }
+    }
+
+    try {
+        showLoading(true, 'Updating obligation...');
+
+        const obligationData = {
+            obligation_title: document.getElementById('editObligationTitle').value.trim(),
+            description: document.getElementById('editObligationDescription').value.trim(),
+            obligation_type: document.getElementById('editObligationType').value,
+            status: document.getElementById('editObligationStatus').value,
+            priority: document.getElementById('editObligationPriority').value || 'medium',
+            owner_user_id: editSelectedOwner ? editSelectedOwner.id : null,
+            escalation_user_id: editSelectedEscalation ? editSelectedEscalation.id : null,
+            threshold_date: document.getElementById('editThresholdDate').value || null,
+            due_date: document.getElementById('editDueDate').value || null
+        };
+
+        const response = await fetch(`${API_BASE}/${obligationId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(obligationData)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to update obligation');
+        }
+
+        showToast('Obligation updated successfully', 'success');
+        closeEditModal();
+        await loadExistingObligations();
+
+    } catch (error) {
+        console.error('❌ Error updating obligation:', error);
+        showToast(error.message || 'Failed to update obligation', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
 
 
-   
+
+async function searchEditUsers(type) {
+    const query = document.getElementById(`edit${type.charAt(0).toUpperCase() + type.slice(1)}Search`).value.trim();
+    const suggestionsEl = document.getElementById(`edit${type.charAt(0).toUpperCase() + type.slice(1)}Suggestions`);
+
+    if (query.length < 2) {
+        suggestionsEl.innerHTML = '';
+        suggestionsEl.style.display = 'none';
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}&company_id=true`);
+        if (!response.ok) throw new Error('Search failed');
+
+        const users = await response.json();
+        
+        if (users.length === 0) {
+            suggestionsEl.innerHTML = '<div class="no-results">No users found</div>';
+            suggestionsEl.style.display = 'block';
+            return;
+        }
+
+        suggestionsEl.innerHTML = users.map(user => `
+            <div class="user-suggestion-item" onclick='selectEditUser(${JSON.stringify(user)}, "${type}")'>
+                <div class="user-avatar">${user.name.charAt(0).toUpperCase()}</div>
+                <div class="user-info">
+                    <div class="user-name">${escapeHtml(user.name)}</div>
+                    <div class="user-email">${escapeHtml(user.email)}</div>
+                </div>
+            </div>
+        `).join('');
+        suggestionsEl.style.display = 'block';
+
+    } catch (error) {
+        console.error('Search error:', error);
+        suggestionsEl.innerHTML = '<div class="error-message">Search failed</div>';
+        suggestionsEl.style.display = 'block';
+    }
+}
 
 
+function selectEditUser(user, type) {
+    if (type === 'owner') {
+        editSelectedOwner = user;
+    } else {
+        editSelectedEscalation = user;
+    }
 
-    // EDIT EXISTING OBLIGATION (for table)
-    async function editExistingObligation(obligationId) {
-        const obligation = existingObligations.find(o => o.id === obligationId);
+    showEditSelectedUser(type, user);
+    document.getElementById(`edit${type.charAt(0).toUpperCase() + type.slice(1)}Suggestions`).style.display = 'none';
+}
 
-        if (!obligation) return;
 
-        // Populate the new obligation form with existing data
-        document.getElementById('newTitle').value = obligation.obligation_title;
-        document.getElementById('newDescription').value = obligation.description || '';
-        document.getElementById('newCategory').value = obligation.obligation_type || 'other';
-        document.getElementById('newStatus').value = obligation.status || 'initiated';
-        document.getElementById('newThresholdDate').value = obligation.threshold_date ? obligation.threshold_date.split('T')[0] : '';
-        document.getElementById('newDueDate').value = obligation.due_date ? obligation.due_date.split('T')[0] : '';
+function showEditSelectedUser(type, user) {
+    const container = document.getElementById(`editSelected${type.charAt(0).toUpperCase() + type.slice(1)}`);
+    container.innerHTML = `
+        <div class="selected-user">
+            <div class="user-avatar">${user.name.charAt(0).toUpperCase()}</div>
+            <div class="user-info">
+                <div class="user-name">${escapeHtml(user.name)}</div>
+                <div class="user-email">${escapeHtml(user.email)}</div>
+            </div>
+            <button class="remove-user" onclick="removeEditUser('${type}')">
+                <i class="ti ti-x"></i>
+            </button>
+        </div>
+    `;
+    container.style.display = 'block';
+    document.getElementById(`edit${type.charAt(0).toUpperCase() + type.slice(1)}Search`).style.display = 'none';
+}
+
+
+function removeEditUser(type) {
+    if (type === 'owner') {
+        editSelectedOwner = null;
+    } else {
+        editSelectedEscalation = null;
+    }
+
+    document.getElementById(`editSelected${type.charAt(0).toUpperCase() + type.slice(1)}`).style.display = 'none';
+    document.getElementById(`edit${type.charAt(0).toUpperCase() + type.slice(1)}Search`).style.display = 'block';
+}
+
+function closeEditModal() {
+    document.getElementById('editObligationModal').classList.remove('show');
+    editSelectedOwner = null;
+    editSelectedEscalation = null;
+}
+
+
+let editSelectedOwner = null;
+let editSelectedEscalation = null;
+
+async function editExistingObligation(obligationId) {
+    try {
+        console.log('✏️ Editing obligation ID:', obligationId);
+        
+        // Fetch fresh obligation data
+        const response = await fetch(`${API_BASE}/contract/${contractId}`);
+        if (!response.ok) throw new Error('Failed to load obligation');
+        
+        const obligations = await response.json();
+        const obligation = obligations.find(o => o.id === obligationId);
+        
+        if (!obligation) {
+            showToast('Obligation not found', 'error');
+            return;
+        }
+
+        console.log('📝 Obligation data:', obligation);
+
+        // Populate modal
+        document.getElementById('editObligationId').value = obligation.id;
+        document.getElementById('editObligationTitle').value = obligation.obligation_title || '';
+        document.getElementById('editObligationDescription').value = obligation.description || '';
+        document.getElementById('editObligationType').value = obligation.obligation_type || 'other';
+        document.getElementById('editObligationStatus').value = obligation.status || 'initiated';
+        document.getElementById('editObligationPriority').value = obligation.priority || 'medium';
+        
+        // Set dates
+        document.getElementById('editThresholdDate').value = obligation.threshold_date ? 
+            obligation.threshold_date.split('T')[0] : '';
+        document.getElementById('editDueDate').value = obligation.due_date ? 
+            obligation.due_date.split('T')[0] : '';
 
         // Set owner if exists
         if (obligation.owner_user_id && obligation.owner_name) {
-            newSelectedOwner = {
+            editSelectedOwner = {
                 id: obligation.owner_user_id,
                 name: obligation.owner_name,
                 email: obligation.owner_email
             };
-            showSelectedUserNew('owner', newSelectedOwner);
+            showEditSelectedUser('owner', editSelectedOwner);
         } else {
-            newSelectedOwner = null;
-            document.getElementById('newSelectedOwner').style.display = 'none';
-            document.getElementById('newOwnerSearch').style.display = 'block';
+            editSelectedOwner = null;
+            document.getElementById('editSelectedOwner').style.display = 'none';
+            document.getElementById('editOwnerSearch').style.display = 'block';
+            document.getElementById('editOwnerSearch').value = '';
         }
 
         // Set escalation if exists
         if (obligation.escalation_user_id && obligation.escalation_name) {
-            newSelectedEscalation = {
+            editSelectedEscalation = {
                 id: obligation.escalation_user_id,
                 name: obligation.escalation_name,
                 email: obligation.escalation_email
             };
-            showSelectedUserNew('escalation', newSelectedEscalation);
+            showEditSelectedUser('escalation', editSelectedEscalation);
         } else {
-            newSelectedEscalation = null;
-            document.getElementById('newSelectedEscalation').style.display = 'none';
-            document.getElementById('newEscalationSearch').style.display = 'block';
+            editSelectedEscalation = null;
+            document.getElementById('editSelectedEscalation').style.display = 'none';
+            document.getElementById('editEscalationSearch').style.display = 'block';
+            document.getElementById('editEscalationSearch').value = '';
         }
 
-        // Change form submit to update instead of create
-        const form = document.getElementById('newObligationForm');
-        form.onsubmit = async (event) => {
-            event.preventDefault();
-            await updateExistingObligation(obligationId);
-        };
-
-        // Change button text
-        const submitBtn = form.querySelector('button[type="submit"]');
-        submitBtn.innerHTML = '<i class="ti ti-check"></i> Update Obligation';
-
         // Open modal
-        document.getElementById('newObligationModal').classList.add('show');
-    }
+        document.getElementById('editObligationModal').classList.add('show');
 
+    } catch (error) {
+        console.error('❌ Error loading obligation:', error);
+        showToast('Failed to load obligation: ' + error.message, 'error');
+    }
+}
+   
     async function updateExistingObligation(obligationId) {
         try {
             showLoading(true);
@@ -1920,49 +2278,104 @@
     // =====================================================
     // EXISTING OBLIGATIONS
     // =====================================================
-    async function loadExistingObligations() {
-        try {
-            const response = await fetch(`${API_BASE}?contract_id=${contractId}`);
-            if (!response.ok) throw new Error('Failed to load obligations');
+   // =====================================================
+// EXISTING OBLIGATIONS
+// =====================================================
+async function loadExistingObligations() {
+    try {
+        const response = await fetch(`${API_BASE}/contract/${contractId}`);
+        if (!response.ok) throw new Error('Failed to load obligations');
 
-            const obligations = await response.json();
+        const obligations = await response.json();
+        console.log('📋 Loaded obligations:', obligations);
 
-            if (obligations.length > 0) {
-                document.getElementById('existingObligationsSection').style.display = 'block';
-                displayExistingObligations(obligations);
-            } else {
-                document.getElementById('existingObligationsSection').style.display = 'none';
-            }
-
-        } catch (error) {
-            console.error('Error loading existing obligations:', error);
+        if (obligations.length > 0) {
+            document.getElementById('existingObligationsSection').style.display = 'block';
+            displayExistingObligations(obligations);
+        } else {
+            document.getElementById('existingObligationsSection').style.display = 'none';
         }
+
+    } catch (error) {
+        console.error('Error loading existing obligations:', error);
+        showToast('Failed to load obligations', 'error');
     }
+}
+
 
     function displayExistingObligations(obligations) {
-        const container = document.getElementById('existingObligationsList');
+    const container = document.getElementById('existingObligationsList');
 
-        container.innerHTML = obligations.map(obl => `
+    if (!obligations || obligations.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state" style="padding: 2rem; text-align: center;">
+                <i class="ti ti-clipboard-off" style="font-size: 2rem; color: var(--text-muted);"></i>
+                <p style="margin-top: 0.5rem; color: var(--text-muted);">No obligations found</p>
+            </div>
+        `;
+        return;
+    }
+
+    // ✅ FIX: Render with proper owner/escalation data and EDIT BUTTON
+    container.innerHTML = obligations.map((obl, index) => `
         <div class="obligation-card" style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--background-light);">
-            <div style="display: flex; justify-content: space-between; align-items: start;">
+            <div style="display: flex; justify-content: space-between; align-items: start; gap: 1rem;">
                 <div style="flex: 1;">
-                    <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem; font-weight: 600;">${escapeHtml(obl.obligation_title)}</h4>
-                    <p style="margin: 0 0 0.5rem 0; color: var(--text-muted); font-size: 0.9rem;">${escapeHtml(obl.description || 'No description')}</p>
-                    <div style="display: flex; gap: 1rem; font-size: 0.875rem; color: var(--text-muted);">
-                        <span><i class="ti ti-user"></i> Owner: ${escapeHtml(obl.owner_name || 'Unassigned')}</span>
-                        <span><i class="ti ti-calendar"></i> Due: ${obl.due_date ? formatDate(obl.due_date) : 'Not set'}</span>
-                        <span><i class="ti ti-flag"></i> ${escapeHtml(obl.status || 'initiated')}</span>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <h4 style="margin: 0; font-size: 1rem; font-weight: 600;">${escapeHtml(obl.obligation_title)}</h4>
+                        ${obl.is_ai_generated ? 
+                            '<span style="padding: 0.125rem 0.5rem; background: linear-gradient(135deg, #10b981, #059669); color: white; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;"><i class="ti ti-sparkles"></i> AI</span>' : 
+                            '<span style="padding: 0.125rem 0.5rem; background: #6b7280; color: white; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;"><i class="ti ti-user"></i> Manual</span>'}
+                        ${obl.obligation_type ? 
+                            `<span style="padding: 0.125rem 0.5rem; background: #e5e7eb; color: #374151; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;">${obl.obligation_type}</span>` : ''}
+                    </div>
+                    <p style="margin: 0 0 0.75rem 0; color: var(--text-muted); font-size: 0.9rem;">${escapeHtml(obl.description || 'No description')}</p>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; font-size: 0.875rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="ti ti-user" style="color: var(--primary-color);"></i>
+                            <span style="color: var(--text-muted);">Owner:</span>
+                            <span style="font-weight: 500; ${!obl.owner_name ? 'color: var(--text-muted); font-style: italic;' : 'color: var(--text-primary);'}">
+                                ${escapeHtml(obl.owner_name || 'Unassigned')}
+                            </span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="ti ti-alert-triangle" style="color: #f59e0b;"></i>
+                            <span style="color: var(--text-muted);">Escalation:</span>
+                            <span style="font-weight: 500; ${!obl.escalation_name ? 'color: var(--text-muted); font-style: italic;' : 'color: var(--text-primary);'}">
+                                ${escapeHtml(obl.escalation_name || 'Unassigned')}
+                            </span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="ti ti-calendar-due" style="color: var(--primary-color);"></i>
+                            <span style="color: var(--text-muted);">Due:</span>
+                            <span style="font-weight: 500;">${obl.due_date ? formatDate(obl.due_date) : 'Not set'}</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="ti ti-flag" style="color: var(--primary-color);"></i>
+                            <span style="color: var(--text-muted);">Status:</span>
+                            <span style="font-weight: 500;">${escapeHtml(formatStatus(obl.status || 'initiated'))}</span>
+                        </div>
                     </div>
                 </div>
+                
+                <!-- ✅ ACTION BUTTONS: EDIT + DELETE -->
                 <div style="display: flex; gap: 0.5rem;">
-                    <button class="btn-icon btn-danger" onclick="deleteExistingObligation(${obl.id})" title="Delete">
+                    <button class="btn-icon" onclick="editExistingObligation(${obl.id})" 
+                            title="Edit" 
+                            style="padding: 0.5rem; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;">
+                        <i class="ti ti-edit"></i>
+                    </button>
+                    <button class="btn-icon btn-danger" onclick="deleteExistingObligation(${obl.id})" 
+                            title="Delete"
+                            style="padding: 0.5rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;">
                         <i class="ti ti-trash"></i>
                     </button>
                 </div>
             </div>
         </div>
     `).join('');
-    }
+}
 
 
 
@@ -2046,11 +2459,23 @@
         updateSelectedCount();
     }
 
+function formatStatus(status) {
+    const statusMap = {
+        'initiated': 'Initiated',
+        'in_progress': 'In Progress',
+        'in-progress': 'In Progress',
+        'pending_details': 'Pending Details',
+        'pending-details': 'Pending Details',
+        'awaiting_approval': 'Awaiting Approval',
+        'awaiting-approval': 'Awaiting Approval',
+        'completed': 'Completed',
+        'rejected': 'Rejected',
+        'cancelled': 'Cancelled'
+    };
+    return statusMap[status] || status;
+}
 
-    function formatStatus(status) {
-        if (!status) return 'N/A';
-        return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-    }
+
 
     function getStatusPriority(status) {
         const highPriority = ['overdue', 'pending_details'];
@@ -2508,33 +2933,27 @@
 
 
     function openAIModal() {
-    document.getElementById('aiObligationsModal').classList.add('show');
-}
-
-function closeAIModal() {
-    document.getElementById('aiObligationsModal').classList.remove('show');
-    selectedObligations.clear();
-}
-
-function closeEditModal() {
-    document.getElementById('editModal').classList.remove('show');
-    currentEditIndex = null;
-    selectedOwner = null;
-    selectedEscalation = null;
-}
-
-   function showLoading(show, message = 'Loading...', subtext = '') {
-    const overlay = document.getElementById('loadingOverlay');
-    if (!overlay) return;
-    
-    if (show) {
-        document.getElementById('loadingMessage').textContent = message;
-        document.getElementById('loadingSubtext').textContent = subtext;
-        overlay.classList.add('show');
-    } else {
-        overlay.classList.remove('show');
+        document.getElementById('aiObligationsModal').classList.add('show');
     }
-}
+
+    function closeAIModal() {
+        document.getElementById('aiObligationsModal').classList.remove('show');
+        selectedObligations.clear();
+    }
+
+
+    function showLoading(show, message = 'Loading...', subtext = '') {
+        const overlay = document.getElementById('loadingOverlay');
+        if (!overlay) return;
+
+        if (show) {
+            document.getElementById('loadingMessage').textContent = message;
+            document.getElementById('loadingSubtext').textContent = subtext;
+            overlay.classList.add('show');
+        } else {
+            overlay.classList.remove('show');
+        }
+    }
 
 
     async function addSelectedAIObligations() {
@@ -2627,20 +3046,20 @@ function closeEditModal() {
 
 
     function escapeHtml(unsafe) {
-    if (!unsafe) return '';
-    return String(unsafe)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
+        if (!unsafe) return '';
+        return String(unsafe)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
 
-function formatDate(dateString) {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-}
+    function formatDate(dateString) {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
 
 </script>
 {% endblock %}

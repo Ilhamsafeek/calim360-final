@@ -55,7 +55,6 @@ class AIObligationGenerate(BaseModel):
 # =====================================================
 # 1. GET ALL OBLIGATIONS FOR A CONTRACT
 # =====================================================
-
 @router.get("/contract/{contract_id}")
 async def get_contract_obligations(
     contract_id: int,
@@ -78,10 +77,13 @@ async def get_contract_obligations(
             Obligation.contract_id == contract_id
         ).order_by(desc(Obligation.created_at)).all()
         
-        # Enrich with user data
+        # ✅ CRITICAL: Enrich with user data
         enriched = []
         for obl in obligations:
+            # ✅ Get owner information
             owner = db.query(User).filter(User.id == obl.owner_user_id).first() if obl.owner_user_id else None
+            
+            # ✅ Get escalation information
             escalation = db.query(User).filter(User.id == obl.escalation_user_id).first() if obl.escalation_user_id else None
             
             enriched.append({
@@ -90,12 +92,13 @@ async def get_contract_obligations(
                 "obligation_title": obl.obligation_title,
                 "description": obl.description,
                 "obligation_type": obl.obligation_type,
+                "priority": getattr(obl, "priority", "medium"),
                 "owner_user_id": obl.owner_user_id,
                 "owner_name": f"{owner.first_name} {owner.last_name}" if owner else None,
                 "owner_email": owner.email if owner else None,
                 "escalation_user_id": obl.escalation_user_id,
-                "escalation_email": escalation.email if escalation else None,
                 "escalation_name": f"{escalation.first_name} {escalation.last_name}" if escalation else None,
+                "escalation_email": escalation.email if escalation else None,
                 "threshold_date": obl.threshold_date.isoformat() if obl.threshold_date else None,
                 "due_date": obl.due_date.isoformat() if obl.due_date else None,
                 "status": obl.status,
@@ -112,6 +115,7 @@ async def get_contract_obligations(
         logger.error(f"Error fetching obligations: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+        
 # =====================================================
 # 2. GENERATE OBLIGATIONS USING AI
 # =====================================================
