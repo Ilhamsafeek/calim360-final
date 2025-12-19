@@ -1,705 +1,507 @@
 {% extends "base.html" %}
-
-{% block title %}AI Obligations - Contract {{ contract_id }}{% endblock %}
+{% block title %}Contract Obligations - CALIM 360{% endblock %}
 
 {% block head %}
 <style>
-    :root {
-        --primary-color: #2762cb;
-        --secondary-color: #73B4E0;
-        --success-color: #10b981;
-        --warning-color: #f59e0b;
-        --danger-color: #ef4444;
-        --info-color: #3b82f6;
-        --text-color: #1e293b;
-        --text-muted: #64748b;
-        --border-color: #e2e8f0;
-        --background-light: #f8fafc;
-        --transition: all 0.2s ease;
-    }
-
-    .page-content {
-        padding: 2rem;
-        max-width: 1400px;
-        margin: 0 auto;
-    }
-
-    /* Header */
-    .page-header {
-        background: white;
-        border-radius: 12px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-    }
-
-    .header-top {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-    }
-
-    .page-title {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: var(--text-color);
-    }
-
-    .page-title i {
-        color: var(--primary-color);
-    }
-
-    .contract-info {
-        display: flex;
-        gap: 2rem;
-        color: var(--text-muted);
-        font-size: 0.9rem;
-    }
-
-    .info-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    /* Action Buttons */
-    .action-buttons {
-        display: flex;
-        gap: 1rem;
-        flex-wrap: wrap;
-    }
-
-    .btn {
-        border-radius: 8px;
-        font-weight: 500;
-        border: none;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        transition: var(--transition);
-        font-size: 0.9rem;
-    }
-
-    .btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
-
-    .btn-ai {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-    }
-
-    .btn-ai:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
-    }
-
-    .btn-success {
-        background: var(--success-color);
-        color: white;
-    }
-
-    .btn-success:hover:not(:disabled) {
-        background: #059669;
-    }
-
-    .btn-secondary {
-        background: #6b7280;
-        color: white;
-    }
-
-    .btn-secondary:hover:not(:disabled) {
-        background: #4b5563;
-    }
-
-    /* AI Obligations Grid */
-    .obligations-grid {
-        display: grid;
-        gap: 1.5rem;
-        margin-top: 2rem;
-    }
-
-    .obligation-card {
-        background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        border: 2px solid var(--border-color);
-        transition: var(--transition);
-        cursor: pointer;
-        position: relative;
-    }
-
-    .obligation-card:hover {
-        border-color: var(--primary-color);
-        box-shadow: 0 4px 12px rgba(39, 98, 203, 0.1);
-    }
-
-    .obligation-card.selected {
-        border-color: var(--primary-color);
-        background: #f0f6ff;
-        box-shadow: 0 4px 12px rgba(39, 98, 203, 0.15);
-    }
-
-    .card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: start;
-        margin-bottom: 1rem;
-    }
-
-    .card-title {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: var(--text-color);
-        flex: 1;
-    }
-
-    .card-badges {
-        display: flex;
-        gap: 0.5rem;
-        align-items: center;
-    }
-
-    .badge {
-        padding: 0.25rem 0.75rem;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
-
-    .badge-priority {
-        background: #fef3c7;
-        color: #92400e;
-    }
-
-    .badge-priority.high {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-
-    .badge-priority.medium {
-        background: #fef3c7;
-        color: #92400e;
-    }
-
-    .badge-priority.low {
-        background: #dbeafe;
-        color: #1e40af;
-    }
-
-    .badge-confidence {
-        background: #d1fae5;
-        color: #065f46;
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-    }
-
-    .card-description {
-        color: var(--text-muted);
-        margin-bottom: 1rem;
-        line-height: 1.6;
-    }
-
-    .card-meta {
-        display: flex;
-        gap: 1.5rem;
-        padding-top: 1rem;
-        border-top: 1px solid var(--border-color);
-        font-size: 0.85rem;
-        color: var(--text-muted);
-    }
-
-    .meta-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .edit-btn {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        background: white;
-        border: 1px solid var(--border-color);
-        padding: 0.5rem;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: var(--transition);
-    }
-
-    .edit-btn:hover {
-        background: var(--background-light);
-        border-color: var(--primary-color);
-        color: var(--primary-color);
-    }
-
-    /* Modal */
-    .modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 1000;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .modal.show {
-        display: flex;
-    }
-
-    .modal-content {
-        background: white;
-        border-radius: 16px;
-        max-width: 900px;
-        width: 90%;
-        max-height: 90vh;
-        overflow-y: auto;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    }
-
-    .modal-header {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        padding: 1.5rem 2rem;
-        border-radius: 16px 16px 0 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .modal-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-
-    .modal-close {
-        background: rgba(255, 255, 255, 0.2);
-        border: none;
-        color: white;
-        width: 32px;
-        height: 32px;
-        border-radius: 6px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: var(--transition);
-    }
-
-    .modal-close:hover {
-        background: rgba(255, 255, 255, 0.3);
-    }
-
-    .modal-body {
-        padding: 2rem;
-    }
-
-    .modal-footer {
-        padding: 1.5rem 2rem;
-        border-top: 1px solid var(--border-color);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    /* Form Elements */
-    .form-group {
-        margin-bottom: 1.5rem;
-    }
-
-    .form-label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
-        color: var(--text-color);
-    }
-
-    .form-control {
-        width: 100%;
-        padding: 0.75rem;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        font-size: 0.9rem;
-        transition: var(--transition);
-    }
-
-    .form-control:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
-    }
-
-    .form-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-    }
-
-    /* User Search */
-    .user-search-container {
-        position: relative;
-    }
-
-    .user-suggestions {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: white;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        margin-top: 0.25rem;
-        max-height: 300px;
-        overflow-y: auto;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        z-index: 100;
-        display: none;
-    }
-
-    .user-suggestions.show {
-        display: block;
-    }
-
-    .user-suggestion-item {
-        padding: 0.75rem 1rem;
-        cursor: pointer;
-        transition: var(--transition);
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .user-suggestion-item:last-child {
-        border-bottom: none;
-    }
-
-    .user-suggestion-item:hover {
-        background: var(--background-light);
-    }
-
-    .user-name {
-        font-weight: 500;
-        color: var(--text-color);
-    }
-
-    .user-email {
-        font-size: 0.85rem;
-        color: var(--text-muted);
-    }
-
-    .selected-user {
-        background: var(--background-light);
-        border: 1px solid var(--primary-color);
-        border-radius: 8px;
-        padding: 0.75rem;
-        margin-top: 0.5rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .remove-user {
-        background: none;
-        border: none;
-        color: var(--danger-color);
-        cursor: pointer;
-        font-size: 1.2rem;
-    }
-
-    /* Loading */
-    .loading-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.7);
-        z-index: 9999;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .loading-overlay.active {
-        display: flex;
-    }
-
-    .spinner {
-        width: 50px;
-        height: 50px;
-        border: 4px solid rgba(255, 255, 255, 0.3);
-        border-top-color: white;
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    .info-box {
-        background: var(--background-light);
-        border: 1px solid var(--border-color);
-        border-left: 4px solid var(--info-color);
-        border-radius: 8px;
-        padding: 1rem 1.5rem;
-        margin-bottom: 1.5rem;
-        display: flex;
-        align-items: start;
-        gap: 1rem;
-    }
-
-    .info-box i {
-        color: var(--info-color);
-        font-size: 1.25rem;
-        flex-shrink: 0;
-    }
-
-    /* Summary Section */
-    .summary-section {
-        background: var(--background-light);
-        border-radius: 8px;
-        padding: 1rem 1.5rem;
-        margin-top: 1.5rem;
-    }
-
-    .summary-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 0.5rem;
-    }
-
-    .summary-label {
-        font-weight: 600;
-        color: var(--text-color);
-    }
-
-    .summary-value {
-        color: var(--primary-color);
-        font-weight: 600;
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 3rem 2rem;
-        color: var(--text-muted);
-    }
-
-    .empty-state i {
-        font-size: 4rem;
-        margin-bottom: 1rem;
-        opacity: 0.3;
-    }
-
-    /* Toast */
-    .toast {
-        position: fixed;
-        bottom: 2rem;
-        right: 2rem;
-        background: white;
-        padding: 1rem 1.5rem;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        display: none;
-        align-items: center;
-        gap: 1rem;
-        z-index: 10000;
-        min-width: 300px;
-    }
-
-    .toast.show {
-        display: flex;
-        animation: slideIn 0.3s ease;
-    }
-
-    @keyframes slideIn {
-        from {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-
-    .toast-icon {
-        font-size: 1.5rem;
-    }
-
-    .toast.success .toast-icon {
-        color: var(--success-color);
-    }
-
-    .toast.error .toast-icon {
-        color: var(--danger-color);
-    }
-
-    /* Table Styles */
-    table {
-        font-size: 0.9rem;
-    }
-
-    table th {
-        white-space: nowrap;
-    }
-
-    table tr:hover {
-        background: var(--background-light);
-    }
-
-    table button {
-        margin: 0 0.25rem;
-    }
-
-    table button:hover {
-        transform: translateY(-1px);
-    }
-
-    /* Preset Tabs */
-    .preset-tab {
-        padding: 0.75rem 1.5rem;
-        background: none;
-        border: none;
-        border-bottom: 3px solid transparent;
-        cursor: pointer;
-        font-weight: 500;
-        color: var(--text-muted);
-        transition: var(--transition);
-        white-space: nowrap;
-    }
-
-    .preset-tab:hover {
-        color: var(--text-color);
-        background: var(--background-light);
-    }
-
-    .preset-tab.active {
-        color: var(--primary-color);
-        border-bottom-color: var(--primary-color);
-    }
-
-    .preset-obligation-item {
-        background: white;
-        border: 2px solid var(--border-color);
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        cursor: pointer;
-        transition: var(--transition);
-    }
-
-    .preset-obligation-item:hover {
-        border-color: var(--primary-color);
-        box-shadow: 0 2px 8px rgba(39, 98, 203, 0.1);
-    }
-
-    .preset-obligation-item.selected {
-        border-color: var(--success-color);
-        background: #f0fdf4;
-    }
-
-    .preset-check {
-        width: 20px;
-        height: 20px;
-        border: 2px solid var(--border-color);
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 14px;
-        transition: var(--transition);
-    }
-
-    .preset-obligation-item.selected .preset-check {
-        background: var(--success-color);
-        border-color: var(--success-color);
-    }
-
-    .btn-info {
-        background: var(--info-color);
-        color: white;
-    }
-
-    .btn-info:hover:not(:disabled) {
-        background: #2563eb;
-    }
-
-
-    @keyframes rotate {
-        from {
-            transform: rotate(0deg);
-        }
-
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    .rotating {
-        animation: rotate 1s linear infinite;
-    }
-
-    .value.unassigned {
+:root {
+    --primary: #3b82f6;
+    --primary-dark: #2563eb;
+    --success: #10b981;
+    --success-dark: #059669;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #06b6d4;
+    --purple: #8b5cf6;
+    --text-dark: #1f2937;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+    --bg-light: #f9fafb;
+    --bg-card: #ffffff;
+}
+
+.page-content {
+    padding: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Page Header */
+.page-header {
+    margin-bottom: 1.5rem;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.page-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.page-title i {
+    color: var(--purple);
+}
+
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--bg-light);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-dark);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.back-btn:hover {
+    background: var(--border);
+}
+
+/* Contract Info Card */
+.contract-info-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 1.25rem;
+    color: white;
+    margin-bottom: 1.5rem;
+}
+
+.contract-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.info-label {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-ai {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.btn-ai:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-success {
+    background: var(--success);
+    color: white;
+}
+
+.btn-success:hover {
+    background: var(--success-dark);
+}
+
+.btn-info {
+    background: var(--info);
+    color: white;
+}
+
+.btn-info:hover {
+    background: #0891b2;
+}
+
+.btn-secondary {
+    background: var(--bg-light);
+    color: var(--text-dark);
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background: var(--border);
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+}
+
+.btn-danger {
+    background: var(--danger);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Obligations Table */
+.obligations-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.obligation-count {
+    background: var(--primary);
+    color: white;
+    padding: 0.125rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.obligations-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.obligations-table th,
+.obligations-table td {
+    padding: 0.875rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.obligations-table th {
+    background: var(--bg-light);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     color: var(--text-muted);
-    font-style: italic;
 }
 
-.action-btn.edit {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    color: white;
+.obligations-table tbody tr:hover {
+    background: var(--bg-light);
 }
 
-.action-btn.edit:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-}
-</style>
-
-
-<style>
-.action-btn.edit {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    color: white;
+.obligation-title {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 0.25rem;
 }
 
-.action-btn.edit:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-}
-
-.action-btn.delete {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    color: white;
-}
-
-.action-btn.delete:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-}
-
-.value.unassigned {
+.obligation-desc {
+    font-size: 0.8rem;
     color: var(--text-muted);
-    font-style: italic;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
+/* Status Badge */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.625rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-initiated { background: #dbeafe; color: #1d4ed8; }
+.status-in-progress { background: #fef3c7; color: #b45309; }
+.status-pending { background: #fed7aa; color: #c2410c; }
+.status-awaiting { background: #e0e7ff; color: #4338ca; }
+.status-approved { background: #d1fae5; color: #047857; }
+.status-rejected { background: #fee2e2; color: #b91c1c; }
+.status-completed { background: #d1fae5; color: #047857; }
+.status-overdue { background: #fee2e2; color: #b91c1c; }
+
+/* Type Badge */
+.type-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.type-payment { background: #dcfce7; color: #166534; }
+.type-deliverable { background: #dbeafe; color: #1e40af; }
+.type-compliance { background: #fef3c7; color: #92400e; }
+.type-reporting { background: #e0e7ff; color: #4338ca; }
+.type-insurance { background: #fce7f3; color: #be185d; }
+.type-performance { background: #cffafe; color: #0e7490; }
+.type-other { background: #f3f4f6; color: #4b5563; }
+
+/* User Display */
+.user-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.user-name {
+    font-size: 0.85rem;
+    color: var(--text-dark);
+}
+
+/* Action Buttons in Table */
+.table-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    background: var(--bg-light);
+}
+
+.action-btn.edit:hover { color: var(--primary); border-color: var(--primary); }
+.action-btn.delete:hover { color: var(--danger); border-color: var(--danger); }
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    margin: 0 0 0.5rem;
+    color: var(--text-dark);
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-content.large {
+    max-width: 900px;
+}
+
+.modal-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header.gradient {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.modal-header.success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.modal-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.modal-close:hover {
+    opacity: 1;
+}
+
+.modal-body {
+    padding: 1.25rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-footer {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-dark);
+    margin-bottom: 0.375rem;
+}
+
+.form-label .required {
+    color: var(--danger);
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+textarea.form-control {
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* User Search */
 .user-search-container {
     position: relative;
 }
@@ -710,670 +512,509 @@
     left: 0;
     right: 0;
     background: white;
-    border: 1px solid var(--border-color);
-    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     max-height: 200px;
     overflow-y: auto;
-    z-index: 1000;
+    z-index: 10;
     display: none;
-    box-shadow: var(--shadow-lg);
+}
+
+.user-suggestions.active {
+    display: block;
 }
 
 .user-suggestion-item {
+    padding: 0.625rem 0.875rem;
+    cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem;
-    cursor: pointer;
-    transition: background-color 0.2s;
+    gap: 0.5rem;
+    transition: background 0.2s;
 }
 
 .user-suggestion-item:hover {
-    background-color: var(--bg-gray);
-}
-
-.user-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 0.875rem;
+    background: var(--bg-light);
 }
 
 .selected-user {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem;
-    background-color: var(--bg-gray);
-    border: 1px solid var(--border-color);
-    border-radius: 0.5rem;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-light);
+    border-radius: 8px;
+    margin-top: 0.5rem;
 }
 
-.selected-user .user-info {
-    flex: 1;
-}
-
-.selected-user .user-name {
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.selected-user .user-email {
-    font-size: 0.875rem;
+.selected-user .remove-user {
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
     color: var(--text-muted);
 }
 
-.remove-user {
-    padding: 0.25rem;
-    background: white;
-    border: 1px solid var(--border-color);
-    border-radius: 0.25rem;
+.selected-user .remove-user:hover {
+    color: var(--danger);
+}
+
+/* AI Obligations List */
+.ai-obligations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.ai-obligation-item {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
     cursor: pointer;
-    color: var(--text-secondary);
     transition: all 0.2s;
 }
 
-.remove-user:hover {
-    background-color: var(--danger-color);
-    color: white;
-    border-color: var(--danger-color);
-}
-
-.no-results,
-.error-message {
-    padding: 0.75rem;
-    text-align: center;
-    color: var(--text-muted);
-}
-
-
-.ai-obligation-item {
-    padding: 1rem;
-    background: white;
-    border-radius: 8px;
-    margin-bottom: 0.75rem;
-    border-left-width: 3px;
-    border-left-style: solid;
-    transition: all 0.2s ease;
-}
-
 .ai-obligation-item:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    transform: translateX(2px);
+    border-color: var(--primary);
 }
 
-.checkbox-container {
-    display: flex;
-    gap: 1rem;
-    align-items: flex-start;
-}
-
-.checkbox-container input[type="checkbox"] {
-    margin-top: 4px;
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
+.ai-obligation-item.selected {
+    border-color: var(--success);
+    background: rgba(16, 185, 129, 0.05);
 }
 
 .ai-obligation-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 0.5rem;
-    flex-wrap: wrap;
-    gap: 0.5rem;
 }
 
 .ai-obligation-title {
     font-weight: 600;
-    font-size: 0.95rem;
     color: var(--text-dark);
-    flex: 1;
-    min-width: 200px;
 }
 
-.ai-obligation-type {
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.ai-obligation-description {
+.ai-obligation-desc {
+    font-size: 0.85rem;
     color: var(--text-muted);
-    font-size: 0.875rem;
     line-height: 1.5;
-    margin-bottom: 0.5rem;
 }
 
-.ai-obligation-meta {
-    display: flex;
-    gap: 1rem;
-    font-size: 0.875rem;
-    color: var(--text-light);
-    margin-top: 0.5rem;
-}
-
-.ai-obligation-meta div {
+.checkbox-indicator {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--border);
+    border-radius: 4px;
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
 }
 
-.ai-obligation-meta i {
-    font-size: 1rem;
+.ai-obligation-item.selected .checkbox-indicator {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+}
+
+/* Preset Tabs */
+.preset-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.preset-tab {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: white;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.preset-tab.active {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.loading-overlay.active {
+    display: flex;
+}
+
+.loading-content {
+    text-align: center;
+}
+
+.loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
 }
 
 @keyframes spin {
-    from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
 
+/* Toast Notification */
+.toast-container {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 3000;
+}
 
+.toast {
+    padding: 0.875rem 1.25rem;
+    border-radius: 8px;
+    background: var(--text-dark);
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: slideIn 0.3s ease;
+}
+
+.toast.success { background: var(--success); }
+.toast.error { background: var(--danger); }
+.toast.warning { background: var(--warning); }
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Date Display */
+.date-display {
+    font-size: 0.85rem;
+    color: var(--text-dark);
+}
+
+.date-display.overdue {
+    color: var(--danger);
+    font-weight: 500;
+}
+
+.date-display.warning {
+    color: var(--warning);
+    font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .btn {
+        justify-content: center;
+    }
+    
+    .header-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}
 </style>
-
-
 {% endblock %}
 
 {% block content %}
 <div class="page-content">
-    <!-- Header -->
+    <!-- Page Header -->
     <div class="page-header">
         <div class="header-top">
             <h1 class="page-title">
-                <i class="ti ti-sparkles"></i>
-                Generate Obligations
+                <i class="ti ti-checklist"></i>
+                Manage Obligations
             </h1>
+            <a href="/contracts" class="back-btn">
+                <i class="ti ti-arrow-left"></i>
+                Back to Contracts
+            </a>
         </div>
-        <div class="contract-info" id="contractInfo">
+    </div>
+
+    <!-- Contract Info Card -->
+    <div class="contract-info-card" id="contractInfoCard">
+        <div class="contract-info-grid">
             <div class="info-item">
-                <i class="ti ti-file-text"></i>
-                <span>Loading contract details...</span>
+                <span class="info-label">Contract Number</span>
+                <span class="info-value" id="contractNumber">Loading...</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Contract Title</span>
+                <span class="info-value" id="contractTitle">Loading...</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Contract Type</span>
+                <span class="info-value" id="contractType">Loading...</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Status</span>
+                <span class="info-value" id="contractStatus">Loading...</span>
             </div>
         </div>
     </div>
 
     <!-- Action Buttons -->
     <div class="action-buttons">
-        <button class="btn btn-ai" onclick="generateAIObligations()" id="generateBtn">
+        <button class="btn btn-ai" onclick="openAIGenerateModal()" id="generateAIBtn">
             <i class="ti ti-sparkles"></i>
-            Generate Obligations
+            Generate Obligations (AI)
         </button>
-        <button class="btn btn-success" onclick="openNewObligationModal()" id="newObligationBtn">
+        <button class="btn btn-success" onclick="openNewObligationModal()">
             <i class="ti ti-plus"></i>
             New Obligation
         </button>
-        <button class="btn btn-info" onclick="openPresetModal()" id="presetBtn">
+        <button class="btn btn-info" onclick="openPresetModal()">
             <i class="ti ti-template"></i>
             Add from Preset
         </button>
-        <button class="btn btn-success" onclick="addSelectedObligations()" id="addBtn" style="display: none;">
-            <i class="ti ti-check"></i>
-            Add Selected to Database
-        </button>
-        <button class="btn btn-secondary" onclick="window.location.href='/obligations'">
-            <i class="ti ti-arrow-left"></i>
-            Back to Dashboard
+        <button class="btn btn-secondary" onclick="refreshObligations()">
+            <i class="ti ti-refresh"></i>
+            Refresh
         </button>
     </div>
 
-    <!-- Existing Obligations Section -->
-    <div id="existingObligationsSection" style="display: none;">
-        <div
-            style="background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);">
-            <h3
-                style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+    <!-- Obligations Table -->
+    <div class="obligations-card">
+        <div class="card-header">
+            <h2 class="card-title">
                 <i class="ti ti-list-check"></i>
-                Existing Obligations
-            </h3>
-            <div id="existingObligationsList"></div>
+                Contract Obligations
+                <span class="obligation-count" id="obligationCount">0</span>
+            </h2>
         </div>
-    </div>
-
-    <!-- Obligations Grid -->
-    <div id="obligationsContainer">
-        <div class="empty-state">
-            <i class="ti ti-file-search"></i>
-            <h3>No obligations generated yet</h3>
-            <p>Click "Generate Obligations" to analyze the contract and extract obligations automatically.</p>
+        <div class="table-container">
+            <table class="obligations-table">
+                <thead>
+                    <tr>
+                        <th style="width: 30%;">Obligation</th>
+                        <th>Type</th>
+                        <th>Owner</th>
+                        <th>Escalation</th>
+                        <th>Status</th>
+                        <th>Threshold</th>
+                        <th>Due Date</th>
+                        <th style="width: 100px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="obligationsTableBody">
+                    <!-- Obligations loaded dynamically -->
+                </tbody>
+            </table>
+        </div>
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <i class="ti ti-clipboard-off"></i>
+            <h3>No Obligations Found</h3>
+            <p>Generate obligations using AI, add manually, or select from presets.</p>
         </div>
     </div>
 </div>
 
-<!-- AI Obligations Modal -->
-<div class="modal" id="aiObligationsModal">
-    <div class="modal-content" style="max-width: 1200px;">
-        <div class="modal-header"
-            style="position: sticky; top: 0; z-index: 10; background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
-            <h3 class="modal-title" style="color: white;">
+<!-- AI Generate Modal -->
+<div class="modal-overlay" id="aiGenerateModal">
+    <div class="modal-content large">
+        <div class="modal-header gradient">
+            <h3 class="modal-title">
                 <i class="ti ti-sparkles"></i>
                 AI-Generated Obligations
             </h3>
-            <button class="modal-close" style="color: white; border-color: rgba(255,255,255,0.3);"
-                onclick="closeAIModal()">
+            <button class="modal-close" onclick="closeModal('aiGenerateModal')">
                 <i class="ti ti-x"></i>
             </button>
         </div>
-        <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-            <div class="info-box">
-                <i class="ti ti-info-circle"></i>
-                <div>
-                    <strong>Review AI-Generated Obligations</strong>
-                    <p style="margin: 0.5rem 0 0 0; color: var(--text-muted);">
-                        Click on cards to select/deselect. Click the edit icon to assign owners, set dates, or modify
-                        details.
-                    </p>
-                </div>
+        <div class="modal-body" id="aiModalBody">
+            <div class="info-box" style="background: #eff6ff; border: 1px solid #3b82f6; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                <p style="margin: 0; color: #1e40af; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="ti ti-info-circle"></i>
+                    Click "Analyze Contract" to extract obligations using AI. Review and select which ones to add.
+                </p>
             </div>
-
-            <div id="aiObligationsGrid"></div>
-
-            <div class="summary-section">
-                <div class="summary-row">
-                    <span class="summary-label">Selected Obligations:</span>
-                    <span class="summary-value" id="aiSelectedCount">0 / 0</span>
-                </div>
-                <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
-                    Click "Add Selected to Database" to save selected obligations.
-                </div>
+            <div id="aiObligationsList" class="ai-obligations-list">
+                <!-- AI obligations will be loaded here -->
             </div>
         </div>
-        <div class="modal-footer"
-            style="position: sticky; bottom: 0; background: white; border-top: 1px solid var(--border-color);">
-            <button class="btn btn-secondary" onclick="closeAIModal()">
-                <i class="ti ti-x"></i> Cancel
+        <div class="modal-footer" id="aiModalFooter">
+            <button class="btn btn-secondary" onclick="closeModal('aiGenerateModal')">Cancel</button>
+            <button class="btn btn-ai" onclick="analyzeContract()" id="analyzeBtn">
+                <i class="ti ti-sparkles"></i>
+                Analyze Contract
             </button>
-            <button class="btn btn-success" onclick="addSelectedAIObligations()">
-                <i class="ti ti-check"></i> Add Selected to Database
+            <button class="btn btn-success" onclick="addSelectedAIObligations()" id="addAIBtn" style="display: none;">
+                <i class="ti ti-check"></i>
+                Add Selected (<span id="selectedCount">0</span>)
             </button>
         </div>
     </div>
 </div>
 
-<!-- Edit Obligation Modal -->
-<div class="modal" id="editModal">
+<!-- New Obligation Modal -->
+<div class="modal-overlay" id="newObligationModal">
     <div class="modal-content">
-        <div class="modal-header" style="position: sticky; top: 0; z-index: 10;">
+        <div class="modal-header">
             <h3 class="modal-title">
-                <i class="ti ti-edit"></i>
-                Edit Obligation
+                <i class="ti ti-plus-circle"></i>
+                <span id="obligationModalTitle">New Obligation</span>
             </h3>
-            <button class="modal-close" onclick="closeEditModal()">
-                <i class="ti ti-x"></i>
-            </button>
-        </div>
-        <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-            <form id="editForm" onsubmit="saveObligationEdit(event)">
-                <div class="form-group">
-                    <label class="form-label">Title</label>
-                    <input type="text" class="form-control" id="editTitle" required>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Description</label>
-                    <textarea class="form-control" id="editDescription" rows="3" required></textarea>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Category</label>
-                        <select class="form-control" id="editCategory">
-                            <option value="payment">Payment</option>
-                            <option value="delivery">Delivery</option>
-                            <option value="compliance">Compliance</option>
-                            <option value="reporting">Reporting</option>
-                            <option value="maintenance">Maintenance</option>
-                            <option value="insurance">Insurance</option>
-                            <option value="coordination">Coordination</option>
-                            <option value="inspection">Inspection</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Priority</label>
-                        <select class="form-control" id="editPriority">
-                            <option value="high">High</option>
-                            <option value="medium">Medium</option>
-                            <option value="low">Low</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Owner (Search by Email)</label>
-                    <div class="user-search-container">
-                        <input type="text" class="form-control" id="ownerSearch"
-                            placeholder="Type email to search users..." oninput="searchUsers('owner')"
-                            autocomplete="off">
-                        <div class="user-suggestions" id="ownerSuggestions"></div>
-                    </div>
-                    <div id="selectedOwner" style="display: none;"></div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Escalation To (Search by Email)</label>
-                    <div class="user-search-container">
-                        <input type="text" class="form-control" id="escalationSearch"
-                            placeholder="Type email to search users..." oninput="searchUsers('escalation')"
-                            autocomplete="off">
-                        <div class="user-suggestions" id="escalationSuggestions"></div>
-                    </div>
-                    <div id="selectedEscalation" style="display: none;"></div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Threshold Date</label>
-                        <input type="date" class="form-control" id="editThresholdDate">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Due Date</label>
-                        <input type="date" class="form-control" id="editDueDate">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Source Clause</label>
-                    <input type="text" class="form-control" id="editClause" disabled>
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">
-                        <i class="ti ti-x"></i> Cancel
-                    </button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="ti ti-check"></i> Save Changes
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-
-<!-- Edit Obligation Modal -->
-<div class="modal" id="editObligationModal">
-    <div class="modal-content" style="max-width: 800px;">
-        <div class="modal-header" style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white;">
-            <h3 class="modal-title" style="color: white;">
-                <i class="ti ti-edit"></i>
-                Edit Obligation
-            </h3>
-            <button class="modal-close" style="color: white; border-color: rgba(255,255,255,0.3);" onclick="closeEditModal()">
+            <button class="modal-close" onclick="closeModal('newObligationModal')">
                 <i class="ti ti-x"></i>
             </button>
         </div>
         <div class="modal-body">
-            <form id="editObligationForm" onsubmit="saveEditedObligation(event)">
+            <form id="obligationForm">
                 <input type="hidden" id="editObligationId">
-
+                
                 <div class="form-group">
-                    <label class="form-label">
-                        Obligation Title <span style="color: var(--danger-color);">*</span>
-                    </label>
-                    <input type="text" class="form-control" id="editObligationTitle" required
-                        placeholder="Enter obligation title">
+                    <label class="form-label">Obligation Title <span class="required">*</span></label>
+                    <input type="text" class="form-control" id="obligationTitle" required 
+                           placeholder="Enter obligation title">
                 </div>
-
+                
                 <div class="form-group">
                     <label class="form-label">Description</label>
-                    <textarea class="form-control" id="editObligationDescription" rows="3"
-                        placeholder="Enter detailed description"></textarea>
+                    <textarea class="form-control" id="obligationDescription" 
+                              placeholder="Enter detailed description"></textarea>
                 </div>
-
+                
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">Type</label>
-                        <select class="form-control" id="editObligationType">
+                        <label class="form-label">Obligation Type <span class="required">*</span></label>
+                        <select class="form-control" id="obligationType" required>
+                            <option value="">Select Type</option>
                             <option value="payment">Payment</option>
                             <option value="deliverable">Deliverable</option>
                             <option value="compliance">Compliance</option>
                             <option value="reporting">Reporting</option>
-                            <option value="maintenance">Maintenance</option>
                             <option value="insurance">Insurance</option>
+                            <option value="performance">Performance</option>
                             <option value="coordination">Coordination</option>
-                            <option value="inspection">Inspection</option>
+                            <option value="indemnification">Indemnification</option>
+                            <option value="timely_completion">Timely Completion</option>
                             <option value="other">Other</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Priority</label>
-                        <select class="form-control" id="editObligationPriority">
-                            <option value="high">High</option>
-                            <option value="medium">Medium</option>
-                            <option value="low">Low</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Status</label>
-                    <select class="form-control" id="editObligationStatus">
-                        <option value="initiated">Initiated</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="pending_details">Pending Details</option>
-                        <option value="awaiting_approval">Awaiting Approval</option>
-                        <option value="completed">Completed</option>
-                        <option value="rejected">Rejected</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Owner (Search by Email)</label>
-                    <div class="user-search-container">
-                        <input type="text" class="form-control" id="editOwnerSearch"
-                            placeholder="Type email to search users..." oninput="searchEditUsers('owner')"
-                            autocomplete="off">
-                        <div class="user-suggestions" id="editOwnerSuggestions"></div>
-                    </div>
-                    <div id="editSelectedOwner" style="display: none;"></div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Escalation To (Search by Email)</label>
-                    <div class="user-search-container">
-                        <input type="text" class="form-control" id="editEscalationSearch"
-                            placeholder="Type email to search users..." oninput="searchEditUsers('escalation')"
-                            autocomplete="off">
-                        <div class="user-suggestions" id="editEscalationSuggestions"></div>
-                    </div>
-                    <div id="editSelectedEscalation" style="display: none;"></div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Threshold Date</label>
-                        <input type="date" class="form-control" id="editThresholdDate">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Due Date <span style="color: var(--danger-color);">*</span></label>
-                        <input type="date" class="form-control" id="editDueDate" required>
-                    </div>
-                </div>
-
-                <div class="modal-footer" style="margin-top: 1.5rem;">
-                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">
-                        <i class="ti ti-x"></i> Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="ti ti-check"></i> Update Obligation
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-
-<!-- New Obligation Modal -->
-<div class="modal" id="newObligationModal">
-    <div class="modal-content">
-        <div class="modal-header" style="position: sticky; top: 0; z-index: 10;">
-            <h3 class="modal-title">
-                <i class="ti ti-plus"></i>
-                Create New Obligation
-            </h3>
-            <button class="modal-close" onclick="closeNewObligationModal()">
-                <i class="ti ti-x"></i>
-            </button>
-        </div>
-        <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-            <form id="newObligationForm" onsubmit="saveNewObligation(event)">
-                <div class="form-group">
-                    <label class="form-label">Title <span style="color: var(--danger-color);">*</span></label>
-                    <input type="text" class="form-control" id="newTitle" required>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Description</label>
-                    <textarea class="form-control" id="newDescription" rows="3"></textarea>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Category</label>
-                        <select class="form-control" id="newCategory">
-                            <option value="payment">Payment</option>
-                            <option value="delivery">Delivery</option>
-                            <option value="compliance">Compliance</option>
-                            <option value="reporting">Reporting</option>
-                            <option value="maintenance">Maintenance</option>
-                            <option value="insurance">Insurance</option>
-                            <option value="coordination">Coordination</option>
-                            <option value="inspection">Inspection</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Status</label>
-                        <select class="form-control" id="newStatus">
+                        <label class="form-label">Status <span class="required">*</span></label>
+                        <select class="form-control" id="obligationStatus" required>
                             <option value="initiated">Initiated</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="pending_details">Pending Details</option>
-                            <option value="awaiting_approval">Awaiting Approval</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="pending">Pending Details</option>
+                            <option value="awaiting">Awaiting Approval</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
                             <option value="completed">Completed</option>
                         </select>
                     </div>
                 </div>
-
-                <div class="form-group">
-                    <label class="form-label">Owner (Search by Email)</label>
-                    <div class="user-search-container">
-                        <input type="text" class="form-control" id="newOwnerSearch"
-                            placeholder="Type email to search users..." oninput="searchUsersNew('owner')"
-                            autocomplete="off">
-                        <div class="user-suggestions" id="newOwnerSuggestions"></div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Owner</label>
+                        <div class="user-search-container">
+                            <input type="text" class="form-control" id="ownerSearch" 
+                                   placeholder="Search user..." autocomplete="off">
+                            <input type="hidden" id="ownerUserId">
+                            <div class="user-suggestions" id="ownerSuggestions"></div>
+                        </div>
+                        <div class="selected-user" id="selectedOwner" style="display: none;"></div>
                     </div>
-                    <div id="newSelectedOwner" style="display: none;"></div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Escalation To (Search by Email)</label>
-                    <div class="user-search-container">
-                        <input type="text" class="form-control" id="newEscalationSearch"
-                            placeholder="Type email to search users..." oninput="searchUsersNew('escalation')"
-                            autocomplete="off">
-                        <div class="user-suggestions" id="newEscalationSuggestions"></div>
+                    <div class="form-group">
+                        <label class="form-label">Escalation Contact</label>
+                        <div class="user-search-container">
+                            <input type="text" class="form-control" id="escalationSearch" 
+                                   placeholder="Search user..." autocomplete="off">
+                            <input type="hidden" id="escalationUserId">
+                            <div class="user-suggestions" id="escalationSuggestions"></div>
+                        </div>
+                        <div class="selected-user" id="selectedEscalation" style="display: none;"></div>
                     </div>
-                    <div id="newSelectedEscalation" style="display: none;"></div>
                 </div>
-
+                
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Threshold Date</label>
-                        <input type="date" class="form-control" id="newThresholdDate">
+                        <input type="date" class="form-control" id="thresholdDate">
+                        <small style="color: var(--text-muted);">Reminder will be sent on this date</small>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Due Date <span style="color: var(--danger-color);">*</span></label>
-                        <input type="date" class="form-control" id="newDueDate" required>
+                        <label class="form-label">Due Date <span class="required">*</span></label>
+                        <input type="date" class="form-control" id="dueDate" required>
+                        <small style="color: var(--text-muted);">Escalation triggered if breached</small>
                     </div>
                 </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeNewObligationModal()">
-                        <i class="ti ti-x"></i> Cancel
-                    </button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="ti ti-check"></i> Create Obligation
-                    </button>
-                </div>
             </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('newObligationModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="saveObligation()">
+                <i class="ti ti-check"></i>
+                Save Obligation
+            </button>
         </div>
     </div>
 </div>
 
 <!-- Preset Obligations Modal -->
-<div class="modal" id="presetModal">
-    <div class="modal-content" style="max-width: 1000px;">
-        <div class="modal-header"
-            style="position: sticky; top: 0; z-index: 10; background: linear-gradient(135deg, #10b981, #059669); color: white;">
-            <h3 class="modal-title" style="color: white;">
+<div class="modal-overlay" id="presetModal">
+    <div class="modal-content large">
+        <div class="modal-header success">
+            <h3 class="modal-title">
                 <i class="ti ti-template"></i>
-                Preset Obligations Templates
+                Preset Obligations
             </h3>
-            <button class="modal-close" style="color: white; border-color: rgba(255,255,255,0.3);"
-                onclick="closePresetModal()">
+            <button class="modal-close" onclick="closeModal('presetModal')">
                 <i class="ti ti-x"></i>
             </button>
         </div>
-        <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-            <div class="info-box" style="margin-bottom: 1.5rem;">
-                <i class="ti ti-info-circle"></i>
-                <div>
-                    <strong>Select Preset Obligations</strong>
-                    <p style="margin: 0.5rem 0 0 0; color: var(--text-muted);">
-                        These are common obligations based on your contract type. Select the ones you need and they'll
-                        be added to your contract.
-                    </p>
-                </div>
-            </div>
-
-            <!-- Profile Type Tabs -->
-            <div
-                style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-color); overflow-x: auto;">
-                <button class="preset-tab active" data-profile="client" onclick="switchPresetProfile('client')">
-                    Client
+        <div class="modal-body">
+            <div class="preset-tabs">
+                <button class="preset-tab active" onclick="switchPresetTab('client')" data-tab="client">
+                    <i class="ti ti-building"></i> Client/Contractor
                 </button>
-                <button class="preset-tab" data-profile="consultant" onclick="switchPresetProfile('consultant')">
-                    Consultant
-                </button>
-                <button class="preset-tab" data-profile="contractor" onclick="switchPresetProfile('contractor')">
-                    Contractor
-                </button>
-                <button class="preset-tab" data-profile="sub_contractor"
-                    onclick="switchPresetProfile('sub_contractor')">
-                    Sub-Contractor
+                <button class="preset-tab" onclick="switchPresetTab('subcontractor')" data-tab="subcontractor">
+                    <i class="ti ti-users"></i> Sub-Contractor
                 </button>
             </div>
-
-            <!-- Preset Obligations List -->
-            <div id="presetObligationsList" style="max-height: 400px; overflow-y: auto;">
-                <!-- Will be populated by JavaScript -->
+            <div id="presetObligationsList" class="ai-obligations-list">
+                <!-- Preset obligations loaded here -->
             </div>
-
-            <div class="modal-footer">
-                <div style="flex: 1;">
-                    <span id="presetSelectedCount" style="font-weight: 600; color: var(--primary-color);">0
-                        selected</span>
-                </div>
-                <button class="btn btn-secondary" onclick="closePresetModal()">
-                    <i class="ti ti-x"></i> Cancel
-                </button>
-                <button class="btn btn-success" onclick="addPresetObligations()">
-                    <i class="ti ti-check"></i> Add Selected Presets
-                </button>
-            </div>
-
-
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('presetModal')">Cancel</button>
+            <button class="btn btn-success" onclick="addSelectedPresets()" id="addPresetsBtn">
+                <i class="ti ti-check"></i>
+                Add Selected (<span id="presetSelectedCount">0</span>)
+            </button>
         </div>
     </div>
 </div>
@@ -1381,1917 +1022,733 @@
 <!-- Loading Overlay -->
 <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-content">
-        <div class="spinner"></div>
-        <p id="loadingMessage">Processing...</p>
-        <small id="loadingSubtext"></small>
+        <div class="loading-spinner"></div>
+        <p id="loadingText">Loading...</p>
     </div>
 </div>
 
-<!-- Toast Notification -->
-<div class="toast" id="toast">
-    <i class="toast-icon ti ti-check-circle"></i>
-    <div class="toast-message" id="toastMessage">Success!</div>
-</div>
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
 
+{% endblock %}
+
+{% block extra_js %}
 <script>
-    // =====================================================
-    // GLOBAL VARIABLES
-    // =====================================================
-    const contractId = {{ contract_id }};
-    let aiObligations = [];
-    let selectedObligations = new Set();
-    let currentEditIndex = null;
-    let selectedOwner = null;
-    let selectedEscalation = null;
-    let newSelectedOwner = null;
-    let newSelectedEscalation = null;
-    let searchTimeout = null;
-    let existingObligations = [];
-    let currentPresetProfile = 'client';
-    let selectedPresets = new Set();
+// =====================================================
+// GLOBAL VARIABLES
+// =====================================================
+const contractId = {{ contract_id }};
+const API_BASE = '/api/obligations';
+let obligations = [];
+let users = [];
+let selectedAIObligations = new Set();
+let selectedPresets = new Set();
+let currentPresetTab = 'client';
+let aiGeneratedObligations = [];
 
-    // Preset Obligations Templates
-    const presetObligations = {
-        client: [
-            {
-                id: 'client_1',
-                title: 'Payment',
-                description: 'Timely payment for the work completed as per the agreed terms.',
-                category: 'payment',
-                priority: 'high'
-            },
-            {
-                id: 'client_2',
-                title: 'Provision of Information',
-                description: 'Provide necessary information and resources for the contractor to complete the work.',
-                category: 'coordination',
-                priority: 'medium'
-            },
-            {
-                id: 'client_3',
-                title: 'Coordination',
-                description: 'Facilitate coordination with other contractors or stakeholders as needed.',
-                category: 'coordination',
-                priority: 'medium'
-            },
-            {
-                id: 'client_4',
-                title: 'Inspection and Acceptance',
-                description: 'Conduct inspections of the work and accept it according to the agreement terms.',
-                category: 'inspection',
-                priority: 'high'
-            },
-            {
-                id: 'client_5',
-                title: 'Access to Site',
-                description: 'Provide timely access to work site and necessary facilities.',
-                category: 'coordination',
-                priority: 'high'
-            }
-        ],
-        consultant: [
-            {
-                id: 'consultant_1',
-                title: 'Professional Services Delivery',
-                description: 'Deliver professional consulting services as per the scope of work.',
-                category: 'delivery',
-                priority: 'high'
-            },
-            {
-                id: 'consultant_2',
-                title: 'Progress Reporting',
-                description: 'Submit regular progress reports and updates to the client.',
-                category: 'reporting',
-                priority: 'medium'
-            },
-            {
-                id: 'consultant_3',
-                title: 'Professional Indemnity Insurance',
-                description: 'Maintain adequate professional indemnity insurance coverage.',
-                category: 'insurance',
-                priority: 'high'
-            },
-            {
-                id: 'consultant_4',
-                title: 'Quality Assurance',
-                description: 'Ensure all deliverables meet agreed quality standards.',
-                category: 'compliance',
-                priority: 'high'
-            },
-            {
-                id: 'consultant_5',
-                title: 'Confidentiality',
-                description: 'Maintain confidentiality of client information and project details.',
-                category: 'compliance',
-                priority: 'high'
-            }
-        ],
-        contractor: [
-            {
-                id: 'contractor_1',
-                title: 'Performance of Work',
-                description: 'Complete the specified work as detailed in the agreement.',
-                category: 'delivery',
-                priority: 'high'
-            },
-            {
-                id: 'contractor_2',
-                title: 'Adherence to Standards',
-                description: 'Meet industry standards and any specific quality requirements.',
-                category: 'compliance',
-                priority: 'high'
-            },
-            {
-                id: 'contractor_3',
-                title: 'Compliance with Laws',
-                description: 'Follow all applicable laws, regulations, and safety standards.',
-                category: 'compliance',
-                priority: 'high'
-            },
-            {
-                id: 'contractor_4',
-                title: 'Timely Completion',
-                description: 'Deliver work within the agreed timeline and notify of any potential delays.',
-                category: 'delivery',
-                priority: 'high'
-            },
-            {
-                id: 'contractor_5',
-                title: 'Progress Reporting',
-                description: 'Provide regular updates on progress and any issues encountered.',
-                category: 'reporting',
-                priority: 'medium'
-            },
-            {
-                id: 'contractor_6',
-                title: 'Insurance Coverage',
-                description: 'Maintain appropriate insurance coverage (liability, workers compensation, etc.).',
-                category: 'insurance',
-                priority: 'high'
-            },
-            {
-                id: 'contractor_7',
-                title: 'Performance Bond',
-                description: 'Provide and maintain performance bond as per contractual requirements.',
-                category: 'insurance',
-                priority: 'high'
-            }
-        ],
-        sub_contractor: [
-            {
-                id: 'sub_1',
-                title: 'Performance of Work',
-                description: 'Complete the specified work as detailed in the agreement.',
-                category: 'delivery',
-                priority: 'high'
-            },
-            {
-                id: 'sub_2',
-                title: 'Adherence to Standards',
-                description: 'Meet industry standards and any specific quality requirements.',
-                category: 'compliance',
-                priority: 'high'
-            },
-            {
-                id: 'sub_3',
-                title: 'Compliance with Laws',
-                description: 'Follow all applicable laws, regulations, and safety standards.',
-                category: 'compliance',
-                priority: 'high'
-            },
-            {
-                id: 'sub_4',
-                title: 'Timely Completion',
-                description: 'Deliver work within the agreed timeline and notify of any potential delays.',
-                category: 'delivery',
-                priority: 'high'
-            },
-            {
-                id: 'sub_5',
-                title: 'Reporting',
-                description: 'Provide regular updates on progress and any issues encountered.',
-                category: 'reporting',
-                priority: 'medium'
-            },
-            {
-                id: 'sub_6',
-                title: 'Subcontracting Limits',
-                description: 'Not subcontract further without the primary contractor\'s consent.',
-                category: 'compliance',
-                priority: 'high'
-            },
-            {
-                id: 'sub_7',
-                title: 'Insurance',
-                description: 'Maintain appropriate insurance coverage (liability, workers\' compensation, etc.).',
-                category: 'insurance',
-                priority: 'high'
-            },
-            {
-                id: 'sub_8',
-                title: 'Indemnification',
-                description: 'Hold the primary contractor harmless from any claims arising from the subcontractor\'s work.',
-                category: 'compliance',
-                priority: 'high'
-            },
-            {
-                id: 'sub_9',
-                title: 'Payment Terms',
-                description: 'Comply with the agreed payment terms and conditions.',
-                category: 'payment',
-                priority: 'high'
-            },
-            {
-                id: 'sub_10',
-                title: 'Compliance with Contractual Terms',
-                description: 'Ensure that the overall project complies with the terms of the main contract with client in back to back basis.',
-                category: 'compliance',
-                priority: 'high'
-            }
-        ]
-    };
+// Preset Obligations Data
+const presetObligations = {
+    client: [
+        { id: 'c1', title: 'Payment', description: 'Timely payment for the work completed as per the agreed terms.', type: 'payment' },
+        { id: 'c2', title: 'Provision of Information', description: 'Provide necessary information and resources for the subcontractor to complete the work.', type: 'coordination' },
+        { id: 'c3', title: 'Coordination', description: 'Facilitate coordination with other Sub-contractors or stakeholders as needed.', type: 'coordination' },
+        { id: 'c4', title: 'Support', description: 'Offer reasonable support and assistance to the subcontractor.', type: 'coordination' },
+        { id: 'c5', title: 'Inspection and Acceptance', description: 'Conduct inspections of the work and accept it according to the agreement terms.', type: 'compliance' },
+        { id: 'c6', title: 'Dispute Resolution', description: 'Establish a process for resolving disputes that may arise (mutual resolution, mediation, Arbitration).', type: 'compliance' },
+        { id: 'c7', title: 'Compliance with Contractual Terms', description: 'Ensure that the overall project complies with the terms of the main contract with client.', type: 'compliance' }
+    ],
+    subcontractor: [
+        { id: 's1', title: 'Performance of Work', description: 'Complete the specified work as detailed in the agreement.', type: 'deliverable' },
+        { id: 's2', title: 'Adherence to Standards', description: 'Meet industry standards and any specific quality requirements.', type: 'compliance' },
+        { id: 's3', title: 'Compliance with Laws', description: 'Follow all applicable laws, regulations, and safety standards.', type: 'compliance' },
+        { id: 's4', title: 'Timely Completion', description: 'Deliver work within the agreed timeline and notify of any potential delays.', type: 'timely_completion' },
+        { id: 's5', title: 'Reporting', description: 'Provide regular updates on progress and any issues encountered.', type: 'reporting' },
+        { id: 's6', title: 'Subcontracting Limits', description: 'Not subcontract further without the primary contractor\'s consent.', type: 'compliance' },
+        { id: 's7', title: 'Bonds and Guarantee', description: 'Maintain Bonds and Guarantees as per contractual requirement.', type: 'insurance' },
+        { id: 's8', title: 'Insurance', description: 'Maintain appropriate insurance coverage (liability, workers\' compensation, etc.).', type: 'insurance' },
+        { id: 's9', title: 'Indemnification', description: 'Hold the primary contractor harmless from any claims arising from the subcontractor\'s work.', type: 'indemnification' },
+        { id: 's10', title: 'Payment Terms', description: 'Comply with the agreed payment terms and conditions (milestones, if any).', type: 'payment' },
+        { id: 's11', title: 'Confidentiality', description: 'Keep sensitive information confidential as stipulated in the agreement.', type: 'compliance' },
+        { id: 's12', title: 'Compliance with Contractual Terms', description: 'Ensure that the overall project complies with the terms of the Agreement.', type: 'compliance' },
+        { id: 's13', title: 'Sub-Contractor Responsibility', description: 'Strictly abide with all sub-contractor responsibility as per agreement.', type: 'compliance' }
+    ]
+};
 
+// =====================================================
+// INITIALIZATION
+// =====================================================
+document.addEventListener('DOMContentLoaded', function() {
+    loadContractDetails();
+    loadObligations();
+    loadUsers();
+    setupUserSearch();
+});
 
-
-
-
-    async function loadUsers() {
-        try {
-            const response = await fetch('/api/users');
-            if (!response.ok) throw new Error('Failed to load users');
-            allUsers = await response.json();
-        } catch (error) {
-            console.error('Error loading users:', error);
-        }
-    }
-
-
-    // =====================================================
-    // CONTRACT DETAILS
-    // =====================================================
-    async function loadContractDetails() {
-        try {
-            const response = await fetch(`/api/contracts/${contractId}`, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) throw new Error('Failed to load contract');
-
-            const data = await response.json();
-            const contract = data.data || data;
-
-            document.getElementById('contractInfo').innerHTML = `
-            <div class="info-item">
-                <i class="ti ti-file-text"></i>
-                <span><strong>${contract.contract_number}</strong></span>
-            </div>
-            <div class="info-item">
-                <i class="ti ti-tag"></i>
-                <span>${contract.contract_title}</span>
-            </div>
-            <div class="info-item">
-                <i class="ti ti-category"></i>
-                <span>${contract.contract_type || 'N/A'}</span>
-            </div>
-        `;
-        } catch (error) {
-            console.error('Error loading contract:', error);
-            showToast('Failed to load contract details', 'error');
-        }
-    }
-
-    // =====================================================
-    // AI GENERATION
-    // =====================================================
-async function generateAIObligations() {
-    const body = document.getElementById('aiGenerateBody');
-    const footer = document.getElementById('aiGenerateFooter');
-    
-    // Show loading state
-    body.innerHTML = '<p style="text-align: center;"><i class="ti ti-loader" style="animation: spin 1s linear infinite;"></i> Analyzing contract and extracting obligations...</p>';
-    footer.style.display = 'none';
-
+// =====================================================
+// API FUNCTIONS
+// =====================================================
+async function loadContractDetails() {
     try {
-        console.log(`🤖 Generating AI obligations for contract ${obligationContractId}`);
+        const response = await fetch(`/api/contracts/${contractId}`);
+        if (!response.ok) throw new Error('Failed to load contract');
+        const contract = await response.json();
         
-        const response = await fetch(`${API_BASE}/generate-ai/${obligationContractId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
+        document.getElementById('contractNumber').textContent = contract.contract_number || 'N/A';
+        document.getElementById('contractTitle').textContent = contract.contract_title || 'N/A';
+        document.getElementById('contractType').textContent = contract.contract_type || 'N/A';
+        document.getElementById('contractStatus').textContent = contract.status || 'N/A';
+    } catch (error) {
+        console.error('Error loading contract:', error);
+        showToast('Failed to load contract details', 'error');
+    }
+}
 
+async function loadObligations() {
+    showLoading(true, 'Loading obligations...');
+    try {
+        const response = await fetch(`${API_BASE}/?contract_id=${contractId}`);
+        if (!response.ok) throw new Error('Failed to load obligations');
+        
+        const data = await response.json();
+        obligations = Array.isArray(data) ? data : (data.obligations || []);
+        renderObligations();
+    } catch (error) {
+        console.error('Error loading obligations:', error);
+        showToast('Failed to load obligations', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function loadUsers() {
+    try {
+        const response = await fetch('/api/users/company');
+        if (!response.ok) throw new Error('Failed to load users');
+        const data = await response.json();
+        users = data.users || [];
+    } catch (error) {
+        console.error('Error loading users:', error);
+    }
+}
+
+function refreshObligations() {
+    loadObligations();
+}
+
+// =====================================================
+// RENDER FUNCTIONS
+// =====================================================
+function renderObligations() {
+    const tbody = document.getElementById('obligationsTableBody');
+    const emptyState = document.getElementById('emptyState');
+    const countEl = document.getElementById('obligationCount');
+    
+    countEl.textContent = obligations.length;
+    
+    if (obligations.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.style.display = 'block';
+        document.querySelector('.table-container').style.display = 'none';
+        return;
+    }
+    
+    emptyState.style.display = 'none';
+    document.querySelector('.table-container').style.display = 'block';
+    
+    tbody.innerHTML = obligations.map(obl => `
+        <tr data-id="${obl.id}">
+            <td>
+                <div class="obligation-title">${escapeHtml(obl.obligation_title)}</div>
+                <div class="obligation-desc">${escapeHtml(obl.description || '')}</div>
+            </td>
+            <td>
+                <span class="type-badge type-${obl.obligation_type || 'other'}">
+                    ${formatType(obl.obligation_type)}
+                </span>
+            </td>
+            <td>${renderUser(obl.owner_user_id, obl.owner_name)}</td>
+            <td>${renderUser(obl.escalation_user_id, obl.escalation_name)}</td>
+            <td>
+                <span class="status-badge status-${obl.status || 'initiated'}">
+                    ${formatStatus(obl.status)}
+                </span>
+            </td>
+            <td>${formatDate(obl.threshold_date)}</td>
+            <td>${formatDueDate(obl.due_date)}</td>
+            <td>
+                <div class="table-actions">
+                    <button class="action-btn edit" onclick="editObligation(${obl.id})" title="Edit">
+                        <i class="ti ti-pencil"></i>
+                    </button>
+                    <button class="action-btn delete" onclick="deleteObligation(${obl.id})" title="Delete">
+                        <i class="ti ti-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function renderUser(userId, userName) {
+    if (!userId && !userName) return '<span style="color: var(--text-muted);">Not assigned</span>';
+    
+    const name = userName || 'Unknown';
+    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    
+    return `
+        <div class="user-display">
+            <div class="user-avatar">${initials}</div>
+            <span class="user-name">${escapeHtml(name)}</span>
+        </div>
+    `;
+}
+
+// =====================================================
+// MODAL FUNCTIONS
+// =====================================================
+function openModal(modalId) {
+    document.getElementById(modalId).classList.add('active');
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+}
+
+function openNewObligationModal() {
+    document.getElementById('obligationModalTitle').textContent = 'New Obligation';
+    document.getElementById('obligationForm').reset();
+    document.getElementById('editObligationId').value = '';
+    document.getElementById('ownerUserId').value = '';
+    document.getElementById('escalationUserId').value = '';
+    document.getElementById('selectedOwner').style.display = 'none';
+    document.getElementById('selectedEscalation').style.display = 'none';
+    document.getElementById('ownerSearch').style.display = 'block';
+    document.getElementById('escalationSearch').style.display = 'block';
+    openModal('newObligationModal');
+}
+
+function editObligation(id) {
+    const obl = obligations.find(o => o.id === id);
+    if (!obl) return;
+    
+    document.getElementById('obligationModalTitle').textContent = 'Edit Obligation';
+    document.getElementById('editObligationId').value = id;
+    document.getElementById('obligationTitle').value = obl.obligation_title || '';
+    document.getElementById('obligationDescription').value = obl.description || '';
+    document.getElementById('obligationType').value = obl.obligation_type || '';
+    document.getElementById('obligationStatus').value = obl.status || 'initiated';
+    document.getElementById('thresholdDate').value = obl.threshold_date ? obl.threshold_date.split('T')[0] : '';
+    document.getElementById('dueDate').value = obl.due_date ? obl.due_date.split('T')[0] : '';
+    
+    // Set owner
+    if (obl.owner_user_id) {
+        document.getElementById('ownerUserId').value = obl.owner_user_id;
+        setSelectedUser('owner', obl.owner_user_id, obl.owner_name);
+    } else {
+        document.getElementById('ownerUserId').value = '';
+        document.getElementById('selectedOwner').style.display = 'none';
+        document.getElementById('ownerSearch').style.display = 'block';
+    }
+    
+    // Set escalation
+    if (obl.escalation_user_id) {
+        document.getElementById('escalationUserId').value = obl.escalation_user_id;
+        setSelectedUser('escalation', obl.escalation_user_id, obl.escalation_name);
+    } else {
+        document.getElementById('escalationUserId').value = '';
+        document.getElementById('selectedEscalation').style.display = 'none';
+        document.getElementById('escalationSearch').style.display = 'block';
+    }
+    
+    openModal('newObligationModal');
+}
+
+async function saveObligation() {
+    const form = document.getElementById('obligationForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const editId = document.getElementById('editObligationId').value;
+    const isEdit = !!editId;
+    
+    const payload = {
+        contract_id: contractId,
+        obligation_title: document.getElementById('obligationTitle').value.trim(),
+        description: document.getElementById('obligationDescription').value.trim(),
+        obligation_type: document.getElementById('obligationType').value,
+        status: document.getElementById('obligationStatus').value,
+        owner_user_id: document.getElementById('ownerUserId').value || null,
+        escalation_user_id: document.getElementById('escalationUserId').value || null,
+        threshold_date: document.getElementById('thresholdDate').value || null,
+        due_date: document.getElementById('dueDate').value || null
+    };
+    
+    showLoading(true, isEdit ? 'Updating obligation...' : 'Creating obligation...');
+    
+    try {
+        const url = isEdit ? `${API_BASE}/${editId}` : `${API_BASE}/`;
+        const method = isEdit ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to save obligation');
+        }
+        
+        showToast(isEdit ? 'Obligation updated successfully' : 'Obligation created successfully', 'success');
+        closeModal('newObligationModal');
+        loadObligations();
+    } catch (error) {
+        console.error('Error saving obligation:', error);
+        showToast(error.message || 'Failed to save obligation', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function deleteObligation(id) {
+    if (!confirm('Are you sure you want to delete this obligation?')) return;
+    
+    showLoading(true, 'Deleting obligation...');
+    
+    try {
+        const response = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to delete obligation');
+        }
+        
+        showToast('Obligation deleted successfully', 'success');
+        loadObligations();
+    } catch (error) {
+        console.error('Error deleting obligation:', error);
+        showToast(error.message || 'Failed to delete obligation', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// =====================================================
+// AI GENERATION
+// =====================================================
+function openAIGenerateModal() {
+    selectedAIObligations.clear();
+    aiGeneratedObligations = [];
+    document.getElementById('aiObligationsList').innerHTML = `
+        <div class="empty-state" style="padding: 2rem;">
+            <i class="ti ti-robot"></i>
+            <h3>AI Analysis Ready</h3>
+            <p>Click "Analyze Contract" to extract obligations from the contract content using AI.</p>
+        </div>
+    `;
+    document.getElementById('analyzeBtn').style.display = 'inline-flex';
+    document.getElementById('addAIBtn').style.display = 'none';
+    openModal('aiGenerateModal');
+}
+
+async function analyzeContract() {
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    analyzeBtn.disabled = true;
+    analyzeBtn.innerHTML = '<i class="ti ti-loader" style="animation: spin 1s linear infinite;"></i> Analyzing...';
+    
+    document.getElementById('aiObligationsList').innerHTML = `
+        <div style="text-align: center; padding: 3rem;">
+            <div class="loading-spinner"></div>
+            <p style="margin-top: 1rem; color: var(--text-muted);">Analyzing contract and extracting obligations...</p>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch(`${API_BASE}/generate-ai/${contractId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.detail || 'Failed to generate obligations');
         }
-
+        
         const data = await response.json();
-        console.log('✅ Received AI obligations:', data);
+        aiGeneratedObligations = Array.isArray(data) ? data : (data.obligations || []);
         
-        // Handle both array and object responses
-        if (Array.isArray(data)) {
-            aiGeneratedObligations = data;
-        } else if (data.obligations && Array.isArray(data.obligations)) {
-            aiGeneratedObligations = data.obligations;
-        } else {
-            throw new Error('Invalid response format from server');
-        }
-
         if (aiGeneratedObligations.length === 0) {
-            body.innerHTML = `
-                <div style="text-align: center; padding: 2rem;">
-                    <i class="ti ti-info-circle" style="font-size: 3rem; color: var(--info-color);"></i>
-                    <p>No obligations found in this contract.</p>
-                    <p style="color: var(--text-light);">The AI analysis did not identify any specific obligations.</p>
+            document.getElementById('aiObligationsList').innerHTML = `
+                <div class="empty-state" style="padding: 2rem;">
+                    <i class="ti ti-file-search"></i>
+                    <h3>No Obligations Found</h3>
+                    <p>AI could not extract obligations from this contract. Try adding manually.</p>
                 </div>
             `;
-            return;
+        } else {
+            renderAIObligations();
         }
-
-        // Render AI obligations
-        body.innerHTML = aiGeneratedObligations.map((obligation, index) => {
-            // Get obligation type color
-            const typeColors = {
-                'payment': '#10b981',
-                'deliverable': '#3b82f6', 
-                'compliance': '#8b5cf6',
-                'reporting': '#f59e0b',
-                'insurance': '#ef4444',
-                'performance': '#06b6d4',
-                'coordination': '#6366f1',
-                'indemnification': '#ec4899',
-                'timely_completion': '#14b8a6'
-            };
-            
-            const typeColor = typeColors[obligation.obligation_type] || '#6b7280';
-            
-            // Get priority badge
-            const priorityBadges = {
-                'high': '<span style="background: #fef2f2; color: #dc2626; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 500;">High Priority</span>',
-                'medium': '<span style="background: #fef3c7; color: #d97706; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 500;">Medium Priority</span>',
-                'low': '<span style="background: #f0fdf4; color: #16a34a; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 500;">Low Priority</span>'
-            };
-            
-            const priorityBadge = priorityBadges[obligation.priority] || priorityBadges['medium'];
-            
-            return `
-                <div class="ai-obligation-item" style="border-left: 3px solid ${typeColor};">
-                    <div class="checkbox-container">
-                        <input type="checkbox" id="ai-obligation-${index}" checked>
-                        <div style="flex: 1;">
-                            <div class="ai-obligation-header">
-                                <div class="ai-obligation-title">${obligation.obligation_title}</div>
-                                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                    <span class="ai-obligation-type" style="background: ${typeColor}20; color: ${typeColor};">
-                                        ${obligation.obligation_type.replace('_', ' ')}
-                                    </span>
-                                    ${priorityBadge}
-                                </div>
-                            </div>
-                            <div class="ai-obligation-description">${obligation.description}</div>
-                            ${obligation.party ? `
-                                <div class="ai-obligation-meta">
-                                    <div>
-                                        <i class="ti ti-users"></i> 
-                                        <span style="text-transform: capitalize;">${obligation.party} Obligation</span>
-                                    </div>
-                                </div>
-                            ` : ''}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        footer.style.display = 'flex';
         
-        showToast(`Successfully extracted ${aiGeneratedObligations.length} obligations`, 'success');
-
+        analyzeBtn.style.display = 'none';
+        document.getElementById('addAIBtn').style.display = aiGeneratedObligations.length > 0 ? 'inline-flex' : 'none';
     } catch (error) {
-        console.error('❌ Error generating obligations:', error);
-        body.innerHTML = `
-            <div style="text-align: center; padding: 2rem;">
-                <i class="ti ti-alert-circle" style="font-size: 3rem; color: var(--danger-color);"></i>
-                <p style="color: var(--danger-color); font-weight: 500;">Failed to generate obligations</p>
-                <p style="color: var(--text-light); font-size: 0.875rem;">${error.message}</p>
-                <button onclick="generateAIObligations()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer;">
-                    <i class="ti ti-refresh"></i> Try Again
-                </button>
+        console.error('Error generating AI obligations:', error);
+        document.getElementById('aiObligationsList').innerHTML = `
+            <div class="empty-state" style="padding: 2rem;">
+                <i class="ti ti-alert-triangle" style="color: var(--danger);"></i>
+                <h3>Analysis Failed</h3>
+                <p>${escapeHtml(error.message)}</p>
             </div>
         `;
-    }
-}
-
-
-
-
-async function saveAIObligations() {
-    try {
-        showLoading(true);
-
-        // Get selected obligations
-        const selected = aiGeneratedObligations.filter((_, index) => {
-            const checkbox = document.getElementById(`ai-obligation-${index}`);
-            return checkbox && checkbox.checked;
-        });
-
-        if (selected.length === 0) {
-            showToast('Please select at least one obligation', 'error');
-            showLoading(false);
-            return;
-        }
-
-        console.log(`💾 Saving ${selected.length} AI obligations`);
-
-        // Prepare data for bulk create
-        const obligations = selected.map(obligation => ({
-            contract_id: parseInt(obligationContractId),
-            obligation_title: obligation.obligation_title,
-            description: obligation.description,
-            obligation_type: obligation.obligation_type,
-            status: 'initiated',
-            is_ai_generated: true
-        }));
-
-        const response = await fetch(`${API_BASE}/bulk-create`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(obligations)
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Failed to save obligations');
-        }
-
-        const result = await response.json();
-        console.log('✅ Obligations saved:', result);
-
-        // Close modal and refresh
-        closeAIGenerateModal();
-        showToast(`Successfully added ${result.created_count} obligations`, 'success');
-        
-        // Reload obligations list
-        await loadObligations();
-
-    } catch (error) {
-        console.error('❌ Error saving obligations:', error);
-        showToast(error.message || 'Failed to save obligations', 'error');
+        showToast(error.message || 'Failed to analyze contract', 'error');
     } finally {
-        showLoading(false);
+        analyzeBtn.disabled = false;
+        analyzeBtn.innerHTML = '<i class="ti ti-sparkles"></i> Analyze Contract';
     }
 }
 
-
-
-
-
-
-    // =====================================================
-    // RENDER AI OBLIGATIONS IN MODAL
-    // =====================================================
-    function renderAIObligationsInModal() {
-        const container = document.getElementById('aiObligationsGrid');
-
-        if (aiObligations.length === 0) {
-            container.innerHTML = `
-            <div class="empty-state">
-                <i class="ti ti-file-search"></i>
-                <h3>No obligations found</h3>
-                <p>The AI analysis did not find any obligations in this contract.</p>
-            </div>
-        `;
-            return;
-        }
-
-        const html = `
-        <div class="obligations-grid">
-            ${aiObligations.map((obl, index) => `
-                <div class="obligation-card ${selectedObligations.has(index) ? 'selected' : ''}" 
-                     onclick="toggleAISelection(${index})" 
-                     data-index="${index}">
-                    <button class="edit-btn" onclick="event.stopPropagation(); editAIObligation(${index})">
-                        <i class="ti ti-edit"></i>
-                    </button>
-                    <div class="card-header">
-                        <div class="card-title">${obl.title}</div>
-                        <div class="card-badges">
-                            <span class="badge badge-priority ${obl.priority}">${obl.priority.toUpperCase()}</span>
-                            <span class="badge badge-confidence">
-                                <i class="ti ti-sparkles"></i>
-                                ${Math.round(obl.confidence * 100)}%
-                            </span>
-                        </div>
-                    </div>
-                    <div class="card-description">${obl.description}</div>
-                    <div class="card-meta">
-                        <div class="meta-item">
-                            <i class="ti ti-category"></i>
-                            ${obl.category}
-                        </div>
-                        ${obl.clause_reference ? `
-                            <div class="meta-item">
-                                <i class="ti ti-bookmark"></i>
-                                ${obl.clause_reference}
-                            </div>
-                        ` : ''}
-                        ${obl.owner ? `
-                            <div class="meta-item">
-                                <i class="ti ti-user"></i>
-                                ${obl.owner.name}
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            `).join('')}
-        </div>
-    `;
-
-        container.innerHTML = html;
-        updateAISelectedCount();
-    }
-
-    function toggleAISelection(index) {
-        if (selectedObligations.has(index)) {
-            selectedObligations.delete(index);
-        } else {
-            selectedObligations.add(index);
-        }
-
-        // Update UI
-        const card = document.querySelector(`[data-index="${index}"]`);
-        if (card) {
-            if (selectedObligations.has(index)) {
-                card.classList.add('selected');
-                card.querySelector('.check-icon').innerHTML = '<i class="ti ti-check"></i>';
-            } else {
-                card.classList.remove('selected');
-                card.querySelector('.check-icon').innerHTML = '';
-            }
-        }
-
-        updateSelectedCount();
-    }
-
-    function updateSelectedCount() {
-        const countElement = document.getElementById('selectedCount');
-        if (countElement) {
-            countElement.textContent = `${selectedObligations.size} selected`;
-        }
-    }
-
-
-
-    // =====================================================
-    // EDIT OBLIGATION (for AI-generated)
-    // =====================================================
-    function editAIObligation(index) {
-        currentEditIndex = index;
-        const obl = aiObligations[index];
-
-        document.getElementById('editTitle').value = obl.title;
-        document.getElementById('editDescription').value = obl.description;
-        document.getElementById('editCategory').value = obl.category;
-        document.getElementById('editPriority').value = obl.priority || 'medium';
-        document.getElementById('editThresholdDate').value = obl.threshold_date || '';
-        document.getElementById('editDueDate').value = obl.due_date || '';
-
-        selectedOwner = obl.owner || null;
-        selectedEscalation = obl.escalation || null;
-
-        if (selectedOwner) {
-            showSelectedUser('owner', selectedOwner);
-        } else {
-            document.getElementById('selectedOwner').style.display = 'none';
-            document.getElementById('ownerSearch').style.display = 'block';
-        }
-
-        if (selectedEscalation) {
-            showSelectedUser('escalation', selectedEscalation);
-        } else {
-            document.getElementById('selectedEscalation').style.display = 'none';
-            document.getElementById('escalationSearch').style.display = 'block';
-        }
-
-        document.getElementById('editModal').classList.add('show');
-    }
-
-
-async function saveEditedObligation(event) {
-    event.preventDefault();
-
-    const obligationId = parseInt(document.getElementById('editObligationId').value);
+function renderAIObligations() {
+    const container = document.getElementById('aiObligationsList');
     
-    if (!obligationId) {
-        showToast('Invalid obligation ID', 'error');
+    container.innerHTML = aiGeneratedObligations.map((obl, index) => `
+        <div class="ai-obligation-item ${selectedAIObligations.has(index) ? 'selected' : ''}" 
+             onclick="toggleAISelection(${index})" data-index="${index}">
+            <div class="ai-obligation-header">
+                <span class="ai-obligation-title">${escapeHtml(obl.title)}</span>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="type-badge type-${obl.type || 'other'}">${formatType(obl.type)}</span>
+                    <div class="checkbox-indicator">
+                        ${selectedAIObligations.has(index) ? '<i class="ti ti-check"></i>' : ''}
+                    </div>
+                </div>
+            </div>
+            <p class="ai-obligation-desc">${escapeHtml(obl.description)}</p>
+        </div>
+    `).join('');
+    
+    updateSelectedCount();
+}
+
+function toggleAISelection(index) {
+    if (selectedAIObligations.has(index)) {
+        selectedAIObligations.delete(index);
+    } else {
+        selectedAIObligations.add(index);
+    }
+    renderAIObligations();
+}
+
+function updateSelectedCount() {
+    document.getElementById('selectedCount').textContent = selectedAIObligations.size;
+}
+
+async function addSelectedAIObligations() {
+    if (selectedAIObligations.size === 0) {
+        showToast('Please select at least one obligation', 'warning');
         return;
     }
-
-    // Validate: Owner and Escalation must be different
-    if (editSelectedOwner && editSelectedEscalation) {
-        if (editSelectedOwner.id === editSelectedEscalation.id) {
-            showToast('Owner and escalation user must be different', 'error');
-            return;
-        }
-    }
-
+    
+    showLoading(true, `Adding ${selectedAIObligations.size} obligation(s)...`);
+    
     try {
-        showLoading(true, 'Updating obligation...');
-
-        const obligationData = {
-            obligation_title: document.getElementById('editObligationTitle').value.trim(),
-            description: document.getElementById('editObligationDescription').value.trim(),
-            obligation_type: document.getElementById('editObligationType').value,
-            status: document.getElementById('editObligationStatus').value,
-            priority: document.getElementById('editObligationPriority').value || 'medium',
-            owner_user_id: editSelectedOwner ? editSelectedOwner.id : null,
-            escalation_user_id: editSelectedEscalation ? editSelectedEscalation.id : null,
-            threshold_date: document.getElementById('editThresholdDate').value || null,
-            due_date: document.getElementById('editDueDate').value || null
-        };
-
-        const response = await fetch(`${API_BASE}/${obligationId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(obligationData)
+        const promises = Array.from(selectedAIObligations).map(index => {
+            const obl = aiGeneratedObligations[index];
+            return fetch(`${API_BASE}/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contract_id: contractId,
+                    obligation_title: obl.title,
+                    description: obl.description,
+                    obligation_type: obl.type || 'other',
+                    status: 'initiated',
+                    is_ai_generated: true
+                })
+            });
         });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Failed to update obligation');
+        
+        const results = await Promise.all(promises);
+        const failed = results.filter(r => !r.ok);
+        
+        if (failed.length > 0) {
+            throw new Error(`Failed to add ${failed.length} obligation(s)`);
         }
-
-        showToast('Obligation updated successfully', 'success');
-        closeEditModal();
-        await loadExistingObligations();
-
+        
+        showToast(`Successfully added ${selectedAIObligations.size} obligation(s)`, 'success');
+        closeModal('aiGenerateModal');
+        loadObligations();
     } catch (error) {
-        console.error('❌ Error updating obligation:', error);
-        showToast(error.message || 'Failed to update obligation', 'error');
+        console.error('Error adding AI obligations:', error);
+        showToast(error.message || 'Failed to add obligations', 'error');
     } finally {
         showLoading(false);
     }
 }
 
+// =====================================================
+// PRESET OBLIGATIONS
+// =====================================================
+function openPresetModal() {
+    selectedPresets.clear();
+    currentPresetTab = 'client';
+    updatePresetTabs();
+    renderPresetObligations();
+    openModal('presetModal');
+}
 
+function switchPresetTab(tab) {
+    currentPresetTab = tab;
+    selectedPresets.clear();
+    updatePresetTabs();
+    renderPresetObligations();
+}
 
-async function searchEditUsers(type) {
-    const query = document.getElementById(`edit${type.charAt(0).toUpperCase() + type.slice(1)}Search`).value.trim();
-    const suggestionsEl = document.getElementById(`edit${type.charAt(0).toUpperCase() + type.slice(1)}Suggestions`);
+function updatePresetTabs() {
+    document.querySelectorAll('.preset-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === currentPresetTab);
+    });
+}
 
-    if (query.length < 2) {
-        suggestionsEl.innerHTML = '';
-        suggestionsEl.style.display = 'none';
+function renderPresetObligations() {
+    const container = document.getElementById('presetObligationsList');
+    const presets = presetObligations[currentPresetTab] || [];
+    
+    container.innerHTML = presets.map(obl => `
+        <div class="ai-obligation-item ${selectedPresets.has(obl.id) ? 'selected' : ''}" 
+             onclick="togglePresetSelection('${obl.id}')" data-id="${obl.id}">
+            <div class="ai-obligation-header">
+                <span class="ai-obligation-title">${escapeHtml(obl.title)}</span>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="type-badge type-${obl.type || 'other'}">${formatType(obl.type)}</span>
+                    <div class="checkbox-indicator">
+                        ${selectedPresets.has(obl.id) ? '<i class="ti ti-check"></i>' : ''}
+                    </div>
+                </div>
+            </div>
+            <p class="ai-obligation-desc">${escapeHtml(obl.description)}</p>
+        </div>
+    `).join('');
+    
+    updatePresetSelectedCount();
+}
+
+function togglePresetSelection(id) {
+    if (selectedPresets.has(id)) {
+        selectedPresets.delete(id);
+    } else {
+        selectedPresets.add(id);
+    }
+    renderPresetObligations();
+}
+
+function updatePresetSelectedCount() {
+    document.getElementById('presetSelectedCount').textContent = selectedPresets.size;
+}
+
+async function addSelectedPresets() {
+    if (selectedPresets.size === 0) {
+        showToast('Please select at least one preset', 'warning');
         return;
     }
-
+    
+    showLoading(true, `Adding ${selectedPresets.size} preset(s)...`);
+    
     try {
-        const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}&company_id=true`);
-        if (!response.ok) throw new Error('Search failed');
-
-        const users = await response.json();
+        const allPresets = [...presetObligations.client, ...presetObligations.subcontractor];
         
-        if (users.length === 0) {
-            suggestionsEl.innerHTML = '<div class="no-results">No users found</div>';
-            suggestionsEl.style.display = 'block';
-            return;
-        }
-
-        suggestionsEl.innerHTML = users.map(user => `
-            <div class="user-suggestion-item" onclick='selectEditUser(${JSON.stringify(user)}, "${type}")'>
-                <div class="user-avatar">${user.name.charAt(0).toUpperCase()}</div>
-                <div class="user-info">
-                    <div class="user-name">${escapeHtml(user.name)}</div>
-                    <div class="user-email">${escapeHtml(user.email)}</div>
-                </div>
-            </div>
-        `).join('');
-        suggestionsEl.style.display = 'block';
-
-    } catch (error) {
-        console.error('Search error:', error);
-        suggestionsEl.innerHTML = '<div class="error-message">Search failed</div>';
-        suggestionsEl.style.display = 'block';
-    }
-}
-
-
-function selectEditUser(user, type) {
-    if (type === 'owner') {
-        editSelectedOwner = user;
-    } else {
-        editSelectedEscalation = user;
-    }
-
-    showEditSelectedUser(type, user);
-    document.getElementById(`edit${type.charAt(0).toUpperCase() + type.slice(1)}Suggestions`).style.display = 'none';
-}
-
-
-function showEditSelectedUser(type, user) {
-    const container = document.getElementById(`editSelected${type.charAt(0).toUpperCase() + type.slice(1)}`);
-    container.innerHTML = `
-        <div class="selected-user">
-            <div class="user-avatar">${user.name.charAt(0).toUpperCase()}</div>
-            <div class="user-info">
-                <div class="user-name">${escapeHtml(user.name)}</div>
-                <div class="user-email">${escapeHtml(user.email)}</div>
-            </div>
-            <button class="remove-user" onclick="removeEditUser('${type}')">
-                <i class="ti ti-x"></i>
-            </button>
-        </div>
-    `;
-    container.style.display = 'block';
-    document.getElementById(`edit${type.charAt(0).toUpperCase() + type.slice(1)}Search`).style.display = 'none';
-}
-
-
-function removeEditUser(type) {
-    if (type === 'owner') {
-        editSelectedOwner = null;
-    } else {
-        editSelectedEscalation = null;
-    }
-
-    document.getElementById(`editSelected${type.charAt(0).toUpperCase() + type.slice(1)}`).style.display = 'none';
-    document.getElementById(`edit${type.charAt(0).toUpperCase() + type.slice(1)}Search`).style.display = 'block';
-}
-
-function closeEditModal() {
-    document.getElementById('editObligationModal').classList.remove('show');
-    editSelectedOwner = null;
-    editSelectedEscalation = null;
-}
-
-
-let editSelectedOwner = null;
-let editSelectedEscalation = null;
-
-async function editExistingObligation(obligationId) {
-    try {
-        console.log('✏️ Editing obligation ID:', obligationId);
-        
-        // Fetch fresh obligation data
-        const response = await fetch(`${API_BASE}/contract/${contractId}`);
-        if (!response.ok) throw new Error('Failed to load obligation');
-        
-        const obligations = await response.json();
-        const obligation = obligations.find(o => o.id === obligationId);
-        
-        if (!obligation) {
-            showToast('Obligation not found', 'error');
-            return;
-        }
-
-        console.log('📝 Obligation data:', obligation);
-
-        // Populate modal
-        document.getElementById('editObligationId').value = obligation.id;
-        document.getElementById('editObligationTitle').value = obligation.obligation_title || '';
-        document.getElementById('editObligationDescription').value = obligation.description || '';
-        document.getElementById('editObligationType').value = obligation.obligation_type || 'other';
-        document.getElementById('editObligationStatus').value = obligation.status || 'initiated';
-        document.getElementById('editObligationPriority').value = obligation.priority || 'medium';
-        
-        // Set dates
-        document.getElementById('editThresholdDate').value = obligation.threshold_date ? 
-            obligation.threshold_date.split('T')[0] : '';
-        document.getElementById('editDueDate').value = obligation.due_date ? 
-            obligation.due_date.split('T')[0] : '';
-
-        // Set owner if exists
-        if (obligation.owner_user_id && obligation.owner_name) {
-            editSelectedOwner = {
-                id: obligation.owner_user_id,
-                name: obligation.owner_name,
-                email: obligation.owner_email
-            };
-            showEditSelectedUser('owner', editSelectedOwner);
-        } else {
-            editSelectedOwner = null;
-            document.getElementById('editSelectedOwner').style.display = 'none';
-            document.getElementById('editOwnerSearch').style.display = 'block';
-            document.getElementById('editOwnerSearch').value = '';
-        }
-
-        // Set escalation if exists
-        if (obligation.escalation_user_id && obligation.escalation_name) {
-            editSelectedEscalation = {
-                id: obligation.escalation_user_id,
-                name: obligation.escalation_name,
-                email: obligation.escalation_email
-            };
-            showEditSelectedUser('escalation', editSelectedEscalation);
-        } else {
-            editSelectedEscalation = null;
-            document.getElementById('editSelectedEscalation').style.display = 'none';
-            document.getElementById('editEscalationSearch').style.display = 'block';
-            document.getElementById('editEscalationSearch').value = '';
-        }
-
-        // Open modal
-        document.getElementById('editObligationModal').classList.add('show');
-
-    } catch (error) {
-        console.error('❌ Error loading obligation:', error);
-        showToast('Failed to load obligation: ' + error.message, 'error');
-    }
-}
-   
-    async function updateExistingObligation(obligationId) {
-        try {
-            showLoading(true);
-
-            const obligationData = {
-                obligation_title: document.getElementById('newTitle').value,
-                description: document.getElementById('newDescription').value,
-                obligation_type: document.getElementById('newCategory').value,
-                owner_user_id: newSelectedOwner?.id,
-                escalation_user_id: newSelectedEscalation?.id,
-                threshold_date: document.getElementById('newThresholdDate').value || null,
-                due_date: document.getElementById('newDueDate').value,
-                status: document.getElementById('newStatus').value
-            };
-
-            const response = await fetch(`/api/obligations/${obligationId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(obligationData)
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.detail || 'Failed to update obligation');
-            }
-
-            showToast('Obligation updated successfully', 'success');
-            closeNewObligationModal();
-
-            // Reset form
-            const form = document.getElementById('newObligationForm');
-            form.onsubmit = saveNewObligation;
-            const submitBtn = form.querySelector('button[type="submit"]');
-            submitBtn.innerHTML = '<i class="ti ti-check"></i> Create Obligation';
-
-            await loadExistingObligations();
-
-        } catch (error) {
-            console.error('Error updating obligation:', error);
-            showToast(error.message || 'Failed to update obligation', 'error');
-        } finally {
-            showLoading(false);
-        }
-    }
-
-
-    function saveObligationEdit(event) {
-        event.preventDefault();
-
-        if (currentEditIndex === null) return;
-
-        aiObligations[currentEditIndex] = {
-            ...aiObligations[currentEditIndex],
-            title: document.getElementById('editTitle').value,
-            description: document.getElementById('editDescription').value,
-            category: document.getElementById('editCategory').value,
-            priority: document.getElementById('editPriority').value,
-            threshold_date: document.getElementById('editThresholdDate').value,
-            due_date: document.getElementById('editDueDate').value,
-            owner: selectedOwner,
-            escalation: selectedEscalation
-        };
-
-        renderObligations();
-        closeEditModal();
-        showToast('Obligation updated successfully', 'success');
-    }
-
-    // =====================================================
-    // USER SEARCH
-    // =====================================================
-    async function searchUsers(type) {
-        const searchInput = document.getElementById(`${type}Search`);
-        const suggestionsDiv = document.getElementById(`${type}Suggestions`);
-        const query = searchInput.value.trim();
-
-        // Clear previous timeout
-        if (searchTimeout) {
-            clearTimeout(searchTimeout);
-        }
-
-        // Hide suggestions if query is empty
-        if (!query) {
-            suggestionsDiv.classList.remove('show');
-            return;
-        }
-
-        // Debounce search
-        searchTimeout = setTimeout(async () => {
-            try {
-                suggestionsDiv.innerHTML = `
-                <div class="user-suggestion-item" style="text-align: center; color: var(--text-muted);">
-                    <i class="ti ti-loader" style="animation: spin 0.8s linear infinite;"></i>
-                    Searching...
-                </div>
-            `;
-                suggestionsDiv.classList.add('show');
-
-                const response = await fetch(`/api/users/search?email=${encodeURIComponent(query)}`, {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (!response.ok) throw new Error('Search failed');
-
-                const users = await response.json();
-
-                if (users.length === 0) {
-                    suggestionsDiv.innerHTML = `
-                    <div class="user-suggestion-item" style="text-align: center; color: var(--text-muted);">
-                        <i class="ti ti-user-x"></i>
-                        No users found
-                    </div>
-                `;
-                } else {
-                    suggestionsDiv.innerHTML = users.map(user => `
-                    <div class="user-suggestion-item" onclick="selectUser('${type}', ${user.id}, '${user.full_name}', '${user.email}')">
-                        <div class="user-name">${user.full_name}</div>
-                        <div class="user-email">${user.email}</div>
-                    </div>
-                `).join('');
-                }
-            } catch (error) {
-                console.error('Error searching users:', error);
-                suggestionsDiv.innerHTML = `
-                <div class="user-suggestion-item" style="text-align: center; color: var(--danger-color);">
-                    <i class="ti ti-alert-circle"></i>
-                    Search failed
-                </div>
-            `;
-            }
-        }, 300);
-    }
-
-
-
-    async function searchUser(type, query) {
-        if (!query) {
-            document.getElementById(`${type}Suggestions`).classList.remove('show');
-            return;
-        }
-
-        const filtered = allUsers.filter(user =>
-            user.first_name.toLowerCase().includes(query.toLowerCase()) ||
-            user.last_name.toLowerCase().includes(query.toLowerCase()) ||
-            user.email.toLowerCase().includes(query.toLowerCase())
-        );
-
-        const suggestionsDiv = document.getElementById(`${type}Suggestions`);
-
-        if (filtered.length === 0) {
-            suggestionsDiv.innerHTML = '<div class="suggestion-item">No users found</div>';
-        } else {
-            suggestionsDiv.innerHTML = filtered.map(user => `
-            <div class="suggestion-item" onclick="selectUser('${type}', ${user.id}, '${escapeHtml(user.first_name)} ${escapeHtml(user.last_name)}', '${escapeHtml(user.email)}')">
-                <div class="user-name">${escapeHtml(user.first_name)} ${escapeHtml(user.last_name)}</div>
-                <div class="user-email">${escapeHtml(user.email)}</div>
-            </div>
-        `).join('');
-        }
-
-        suggestionsDiv.classList.add('show');
-    }
-
-    function showSelectedUser(type, user) {
-        const container = document.getElementById(`selected${type.charAt(0).toUpperCase() + type.slice(1)}`);
-        container.innerHTML = `
-        <div class="selected-user">
-            <div>
-                <div class="user-name">${escapeHtml(user.name)}</div>
-                <div class="user-email">${escapeHtml(user.email)}</div>
-            </div>
-            <button class="remove-user" onclick="removeUser('${type}')">
-                <i class="ti ti-x"></i>
-            </button>
-        </div>
-    `;
-        container.style.display = 'block';
-        document.getElementById(`${type}Search`).style.display = 'none';
-    }
-
-
-    function removeUser(type) {
-        if (type === 'owner') {
-            selectedOwner = null;
-        } else {
-            selectedEscalation = null;
-        }
-
-        document.getElementById(`selected${type.charAt(0).toUpperCase() + type.slice(1)}`).style.display = 'none';
-        document.getElementById(`${type}Search`).style.display = 'block';
-    }
-
-
-    // =====================================================
-    // ADD TO DATABASE
-    // =====================================================
-    async function addSelectedObligations() {
-        if (selectedObligations.size === 0) {
-            showToast('Please select at least one obligation to add', 'error');
-            return;
-        }
-
-        try {
-            showLoading(true, `Adding ${selectedObligations.size} obligation(s)...`, 'Please wait...');
-
-            const obligationsToAdd = Array.from(selectedObligations).map(index => aiObligations[index]);
-
-            // Validate all have required owner and escalation
-            const invalid = obligationsToAdd.find(obl => !obl.owner || !obl.due_date);
-            if (invalid) {
-                showToast('Please edit obligations to assign owners and due dates before adding', 'error');
-                showLoading(false);
-                return;
-            }
-
-            const promises = obligationsToAdd.map(obl =>
-                fetch(API_BASE, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contract_id: contractId,
-                        obligation_title: obl.title,
-                        description: obl.description,
-                        obligation_type: obl.category,
-                        priority: obl.priority || 'medium',
-                        owner_user_id: obl.owner?.id,
-                        escalation_user_id: obl.escalation?.id,
-                        threshold_date: obl.threshold_date,
-                        due_date: obl.due_date,
-                        status: 'initiated',
-                        is_ai_generated: true
-                    })
+        const promises = Array.from(selectedPresets).map(id => {
+            const obl = allPresets.find(p => p.id === id);
+            if (!obl) return Promise.resolve({ ok: true });
+            
+            return fetch(`${API_BASE}/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contract_id: contractId,
+                    obligation_title: obl.title,
+                    description: obl.description,
+                    obligation_type: obl.type || 'other',
+                    status: 'initiated',
+                    is_ai_generated: false
                 })
-            );
-
-            const results = await Promise.all(promises);
-            const failed = results.filter(r => !r.ok);
-
-            if (failed.length > 0) {
-                throw new Error(`Failed to add ${failed.length} obligation(s)`);
-            }
-
-            // ✅ SUCCESS - STAY ON THIS PAGE
-            showToast(`Successfully added ${obligationsToAdd.length} obligation(s)`, 'success');
-
-            // Close modal
-            closeAIModal();
-
-            // ✅ RELOAD EXISTING OBLIGATIONS TO SHOW NEWLY ADDED ONES
-            await loadExistingObligations();
-
-            // ✅ HIDE GENERATE BUTTON (per business requirement)
-            const generateBtn = document.getElementById('generateBtn');
-            if (generateBtn) {
-                generateBtn.style.display = 'none';
-            }
-
-            // Clear selections
-            selectedObligations.clear();
-            aiObligations = [];
-
-        } catch (error) {
-            console.error('Error adding obligations:', error);
-            showToast(error.message || 'Failed to add obligations', 'error');
-        } finally {
-            showLoading(false);
-        }
-    }
-
-    function showToast(message, type = 'success') {
-        const toast = document.getElementById('toast');
-        const messageEl = document.getElementById('toastMessage');
-
-        toast.className = `toast ${type}`;
-        messageEl.textContent = message;
-        toast.classList.add('show');
-
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3000);
-    }
-
-    // Close suggestions when clicking outside
-    document.addEventListener('click', function (event) {
-        if (!event.target.closest('.user-search-container')) {
-            document.querySelectorAll('.user-suggestions').forEach(el => {
-                el.classList.remove('show');
             });
+        });
+        
+        const results = await Promise.all(promises);
+        const failed = results.filter(r => !r.ok);
+        
+        if (failed.length > 0) {
+            throw new Error(`Failed to add ${failed.length} preset(s)`);
+        }
+        
+        showToast(`Successfully added ${selectedPresets.size} preset(s)`, 'success');
+        closeModal('presetModal');
+        loadObligations();
+    } catch (error) {
+        console.error('Error adding presets:', error);
+        showToast(error.message || 'Failed to add presets', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// =====================================================
+// USER SEARCH
+// =====================================================
+function setupUserSearch() {
+    const ownerSearch = document.getElementById('ownerSearch');
+    const escalationSearch = document.getElementById('escalationSearch');
+    
+    ownerSearch.addEventListener('input', () => searchUsers('owner', ownerSearch.value));
+    escalationSearch.addEventListener('input', () => searchUsers('escalation', escalationSearch.value));
+    
+    ownerSearch.addEventListener('focus', () => searchUsers('owner', ownerSearch.value));
+    escalationSearch.addEventListener('focus', () => searchUsers('escalation', escalationSearch.value));
+    
+    // Close suggestions on click outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.user-search-container')) {
+            document.querySelectorAll('.user-suggestions').forEach(el => el.classList.remove('active'));
         }
     });
-
-
-    const API_BASE = '/api/obligations';
-
-    let allUsers = [];
-
-
-    // =====================================================
-    // EXISTING OBLIGATIONS
-    // =====================================================
-   // =====================================================
-// EXISTING OBLIGATIONS
-// =====================================================
-async function loadExistingObligations() {
-    try {
-        const response = await fetch(`${API_BASE}/contract/${contractId}`);
-        if (!response.ok) throw new Error('Failed to load obligations');
-
-        const obligations = await response.json();
-        console.log('📋 Loaded obligations:', obligations);
-
-        if (obligations.length > 0) {
-            document.getElementById('existingObligationsSection').style.display = 'block';
-            displayExistingObligations(obligations);
-        } else {
-            document.getElementById('existingObligationsSection').style.display = 'none';
-        }
-
-    } catch (error) {
-        console.error('Error loading existing obligations:', error);
-        showToast('Failed to load obligations', 'error');
-    }
 }
 
-
-    function displayExistingObligations(obligations) {
-    const container = document.getElementById('existingObligationsList');
-
-    if (!obligations || obligations.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state" style="padding: 2rem; text-align: center;">
-                <i class="ti ti-clipboard-off" style="font-size: 2rem; color: var(--text-muted);"></i>
-                <p style="margin-top: 0.5rem; color: var(--text-muted);">No obligations found</p>
-            </div>
-        `;
+function searchUsers(type, query) {
+    const suggestionsEl = document.getElementById(`${type}Suggestions`);
+    
+    if (query.length < 1) {
+        suggestionsEl.classList.remove('active');
         return;
     }
-
-    // ✅ FIX: Render with proper owner/escalation data and EDIT BUTTON
-    container.innerHTML = obligations.map((obl, index) => `
-        <div class="obligation-card" style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--background-light);">
-            <div style="display: flex; justify-content: space-between; align-items: start; gap: 1rem;">
-                <div style="flex: 1;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                        <h4 style="margin: 0; font-size: 1rem; font-weight: 600;">${escapeHtml(obl.obligation_title)}</h4>
-                        ${obl.is_ai_generated ? 
-                            '<span style="padding: 0.125rem 0.5rem; background: linear-gradient(135deg, #10b981, #059669); color: white; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;"><i class="ti ti-sparkles"></i> AI</span>' : 
-                            '<span style="padding: 0.125rem 0.5rem; background: #6b7280; color: white; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;"><i class="ti ti-user"></i> Manual</span>'}
-                        ${obl.obligation_type ? 
-                            `<span style="padding: 0.125rem 0.5rem; background: #e5e7eb; color: #374151; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;">${obl.obligation_type}</span>` : ''}
-                    </div>
-                    <p style="margin: 0 0 0.75rem 0; color: var(--text-muted); font-size: 0.9rem;">${escapeHtml(obl.description || 'No description')}</p>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; font-size: 0.875rem;">
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <i class="ti ti-user" style="color: var(--primary-color);"></i>
-                            <span style="color: var(--text-muted);">Owner:</span>
-                            <span style="font-weight: 500; ${!obl.owner_name ? 'color: var(--text-muted); font-style: italic;' : 'color: var(--text-primary);'}">
-                                ${escapeHtml(obl.owner_name || 'Unassigned')}
-                            </span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <i class="ti ti-alert-triangle" style="color: #f59e0b;"></i>
-                            <span style="color: var(--text-muted);">Escalation:</span>
-                            <span style="font-weight: 500; ${!obl.escalation_name ? 'color: var(--text-muted); font-style: italic;' : 'color: var(--text-primary);'}">
-                                ${escapeHtml(obl.escalation_name || 'Unassigned')}
-                            </span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <i class="ti ti-calendar-due" style="color: var(--primary-color);"></i>
-                            <span style="color: var(--text-muted);">Due:</span>
-                            <span style="font-weight: 500;">${obl.due_date ? formatDate(obl.due_date) : 'Not set'}</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <i class="ti ti-flag" style="color: var(--primary-color);"></i>
-                            <span style="color: var(--text-muted);">Status:</span>
-                            <span style="font-weight: 500;">${escapeHtml(formatStatus(obl.status || 'initiated'))}</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- ✅ ACTION BUTTONS: EDIT + DELETE -->
-                <div style="display: flex; gap: 0.5rem;">
-                    <button class="btn-icon" onclick="editExistingObligation(${obl.id})" 
-                            title="Edit" 
-                            style="padding: 0.5rem; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;">
-                        <i class="ti ti-edit"></i>
-                    </button>
-                    <button class="btn-icon btn-danger" onclick="deleteExistingObligation(${obl.id})" 
-                            title="Delete"
-                            style="padding: 0.5rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;">
-                        <i class="ti ti-trash"></i>
-                    </button>
+    
+    const filtered = users.filter(u => {
+        const fullName = `${u.first_name} ${u.last_name}`.toLowerCase();
+        const email = (u.email || '').toLowerCase();
+        const q = query.toLowerCase();
+        return fullName.includes(q) || email.includes(q);
+    }).slice(0, 5);
+    
+    if (filtered.length === 0) {
+        suggestionsEl.innerHTML = '<div class="user-suggestion-item" style="color: var(--text-muted);">No users found</div>';
+    } else {
+        suggestionsEl.innerHTML = filtered.map(u => `
+            <div class="user-suggestion-item" onclick="selectUser('${type}', ${u.id}, '${escapeHtml(u.first_name)} ${escapeHtml(u.last_name)}')">
+                <div class="user-avatar">${u.first_name[0]}${u.last_name[0]}</div>
+                <div>
+                    <div style="font-weight: 500;">${escapeHtml(u.first_name)} ${escapeHtml(u.last_name)}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(u.email)}</div>
                 </div>
             </div>
-        </div>
-    `).join('');
+        `).join('');
+    }
+    
+    suggestionsEl.classList.add('active');
 }
 
+function selectUser(type, userId, userName) {
+    document.getElementById(`${type}UserId`).value = userId;
+    document.getElementById(`${type}Search`).style.display = 'none';
+    document.getElementById(`${type}Suggestions`).classList.remove('active');
+    setSelectedUser(type, userId, userName);
+}
 
+function setSelectedUser(type, userId, userName) {
+    const selectedEl = document.getElementById(`selected${type.charAt(0).toUpperCase() + type.slice(1)}`);
+    const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    
+    selectedEl.innerHTML = `
+        <div class="user-avatar">${initials}</div>
+        <span>${escapeHtml(userName)}</span>
+        <button class="remove-user" onclick="removeUser('${type}')">
+            <i class="ti ti-x"></i>
+        </button>
+    `;
+    selectedEl.style.display = 'flex';
+}
 
-    async function generateObligations() {
-        try {
-            const generateBtn = document.getElementById('generateBtn');
-            generateBtn.disabled = true;
-            generateBtn.innerHTML = '<i class="ti ti-loader-2 rotating"></i> Analyzing Contract...';
+function removeUser(type) {
+    document.getElementById(`${type}UserId`).value = '';
+    document.getElementById(`${type}Search`).value = '';
+    document.getElementById(`${type}Search`).style.display = 'block';
+    document.getElementById(`selected${type.charAt(0).toUpperCase() + type.slice(1)}`).style.display = 'none';
+}
 
-            showLoading(true, 'Analyzing contract with AI...', 'This may take a moment...');
+// =====================================================
+// UTILITY FUNCTIONS
+// =====================================================
+function showLoading(show, text = 'Loading...') {
+    const overlay = document.getElementById('loadingOverlay');
+    document.getElementById('loadingText').textContent = text;
+    overlay.classList.toggle('active', show);
+}
 
-            // Call AI generation API
-            const response = await fetch(`/api/contracts/${contractId}/generate-obligations`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+        <i class="ti ti-${type === 'success' ? 'check' : type === 'error' ? 'x' : 'info-circle'}"></i>
+        ${escapeHtml(message)}
+    `;
+    container.appendChild(toast);
+    
+    setTimeout(() => toast.remove(), 4000);
+}
 
-            if (!response.ok) throw new Error('Failed to generate obligations');
+function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
 
-            const result = await response.json();
-            aiObligations = result.obligations || [];
-
-            showLoading(false);
-
-            if (aiObligations.length > 0) {
-                openAIModal();
-                displayAIObligations();
-            } else {
-                showToast('No obligations found in the contract', 'info');
-            }
-
-        } catch (error) {
-            console.error('Error generating obligations:', error);
-            showToast('Failed to generate obligations', 'error');
-        } finally {
-            const generateBtn = document.getElementById('generateBtn');
-            generateBtn.disabled = false;
-            generateBtn.innerHTML = '<i class="ti ti-sparkles"></i> Generate Obligations (AI)';
-            showLoading(false);
-        }
-    }
-
-    // =====================================================
-    // DISPLAY AI OBLIGATIONS IN MODAL
-    // =====================================================
-    function displayAIObligations() {
-        const container = document.getElementById('aiObligationsList');
-
-        container.innerHTML = aiObligations.map((obl, index) => `
-        <div class="ai-obligation-card ${selectedObligations.has(index) ? 'selected' : ''}" 
-             onclick="toggleAISelection(${index})" 
-             data-index="${index}">
-            <div class="card-header">
-                <div class="check-icon">${selectedObligations.has(index) ? '<i class="ti ti-check"></i>' : ''}</div>
-                <div class="card-title-section">
-                    <h4>${escapeHtml(obl.title)}</h4>
-                    <span class="badge badge-${obl.category === 'payment' ? 'success' : 'info'}">${escapeHtml(obl.category)}</span>
-                </div>
-                <button class="edit-btn" onclick="event.stopPropagation(); editAIObligation(${index})" title="Edit">
-                    <i class="ti ti-edit"></i>
-                </button>
-            </div>
-            <p class="card-description">${escapeHtml(obl.description)}</p>
-            <div class="card-details">
-                <div class="detail-row">
-                    <i class="ti ti-user"></i>
-                    <span>Owner: ${obl.owner ? escapeHtml(obl.owner.name) : '<span style="color: var(--text-muted);">Not assigned</span>'}</span>
-                </div>
-                <div class="detail-row">
-                    <i class="ti ti-alert-triangle"></i>
-                    <span>Escalation: ${obl.escalation ? escapeHtml(obl.escalation.name) : '<span style="color: var(--text-muted);">Not assigned</span>'}</span>
-                </div>
-                <div class="detail-row">
-                    <i class="ti ti-calendar"></i>
-                    <span>Due: ${obl.due_date ? formatDate(obl.due_date) : '<span style="color: var(--text-muted);">Not set</span>'}</span>
-                </div>
-            </div>
-        </div>
-    `).join('');
-
-        updateSelectedCount();
-    }
+function formatType(type) {
+    if (!type) return 'Other';
+    return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
 
 function formatStatus(status) {
+    if (!status) return 'Initiated';
     const statusMap = {
         'initiated': 'Initiated',
-        'in_progress': 'In Progress',
         'in-progress': 'In Progress',
-        'pending_details': 'Pending Details',
-        'pending-details': 'Pending Details',
-        'awaiting_approval': 'Awaiting Approval',
-        'awaiting-approval': 'Awaiting Approval',
-        'completed': 'Completed',
+        'pending': 'Pending',
+        'awaiting': 'Awaiting Approval',
+        'approved': 'Approved',
         'rejected': 'Rejected',
-        'cancelled': 'Cancelled'
+        'completed': 'Completed',
+        'overdue': 'Overdue'
     };
-    return statusMap[status] || status;
+    return statusMap[status] || status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
+function formatDate(dateStr) {
+    if (!dateStr) return '<span style="color: var(--text-muted);">-</span>';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
 
-
-    function getStatusPriority(status) {
-        const highPriority = ['overdue', 'pending_details'];
-        const mediumPriority = ['in_progress', 'awaiting_approval'];
-
-        if (highPriority.includes(status)) return 'high';
-        if (mediumPriority.includes(status)) return 'medium';
-        return 'low';
+function formatDueDate(dateStr) {
+    if (!dateStr) return '<span style="color: var(--text-muted);">-</span>';
+    const date = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const formattedDate = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    
+    if (date < today) {
+        return `<span class="date-display overdue">${formattedDate}</span>`;
     }
-
-    // async function editExistingObligation(obligationId) {
-    //     const obligation = existingObligations.find(o => o.id === obligationId);
-    //     if (!obligation) return;
-
-    //     // This would need a separate modal or reuse the edit modal
-    //     // For now, let's show a toast
-    //     showToast('Edit existing obligations from the main Obligations Dashboard', 'info');
-    // }
-
-    async function deleteObligation(obligationId) {
-        if (!confirm('Are you sure you want to delete this obligation? This action cannot be undone.')) return;
-
-        try {
-            showLoading(true);
-
-            const response = await fetch(`/api/obligations/${obligationId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                // Check if it's a foreign key constraint error
-                if (errorData.detail && errorData.detail.includes('foreign key constraint')) {
-                    throw new Error('Cannot delete this obligation because it has related updates or tracking records. Please remove those first.');
-                }
-                throw new Error(errorData.detail || 'Failed to delete obligation');
-            }
-
-            showToast('Obligation deleted successfully', 'success');
-            await loadExistingObligations();
-
-        } catch (error) {
-            console.error('Error deleting obligation:', error);
-            showToast(error.message || 'Failed to delete obligation', 'error');
-        } finally {
-            showLoading(false);
-        }
+    
+    const daysUntil = Math.ceil((date - today) / (1000 * 60 * 60 * 24));
+    if (daysUntil <= 7) {
+        return `<span class="date-display warning">${formattedDate}</span>`;
     }
-
-    // =====================================================
-    // NEW OBLIGATION MODAL
-    // =====================================================
-    function openNewObligationModal() {
-        document.getElementById('newObligationModal').classList.add('show');
-        // Reset form
-        document.getElementById('newObligationForm').reset();
-        newSelectedOwner = null;
-        newSelectedEscalation = null;
-        document.getElementById('newSelectedOwner').style.display = 'none';
-        document.getElementById('newSelectedEscalation').style.display = 'none';
-        document.getElementById('newOwnerSearch').style.display = 'block';
-        document.getElementById('newEscalationSearch').style.display = 'block';
-    }
-
-    function closeNewObligationModal() {
-        document.getElementById('newObligationModal').classList.remove('show');
-    }
-
-
-    async function saveNewObligation(event) {
-        event.preventDefault();
-
-        const title = document.getElementById('newTitle').value.trim();
-        if (!title) {
-            showToast('Please enter obligation title', 'error');
-            return;
-        }
-
-        try {
-            // ADD LOADING INDICATORS
-            showLoading(true, 'Saving obligation...', 'Please wait...');
-            const submitBtn = document.querySelector('#newObligationForm button[type="submit"]');
-            if (submitBtn) {
-                submitBtn.dataset.originalHtml = submitBtn.innerHTML;
-                submitBtn.innerHTML = '<i class="ti ti-loader-2"></i> Saving...';
-                submitBtn.disabled = true;
-            }
-
-            const obligationData = {
-                contract_id: contractId,
-                obligation_title: title,
-                description: document.getElementById('newDescription').value.trim(),
-                obligation_type: document.getElementById('newCategory').value,
-                status: document.getElementById('newStatus').value,
-                threshold_date: document.getElementById('newThresholdDate').value || null,
-                due_date: document.getElementById('newDueDate').value || null,
-                is_ai_generated: false
-            };
-
-            const response = await fetch('/api/obligations', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(obligationData)
-            });
-
-            if (!response.ok) throw new Error('Failed to save obligation');
-
-            showToast('Obligation saved successfully', 'success');
-            closeNewObligationModal();
-            await loadExistingObligations();
-
-        } catch (error) {
-            console.error('Error saving obligation:', error);
-            showToast(error.message || 'Failed to save obligation', 'error');
-        } finally {
-            // ADD CLEANUP
-            showLoading(false);
-            const submitBtn = document.querySelector('#newObligationForm button[type="submit"]');
-            if (submitBtn && submitBtn.dataset.originalHtml) {
-                submitBtn.innerHTML = submitBtn.dataset.originalHtml;
-                submitBtn.disabled = false;
-            }
-        }
-    }
-
-    // User search for new obligation modal
-    async function searchUsersNew(type) {
-        const searchInput = document.getElementById(`new${type.charAt(0).toUpperCase() + type.slice(1)}Search`);
-        const suggestionsDiv = document.getElementById(`new${type.charAt(0).toUpperCase() + type.slice(1)}Suggestions`);
-        const query = searchInput.value.trim();
-
-        if (searchTimeout) {
-            clearTimeout(searchTimeout);
-        }
-
-        if (!query) {
-            suggestionsDiv.classList.remove('show');
-            return;
-        }
-
-        searchTimeout = setTimeout(async () => {
-            try {
-                suggestionsDiv.innerHTML = `
-                <div class="user-suggestion-item" style="text-align: center; color: var(--text-muted);">
-                    <i class="ti ti-loader" style="animation: spin 0.8s linear infinite;"></i>
-                    Searching...
-                </div>
-            `;
-                suggestionsDiv.classList.add('show');
-
-                const response = await fetch(`/api/users/search?email=${encodeURIComponent(query)}`, {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (!response.ok) throw new Error('Search failed');
-
-                const users = await response.json();
-
-                if (users.length === 0) {
-                    suggestionsDiv.innerHTML = `
-                    <div class="user-suggestion-item" style="text-align: center; color: var(--text-muted);">
-                        <i class="ti ti-user-x"></i>
-                        No users found
-                    </div>
-                `;
-                } else {
-                    suggestionsDiv.innerHTML = users.map(user => `
-                    <div class="user-suggestion-item" onclick="selectUserNew('${type}', ${user.id}, '${user.full_name}', '${user.email}')">
-                        <div class="user-name">${user.full_name}</div>
-                        <div class="user-email">${user.email}</div>
-                    </div>
-                `).join('');
-                }
-            } catch (error) {
-                console.error('Error searching users:', error);
-                suggestionsDiv.innerHTML = `
-                <div class="user-suggestion-item" style="text-align: center; color: var(--danger-color);">
-                    <i class="ti ti-alert-circle"></i>
-                    Search failed
-                </div>
-            `;
-            }
-        }, 300);
-    }
-
-    function selectUserNew(type, userId, userName, userEmail) {
-        const user = { id: userId, name: userName, email: userEmail };
-
-        if (type === 'owner') {
-            newSelectedOwner = user;
-        } else {
-            newSelectedEscalation = user;
-        }
-
-        showSelectedUserNew(type, user);
-
-        document.getElementById(`new${type.charAt(0).toUpperCase() + type.slice(1)}Suggestions`).classList.remove('show');
-        document.getElementById(`new${type.charAt(0).toUpperCase() + type.slice(1)}Search`).value = '';
-    }
-
-
-    function selectUser(type, userId, userName, userEmail) {
-        const user = { id: userId, name: userName, email: userEmail };
-
-        if (type === 'owner') {
-            selectedOwner = user;
-        } else {
-            selectedEscalation = user;
-        }
-
-        showSelectedUser(type, user);
-        document.getElementById(`${type}Suggestions`).classList.remove('show');
-        document.getElementById(`${type}Search`).value = '';
-    }
-
-
-
-    function showSelectedUserNew(type, user) {
-        const container = document.getElementById(`newSelected${type.charAt(0).toUpperCase() + type.slice(1)}`);
-        container.innerHTML = `
-        <div class="selected-user">
-            <div>
-                <div class="user-name">${user.name}</div>
-                <div class="user-email">${user.email}</div>
-            </div>
-            <button class="remove-user" onclick="removeUserNew('${type}')">
-                <i class="ti ti-x"></i>
-            </button>
-        </div>
-    `;
-        container.style.display = 'block';
-        document.getElementById(`new${type.charAt(0).toUpperCase() + type.slice(1)}Search`).style.display = 'none';
-    }
-
-    function removeUserNew(type) {
-        if (type === 'owner') {
-            newSelectedOwner = null;
-        } else {
-            newSelectedEscalation = null;
-        }
-
-        document.getElementById(`newSelected${type.charAt(0).toUpperCase() + type.slice(1)}`).style.display = 'none';
-        document.getElementById(`new${type.charAt(0).toUpperCase() + type.slice(1)}Search`).style.display = 'block';
-    }
-
-    // =====================================================
-    // PRESET OBLIGATIONS
-    // =====================================================
-    function openPresetModal() {
-        document.getElementById('presetModal').classList.add('show');
-        selectedPresets.clear();
-        currentPresetProfile = 'client'; // Default to client
-
-        // Set active tab
-        document.querySelectorAll('.preset-tab').forEach(tab => {
-            tab.classList.remove('active');
-            if (tab.dataset.profile === currentPresetProfile) {
-                tab.classList.add('active');
-            }
-        });
-
-        displayPresetObligations();
-    }
-
-    function closePresetModal() {
-        document.getElementById('presetModal').classList.remove('show');
-        selectedPresets.clear();
-    }
-
-    function switchPresetProfile(profile) {
-        currentPresetProfile = profile;
-
-        // Update active tab
-        document.querySelectorAll('.preset-tab').forEach(tab => {
-            tab.classList.remove('active');
-            if (tab.dataset.profile === profile) {
-                tab.classList.add('active');
-            }
-        });
-
-        selectedPresets.clear();
-        displayPresetObligations();
-    }
-
-    function displayPresetObligations() {
-        const container = document.getElementById('presetObligationsList');
-        const obligations = presetObligations[currentPresetProfile] || [];
-
-        if (obligations.length === 0) {
-            container.innerHTML = `
-            <div class="empty-state" style="padding: 2rem;">
-                <i class="ti ti-inbox"></i>
-                <p>No preset obligations available for this profile.</p>
-            </div>
-        `;
-            return;
-        }
-
-        container.innerHTML = obligations.map(obl => `
-        <div class="preset-obligation-item ${selectedPresets.has(obl.id) ? 'selected' : ''}" 
-             onclick="togglePresetSelection('${obl.id}')"
-             data-preset-id="${obl.id}">
-            <div style="display: flex; align-items: start; gap: 1rem;">
-                <div class="preset-check">
-                    ${selectedPresets.has(obl.id) ? '<i class="ti ti-check"></i>' : ''}
-                </div>
-                <div style="flex: 1;">
-                    <div style="font-weight: 600; font-size: 1rem; margin-bottom: 0.5rem;">
-                        ${obl.title}
-                    </div>
-                    <div style="color: var(--text-muted); margin-bottom: 0.75rem; line-height: 1.5;">
-                        ${obl.description}
-                    </div>
-                    <div style="display: flex; gap: 0.75rem;">
-                        <span class="badge" style="background: var(--background-light); color: var(--text-color);">
-                            <i class="ti ti-category"></i> ${obl.category}
-                        </span>
-                        <span class="badge badge-priority ${obl.priority}">
-                            ${obl.priority.toUpperCase()}
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `).join('');
-
-        updatePresetCount();
-    }
-
-    function togglePresetSelection(presetId) {
-        if (selectedPresets.has(presetId)) {
-            selectedPresets.delete(presetId);
-        } else {
-            selectedPresets.add(presetId);
-        }
-
-        // Update UI
-        const item = document.querySelector(`[data-preset-id="${presetId}"]`);
-        const check = item.querySelector('.preset-check');
-
-        if (selectedPresets.has(presetId)) {
-            item.classList.add('selected');
-            check.innerHTML = '<i class="ti ti-check"></i>';
-        } else {
-            item.classList.remove('selected');
-            check.innerHTML = '';
-        }
-
-        updatePresetCount();
-    }
-
-    function updatePresetCount() {
-        document.getElementById('presetSelectedCount').textContent =
-            `${selectedPresets.size} selected`;
-    }
-
-    async function addPresetObligations() {
-        if (selectedPresets.size === 0) {
-            showToast('Please select at least one preset obligation', 'error');
-            return;
-        }
-
-        try {
-            // ADD LOADING INDICATORS
-            showLoading(true, `Adding ${selectedPresets.size} preset obligation(s)...`, 'Please wait...');
-            const addBtn = document.querySelector('#presetModal .btn-success');
-            if (addBtn) {
-                addBtn.dataset.originalHtml = addBtn.innerHTML;
-                addBtn.innerHTML = '<i class="ti ti-loader-2"></i> Adding...';
-                addBtn.disabled = true;
-            }
-
-            const obligations = presetObligations[currentPresetProfile];
-            const obligationsToAdd = Array.from(selectedPresets).map(id =>
-                obligations.find(o => o.id === id)
-            ).filter(Boolean);
-
-            const promises = obligationsToAdd.map(obl =>
-                fetch('/api/obligations', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        contract_id: contractId,
-                        obligation_title: obl.title,
-                        description: obl.description,
-                        obligation_type: obl.category,
-                        status: 'initiated',
-                        is_ai_generated: false
-                    })
-                })
-            );
-
-            const results = await Promise.all(promises);
-            const failed = results.filter(r => !r.ok);
-
-            if (failed.length > 0) {
-                throw new Error(`Failed to add ${failed.length} preset obligations`);
-            }
-
-            showToast(`Successfully added ${obligationsToAdd.length} preset obligations`, 'success');
-            closePresetModal();
-            await loadExistingObligations();
-
-        } catch (error) {
-            console.error('Error adding preset obligations:', error);
-            showToast(error.message || 'Failed to add preset obligations', 'error');
-        } finally {
-            // ADD CLEANUP
-            showLoading(false);
-            const addBtn = document.querySelector('#presetModal .btn-success');
-            if (addBtn && addBtn.dataset.originalHtml) {
-                addBtn.innerHTML = addBtn.dataset.originalHtml;
-                addBtn.disabled = false;
-            }
-        }
-    }
-
-
-    async function deleteExistingObligation(obligationId) {
-        if (!confirm('Are you sure you want to delete this obligation?')) return;
-
-        try {
-            showLoading(true, 'Deleting obligation...', 'Please wait...');
-
-            const response = await fetch(`${API_BASE}/${obligationId}`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' }
-            });
-
-            if (!response.ok) throw new Error('Failed to delete obligation');
-
-            showToast('Obligation deleted successfully', 'success');
-
-            // ✅ RELOAD TO REFRESH UI
-            await loadExistingObligations();
-
-        } catch (error) {
-            console.error('Error deleting obligation:', error);
-            showToast('Failed to delete obligation', 'error');
-        } finally {
-            showLoading(false);
-        }
-    }
-
-
-
-
-    function openAIModal() {
-        document.getElementById('aiObligationsModal').classList.add('show');
-    }
-
-    function closeAIModal() {
-        document.getElementById('aiObligationsModal').classList.remove('show');
-        selectedObligations.clear();
-    }
-
-
-    function showLoading(show, message = 'Loading...', subtext = '') {
-        const overlay = document.getElementById('loadingOverlay');
-        if (!overlay) return;
-
-        if (show) {
-            document.getElementById('loadingMessage').textContent = message;
-            document.getElementById('loadingSubtext').textContent = subtext;
-            overlay.classList.add('show');
-        } else {
-            overlay.classList.remove('show');
-        }
-    }
-
-
-    async function addSelectedAIObligations() {
-        if (selectedObligations.size === 0) {
-            showToast('Please select at least one obligation to add', 'error');
-            return;
-        }
-
-        try {
-            // ADD THESE LOADING INDICATORS
-            showLoading(true, `Adding ${selectedObligations.size} obligation(s)...`, 'Please wait...');
-            const addBtn = document.querySelector('#aiObligationsModal .modal-footer .btn-success');
-            if (addBtn) {
-                addBtn.dataset.originalHtml = addBtn.innerHTML;
-                addBtn.innerHTML = '<i class="ti ti-loader-2"></i> Adding...';
-                addBtn.disabled = true;
-            }
-
-            const obligationsToAdd = Array.from(selectedObligations).map(index => aiObligations[index]);
-
-            const promises = obligationsToAdd.map(obl =>
-                fetch('/api/obligations', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        contract_id: contractId,
-                        obligation_title: obl.title,
-                        description: obl.description,
-                        obligation_type: obl.category,
-                        owner_user_id: obl.owner?.id,
-                        escalation_user_id: obl.escalation?.id,
-                        threshold_date: obl.threshold_date,
-                        due_date: obl.due_date,
-                        status: 'initiated',
-                        is_ai_generated: true
-                    })
-                })
-            );
-
-            const results = await Promise.all(promises);
-            const failed = results.filter(r => !r.ok);
-
-            if (failed.length > 0) {
-                throw new Error(`Failed to add ${failed.length} obligations`);
-            }
-
-            showToast(`Successfully added ${obligationsToAdd.length} obligations`, 'success');
-
-            // Redirect to obligations dashboard
-            setTimeout(() => {
-                window.location.href = '/obligations';
-            }, 1500);
-
-        } catch (error) {
-            console.error('Error adding obligations:', error);
-            showToast(error.message || 'Failed to add obligations', 'error');
-        } finally {
-            // ADD CLEANUP
-            showLoading(false);
-            const addBtn = document.querySelector('#aiObligationsModal .modal-footer .btn-success');
-            if (addBtn && addBtn.dataset.originalHtml) {
-                addBtn.innerHTML = addBtn.dataset.originalHtml;
-                addBtn.disabled = false;
-            }
-        }
-    }
-
-
-    document.addEventListener('DOMContentLoaded', async function () {
-        console.log('Page loaded, contract ID:', contractId);
-
-        // ADD INITIAL LOADING
-        showLoading(true, 'Initializing page...', 'Loading contract and obligations');
-
-        try {
-            // Load contract details and obligations
-            await loadUsers();
-            await loadContractDetails();
-            await loadExistingObligations();
-        } catch (error) {
-            console.error('Error during initialization:', error);
-            showToast('Failed to initialize page', 'error');
-        } finally {
-            // HIDE LOADING
-            showLoading(false);
-        }
-    });
-
-
-    function escapeHtml(unsafe) {
-        if (!unsafe) return '';
-        return String(unsafe)
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-
-    function formatDate(dateString) {
-        if (!dateString) return 'N/A';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    }
-
-
-
+    
+    return `<span class="date-display">${formattedDate}</span>`;
+}
 </script>
 {% endblock %}

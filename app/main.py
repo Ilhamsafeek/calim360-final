@@ -1233,16 +1233,18 @@ async def obligations_dashboard(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Obligations Dashboard"""
+    """Obligations Dashboard - All obligations across contracts"""
     user_context = get_user_context_with_subscriptions(current_user, db)
     
-    return templates.TemplateResponse("screens/obligations/SCR_039_obligations_dashboard.html", {
-        "request": request,
-        "current_page": "obligations",
-        "user": user_context,
-        "subscriptions": user_context['subscriptions'],
-    })
-
+    return templates.TemplateResponse(
+        "screens/obligations/SCR_039_obligations_dashboard.html",
+        {
+            "request": request,
+            "current_page": "obligations",
+            "user": user_context,
+            "subscriptions": user_context.get('subscriptions', {})
+        }
+    )
 @app.get("/contract/obligations/{contract_id}", response_class=HTMLResponse)
 async def contract_obligations(
     request: Request,

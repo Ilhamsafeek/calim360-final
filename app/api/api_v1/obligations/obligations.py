@@ -1,43 +1,42 @@
 # =====================================================
 # FILE: app/api/api_v1/obligations/obligations.py
 # COMPLETE OBLIGATION MANAGEMENT API
+# MATCHES EXISTING DATABASE SCHEMA
 # =====================================================
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import text, desc
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime
+from pydantic import BaseModel
 import logging
+import json
 
 from app.core.database import get_db
 from app.models.user import User
 from app.models.contract import Contract
 from app.models.obligation import Obligation, ObligationTracking
 from app.core.dependencies import get_current_user
-from app.services.claude_service import ClaudeService
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-claude_service = ClaudeService()
 
 # =====================================================
-# SCHEMAS
+# PYDANTIC SCHEMAS
 # =====================================================
-
-from pydantic import BaseModel
 
 class ObligationCreate(BaseModel):
     contract_id: int
     obligation_title: str
     description: Optional[str] = None
-    obligation_type: Optional[str] = None
+    obligation_type: Optional[str] = "other"
     owner_user_id: Optional[int] = None
     escalation_user_id: Optional[int] = None
-    threshold_date: Optional[datetime] = None
-    due_date: Optional[datetime] = None
-    status: str = 'initiated'
-    is_ai_generated: bool = False
+    threshold_date: Optional[str] = None
+    due_date: Optional[str] = None
+    status: Optional[str] = "initiated"
+    is_ai_generated: Optional[bool] = False
 
 class ObligationUpdate(BaseModel):
     obligation_title: Optional[str] = None
@@ -45,282 +44,107 @@ class ObligationUpdate(BaseModel):
     obligation_type: Optional[str] = None
     owner_user_id: Optional[int] = None
     escalation_user_id: Optional[int] = None
-    threshold_date: Optional[datetime] = None
-    due_date: Optional[datetime] = None
+    threshold_date: Optional[str] = None
+    due_date: Optional[str] = None
     status: Optional[str] = None
 
-class AIObligationGenerate(BaseModel):
-    contract_id: int
 
 # =====================================================
-# 1. GET ALL OBLIGATIONS FOR A CONTRACT
+# HELPER FUNCTIONS
 # =====================================================
-@router.get("/contract/{contract_id}")
-async def get_contract_obligations(
-    contract_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Get all obligations for a specific contract"""
+
+def parse_date(date_str: Optional[str]) -> Optional[datetime]:
+    """Parse date string to datetime object"""
+    if not date_str:
+        return None
     try:
-        # Verify contract access
-        contract = db.query(Contract).filter(
-            Contract.id == contract_id,
-            Contract.company_id == current_user.company_id
-        ).first()
-        
-        if not contract:
-            raise HTTPException(status_code=404, detail="Contract not found")
-        
-        # Get obligations
-        obligations = db.query(Obligation).filter(
-            Obligation.contract_id == contract_id
-        ).order_by(desc(Obligation.created_at)).all()
-        
-        # ✅ CRITICAL: Enrich with user data
-        enriched = []
-        for obl in obligations:
-            # ✅ Get owner information
-            owner = db.query(User).filter(User.id == obl.owner_user_id).first() if obl.owner_user_id else None
-            
-            # ✅ Get escalation information
-            escalation = db.query(User).filter(User.id == obl.escalation_user_id).first() if obl.escalation_user_id else None
-            
-            enriched.append({
-                "id": obl.id,
-                "contract_id": obl.contract_id,
-                "obligation_title": obl.obligation_title,
-                "description": obl.description,
-                "obligation_type": obl.obligation_type,
-                "priority": getattr(obl, "priority", "medium"),
-                "owner_user_id": obl.owner_user_id,
-                "owner_name": f"{owner.first_name} {owner.last_name}" if owner else None,
-                "owner_email": owner.email if owner else None,
-                "escalation_user_id": obl.escalation_user_id,
-                "escalation_name": f"{escalation.first_name} {escalation.last_name}" if escalation else None,
-                "escalation_email": escalation.email if escalation else None,
-                "threshold_date": obl.threshold_date.isoformat() if obl.threshold_date else None,
-                "due_date": obl.due_date.isoformat() if obl.due_date else None,
-                "status": obl.status,
-                "is_ai_generated": obl.is_ai_generated,
-                "created_at": obl.created_at.isoformat() if obl.created_at else None,
-                "updated_at": obl.updated_at.isoformat() if obl.updated_at else None
-            })
-        
-        return enriched
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error fetching obligations: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        if 'T' in date_str:
+            return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+        return datetime.strptime(date_str, '%Y-%m-%d')
+    except (ValueError, TypeError):
+        return None
+
+def format_datetime(dt: Optional[datetime]) -> Optional[str]:
+    """Format datetime to ISO string"""
+    if not dt:
+        return None
+    return dt.isoformat()
 
 
 # =====================================================
-# 2. GENERATE OBLIGATIONS USING AI
+# 1. CREATE OBLIGATION
 # =====================================================
-@router.post("/generate-ai/{contract_id}")
-async def generate_obligations_ai(
-    contract_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Use AI to extract obligations from contract content"""
-    try:
-        logger.info(f"🤖 Generating AI obligations for contract {contract_id}")
-        
-        # Get contract
-        contract = db.query(Contract).filter(
-            Contract.id == contract_id,
-            Contract.company_id == current_user.company_id
-        ).first()
-        
-        if not contract:
-            logger.error(f"❌ Contract {contract_id} not found")
-            raise HTTPException(status_code=404, detail="Contract not found")
-        
-        # Get latest contract version content
-        from app.models.contract import ContractVersion
-        latest_version = db.query(ContractVersion).filter(
-            ContractVersion.contract_id == contract_id
-        ).order_by(desc(ContractVersion.version_number)).first()
-        
-        if not latest_version or not latest_version.contract_content:
-            logger.error(f"❌ No contract content found for contract {contract_id}")
-            raise HTTPException(
-                status_code=400, 
-                detail="No contract content found. Please ensure the contract has content."
-            )
-        
-        logger.info(f"📄 Contract content length: {len(latest_version.contract_content)} characters")
-        
-        # Extract obligations using Claude AI
-        prompt = f"""Analyze this {contract.contract_type} contract and extract ALL contractual obligations.
 
-For each obligation, provide:
-1. **title**: Clear obligation title (max 50 words)
-2. **description**: Detailed description including specific requirements (max 150 words)  
-3. **type**: One of [payment, deliverable, compliance, reporting, insurance, performance, coordination, indemnification, timely_completion]
-4. **party**: Who has this obligation - 'contractor' or 'client'
-5. **priority**: high, medium, or low based on criticality
-
-Contract Details:
-- Type: {contract.contract_type}
-- Parties: {contract.party_a_name} and {contract.party_b_name}
-
-Contract Content:
-{latest_version.contract_content[:8000]}
-
-CRITICAL: Return ONLY a valid JSON array with NO markdown formatting, NO code blocks, NO explanations.
-Just the raw JSON array starting with [ and ending with ].
-
-Example format:
-[
-  {{
-    "title": "Payment Obligation",
-    "description": "Timely payment for work completed as per agreed terms within 30 days of invoice submission with proper documentation",
-    "type": "payment",
-    "party": "client",
-    "priority": "high"
-  }},
-  {{
-    "title": "Quality Standards Compliance",
-    "description": "Ensure all deliverables meet specified quality standards and industry requirements with proper testing and validation",
-    "type": "performance", 
-    "party": "contractor",
-    "priority": "high"
-  }}
-]"""
-        
-        # Call Claude API
-        logger.info("📡 Calling Claude API for obligation extraction...")
-        response = await claude_service.generate_text(prompt, max_tokens=3000)
-        logger.info(f"✅ Received response: {len(response)} characters")
-        
-        # Parse response
-        import json
-        import re
-        
-        # Clean response - remove markdown if present
-        cleaned_response = response.strip()
-        if cleaned_response.startswith("```"):
-            # Remove markdown code blocks
-            cleaned_response = re.sub(r'^```(?:json)?\s*|\s*```$', '', cleaned_response, flags=re.MULTILINE)
-            cleaned_response = cleaned_response.strip()
-        
-        # Extract JSON array
-        json_match = re.search(r'\[.*\]', cleaned_response, re.DOTALL)
-        if not json_match:
-            logger.error("❌ Could not find JSON array in response")
-            logger.error(f"Response preview: {response[:500]}")
-            raise ValueError("AI response did not contain valid JSON array")
-        
-        # Parse JSON
-        obligations_data = json.loads(json_match.group(0))
-        
-        if not obligations_data or len(obligations_data) == 0:
-            logger.warning("⚠️ No obligations extracted from contract")
-            return {
-                "success": True,
-                "obligations": [],
-                "count": 0,
-                "message": "No obligations found in contract content"
-            }
-        
-        logger.info(f"✅ Successfully extracted {len(obligations_data)} obligations")
-        
-        # Format response for frontend
-        formatted_obligations = []
-        for idx, obl in enumerate(obligations_data, 1):
-            formatted_obligations.append({
-                "obligation_title": obl.get("title", f"Obligation {idx}"),
-                "description": obl.get("description", ""),
-                "obligation_type": obl.get("type", "performance"),
-                "party": obl.get("party", "both"),
-                "priority": obl.get("priority", "medium"),
-                "contract_id": contract_id,
-                "is_ai_generated": True
-            })
-        
-        return formatted_obligations
-        
-    except HTTPException:
-        raise
-    except json.JSONDecodeError as e:
-        logger.error(f"❌ JSON parsing error: {str(e)}")
-        logger.error(f"Response that failed to parse: {response[:1000]}")
-        raise HTTPException(
-            status_code=500, 
-            detail=f"Failed to parse AI response. Please try again."
-        )
-    except Exception as e:
-        logger.error(f"❌ Error generating AI obligations: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500, 
-            detail=f"Failed to generate obligations: {str(e)}"
-        )
-
-
-# =====================================================
-# 3. CREATE OBLIGATION
-# =====================================================
-@router.post("/")
+@router.post("/", response_model=Dict[str, Any])
 async def create_obligation(
-    request: dict,
+    request: ObligationCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Create new obligation with email validation
-    """
+    """Create a new obligation"""
     try:
-        # ✅ VALIDATE: Owner and Escalation must be different
-        owner_user_id = request.get("owner_user_id")
-        escalation_user_id = request.get("escalation_user_id")
+        logger.info(f"📝 Creating obligation for contract {request.contract_id}")
         
-        if owner_user_id and escalation_user_id and owner_user_id == escalation_user_id:
+        # Verify contract exists and belongs to user's company
+        contract = db.query(Contract).filter(
+            Contract.id == request.contract_id,
+            Contract.company_id == current_user.company_id
+        ).first()
+        
+        if not contract:
+            logger.error(f"❌ Contract {request.contract_id} not found")
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Owner and escalation user must be different"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Contract not found"
             )
         
-        # Verify emails are different if both provided
-        if owner_user_id and escalation_user_id:
-            owner = db.query(User).filter(User.id == owner_user_id).first()
-            escalation = db.query(User).filter(User.id == escalation_user_id).first()
-            
-            if owner and escalation and owner.email == escalation.email:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Owner and escalation emails must be different"
-                )
+        # Parse dates
+        threshold_date = parse_date(request.threshold_date)
+        due_date = parse_date(request.due_date)
         
-        # Create obligation
-        new_obligation = Obligation(
-            contract_id=request.get("contract_id"),
-            obligation_title=request.get("obligation_title"),
-            description=request.get("description"),
-            obligation_type=request.get("obligation_type", "other"),
-            owner_user_id=owner_user_id,
-            escalation_user_id=escalation_user_id,
-            threshold_date=request.get("threshold_date"),
-            due_date=request.get("due_date"),
-            status=request.get("status", "initiated"),
-            is_ai_generated=request.get("is_ai_generated", False),
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
-        )
+        # Use raw SQL INSERT to match existing table schema exactly
+        insert_query = text("""
+            INSERT INTO obligations (
+                contract_id, obligation_title, description, obligation_type,
+                owner_user_id, escalation_user_id, threshold_date, due_date,
+                status, is_ai_generated, is_preset, created_at, updated_at
+            ) VALUES (
+                :contract_id, :obligation_title, :description, :obligation_type,
+                :owner_user_id, :escalation_user_id, :threshold_date, :due_date,
+                :status, :is_ai_generated, :is_preset, :created_at, :updated_at
+            )
+        """)
         
-        db.add(new_obligation)
+        now = datetime.utcnow()
+        
+        db.execute(insert_query, {
+            "contract_id": request.contract_id,
+            "obligation_title": request.obligation_title,
+            "description": request.description,
+            "obligation_type": request.obligation_type or "other",
+            "owner_user_id": request.owner_user_id if request.owner_user_id else None,
+            "escalation_user_id": request.escalation_user_id if request.escalation_user_id else None,
+            "threshold_date": threshold_date,
+            "due_date": due_date,
+            "status": request.status or "initiated",
+            "is_ai_generated": 1 if request.is_ai_generated else 0,
+            "is_preset": 0,
+            "created_at": now,
+            "updated_at": now
+        })
+        
         db.commit()
-        db.refresh(new_obligation)
         
-        logger.info(f"✅ Created obligation {new_obligation.id}")
+        # Get the inserted ID
+        result = db.execute(text("SELECT LAST_INSERT_ID()")).fetchone()
+        new_id = result[0] if result else None
+        
+        logger.info(f"✅ Created obligation ID: {new_id}")
         
         return {
             "success": True,
             "message": "Obligation created successfully",
-            "id": new_obligation.id
+            "id": new_id
         }
         
     except HTTPException:
@@ -333,69 +157,89 @@ async def create_obligation(
             detail=f"Failed to create obligation: {str(e)}"
         )
 
+
+# =====================================================
+# 2. GET ALL OBLIGATIONS (with filters)
+# =====================================================
+
 @router.get("/")
-async def get_all_obligations(
-    contract_id: Optional[str] = None,
+async def get_obligations(
+    contract_id: Optional[int] = None,
     status_filter: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Get all obligations with proper user information display
-    """
+    """Get all obligations with optional filters"""
     try:
-        query = db.query(Obligation).join(
-            Contract, Obligation.contract_id == Contract.id
-        ).filter(
-            Contract.company_id == current_user.company_id
-        )
+        logger.info(f"📋 Fetching obligations for user {current_user.id}, contract: {contract_id}")
+        
+        query = """
+            SELECT 
+                o.id,
+                o.contract_id,
+                o.obligation_title,
+                o.description,
+                o.obligation_type,
+                o.owner_user_id,
+                o.escalation_user_id,
+                o.threshold_date,
+                o.due_date,
+                o.status,
+                o.is_ai_generated,
+                o.is_preset,
+                o.created_at,
+                o.updated_at,
+                CONCAT(owner.first_name, ' ', owner.last_name) as owner_name,
+                CONCAT(esc.first_name, ' ', esc.last_name) as escalation_name,
+                c.contract_title,
+                c.contract_number
+            FROM obligations o
+            INNER JOIN contracts c ON o.contract_id = c.id
+            LEFT JOIN users owner ON o.owner_user_id = owner.id
+            LEFT JOIN users esc ON o.escalation_user_id = esc.id
+            WHERE c.company_id = :company_id
+        """
+        
+        params = {"company_id": current_user.company_id}
         
         if contract_id:
-            query = query.filter(Obligation.contract_id == contract_id)
+            query += " AND o.contract_id = :contract_id"
+            params["contract_id"] = contract_id
         
-        if status_filter:
-            query = query.filter(Obligation.status == status_filter)
+        if status_filter and status_filter != 'all':
+            query += " AND o.status = :status"
+            params["status"] = status_filter
         
-        obligations = query.order_by(Obligation.created_at.desc()).all()
+        query += " ORDER BY o.created_at DESC"
         
-        # Enrich with user and contract information
-        enriched_obligations = []
-        for obligation in obligations:
-            # Get contract info
-            contract = db.query(Contract).filter(Contract.id == obligation.contract_id).first()
-            
-            # Get owner info
-            owner = db.query(User).filter(User.id == obligation.owner_user_id).first() if obligation.owner_user_id else None
-            
-            # Get escalation info
-            escalation_user = db.query(User).filter(User.id == obligation.escalation_user_id).first() if obligation.escalation_user_id else None
-            
-            enriched_data = {
-                "id": obligation.id,
-                "contract_id": obligation.contract_id,
-                "contract_number": contract.contract_number if contract else None,
-                "contract_title": contract.contract_title if contract else None,
-                "obligation_title": obligation.obligation_title,
-                "description": obligation.description,
-                "obligation_type": obligation.obligation_type,
-                "priority": getattr(obligation, "priority", "medium"),
-                "owner_user_id": getattr(obligation, "owner_user_id", None),
-                "owner_name": f"{owner.first_name} {owner.last_name}" if owner else "Unassigned",
-                "owner_email": owner.email if owner else None,
-                "escalation_user_id": getattr(obligation, "escalation_user_id", None),
-                "escalation_name": f"{escalation_user.first_name} {escalation_user.last_name}" if escalation_user else "Unassigned",
-                "escalation_email": escalation_user.email if escalation_user else None,
-                "threshold_date": getattr(obligation, "threshold_date", None).isoformat() if obligation.threshold_date else None,
-                "due_date": obligation.due_date.isoformat() if obligation.due_date else None,
-                "status": obligation.status or "initiated",
-                "is_ai_generated": obligation.is_ai_generated or False,
-                "created_at": obligation.created_at.isoformat() if obligation.created_at else None,
-                "updated_at": obligation.updated_at.isoformat() if obligation.updated_at else None
-            }
-            
-            enriched_obligations.append(enriched_data)
+        result = db.execute(text(query), params)
+        rows = result.fetchall()
         
-        return enriched_obligations
+        obligations = []
+        for row in rows:
+            obligations.append({
+                "id": row[0],
+                "contract_id": row[1],
+                "obligation_title": row[2],
+                "description": row[3],
+                "obligation_type": row[4],
+                "owner_user_id": row[5],
+                "escalation_user_id": row[6],
+                "threshold_date": format_datetime(row[7]),
+                "due_date": format_datetime(row[8]),
+                "status": row[9] or "initiated",
+                "is_ai_generated": bool(row[10]),
+                "is_preset": bool(row[11]),
+                "created_at": format_datetime(row[12]),
+                "updated_at": format_datetime(row[13]),
+                "owner_name": row[14],
+                "escalation_name": row[15],
+                "contract_title": row[16],
+                "contract_number": row[17]
+            })
+        
+        logger.info(f"✅ Found {len(obligations)} obligations")
+        return obligations
         
     except Exception as e:
         logger.error(f"❌ Error fetching obligations: {str(e)}")
@@ -405,6 +249,79 @@ async def get_all_obligations(
         )
 
 
+# =====================================================
+# 3. GET SINGLE OBLIGATION
+# =====================================================
+
+@router.get("/{obligation_id}")
+async def get_obligation(
+    obligation_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get a single obligation by ID"""
+    try:
+        query = """
+            SELECT 
+                o.id,
+                o.contract_id,
+                o.obligation_title,
+                o.description,
+                o.obligation_type,
+                o.owner_user_id,
+                o.escalation_user_id,
+                o.threshold_date,
+                o.due_date,
+                o.status,
+                o.is_ai_generated,
+                o.created_at,
+                o.updated_at,
+                CONCAT(owner.first_name, ' ', owner.last_name) as owner_name,
+                CONCAT(esc.first_name, ' ', esc.last_name) as escalation_name
+            FROM obligations o
+            INNER JOIN contracts c ON o.contract_id = c.id
+            LEFT JOIN users owner ON o.owner_user_id = owner.id
+            LEFT JOIN users esc ON o.escalation_user_id = esc.id
+            WHERE o.id = :obligation_id AND c.company_id = :company_id
+        """
+        
+        result = db.execute(text(query), {
+            "obligation_id": obligation_id,
+            "company_id": current_user.company_id
+        }).fetchone()
+        
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Obligation not found"
+            )
+        
+        return {
+            "id": result[0],
+            "contract_id": result[1],
+            "obligation_title": result[2],
+            "description": result[3],
+            "obligation_type": result[4],
+            "owner_user_id": result[5],
+            "escalation_user_id": result[6],
+            "threshold_date": format_datetime(result[7]),
+            "due_date": format_datetime(result[8]),
+            "status": result[9] or "initiated",
+            "is_ai_generated": bool(result[10]),
+            "created_at": format_datetime(result[11]),
+            "updated_at": format_datetime(result[12]),
+            "owner_name": result[13],
+            "escalation_name": result[14]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error fetching obligation {obligation_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch obligation: {str(e)}"
+        )
 
 
 # =====================================================
@@ -414,326 +331,591 @@ async def get_all_obligations(
 @router.put("/{obligation_id}")
 async def update_obligation(
     obligation_id: int,
-    data: ObligationUpdate,
+    request: ObligationUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Update an existing obligation"""
     try:
-        # Get obligation
-        obligation = db.query(Obligation).filter(
-            Obligation.id == obligation_id
-        ).first()
+        logger.info(f"📝 Updating obligation {obligation_id}")
         
-        if not obligation:
-            raise HTTPException(status_code=404, detail="Obligation not found")
+        # Verify obligation exists and belongs to user's company
+        check_query = """
+            SELECT o.id FROM obligations o
+            INNER JOIN contracts c ON o.contract_id = c.id
+            WHERE o.id = :obligation_id AND c.company_id = :company_id
+        """
+        result = db.execute(text(check_query), {
+            "obligation_id": obligation_id,
+            "company_id": current_user.company_id
+        }).fetchone()
         
-        # Verify access
-        contract = db.query(Contract).filter(
-            Contract.id == obligation.contract_id,
-            Contract.company_id == current_user.company_id
-        ).first()
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Obligation not found"
+            )
         
-        if not contract:
-            raise HTTPException(status_code=403, detail="Access denied")
+        # Build dynamic update query
+        update_fields = []
+        params = {"obligation_id": obligation_id}
         
-        # Update fields
-        update_data = data.dict(exclude_unset=True)
-        for field, value in update_data.items():
-            setattr(obligation, field, value)
+        if request.obligation_title is not None:
+            update_fields.append("obligation_title = :title")
+            params["title"] = request.obligation_title
         
-        obligation.updated_at = datetime.utcnow()
+        if request.description is not None:
+            update_fields.append("description = :description")
+            params["description"] = request.description
         
-        db.commit()
-        db.refresh(obligation)
+        if request.obligation_type is not None:
+            update_fields.append("obligation_type = :type")
+            params["type"] = request.obligation_type
         
-        # Create tracking entry
-        tracking = ObligationTracking(
-            obligation_id=obligation.id,
-            action_taken="Obligation updated",
-            action_by=current_user.id,
-            notes=f"Updated by {current_user.first_name} {current_user.last_name}"
-        )
-        db.add(tracking)
-        db.commit()
+        if request.owner_user_id is not None:
+            update_fields.append("owner_user_id = :owner_id")
+            params["owner_id"] = request.owner_user_id if request.owner_user_id else None
+        
+        if request.escalation_user_id is not None:
+            update_fields.append("escalation_user_id = :escalation_id")
+            params["escalation_id"] = request.escalation_user_id if request.escalation_user_id else None
+        
+        if request.threshold_date is not None:
+            update_fields.append("threshold_date = :threshold")
+            params["threshold"] = parse_date(request.threshold_date)
+        
+        if request.due_date is not None:
+            update_fields.append("due_date = :due_date")
+            params["due_date"] = parse_date(request.due_date)
+        
+        if request.status is not None:
+            update_fields.append("status = :status")
+            params["status"] = request.status
+        
+        update_fields.append("updated_at = :updated_at")
+        params["updated_at"] = datetime.utcnow()
+        
+        if update_fields:
+            update_query = f"""
+                UPDATE obligations 
+                SET {', '.join(update_fields)}
+                WHERE id = :obligation_id
+            """
+            db.execute(text(update_query), params)
+            db.commit()
+        
+        logger.info(f"✅ Updated obligation {obligation_id}")
         
         return {
             "success": True,
-            "message": "Obligation updated successfully"
+            "message": "Obligation updated successfully",
+            "id": obligation_id
         }
         
     except HTTPException:
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"Error updating obligation: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"❌ Error updating obligation {obligation_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update obligation: {str(e)}"
+        )
+
 
 # =====================================================
 # 5. DELETE OBLIGATION
 # =====================================================
-# =====================================================
-# DELETE OBLIGATION
-# =====================================================
+
 @router.delete("/{obligation_id}")
 async def delete_obligation(
     obligation_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Delete an obligation with proper cascading and UI refresh
-    """
+    """Delete an obligation"""
     try:
         logger.info(f"🗑️ Deleting obligation {obligation_id}")
         
-        # Get the obligation first
-        obligation = db.query(Obligation).filter(Obligation.id == obligation_id).first()
+        # Verify obligation exists and belongs to user's company
+        check_query = """
+            SELECT o.id FROM obligations o
+            INNER JOIN contracts c ON o.contract_id = c.id
+            WHERE o.id = :obligation_id AND c.company_id = :company_id
+        """
+        result = db.execute(text(check_query), {
+            "obligation_id": obligation_id,
+            "company_id": current_user.company_id
+        }).fetchone()
         
-        if not obligation:
+        if not result:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Obligation not found"
             )
         
-        # Verify user has access
-        contract = db.query(Contract).filter(Contract.id == obligation.contract_id).first()
-        if contract and contract.company_id != current_user.company_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied"
-            )
-        
-        # ✅ DELETE WITH FK CHECKS DISABLED
+        # Delete ALL related records from child tables first
+        # 1. Delete from obligation_updates
         try:
-            # Disable foreign key checks to force delete
-            db.execute(text("SET FOREIGN_KEY_CHECKS=0"))
-            
-            # Delete related records
-            db.execute(text("DELETE FROM obligation_updates WHERE obligation_id = :id"), {"id": obligation_id})
-            db.execute(text("DELETE FROM obligation_escalations WHERE obligation_id = :id"), {"id": obligation_id})
-            db.execute(text("DELETE FROM obligation_tracking WHERE obligation_id = :id"), {"id": obligation_id})
-            db.execute(text("DELETE FROM kpis WHERE obligation_id = :id"), {"id": obligation_id})
-            
-            # Delete the obligation itself using RAW SQL (not ORM)
-            result = db.execute(text("DELETE FROM obligations WHERE id = :id"), {"id": obligation_id})
-            
-            # Re-enable foreign key checks
-            db.execute(text("SET FOREIGN_KEY_CHECKS=1"))
-            
-            # Commit everything
-            db.commit()
-            
-            logger.info(f"✅ Obligation {obligation_id} deleted successfully (rows: {result.rowcount})")
-            
-            return {
-                "success": True,
-                "message": "Obligation deleted successfully",
-                "id": obligation_id
-            }
-            
+            db.execute(
+                text("DELETE FROM obligation_updates WHERE obligation_id = :id"),
+                {"id": obligation_id}
+            )
+            logger.info(f"  ✓ Deleted obligation_updates for {obligation_id}")
         except Exception as e:
-            db.rollback()
-            db.execute(text("SET FOREIGN_KEY_CHECKS=1"))  # Re-enable on error
-            logger.error(f"❌ Error during cascading delete: {str(e)}")
-            raise
+            logger.warning(f"  ⚠ obligation_updates: {str(e)}")
+        
+        # 2. Delete from obligation_tracking
+        try:
+            db.execute(
+                text("DELETE FROM obligation_tracking WHERE obligation_id = :id"),
+                {"id": obligation_id}
+            )
+            logger.info(f"  ✓ Deleted obligation_tracking for {obligation_id}")
+        except Exception as e:
+            logger.warning(f"  ⚠ obligation_tracking: {str(e)}")
+        
+        # 3. Delete from obligation_escalations
+        try:
+            db.execute(
+                text("DELETE FROM obligation_escalations WHERE obligation_id = :id"),
+                {"id": obligation_id}
+            )
+            logger.info(f"  ✓ Deleted obligation_escalations for {obligation_id}")
+        except Exception as e:
+            logger.warning(f"  ⚠ obligation_escalations: {str(e)}")
+        
+        # 4. Commit child deletions
+        db.commit()
+        
+        # 5. Now delete the main obligation record
+        db.execute(
+            text("DELETE FROM obligations WHERE id = :id"),
+            {"id": obligation_id}
+        )
+        
+        db.commit()
+        logger.info(f"✅ Successfully deleted obligation {obligation_id}")
+        
+        return {
+            "success": True,
+            "message": "Obligation deleted successfully"
+        }
         
     except HTTPException:
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error deleting obligation: {str(e)}")
+        logger.error(f"❌ Error deleting obligation {obligation_id}: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete obligation: {str(e)}"
         )
 
 
-@router.post("/bulk-delete")
-async def bulk_delete_obligations(
-    request: dict,
+# =====================================================
+# 6. GENERATE AI OBLIGATIONS
+# =====================================================
+
+@router.post("/generate-ai/{contract_id}")
+async def generate_ai_obligations(
+    contract_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Bulk delete obligations with proper error handling
-    """
+    """Use AI to extract obligations from contract content"""
     try:
-        obligation_ids = request.get("obligation_ids", [])
+        logger.info(f"🤖 Generating AI obligations for contract {contract_id}")
         
-        if not obligation_ids:
+        # Verify contract exists and belongs to user's company
+        contract = db.query(Contract).filter(
+            Contract.id == contract_id,
+            Contract.company_id == current_user.company_id
+        ).first()
+        
+        if not contract:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No obligation IDs provided"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Contract not found"
             )
         
-        logger.info(f"🗑️ Bulk deleting {len(obligation_ids)} obligations")
+        # Get contract content from latest version
+        version_query = """
+            SELECT contract_content FROM contract_versions 
+            WHERE contract_id = :contract_id 
+            ORDER BY version_number DESC 
+            LIMIT 1
+        """
+        result = db.execute(text(version_query), {"contract_id": contract_id}).fetchone()
         
-        deleted_count = 0
-        errors = []
+        contract_content = result[0] if result else None
         
-        for obligation_id in obligation_ids:
-            try:
-                obligation = db.query(Obligation).filter(Obligation.id == obligation_id).first()
-                
-                if not obligation:
-                    errors.append(f"Obligation {obligation_id} not found")
-                    continue
-                
-                # Verify access
-                contract = db.query(Contract).filter(Contract.id == obligation.contract_id).first()
-                if contract and contract.company_id != current_user.company_id:
-                    errors.append(f"Access denied for obligation {obligation_id}")
-                    continue
-                
-                # Delete related records
-                try:
-                    db.execute(text("DELETE FROM obligation_updates WHERE obligation_id = :id"), {"id": obligation_id})
-                    db.execute(text("DELETE FROM obligation_escalations WHERE obligation_id = :id"), {"id": obligation_id})
-                    db.execute(text("DELETE FROM obligation_tracking WHERE obligation_id = :id"), {"id": obligation_id})
-                    db.execute(text("DELETE FROM kpis WHERE obligation_id = :id"), {"id": obligation_id})
-                    
-                    # Delete the obligation
-                    db.delete(obligation)
-                    deleted_count += 1
-                    
-                except Exception as e:
-                    errors.append(f"Error deleting obligation {obligation_id}: {str(e)}")
-                    db.rollback()
-                    continue
-                
-            except Exception as e:
-                errors.append(f"Error processing obligation {obligation_id}: {str(e)}")
-                continue
+        if not contract_content:
+            logger.warning(f"⚠️ No contract content found for contract {contract_id}")
+            return generate_fallback_obligations(contract.contract_type)
         
-        # Commit all successful deletions
-        if deleted_count > 0:
-            db.commit()
+        # Try to use Claude API for extraction
+        try:
+            from app.services.claude_service import ClaudeService
+            claude_service = ClaudeService()
+            
+            if claude_service.client:
+                obligations = await extract_with_claude(
+                    claude_service, 
+                    contract_content, 
+                    contract.contract_type
+                )
+                if obligations:
+                    return obligations
+        except Exception as e:
+            logger.warning(f"⚠️ Claude API not available: {str(e)}")
         
-        logger.info(f"✅ Deleted {deleted_count}/{len(obligation_ids)} obligations")
-        
-        return {
-            "success": True,
-            "message": f"Deleted {deleted_count} obligation(s)",
-            "deleted_count": deleted_count,
-            "total_requested": len(obligation_ids),
-            "errors": errors if errors else None
-        }
+        # Fallback to pattern-based extraction
+        return generate_fallback_obligations(contract.contract_type)
         
     except HTTPException:
         raise
     except Exception as e:
-        db.rollback()
-        logger.error(f"❌ Error in bulk delete: {str(e)}")
+        logger.error(f"❌ Error generating AI obligations: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete obligations: {str(e)}"
+            detail=f"Failed to generate obligations: {str(e)}"
         )
 
 
-# =====================================================
-# 6. GET ALL USERS (FOR DROPDOWNS)
-# =====================================================
+async def extract_with_claude(claude_service, contract_content: str, contract_type: str) -> List[Dict]:
+    """Extract obligations using Claude AI"""
+    prompt = f"""Analyze this {contract_type} contract and extract ALL contractual obligations.
 
-@router.get("/users/list")
-async def get_users_list(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Get list of users for owner/escalation dropdowns"""
+For each obligation, provide:
+1. **title**: Clear obligation title (max 50 words)
+2. **description**: Detailed description (max 150 words)
+3. **type**: One of [payment, deliverable, compliance, reporting, insurance, performance, coordination, indemnification, timely_completion, other]
+
+Contract Content:
+{contract_content[:8000]}
+
+Return ONLY a valid JSON array. No markdown, no explanation, just the JSON array starting with [ and ending with ].
+Example format:
+[
+  {{"title": "Payment Terms", "description": "Pay within 30 days...", "type": "payment"}},
+  {{"title": "Delivery", "description": "Deliver by...", "type": "deliverable"}}
+]"""
+
     try:
-        users = db.query(User).filter(
-            User.company_id == current_user.company_id,
-            User.is_active == True
-        ).all()
+        response = claude_service.client.messages.create(
+            model=claude_service.model,
+            max_tokens=4000,
+            messages=[{"role": "user", "content": prompt}]
+        )
         
-        return [
-            {
-                "id": user.id,
-                "name": f"{user.first_name} {user.last_name}",
-                "email": user.email
-            }
-            for user in users
-        ]
+        response_text = response.content[0].text.strip()
         
+        # Clean response
+        if response_text.startswith("```"):
+            response_text = response_text.split("```")[1]
+            if response_text.startswith("json"):
+                response_text = response_text[4:]
+        response_text = response_text.strip()
+        
+        obligations = json.loads(response_text)
+        return obligations if isinstance(obligations, list) else []
     except Exception as e:
-        logger.error(f"Error fetching users: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Claude extraction error: {str(e)}")
+        return []
+
+
+def generate_fallback_obligations(contract_type: str) -> List[Dict]:
+    """Generate fallback obligations based on contract type"""
+    
+    base_obligations = [
+        {
+            "title": "Timely Completion",
+            "description": "Deliver work within the agreed timeline and notify of any potential delays promptly.",
+            "type": "timely_completion"
+        },
+        {
+            "title": "Quality Standards Compliance",
+            "description": "Ensure all work meets industry standards and specific quality requirements outlined in the agreement.",
+            "type": "compliance"
+        },
+        {
+            "title": "Payment Terms",
+            "description": "Process payments according to the agreed schedule and terms specified in the contract.",
+            "type": "payment"
+        },
+        {
+            "title": "Reporting Requirements",
+            "description": "Provide regular progress updates and reports on work completion and any issues encountered.",
+            "type": "reporting"
+        },
+        {
+            "title": "Compliance with Laws",
+            "description": "Follow all applicable laws, regulations, and safety standards relevant to the work being performed.",
+            "type": "compliance"
+        }
+    ]
+    
+    # Add type-specific obligations
+    if contract_type and 'service' in contract_type.lower():
+        base_obligations.append({
+            "title": "Service Level Agreement",
+            "description": "Maintain service levels as specified in the SLA, including response times and availability.",
+            "type": "performance"
+        })
+    
+    if contract_type and 'construction' in contract_type.lower():
+        base_obligations.extend([
+            {
+                "title": "Insurance Coverage",
+                "description": "Maintain appropriate insurance coverage including liability and workers' compensation.",
+                "type": "insurance"
+            },
+            {
+                "title": "Safety Standards",
+                "description": "Comply with all site safety requirements and maintain a safe working environment.",
+                "type": "compliance"
+            }
+        ])
+    
+    return base_obligations
+
 
 # =====================================================
-# 7. BULK CREATE AI OBLIGATIONS
+# 7. BULK OPERATIONS
 # =====================================================
+
 @router.post("/bulk-create")
 async def bulk_create_obligations(
     obligations: List[ObligationCreate],
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Create multiple obligations at once (from AI generation)"""
+    """Create multiple obligations at once"""
     try:
-        logger.info(f"💾 Bulk creating {len(obligations)} obligations")
+        created_count = 0
+        errors = []
+        now = datetime.utcnow()
         
-        created_obligations = []
-        
-        for obl_data in obligations:
-            # Verify contract access
-            contract = db.query(Contract).filter(
-                Contract.id == obl_data.contract_id,
-                Contract.company_id == current_user.company_id
-            ).first()
-            
-            if not contract:
-                logger.warning(f"⚠️ Skipping obligation - contract {obl_data.contract_id} not found")
-                continue
-            
-            # Create obligation
-            new_obligation = Obligation(
-                company_id=current_user.company_id,
-                contract_id=obl_data.contract_id,
-                obligation_title=obl_data.obligation_title,
-                description=obl_data.description,
-                obligation_type=obl_data.obligation_type,
-                owner_user_id=obl_data.owner_user_id,
-                escalation_user_id=obl_data.escalation_user_id,
-                threshold_date=obl_data.threshold_date,
-                due_date=obl_data.due_date,
-                status=obl_data.status or 'initiated',
-                is_ai_generated=obl_data.is_ai_generated,
-                created_by=current_user.id,
-                created_at=datetime.utcnow()
+        insert_query = text("""
+            INSERT INTO obligations (
+                contract_id, obligation_title, description, obligation_type,
+                owner_user_id, escalation_user_id, threshold_date, due_date,
+                status, is_ai_generated, is_preset, created_at, updated_at
+            ) VALUES (
+                :contract_id, :obligation_title, :description, :obligation_type,
+                :owner_user_id, :escalation_user_id, :threshold_date, :due_date,
+                :status, :is_ai_generated, :is_preset, :created_at, :updated_at
             )
-            
-            db.add(new_obligation)
-            created_obligations.append(new_obligation)
+        """)
         
-        # Commit all at once
+        for i, obl in enumerate(obligations):
+            try:
+                # Verify contract
+                contract = db.query(Contract).filter(
+                    Contract.id == obl.contract_id,
+                    Contract.company_id == current_user.company_id
+                ).first()
+                
+                if not contract:
+                    errors.append(f"Item {i}: Contract not found")
+                    continue
+                
+                db.execute(insert_query, {
+                    "contract_id": obl.contract_id,
+                    "obligation_title": obl.obligation_title,
+                    "description": obl.description,
+                    "obligation_type": obl.obligation_type or "other",
+                    "owner_user_id": obl.owner_user_id,
+                    "escalation_user_id": obl.escalation_user_id,
+                    "threshold_date": parse_date(obl.threshold_date),
+                    "due_date": parse_date(obl.due_date),
+                    "status": obl.status or "initiated",
+                    "is_ai_generated": 1 if obl.is_ai_generated else 0,
+                    "is_preset": 0,
+                    "created_at": now,
+                    "updated_at": now
+                })
+                created_count += 1
+                
+            except Exception as e:
+                errors.append(f"Item {i}: {str(e)}")
+        
         db.commit()
-        
-        # Refresh to get IDs
-        for obl in created_obligations:
-            db.refresh(obl)
-        
-        logger.info(f"✅ Successfully created {len(created_obligations)} obligations")
         
         return {
             "success": True,
-            "created_count": len(created_obligations),
-            "obligations": [
-                {
-                    "id": obl.id,
-                    "obligation_title": obl.obligation_title,
-                    "status": obl.status
-                }
-                for obl in created_obligations
-            ]
+            "created": created_count,
+            "errors": errors
         }
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error bulk creating obligations: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to create obligations: {str(e)}"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Bulk creation failed: {str(e)}"
         )
 
+
+@router.delete("/bulk-delete")
+async def bulk_delete_obligations(
+    obligation_ids: List[int],
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Delete multiple obligations at once"""
+    try:
+        deleted_count = 0
         
+        for obl_id in obligation_ids:
+            # Verify ownership
+            check_query = """
+                SELECT o.id FROM obligations o
+                INNER JOIN contracts c ON o.contract_id = c.id
+                WHERE o.id = :id AND c.company_id = :company_id
+            """
+            result = db.execute(text(check_query), {
+                "id": obl_id,
+                "company_id": current_user.company_id
+            }).fetchone()
+            
+            if result:
+                # Delete from all related tables first
+                try:
+                    db.execute(text("DELETE FROM obligation_updates WHERE obligation_id = :id"), {"id": obl_id})
+                except: pass
+                try:
+                    db.execute(text("DELETE FROM obligation_tracking WHERE obligation_id = :id"), {"id": obl_id})
+                except: pass
+                try:
+                    db.execute(text("DELETE FROM obligation_escalations WHERE obligation_id = :id"), {"id": obl_id})
+                except: pass
+                
+                # Now delete the obligation
+                db.execute(
+                    text("DELETE FROM obligations WHERE id = :id"),
+                    {"id": obl_id}
+                )
+                deleted_count += 1
+        
+        db.commit()
+        
+        return {
+            "success": True,
+            "deleted": deleted_count
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Bulk deletion failed: {str(e)}"
+        )
+
+
+# =====================================================
+# 8. OBLIGATION TRACKING
+# =====================================================
+
+@router.post("/{obligation_id}/track")
+async def add_tracking_entry(
+    obligation_id: int,
+    action_taken: str,
+    notes: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Add a tracking entry to an obligation"""
+    try:
+        # Verify obligation exists
+        check_query = """
+            SELECT o.id FROM obligations o
+            INNER JOIN contracts c ON o.contract_id = c.id
+            WHERE o.id = :id AND c.company_id = :company_id
+        """
+        result = db.execute(text(check_query), {
+            "id": obligation_id,
+            "company_id": current_user.company_id
+        }).fetchone()
+        
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Obligation not found"
+            )
+        
+        insert_query = text("""
+            INSERT INTO obligation_tracking (obligation_id, action_taken, action_by, notes, created_at)
+            VALUES (:obligation_id, :action_taken, :action_by, :notes, :created_at)
+        """)
+        
+        db.execute(insert_query, {
+            "obligation_id": obligation_id,
+            "action_taken": action_taken,
+            "action_by": current_user.id,
+            "notes": notes,
+            "created_at": datetime.utcnow()
+        })
+        
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": "Tracking entry added"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to add tracking: {str(e)}"
+        )
+
+
+@router.get("/{obligation_id}/tracking")
+async def get_tracking_history(
+    obligation_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get tracking history for an obligation"""
+    try:
+        query = """
+            SELECT 
+                t.id,
+                t.action_taken,
+                t.notes,
+                t.created_at,
+                CONCAT(u.first_name, ' ', u.last_name) as action_by_name
+            FROM obligation_tracking t
+            LEFT JOIN users u ON t.action_by = u.id
+            INNER JOIN obligations o ON t.obligation_id = o.id
+            INNER JOIN contracts c ON o.contract_id = c.id
+            WHERE t.obligation_id = :obligation_id AND c.company_id = :company_id
+            ORDER BY t.created_at DESC
+        """
+        
+        result = db.execute(text(query), {
+            "obligation_id": obligation_id,
+            "company_id": current_user.company_id
+        })
+        
+        tracking = []
+        for row in result:
+            tracking.append({
+                "id": row[0],
+                "action_taken": row[1],
+                "notes": row[2],
+                "created_at": format_datetime(row[3]),
+                "action_by_name": row[4]
+            })
+        
+        return tracking
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get tracking: {str(e)}"
+        )
