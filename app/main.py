@@ -188,7 +188,7 @@ except ImportError:
 # Correspondence router (with error handling)
 correspondence_router = None
 try:
-    from app.api.api_v1.correspondence.router import router as correspondence_router
+    from app.api.api_v1.correspondence.correspondence_router import router as correspondence_router
     logger.info("✅ Correspondence router imported")
 except ImportError:
     try:
@@ -464,10 +464,11 @@ if ws_consultation_router:
     app.include_router(ws_consultation_router)
     logger.info("✅ WebSocket consultation router registered")
 
-# Correspondence router (only once, with proper prefix)
-if correspondence_router:
-    app.include_router(correspondence_router)  # No additional prefix needed!
-    logger.info("✅ Correspondence router registered at /api/correspondence")
+app.include_router(
+    correspondence_router,
+    prefix="/api/v1",
+    tags=["Correspondence"]
+)
 
 logger.info("✅ All available API routers registered successfully")
 
