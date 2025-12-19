@@ -115,11 +115,10 @@ async def get_contract_obligations(
         logger.error(f"Error fetching obligations: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-        
+
 # =====================================================
 # 2. GENERATE OBLIGATIONS USING AI
 # =====================================================
-
 @router.post("/generate-ai/{contract_id}")
 async def generate_obligations_ai(
     contract_id: int,
@@ -128,6 +127,8 @@ async def generate_obligations_ai(
 ):
     """Use AI to extract obligations from contract content"""
     try:
+        logger.info(f"🤖 Generating AI obligations for contract {contract_id}")
+        
         # Get contract
         contract = db.query(Contract).filter(
             Contract.id == contract_id,
@@ -135,6 +136,7 @@ async def generate_obligations_ai(
         ).first()
         
         if not contract:
+            logger.error(f"❌ Contract {contract_id} not found")
             raise HTTPException(status_code=404, detail="Contract not found")
         
         # Get latest contract version content
@@ -144,52 +146,120 @@ async def generate_obligations_ai(
         ).order_by(desc(ContractVersion.version_number)).first()
         
         if not latest_version or not latest_version.contract_content:
-            raise HTTPException(status_code=400, detail="No contract content found")
+            logger.error(f"❌ No contract content found for contract {contract_id}")
+            raise HTTPException(
+                status_code=400, 
+                detail="No contract content found. Please ensure the contract has content."
+            )
+        
+        logger.info(f"📄 Contract content length: {len(latest_version.contract_content)} characters")
         
         # Extract obligations using Claude AI
-        prompt = f"""Analyze this contract and extract all contractual obligations. For each obligation, provide:
-1. A clear title (max 50 words)
-2. Detailed description (max 150 words)
-3. Obligation type: one of [payment, deliverable, compliance, reporting, insurance, performance, coordination, indemnification, timely_completion]
+        prompt = f"""Analyze this {contract.contract_type} contract and extract ALL contractual obligations.
+
+For each obligation, provide:
+1. **title**: Clear obligation title (max 50 words)
+2. **description**: Detailed description including specific requirements (max 150 words)  
+3. **type**: One of [payment, deliverable, compliance, reporting, insurance, performance, coordination, indemnification, timely_completion]
+4. **party**: Who has this obligation - 'contractor' or 'client'
+5. **priority**: high, medium, or low based on criticality
+
+Contract Details:
+- Type: {contract.contract_type}
+- Parties: {contract.party_a_name} and {contract.party_b_name}
 
 Contract Content:
 {latest_version.contract_content[:8000]}
 
-Return ONLY a JSON array with this structure:
+CRITICAL: Return ONLY a valid JSON array with NO markdown formatting, NO code blocks, NO explanations.
+Just the raw JSON array starting with [ and ending with ].
+
+Example format:
 [
   {{
     "title": "Payment Obligation",
-    "description": "Timely payment for work completed as per agreed terms...",
-    "type": "payment"
+    "description": "Timely payment for work completed as per agreed terms within 30 days of invoice submission with proper documentation",
+    "type": "payment",
+    "party": "client",
+    "priority": "high"
+  }},
+  {{
+    "title": "Quality Standards Compliance",
+    "description": "Ensure all deliverables meet specified quality standards and industry requirements with proper testing and validation",
+    "type": "performance", 
+    "party": "contractor",
+    "priority": "high"
   }}
-]
-"""
+]"""
         
         # Call Claude API
-        response = await claude_service.generate_text(prompt, max_tokens=2000)
+        logger.info("📡 Calling Claude API for obligation extraction...")
+        response = await claude_service.generate_text(prompt, max_tokens=3000)
+        logger.info(f"✅ Received response: {len(response)} characters")
         
         # Parse response
         import json
         import re
         
-        # Extract JSON from response
-        json_match = re.search(r'\[.*\]', response, re.DOTALL)
-        if json_match:
-            obligations_data = json.loads(json_match.group(0))
-        else:
-            raise ValueError("Could not parse AI response")
+        # Clean response - remove markdown if present
+        cleaned_response = response.strip()
+        if cleaned_response.startswith("```"):
+            # Remove markdown code blocks
+            cleaned_response = re.sub(r'^```(?:json)?\s*|\s*```$', '', cleaned_response, flags=re.MULTILINE)
+            cleaned_response = cleaned_response.strip()
         
-        return {
-            "success": True,
-            "obligations": obligations_data,
-            "count": len(obligations_data)
-        }
+        # Extract JSON array
+        json_match = re.search(r'\[.*\]', cleaned_response, re.DOTALL)
+        if not json_match:
+            logger.error("❌ Could not find JSON array in response")
+            logger.error(f"Response preview: {response[:500]}")
+            raise ValueError("AI response did not contain valid JSON array")
+        
+        # Parse JSON
+        obligations_data = json.loads(json_match.group(0))
+        
+        if not obligations_data or len(obligations_data) == 0:
+            logger.warning("⚠️ No obligations extracted from contract")
+            return {
+                "success": True,
+                "obligations": [],
+                "count": 0,
+                "message": "No obligations found in contract content"
+            }
+        
+        logger.info(f"✅ Successfully extracted {len(obligations_data)} obligations")
+        
+        # Format response for frontend
+        formatted_obligations = []
+        for idx, obl in enumerate(obligations_data, 1):
+            formatted_obligations.append({
+                "obligation_title": obl.get("title", f"Obligation {idx}"),
+                "description": obl.get("description", ""),
+                "obligation_type": obl.get("type", "performance"),
+                "party": obl.get("party", "both"),
+                "priority": obl.get("priority", "medium"),
+                "contract_id": contract_id,
+                "is_ai_generated": True
+            })
+        
+        return formatted_obligations
         
     except HTTPException:
         raise
+    except json.JSONDecodeError as e:
+        logger.error(f"❌ JSON parsing error: {str(e)}")
+        logger.error(f"Response that failed to parse: {response[:1000]}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to parse AI response. Please try again."
+        )
     except Exception as e:
-        logger.error(f"Error generating AI obligations: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"❌ Error generating AI obligations: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to generate obligations: {str(e)}"
+        )
+
 
 # =====================================================
 # 3. CREATE OBLIGATION
@@ -593,7 +663,6 @@ async def get_users_list(
 # =====================================================
 # 7. BULK CREATE AI OBLIGATIONS
 # =====================================================
-
 @router.post("/bulk-create")
 async def bulk_create_obligations(
     obligations: List[ObligationCreate],
@@ -602,7 +671,9 @@ async def bulk_create_obligations(
 ):
     """Create multiple obligations at once (from AI generation)"""
     try:
-        created_count = 0
+        logger.info(f"💾 Bulk creating {len(obligations)} obligations")
+        
+        created_obligations = []
         
         for obl_data in obligations:
             # Verify contract access
@@ -612,10 +683,12 @@ async def bulk_create_obligations(
             ).first()
             
             if not contract:
+                logger.warning(f"⚠️ Skipping obligation - contract {obl_data.contract_id} not found")
                 continue
             
             # Create obligation
-            obligation = Obligation(
+            new_obligation = Obligation(
+                company_id=current_user.company_id,
                 contract_id=obl_data.contract_id,
                 obligation_title=obl_data.obligation_title,
                 description=obl_data.description,
@@ -624,22 +697,43 @@ async def bulk_create_obligations(
                 escalation_user_id=obl_data.escalation_user_id,
                 threshold_date=obl_data.threshold_date,
                 due_date=obl_data.due_date,
-                status=obl_data.status,
-                is_ai_generated=obl_data.is_ai_generated
+                status=obl_data.status or 'initiated',
+                is_ai_generated=obl_data.is_ai_generated,
+                created_by=current_user.id,
+                created_at=datetime.utcnow()
             )
             
-            db.add(obligation)
-            created_count += 1
+            db.add(new_obligation)
+            created_obligations.append(new_obligation)
         
+        # Commit all at once
         db.commit()
+        
+        # Refresh to get IDs
+        for obl in created_obligations:
+            db.refresh(obl)
+        
+        logger.info(f"✅ Successfully created {len(created_obligations)} obligations")
         
         return {
             "success": True,
-            "message": f"Created {created_count} obligations successfully",
-            "count": created_count
+            "created_count": len(created_obligations),
+            "obligations": [
+                {
+                    "id": obl.id,
+                    "obligation_title": obl.obligation_title,
+                    "status": obl.status
+                }
+                for obl in created_obligations
+            ]
         }
         
     except Exception as e:
         db.rollback()
-        logger.error(f"Error bulk creating obligations: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"❌ Error bulk creating obligations: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create obligations: {str(e)}"
+        )
+
+        

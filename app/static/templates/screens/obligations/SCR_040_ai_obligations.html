@@ -791,6 +791,93 @@
     text-align: center;
     color: var(--text-muted);
 }
+
+
+.ai-obligation-item {
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    border-left-width: 3px;
+    border-left-style: solid;
+    transition: all 0.2s ease;
+}
+
+.ai-obligation-item:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateX(2px);
+}
+
+.checkbox-container {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.checkbox-container input[type="checkbox"] {
+    margin-top: 4px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.ai-obligation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.ai-obligation-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+    flex: 1;
+    min-width: 200px;
+}
+
+.ai-obligation-type {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ai-obligation-description {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+}
+
+.ai-obligation-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: var(--text-light);
+    margin-top: 0.5rem;
+}
+
+.ai-obligation-meta div {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.ai-obligation-meta i {
+    font-size: 1rem;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+
 </style>
 
 
@@ -1578,48 +1665,191 @@
     // =====================================================
     // AI GENERATION
     // =====================================================
-    async function generateAIObligations() {
-        const btn = document.getElementById('generateBtn');
-        const originalHTML = btn.innerHTML;
+async function generateAIObligations() {
+    const body = document.getElementById('aiGenerateBody');
+    const footer = document.getElementById('aiGenerateFooter');
+    
+    // Show loading state
+    body.innerHTML = '<p style="text-align: center;"><i class="ti ti-loader" style="animation: spin 1s linear infinite;"></i> Analyzing contract and extracting obligations...</p>';
+    footer.style.display = 'none';
 
-        try {
-            // Show loading
-            showLoading(true);
-            btn.disabled = true;
-            btn.innerHTML = '<i class="ti ti-loader" style="animation: spin 0.8s linear infinite;"></i> Analyzing Contract...';
-
-            const response = await fetch(`/api/obligations/generate-ai/${contractId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.detail || 'Failed to generate obligations');
+    try {
+        console.log(`🤖 Generating AI obligations for contract ${obligationContractId}`);
+        
+        const response = await fetch(`${API_BASE}/generate-ai/${obligationContractId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
             }
+        });
 
-            aiObligations = await response.json();
-
-            if (aiObligations.length === 0) {
-                throw new Error('No obligations were extracted from the contract');
-            }
-
-            // Show results in modal
-            renderAIObligationsInModal();
-            document.getElementById('aiObligationsModal').classList.add('show');
-            showToast(`Successfully extracted ${aiObligations.length} obligations`, 'success');
-
-        } catch (error) {
-            console.error('Error generating obligations:', error);
-            showToast(error.message || 'Failed to generate obligations', 'error');
-        } finally {
-            showLoading(false);
-            btn.disabled = false;
-            btn.innerHTML = originalHTML;
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to generate obligations');
         }
+
+        const data = await response.json();
+        console.log('✅ Received AI obligations:', data);
+        
+        // Handle both array and object responses
+        if (Array.isArray(data)) {
+            aiGeneratedObligations = data;
+        } else if (data.obligations && Array.isArray(data.obligations)) {
+            aiGeneratedObligations = data.obligations;
+        } else {
+            throw new Error('Invalid response format from server');
+        }
+
+        if (aiGeneratedObligations.length === 0) {
+            body.innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <i class="ti ti-info-circle" style="font-size: 3rem; color: var(--info-color);"></i>
+                    <p>No obligations found in this contract.</p>
+                    <p style="color: var(--text-light);">The AI analysis did not identify any specific obligations.</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Render AI obligations
+        body.innerHTML = aiGeneratedObligations.map((obligation, index) => {
+            // Get obligation type color
+            const typeColors = {
+                'payment': '#10b981',
+                'deliverable': '#3b82f6', 
+                'compliance': '#8b5cf6',
+                'reporting': '#f59e0b',
+                'insurance': '#ef4444',
+                'performance': '#06b6d4',
+                'coordination': '#6366f1',
+                'indemnification': '#ec4899',
+                'timely_completion': '#14b8a6'
+            };
+            
+            const typeColor = typeColors[obligation.obligation_type] || '#6b7280';
+            
+            // Get priority badge
+            const priorityBadges = {
+                'high': '<span style="background: #fef2f2; color: #dc2626; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 500;">High Priority</span>',
+                'medium': '<span style="background: #fef3c7; color: #d97706; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 500;">Medium Priority</span>',
+                'low': '<span style="background: #f0fdf4; color: #16a34a; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 500;">Low Priority</span>'
+            };
+            
+            const priorityBadge = priorityBadges[obligation.priority] || priorityBadges['medium'];
+            
+            return `
+                <div class="ai-obligation-item" style="border-left: 3px solid ${typeColor};">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="ai-obligation-${index}" checked>
+                        <div style="flex: 1;">
+                            <div class="ai-obligation-header">
+                                <div class="ai-obligation-title">${obligation.obligation_title}</div>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <span class="ai-obligation-type" style="background: ${typeColor}20; color: ${typeColor};">
+                                        ${obligation.obligation_type.replace('_', ' ')}
+                                    </span>
+                                    ${priorityBadge}
+                                </div>
+                            </div>
+                            <div class="ai-obligation-description">${obligation.description}</div>
+                            ${obligation.party ? `
+                                <div class="ai-obligation-meta">
+                                    <div>
+                                        <i class="ti ti-users"></i> 
+                                        <span style="text-transform: capitalize;">${obligation.party} Obligation</span>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        footer.style.display = 'flex';
+        
+        showToast(`Successfully extracted ${aiGeneratedObligations.length} obligations`, 'success');
+
+    } catch (error) {
+        console.error('❌ Error generating obligations:', error);
+        body.innerHTML = `
+            <div style="text-align: center; padding: 2rem;">
+                <i class="ti ti-alert-circle" style="font-size: 3rem; color: var(--danger-color);"></i>
+                <p style="color: var(--danger-color); font-weight: 500;">Failed to generate obligations</p>
+                <p style="color: var(--text-light); font-size: 0.875rem;">${error.message}</p>
+                <button onclick="generateAIObligations()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer;">
+                    <i class="ti ti-refresh"></i> Try Again
+                </button>
+            </div>
+        `;
     }
+}
+
+
+
+
+async function saveAIObligations() {
+    try {
+        showLoading(true);
+
+        // Get selected obligations
+        const selected = aiGeneratedObligations.filter((_, index) => {
+            const checkbox = document.getElementById(`ai-obligation-${index}`);
+            return checkbox && checkbox.checked;
+        });
+
+        if (selected.length === 0) {
+            showToast('Please select at least one obligation', 'error');
+            showLoading(false);
+            return;
+        }
+
+        console.log(`💾 Saving ${selected.length} AI obligations`);
+
+        // Prepare data for bulk create
+        const obligations = selected.map(obligation => ({
+            contract_id: parseInt(obligationContractId),
+            obligation_title: obligation.obligation_title,
+            description: obligation.description,
+            obligation_type: obligation.obligation_type,
+            status: 'initiated',
+            is_ai_generated: true
+        }));
+
+        const response = await fetch(`${API_BASE}/bulk-create`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(obligations)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to save obligations');
+        }
+
+        const result = await response.json();
+        console.log('✅ Obligations saved:', result);
+
+        // Close modal and refresh
+        closeAIGenerateModal();
+        showToast(`Successfully added ${result.created_count} obligations`, 'success');
+        
+        // Reload obligations list
+        await loadObligations();
+
+    } catch (error) {
+        console.error('❌ Error saving obligations:', error);
+        showToast(error.message || 'Failed to save obligations', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+
+
+
 
 
     // =====================================================
@@ -3060,6 +3290,8 @@ function formatStatus(status) {
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     }
+
+
 
 </script>
 {% endblock %}

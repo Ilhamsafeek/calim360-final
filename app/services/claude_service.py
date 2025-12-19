@@ -1203,3 +1203,154 @@ Provide ONLY the suggested clause text, no explanation needed."""
     except Exception as e:
         logger.error(f"Error generating mitigation text: {str(e)}")
         return f"Recommended: {risk_item.get('recommendation', 'Consult legal team')}"
+
+
+
+
+
+# =====================================================
+# ADD THIS METHOD TO: app/services/claude_service.py
+# Add it inside the ClaudeService class
+# =====================================================
+async def generate_text(self, prompt: str, max_tokens: int = 2000) -> str:
+    """Generate text using Claude API"""
+    if not self.client:
+        raise ValueError("Claude API not configured")
+    
+    message = self.client.messages.create(
+        model=self.model,
+        max_tokens=max_tokens,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7
+    )
+    
+    return message.content[0].text
+
+
+
+def _generate_mock_obligations_response(self) -> str:
+    """Generate mock obligations response for testing"""
+    mock_obligations = [
+        {
+            "title": "Payment Obligation",
+            "description": "Timely payment for the work completed as per the agreed terms and milestone schedule. Payment shall be made within 30 days of invoice submission.",
+            "type": "payment"
+        },
+        {
+            "title": "Provision of Information",
+            "description": "Provide necessary information, specifications, and resources for the contractor to complete the work efficiently and according to requirements.",
+            "type": "coordination"
+        },
+        {
+            "title": "Timely Completion",
+            "description": "Complete the specified work within the agreed timeline and notify of any potential delays in advance to allow for appropriate mitigation.",
+            "type": "timely_completion"
+        },
+        {
+            "title": "Quality Standards Compliance",
+            "description": "Ensure all work meets industry standards and specific quality requirements outlined in the agreement, subject to inspection and acceptance.",
+            "type": "performance"
+        },
+        {
+            "title": "Insurance Coverage",
+            "description": "Maintain appropriate insurance coverage including liability, workers' compensation, and professional indemnity as specified in the contract.",
+            "type": "insurance"
+        },
+        {
+            "title": "Reporting Requirements",
+            "description": "Provide regular progress updates and reports on work completion, issues encountered, and any variations from the original scope.",
+            "type": "reporting"
+        },
+        {
+            "title": "Compliance with Laws",
+            "description": "Follow all applicable laws, regulations, and safety standards relevant to the work being performed under this contract.",
+            "type": "compliance"
+        }
+    ]
+    
+    import json
+    return json.dumps(mock_obligations)
+
+
+# =====================================================
+# ALSO ADD THIS ENHANCED METHOD FOR OBLIGATION EXTRACTION
+# =====================================================
+
+async def extract_obligations_from_contract(
+    self,
+    contract_content: str,
+    contract_type: str = "General Agreement",
+    party_role: str = "both"
+) -> List[Dict]:
+    """
+    Extract contractual obligations using AI analysis
+    
+    Args:
+        contract_content: Full contract text
+        contract_type: Type of contract
+        party_role: Extract for 'contractor', 'client', or 'both'
+        
+    Returns:
+        List of extracted obligations with metadata
+    """
+    
+    prompt = f"""You are a legal contract analyst. Analyze this {contract_type} and extract ALL contractual obligations.
+
+For each obligation identified, provide:
+1. **title**: Clear obligation title (max 50 words)
+2. **description**: Detailed description (max 150 words)
+3. **type**: One of [payment, deliverable, compliance, reporting, insurance, performance, coordination, indemnification, timely_completion]
+4. **party**: Who has this obligation ('contractor' or 'client')
+5. **priority**: high, medium, or low
+
+Contract Content:
+{contract_content[:8000]}
+
+IMPORTANT: Return ONLY a valid JSON array. No markdown, no explanation, just the JSON array.
+
+Example format:
+[
+  {{
+    "title": "Payment Obligation",
+    "description": "Timely payment for work completed as per agreed terms within 30 days of invoice",
+    "type": "payment",
+    "party": "client",
+    "priority": "high"
+  }},
+  {{
+    "title": "Quality Compliance",
+    "description": "Ensure all deliverables meet specified quality standards and industry requirements",
+    "type": "performance",
+    "party": "contractor",
+    "priority": "high"
+  }}
+]"""
+
+    try:
+        response_text = await self.generate_text(prompt, max_tokens=3000)
+        
+        # Parse JSON from response
+        import json
+        import re
+        
+        # Try to extract JSON array
+        json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+        if json_match:
+            obligations = json.loads(json_match.group(0))
+            
+            # Filter by party role if specified
+            if party_role != "both":
+                obligations = [
+                    obl for obl in obligations 
+                    if obl.get("party", "both").lower() == party_role.lower()
+                ]
+            
+            logger.info(f"✅ Extracted {len(obligations)} obligations from contract")
+            return obligations
+        else:
+            logger.warning("⚠️ Could not parse JSON from response")
+            return []
+            
+    except Exception as e:
+        logger.error(f"❌ Error extracting obligations: {str(e)}")
+        return []
