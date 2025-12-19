@@ -135,7 +135,7 @@ except ImportError:
 # Obligations router
 obligations_router = None
 try:
-    from app.api.api_v1.obligations.obligations import router as obligations_router
+    from app.api.api_v1.obligations import router as obligations_router    
     logger.info("✅ Obligations router imported")
 except ImportError:
     logger.warning("⚠️ Obligations router not found")

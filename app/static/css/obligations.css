@@ -1,0 +1,369 @@
+/**
+ * FIXED: Consistent Font Styles Across Obligations Module
+ * File: app/static/css/obligations.css (create if doesn't exist)
+ * 
+ * Add to main.html or include in obligations pages:
+ * <link rel="stylesheet" href="/static/css/obligations.css">
+ */
+
+/* ============================================= */
+/* BASE TYPOGRAPHY */
+/* ============================================= */
+:root {
+    /* Font Families */
+    --font-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+    
+    /* Font Sizes */
+    --font-size-xs: 0.75rem;      /* 12px */
+    --font-size-sm: 0.875rem;     /* 14px */
+    --font-size-base: 0.95rem;    /* 15.2px */
+    --font-size-md: 1rem;         /* 16px */
+    --font-size-lg: 1.125rem;     /* 18px */
+    --font-size-xl: 1.25rem;      /* 20px */
+    --font-size-2xl: 1.5rem;      /* 24px */
+    
+    /* Font Weights */
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    
+    /* Line Heights */
+    --line-height-tight: 1.25;
+    --line-height-normal: 1.5;
+    --line-height-relaxed: 1.75;
+}
+
+/* ============================================= */
+/* OBLIGATIONS TABLE TYPOGRAPHY */
+/* ============================================= */
+
+/* Table Headers */
+.obligations-table th {
+    font-family: var(--font-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+    color: var(--text-secondary);
+    letter-spacing: 0.025em;
+}
+
+/* Table Cell Text */
+.obligations-table td {
+    font-family: var(--font-primary);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-normal);
+    line-height: var(--line-height-normal);
+    color: var(--text-primary);
+}
+
+/* Obligation Title (Primary Text) */
+.obligations-table td div[style*="font-weight: 600"] {
+    font-family: var(--font-primary) !important;
+    font-size: var(--font-size-base) !important;
+    font-weight: var(--font-weight-semibold) !important;
+    line-height: var(--line-height-tight) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Secondary Text (Description, Contract Number) */
+.obligations-table td div[style*="font-size: 0.875rem"] {
+    font-family: var(--font-primary) !important;
+    font-size: var(--font-size-sm) !important;
+    font-weight: var(--font-weight-normal) !important;
+    line-height: var(--line-height-normal) !important;
+    color: var(--text-muted) !important;
+}
+
+/* Owner Names */
+.obligations-table td div[style*="font-weight: 500"] {
+    font-family: var(--font-primary) !important;
+    font-size: var(--font-size-base) !important;
+    font-weight: var(--font-weight-medium) !important;
+    line-height: var(--line-height-tight) !important;
+    color: var(--text-primary) !important;
+}
+
+/* "Unassigned" Text */
+.obligations-table td span:contains("Unassigned"),
+.obligations-table td div:contains("Unassigned") {
+    font-family: var(--font-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-normal);
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* ============================================= */
+/* BADGES & STATUS INDICATORS */
+/* ============================================= */
+.badge {
+    font-family: var(--font-primary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-tight);
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+}
+
+/* ============================================= */
+/* AI OBLIGATIONS MODAL */
+/* ============================================= */
+
+/* Modal Titles */
+.ai-obligation-card h4,
+.modal-title {
+    font-family: var(--font-primary);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+    color: var(--text-primary);
+}
+
+/* Card Descriptions */
+.ai-obligation-card p,
+.card-description {
+    font-family: var(--font-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-normal);
+    line-height: var(--line-height-normal);
+    color: var(--text-secondary);
+}
+
+/* Detail Rows */
+.card-details .detail-row span {
+    font-family: var(--font-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-normal);
+    color: var(--text-primary);
+}
+
+/* ============================================= */
+/* FORM INPUTS */
+/* ============================================= */
+input[type="text"],
+input[type="email"],
+input[type="date"],
+textarea,
+select {
+    font-family: var(--font-primary);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-normal);
+    line-height: var(--line-height-normal);
+    color: var(--text-primary);
+}
+
+input::placeholder,
+textarea::placeholder {
+    font-family: var(--font-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-normal);
+    color: var(--text-muted);
+}
+
+/* Form Labels */
+label {
+    font-family: var(--font-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-tight);
+    color: var(--text-secondary);
+}
+
+/* ============================================= */
+/* BUTTONS */
+/* ============================================= */
+.btn,
+button {
+    font-family: var(--font-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-tight);
+    letter-spacing: 0.025em;
+}
+
+/* ============================================= */
+/* TOAST NOTIFICATIONS */
+/* ============================================= */
+#toastContainer .toast-message,
+#toastContainer span {
+    font-family: var(--font-primary);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-tight);
+    color: var(--text-primary);
+}
+
+/* ============================================= */
+/* LOADING & EMPTY STATES */
+/* ============================================= */
+.loading-content p,
+.loading-content small,
+.empty-state p,
+.empty-state h3 {
+    font-family: var(--font-primary);
+    font-weight: var(--font-weight-normal);
+    line-height: var(--line-height-normal);
+}
+
+.loading-content p {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+}
+
+.loading-content small {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+}
+
+.empty-state h3 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+}
+
+.empty-state p {
+    font-size: var(--font-size-base);
+    color: var(--text-muted);
+}
+
+/* ============================================= */
+/* SPECIFIC FIXES */
+/* ============================================= */
+
+/* Fix for "Unassigned" appearing inconsistently */
+td[data-owner="unassigned"],
+td[data-escalation="unassigned"],
+span.unassigned,
+div.unassigned {
+    font-family: var(--font-primary) !important;
+    font-size: var(--font-size-sm) !important;
+    font-weight: var(--font-weight-normal) !important;
+    color: var(--text-muted) !important;
+    font-style: italic !important;
+}
+
+/* Contract Title & Number Consistency */
+.contract-title {
+    font-family: var(--font-primary);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+}
+
+.contract-number {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-normal);
+    color: var(--text-secondary);
+}
+
+/* Email Display */
+.user-email,
+.owner-email,
+.escalation-email {
+    font-family: var(--font-primary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-normal);
+    color: var(--text-muted);
+    word-break: break-word;
+}
+
+/* User Name Display */
+.user-name,
+.owner-name,
+.escalation-name {
+    font-family: var(--font-primary);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+}
+
+/* ============================================= */
+/* RESPONSIVE TYPOGRAPHY */
+/* ============================================= */
+@media (max-width: 768px) {
+    :root {
+        --font-size-base: 0.875rem;   /* Slightly smaller on mobile */
+        --font-size-lg: 1rem;
+        --font-size-xl: 1.125rem;
+    }
+}
+
+/* ============================================= */
+/* PRINT STYLES */
+/* ============================================= */
+@media print {
+    * {
+        font-family: var(--font-primary) !important;
+    }
+    
+    .obligations-table th,
+    .obligations-table td {
+        font-size: 10pt !important;
+        line-height: 1.4 !important;
+    }
+}
+
+/* ============================================= */
+/* UTILITY CLASSES */
+/* ============================================= */
+.text-primary {
+    color: var(--text-primary) !important;
+}
+
+.text-secondary {
+    color: var(--text-secondary) !important;
+}
+
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+.font-normal {
+    font-weight: var(--font-weight-normal) !important;
+}
+
+.font-medium {
+    font-weight: var(--font-weight-medium) !important;
+}
+
+.font-semibold {
+    font-weight: var(--font-weight-semibold) !important;
+}
+
+.font-bold {
+    font-weight: var(--font-weight-bold) !important;
+}
+
+.text-xs {
+    font-size: var(--font-size-xs) !important;
+}
+
+.text-sm {
+    font-size: var(--font-size-sm) !important;
+}
+
+.text-base {
+    font-size: var(--font-size-base) !important;
+}
+
+.text-lg {
+    font-size: var(--font-size-lg) !important;
+}
+
+/* ============================================= */
+/* PREVENT FONT INHERITANCE ISSUES */
+/* ============================================= */
+.obligations-table *,
+.ai-obligation-card *,
+.modal-content * {
+    font-family: inherit;
+}
+
+/* Override any global font-family declarations */
+body.obligations-page,
+body.obligations-page * {
+    font-family: var(--font-primary) !important;
+}

@@ -1,31 +1,31 @@
 # =====================================================
 # FILE: app/api/api_v1/obligations/obligations.py
-# Complete Obligations API with AI Generation
+# COMPLETE OBLIGATION MANAGEMENT API
 # =====================================================
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import text, func, case
-from pydantic import BaseModel
+from sqlalchemy import text, desc
 from typing import List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime
 import logging
-import json
-import re
-
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
 from app.models.user import User
-from app.models.obligation import Obligation, ObligationTracking
 from app.models.contract import Contract
+from app.models.obligation import Obligation, ObligationTracking
+from app.core.dependencies import get_current_user
+from app.services.claude_service import ClaudeService
 
+router = APIRouter()
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/obligations", tags=["obligations"])
+claude_service = ClaudeService()
 
 # =====================================================
-# PYDANTIC SCHEMAS
+# SCHEMAS
 # =====================================================
+
+from pydantic import BaseModel
 
 class ObligationCreate(BaseModel):
     contract_id: int
@@ -36,8 +36,8 @@ class ObligationCreate(BaseModel):
     escalation_user_id: Optional[int] = None
     threshold_date: Optional[datetime] = None
     due_date: Optional[datetime] = None
-    status: Optional[str] = "initiated"
-    is_ai_generated: Optional[bool] = False
+    status: str = 'initiated'
+    is_ai_generated: bool = False
 
 class ObligationUpdate(BaseModel):
     obligation_title: Optional[str] = None
@@ -49,37 +49,14 @@ class ObligationUpdate(BaseModel):
     due_date: Optional[datetime] = None
     status: Optional[str] = None
 
-class ObligationResponse(BaseModel):
-    id: int
+class AIObligationGenerate(BaseModel):
     contract_id: int
-    obligation_title: str
-    description: Optional[str]
-    obligation_type: Optional[str]
-    owner_user_id: Optional[int]
-    escalation_user_id: Optional[int]
-    threshold_date: Optional[datetime]
-    due_date: Optional[datetime]
-    status: str
-    is_ai_generated: bool
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
-
-class AIObligationResponse(BaseModel):
-    title: str
-    description: str
-    category: str
-    priority: str
-    confidence: float
-    clause_reference: Optional[str] = None
 
 # =====================================================
-# GET CONTRACT OBLIGATIONS
+# 1. GET ALL OBLIGATIONS FOR A CONTRACT
 # =====================================================
 
-@router.get("/contract/{contract_id}", response_model=List[ObligationResponse])
+@router.get("/contract/{contract_id}")
 async def get_contract_obligations(
     contract_id: int,
     db: Session = Depends(get_db),
@@ -87,315 +64,175 @@ async def get_contract_obligations(
 ):
     """Get all obligations for a specific contract"""
     try:
-        logger.info(f"📋 Fetching obligations for contract {contract_id}")
+        # Verify contract access
+        contract = db.query(Contract).filter(
+            Contract.id == contract_id,
+            Contract.company_id == current_user.company_id
+        ).first()
         
+        if not contract:
+            raise HTTPException(status_code=404, detail="Contract not found")
+        
+        # Get obligations
         obligations = db.query(Obligation).filter(
             Obligation.contract_id == contract_id
-        ).order_by(Obligation.created_at.desc()).all()
-        
-        logger.info(f"✅ Found {len(obligations)} obligations")
+        ).order_by(desc(Obligation.created_at)).all()
         
         # Enrich with user data
-        enriched_obligations = []
-        for obligation in obligations:
-            # Get contract info
-            contract = db.query(Contract).filter(Contract.id == obligation.contract_id).first()
+        enriched = []
+        for obl in obligations:
+            owner = db.query(User).filter(User.id == obl.owner_user_id).first() if obl.owner_user_id else None
+            escalation = db.query(User).filter(User.id == obl.escalation_user_id).first() if obl.escalation_user_id else None
             
-            # Get owner info
-            owner = None
-            if obligation.owner_user_id:
-                owner = db.query(User).filter(User.id == obligation.owner_user_id).first()
-            
-            # Get escalation user info
-            escalation_user = None
-            if obligation.escalation_user_id:
-                escalation_user = db.query(User).filter(User.id == obligation.escalation_user_id).first()
-            
-            enriched_data = {
-                "id": obligation.id,
-                "contract_id": obligation.contract_id,
-                "contract_number": contract.contract_number if contract else None,
-                "contract_title": contract.contract_title if contract else None,
-                "obligation_title": obligation.obligation_title,
-                "description": obligation.description,
-                "obligation_type": obligation.obligation_type or "other",
-                "owner_user_id": obligation.owner_user_id,
+            enriched.append({
+                "id": obl.id,
+                "contract_id": obl.contract_id,
+                "obligation_title": obl.obligation_title,
+                "description": obl.description,
+                "obligation_type": obl.obligation_type,
+                "owner_user_id": obl.owner_user_id,
                 "owner_name": f"{owner.first_name} {owner.last_name}" if owner else None,
                 "owner_email": owner.email if owner else None,
-                "escalation_user_id": obligation.escalation_user_id,
-                "escalation_name": f"{escalation_user.first_name} {escalation_user.last_name}" if escalation_user else None,
-                "threshold_date": obligation.threshold_date,
-                "due_date": obligation.due_date,
-                "status": obligation.status or "initiated",
-                "is_ai_generated": obligation.is_ai_generated,
-                "created_at": obligation.created_at,
-                "updated_at": obligation.updated_at
-            }
-            enriched_obligations.append(enriched_data)
+                "escalation_user_id": obl.escalation_user_id,
+                "escalation_email": escalation.email if escalation else None,
+                "escalation_name": f"{escalation.first_name} {escalation.last_name}" if escalation else None,
+                "threshold_date": obl.threshold_date.isoformat() if obl.threshold_date else None,
+                "due_date": obl.due_date.isoformat() if obl.due_date else None,
+                "status": obl.status,
+                "is_ai_generated": obl.is_ai_generated,
+                "created_at": obl.created_at.isoformat() if obl.created_at else None,
+                "updated_at": obl.updated_at.isoformat() if obl.updated_at else None
+            })
         
-        return enriched_obligations
+        return enriched
         
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"❌ Error fetching obligations: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+        logger.error(f"Error fetching obligations: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # =====================================================
-# AI OBLIGATION GENERATION
+# 2. GENERATE OBLIGATIONS USING AI
 # =====================================================
 
-@router.post("/generate-ai/{contract_id}", response_model=List[AIObligationResponse])
-async def generate_ai_obligations(
+@router.post("/generate-ai/{contract_id}")
+async def generate_obligations_ai(
     contract_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Generate obligations using Claude AI by analyzing the actual contract document.
-    """
+    """Use AI to extract obligations from contract content"""
     try:
-        # Verify contract exists
-        contract = db.query(Contract).filter(Contract.id == contract_id).first()
+        # Get contract
+        contract = db.query(Contract).filter(
+            Contract.id == contract_id,
+            Contract.company_id == current_user.company_id
+        ).first()
+        
         if not contract:
             raise HTTPException(status_code=404, detail="Contract not found")
         
-        logger.info(f"🤖 Generating AI obligations for contract {contract_id}")
+        # Get latest contract version content
+        from app.models.contract import ContractVersion
+        latest_version = db.query(ContractVersion).filter(
+            ContractVersion.contract_id == contract_id
+        ).order_by(desc(ContractVersion.version_number)).first()
         
-        # Get contract content from contract_versions table
-        contract_text = await get_contract_content(contract_id, db)
-        
-        if not contract_text or len(contract_text.strip()) < 100:
-            raise HTTPException(
-                status_code=400, 
-                detail="Contract content is too short or empty. Please ensure the contract has been created with content."
-            )
-        
-        logger.info(f"📄 Contract content length: {len(contract_text)} characters")
+        if not latest_version or not latest_version.contract_content:
+            raise HTTPException(status_code=400, detail="No contract content found")
         
         # Extract obligations using Claude AI
-        ai_obligations = await extract_obligations_with_ai(contract_text, contract)
+        prompt = f"""Analyze this contract and extract all contractual obligations. For each obligation, provide:
+1. A clear title (max 50 words)
+2. Detailed description (max 150 words)
+3. Obligation type: one of [payment, deliverable, compliance, reporting, insurance, performance, coordination, indemnification, timely_completion]
+
+Contract Content:
+{latest_version.contract_content[:8000]}
+
+Return ONLY a JSON array with this structure:
+[
+  {{
+    "title": "Payment Obligation",
+    "description": "Timely payment for work completed as per agreed terms...",
+    "type": "payment"
+  }}
+]
+"""
         
-        logger.info(f"✅ Generated {len(ai_obligations)} AI obligations")
-        return ai_obligations
-    
+        # Call Claude API
+        response = await claude_service.generate_text(prompt, max_tokens=2000)
+        
+        # Parse response
+        import json
+        import re
+        
+        # Extract JSON from response
+        json_match = re.search(r'\[.*\]', response, re.DOTALL)
+        if json_match:
+            obligations_data = json.loads(json_match.group(0))
+        else:
+            raise ValueError("Could not parse AI response")
+        
+        return {
+            "success": True,
+            "obligations": obligations_data,
+            "count": len(obligations_data)
+        }
+        
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error generating AI obligations: {str(e)}")
-        raise HTTPException(
-            status_code=500, 
-            detail=f"Failed to generate obligations: {str(e)}"
-        )
-
-async def get_contract_content(contract_id: int, db: Session) -> str:
-    """
-    Retrieve the actual contract content from contract_versions table.
-    """
-    try:
-        # Get the latest version of the contract content
-        query = text("""
-            SELECT contract_content, contract_content_ar
-            FROM contract_versions
-            WHERE contract_id = :contract_id
-            ORDER BY version_number DESC
-            LIMIT 1
-        """)
-        
-        result = db.execute(query, {"contract_id": contract_id}).fetchone()
-        
-        if result and result.contract_content:
-            content = result.contract_content
-            logger.info(f"✅ Retrieved contract content from database")
-            return content
-        
-        # Fallback: Get contract metadata
-        contract = db.query(Contract).filter(Contract.id == contract_id).first()
-        if not contract:
-            raise Exception("Contract not found")
-        
-        # Build contract info from metadata
-        contract_info = f"""
-CONTRACT INFORMATION:
-
-Contract Number: {contract.contract_number}
-Contract Title: {getattr(contract, 'contract_title', 'N/A')}
-Contract Type: {getattr(contract, 'contract_type', 'N/A')}
-
-PARTIES:
-Party A: {getattr(contract, 'party_a_name', 'N/A')}
-Party B: {getattr(contract, 'party_b_name', 'N/A')}
-
-DURATION:
-Start Date: {getattr(contract, 'start_date', 'N/A')}
-End Date: {getattr(contract, 'end_date', 'N/A')}
-
-FINANCIAL:
-Contract Value: {getattr(contract, 'contract_value', 'N/A')} {getattr(contract, 'currency', 'QAR')}
-
-SCOPE:
-This is a {getattr(contract, 'contract_type', 'service')} agreement between the parties for the execution of contracted services and deliverables as per agreed terms and conditions.
-"""
-        
-        logger.info(f"⚠️ Using contract metadata as content is not available")
-        return contract_info
-        
-    except Exception as e:
-        logger.error(f"❌ Error reading contract content: {str(e)}")
-        raise Exception(f"Failed to retrieve contract content: {str(e)}")
-
-async def extract_obligations_with_ai(contract_text: str, contract) -> List[AIObligationResponse]:
-    """
-    Use Claude AI to extract obligations from the actual contract text.
-    """
-    try:
-        from app.services.claude_service import claude_service
-        
-        # Create comprehensive AI prompt
-        prompt = f"""Analyze this contract and extract ALL contractual obligations, duties, requirements, and commitments. Return ONLY a valid JSON array.
-
-CONTRACT TEXT:
-{contract_text[:8000]}
-
-TASK: Extract every obligation, duty, requirement, or commitment mentioned in this contract.
-
-For each obligation found, create a JSON object with these exact fields:
-- title: Short descriptive title (max 100 chars)
-- description: Detailed explanation of what must be done (max 500 chars)
-- category: Choose ONE from: payment, delivery, compliance, reporting, maintenance, insurance, coordination, inspection, other
-- priority: Choose ONE from: high, medium, low (high = financial/critical, medium = operational, low = administrative)
-- confidence: Number between 0.5 and 1.0 indicating AI confidence
-- clause_reference: Where in the contract this obligation appears (optional)
-
-CRITICAL INSTRUCTIONS:
-1. Extract AT LEAST 5 obligations even if the contract is brief
-2. Look for: payment terms, delivery requirements, reporting duties, compliance rules, maintenance obligations, insurance requirements, meeting schedules, approval processes, coordination responsibilities, inspection requirements
-3. If the contract mentions parties, dates, amounts, or actions - those are obligations
-4. Return ONLY the JSON array, no other text or markdown
-5. Do NOT wrap in code blocks or markdown
-
-EXAMPLE OUTPUT FORMAT (return similar structure):
-[
-  {{"title": "Monthly Payment Obligation", "description": "Pay invoice within 30 days of receipt", "category": "payment", "priority": "high", "confidence": 0.95, "clause_reference": "Payment Terms - Clause 5.1"}},
-  {{"title": "Quality Report Submission", "description": "Submit monthly quality reports by the 5th of each month", "category": "reporting", "priority": "medium", "confidence": 0.88, "clause_reference": "Reporting Requirements"}}
-]
-
-Now extract obligations from the contract above and return ONLY the JSON array:"""
-
-        logger.info(f"🤖 Calling Claude AI via ClaudeService")
-        logger.info(f"📝 Contract text length: {len(contract_text)} characters")
-        
-        # Call Claude AI
-        message = claude_service.client.messages.create(
-            model=claude_service.model,
-            max_tokens=4000,
-            temperature=0.3,
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
-        )
-        
-        # Extract response
-        response_text = message.content[0].text
-        
-        logger.info(f"📨 Received AI response: {len(response_text)} characters")
-        logger.info(f"📄 Raw response preview: {response_text[:300]}")
-        
-        # Clean and parse JSON
-        response_text = response_text.strip()
-        
-        # Remove markdown code blocks if present
-        if "```json" in response_text:
-            response_text = response_text.split("```json")[1].split("```")[0]
-        elif "```" in response_text:
-            response_text = response_text.split("```")[1].split("```")[0]
-        
-        response_text = response_text.strip()
-        
-        logger.info(f"🧹 Cleaned response: {response_text[:200]}")
-        
-        # Parse JSON
-        try:
-            obligations_data = json.loads(response_text)
-        except json.JSONDecodeError as je:
-            logger.error(f"❌ JSON parsing failed: {str(je)}")
-            logger.error(f"📄 Full response: {response_text}")
-            
-            # Try to extract JSON array from text using regex
-            json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
-            if json_match:
-                try:
-                    obligations_data = json.loads(json_match.group(0))
-                    logger.info(f"✅ Extracted JSON from text using regex")
-                except:
-                    raise Exception("Failed to parse AI response as JSON")
-            else:
-                raise Exception("AI response does not contain valid JSON array")
-        
-        # Validate and convert to response objects
-        result = []
-        for obl in obligations_data:
-            try:
-                result.append(AIObligationResponse(
-                    title=str(obl.get("title", ""))[:100],
-                    description=str(obl.get("description", ""))[:500],
-                    category=str(obl.get("category", "other")),
-                    priority=str(obl.get("priority", "medium")),
-                    confidence=float(obl.get("confidence", 0.8)),
-                    clause_reference=obl.get("clause_reference")
-                ))
-            except Exception as e:
-                logger.warning(f"⚠️ Skipping invalid obligation: {str(e)}")
-                continue
-        
-        if len(result) == 0:
-            raise Exception("No valid obligations extracted from AI response")
-        
-        logger.info(f"✅ Successfully parsed {len(result)} obligations")
-        return result
-        
-    except ImportError:
-        logger.error("❌ Claude service not available")
-        raise Exception("AI service is not configured. Please configure Claude API key.")
-    except Exception as e:
-        logger.error(f"❌ Error in AI extraction: {str(e)}")
-        raise Exception(f"AI obligation extraction failed: {str(e)}")
+        logger.error(f"Error generating AI obligations: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # =====================================================
-# CREATE OBLIGATION
+# 3. CREATE OBLIGATION
 # =====================================================
-
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("/")
 async def create_obligation(
-    obligation: ObligationCreate,
+    request: dict,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Create a new obligation"""
+    """
+    Create new obligation with email validation
+    """
     try:
-        logger.info(f"➕ Creating obligation: {obligation.obligation_title}")
+        # ✅ VALIDATE: Owner and Escalation must be different
+        owner_user_id = request.get("owner_user_id")
+        escalation_user_id = request.get("escalation_user_id")
         
-        # Verify contract exists
-        contract = db.query(Contract).filter(Contract.id == obligation.contract_id).first()
-        if not contract:
-            raise HTTPException(status_code=404, detail="Contract not found")
+        if owner_user_id and escalation_user_id and owner_user_id == escalation_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Owner and escalation user must be different"
+            )
+        
+        # Verify emails are different if both provided
+        if owner_user_id and escalation_user_id:
+            owner = db.query(User).filter(User.id == owner_user_id).first()
+            escalation = db.query(User).filter(User.id == escalation_user_id).first()
+            
+            if owner and escalation and owner.email == escalation.email:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Owner and escalation emails must be different"
+                )
         
         # Create obligation
         new_obligation = Obligation(
-            contract_id=obligation.contract_id,
-            obligation_title=obligation.obligation_title,
-            description=obligation.description,
-            obligation_type=obligation.obligation_type,
-            owner_user_id=obligation.owner_user_id,
-            escalation_user_id=obligation.escalation_user_id,
-            threshold_date=obligation.threshold_date,
-            due_date=obligation.due_date,
-            status=obligation.status,
-            is_ai_generated=obligation.is_ai_generated,
+            contract_id=request.get("contract_id"),
+            obligation_title=request.get("obligation_title"),
+            description=request.get("description"),
+            obligation_type=request.get("obligation_type", "other"),
+            owner_user_id=owner_user_id,
+            escalation_user_id=escalation_user_id,
+            threshold_date=request.get("threshold_date"),
+            due_date=request.get("due_date"),
+            status=request.get("status", "initiated"),
+            is_ai_generated=request.get("is_ai_generated", False),
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
@@ -404,7 +241,7 @@ async def create_obligation(
         db.commit()
         db.refresh(new_obligation)
         
-        logger.info(f"✅ Obligation created with ID: {new_obligation.id}")
+        logger.info(f"✅ Created obligation {new_obligation.id}")
         
         return {
             "success": True,
@@ -412,76 +249,69 @@ async def create_obligation(
             "id": new_obligation.id
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
         logger.error(f"❌ Error creating obligation: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            detail=f"Failed to create obligation: {str(e)}"
         )
 
-@router.get("/all")
+@router.get("/")
 async def get_all_obligations(
+    contract_id: Optional[str] = None,
+    status_filter: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """
-    Get all obligations for the user's company
-    Used by the obligations dashboard
+    Get all obligations with proper user information display
     """
     try:
-        logger.info(f"📋 Fetching all obligations for company {current_user.company_id}")
-        
-        # Get all contracts for the user's company
-        company_contracts = db.query(Contract.id).filter(
+        query = db.query(Obligation).join(
+            Contract, Obligation.contract_id == Contract.id
+        ).filter(
             Contract.company_id == current_user.company_id
-        ).all()
+        )
         
-        contract_ids = [c.id for c in company_contracts]
+        if contract_id:
+            query = query.filter(Obligation.contract_id == contract_id)
         
-        if not contract_ids:
-            logger.info("No contracts found for company")
-            return []
+        if status_filter:
+            query = query.filter(Obligation.status == status_filter)
         
-        # Get all obligations for these contracts
-        obligations = db.query(Obligation).filter(
-            Obligation.contract_id.in_(contract_ids)
-        ).order_by(Obligation.created_at.desc()).all()
+        obligations = query.order_by(Obligation.created_at.desc()).all()
         
-        logger.info(f"✅ Found {len(obligations)} obligations")
-        
-        # Enrich with user and contract data
+        # Enrich with user and contract information
         enriched_obligations = []
         for obligation in obligations:
             # Get contract info
             contract = db.query(Contract).filter(Contract.id == obligation.contract_id).first()
             
             # Get owner info
-            owner = None
-            if obligation.owner_user_id:
-                owner = db.query(User).filter(User.id == obligation.owner_user_id).first()
+            owner = db.query(User).filter(User.id == obligation.owner_user_id).first() if obligation.owner_user_id else None
             
-            # Get escalation user info
-            escalation_user = None
-            if obligation.escalation_user_id:
-                escalation_user = db.query(User).filter(User.id == obligation.escalation_user_id).first()
+            # Get escalation info
+            escalation_user = db.query(User).filter(User.id == obligation.escalation_user_id).first() if obligation.escalation_user_id else None
             
             enriched_data = {
                 "id": obligation.id,
                 "contract_id": obligation.contract_id,
-                # FIXED: Use contract_number instead of contract_no
                 "contract_number": contract.contract_number if contract else None,
                 "contract_title": contract.contract_title if contract else None,
                 "obligation_title": obligation.obligation_title,
                 "description": obligation.description,
                 "obligation_type": obligation.obligation_type,
-                "owner_user_id": obligation.owner_user_id,
-                "owner_name": f"{owner.first_name} {owner.last_name}" if owner else None,
+                "priority": getattr(obligation, "priority", "medium"),
+                "owner_user_id": getattr(obligation, "owner_user_id", None),
+                "owner_name": f"{owner.first_name} {owner.last_name}" if owner else "Unassigned",
                 "owner_email": owner.email if owner else None,
-                "escalation_user_id": obligation.escalation_user_id,
-                "escalation_name": f"{escalation_user.first_name} {escalation_user.last_name}" if escalation_user else None,
+                "escalation_user_id": getattr(obligation, "escalation_user_id", None),
+                "escalation_name": f"{escalation_user.first_name} {escalation_user.last_name}" if escalation_user else "Unassigned",
                 "escalation_email": escalation_user.email if escalation_user else None,
-                "threshold_date": obligation.threshold_date.isoformat() if obligation.threshold_date else None,
+                "threshold_date": getattr(obligation, "threshold_date", None).isoformat() if obligation.threshold_date else None,
                 "due_date": obligation.due_date.isoformat() if obligation.due_date else None,
                 "status": obligation.status or "initiated",
                 "is_ai_generated": obligation.is_ai_generated or False,
@@ -494,201 +324,80 @@ async def get_all_obligations(
         return enriched_obligations
         
     except Exception as e:
-        logger.error(f"❌ Error fetching all obligations: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        logger.error(f"❌ Error fetching obligations: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch obligations: {str(e)}"
         )
 
 
-# 3. REPLACE THE /stats ENDPOINT WITH THIS FIXED VERSION
-# =====================================================
-
-@router.get("/stats")
-async def get_obligations_stats(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get statistics about obligations for the dashboard
-    Returns counts by status, priority, overdue, etc.
-    """
-    try:
-        logger.info(f"📊 Fetching obligations statistics for company {current_user.company_id}")
-        
-        # Get all contracts for the user's company
-        company_contracts = db.query(Contract.id).filter(
-            Contract.company_id == current_user.company_id
-        ).all()
-        
-        contract_ids = [c.id for c in company_contracts]
-        
-        if not contract_ids:
-            return {
-                "total": 0,
-                "by_status": {},
-                "overdue": 0,
-                "due_soon": 0,
-                "completed": 0,
-                "pending": 0
-            }
-        
-        # Get base query
-        base_query = db.query(Obligation).filter(
-            Obligation.contract_id.in_(contract_ids)
-        )
-        
-        # Total count
-        total = base_query.count()
-        
-        # Count by status - FIXED: Now using func from sqlalchemy
-        status_counts = db.query(
-            Obligation.status,
-            func.count(Obligation.id).label('count')
-        ).filter(
-            Obligation.contract_id.in_(contract_ids)
-        ).group_by(Obligation.status).all()
-        
-        by_status = {status: count for status, count in status_counts}
-        
-        # Overdue count (due_date < today and status not completed)
-        today = datetime.now().date()
-        
-        overdue = base_query.filter(
-            Obligation.due_date < today,
-            Obligation.status != 'completed'
-        ).count()
-        
-        # Due soon (within 7 days)
-        next_week = today + timedelta(days=7)
-        due_soon = base_query.filter(
-            Obligation.due_date >= today,
-            Obligation.due_date <= next_week,
-            Obligation.status != 'completed'
-        ).count()
-        
-        # Completed count
-        completed = base_query.filter(
-            Obligation.status == 'completed'
-        ).count()
-        
-        # Pending/Initiated count
-        pending = base_query.filter(
-            Obligation.status.in_(['initiated', 'pending', 'in_progress'])
-        ).count()
-        
-        stats = {
-            "total": total,
-            "by_status": by_status,
-            "overdue": overdue,
-            "due_soon": due_soon,
-            "completed": completed,
-            "pending": pending
-        }
-        
-        logger.info(f"✅ Statistics: {stats}")
-        
-        return stats
-        
-    except Exception as e:
-        logger.error(f"❌ Error fetching obligations stats: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch statistics: {str(e)}"
-        )
 
 
 # =====================================================
-# UPDATE OBLIGATION
+# 4. UPDATE OBLIGATION
 # =====================================================
 
 @router.put("/{obligation_id}")
 async def update_obligation(
     obligation_id: int,
-    obligation_update: ObligationUpdate,
+    data: ObligationUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Update an existing obligation"""
     try:
-        logger.info(f"🔄 Updating obligation {obligation_id}")
+        # Get obligation
+        obligation = db.query(Obligation).filter(
+            Obligation.id == obligation_id
+        ).first()
         
-        obligation = db.query(Obligation).filter(Obligation.id == obligation_id).first()
         if not obligation:
             raise HTTPException(status_code=404, detail="Obligation not found")
         
-        # Track changes
-        changes = []
+        # Verify access
+        contract = db.query(Contract).filter(
+            Contract.id == obligation.contract_id,
+            Contract.company_id == current_user.company_id
+        ).first()
         
-        if obligation_update.obligation_title is not None:
-            obligation.obligation_title = obligation_update.obligation_title
-            changes.append("Title updated")
-            
-        if obligation_update.description is not None:
-            obligation.description = obligation_update.description
-            changes.append("Description updated")
-            
-        if obligation_update.obligation_type is not None:
-            obligation.obligation_type = obligation_update.obligation_type
-            changes.append("Type updated")
-            
-        if obligation_update.owner_user_id is not None:
-            obligation.owner_user_id = obligation_update.owner_user_id
-            changes.append("Owner updated")
-            
-        if obligation_update.escalation_user_id is not None:
-            obligation.escalation_user_id = obligation_update.escalation_user_id
-            changes.append("Escalation updated")
-            
-        if obligation_update.threshold_date is not None:
-            obligation.threshold_date = obligation_update.threshold_date
-            changes.append("Threshold date updated")
-            
-        if obligation_update.due_date is not None:
-            obligation.due_date = obligation_update.due_date
-            changes.append("Due date updated")
-            
-        if obligation_update.status is not None:
-            obligation.status = obligation_update.status
-            changes.append("Status updated")
+        if not contract:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Update fields
+        update_data = data.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(obligation, field, value)
         
         obligation.updated_at = datetime.utcnow()
         
         db.commit()
         db.refresh(obligation)
         
-        # Create tracking log
-        if changes:
-            tracking = ObligationTracking(
-                obligation_id=obligation.id,
-                action_taken="Updated",
-                action_by=current_user.id,
-                notes="; ".join(changes),
-                created_at=datetime.utcnow()
-            )
-            db.add(tracking)
-            db.commit()
-        
-        logger.info(f"✅ Obligation {obligation_id} updated")
+        # Create tracking entry
+        tracking = ObligationTracking(
+            obligation_id=obligation.id,
+            action_taken="Obligation updated",
+            action_by=current_user.id,
+            notes=f"Updated by {current_user.first_name} {current_user.last_name}"
+        )
+        db.add(tracking)
+        db.commit()
         
         return {
             "success": True,
-            "message": "Obligation updated successfully",
-            "changes": changes
+            "message": "Obligation updated successfully"
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error updating obligation: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+        logger.error(f"Error updating obligation: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
+# =====================================================
+# 5. DELETE OBLIGATION
+# =====================================================
 # =====================================================
 # DELETE OBLIGATION
 # =====================================================
@@ -699,8 +408,7 @@ async def delete_obligation(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Delete an obligation with proper foreign key handling
-    Manually deletes related records to avoid constraint errors
+    Delete an obligation with proper cascading and UI refresh
     """
     try:
         logger.info(f"🗑️ Deleting obligation {obligation_id}")
@@ -722,45 +430,27 @@ async def delete_obligation(
                 detail="Access denied"
             )
         
-        # ✅ MANUALLY DELETE RELATED RECORDS IN CORRECT ORDER
-        logger.info(f"🗑️ Deleting related records for obligation {obligation_id}")
-        
+        # ✅ DELETE WITH FK CHECKS DISABLED
         try:
-            # 1. Delete obligation_updates
-            db.execute(
-                text("DELETE FROM obligation_updates WHERE obligation_id = :id"),
-                {"id": obligation_id}
-            )
+            # Disable foreign key checks to force delete
+            db.execute(text("SET FOREIGN_KEY_CHECKS=0"))
             
-            # 2. Delete obligation_kpis
-            db.execute(
-                text("DELETE FROM obligation_kpis WHERE obligation_id = :id"),
-                {"id": obligation_id}
-            )
+            # Delete related records
+            db.execute(text("DELETE FROM obligation_updates WHERE obligation_id = :id"), {"id": obligation_id})
+            db.execute(text("DELETE FROM obligation_escalations WHERE obligation_id = :id"), {"id": obligation_id})
+            db.execute(text("DELETE FROM obligation_tracking WHERE obligation_id = :id"), {"id": obligation_id})
+            db.execute(text("DELETE FROM kpis WHERE obligation_id = :id"), {"id": obligation_id})
             
-            # 3. Delete obligation_alerts
-            db.execute(
-                text("DELETE FROM obligation_alerts WHERE obligation_id = :id"),
-                {"id": obligation_id}
-            )
+            # Delete the obligation itself using RAW SQL (not ORM)
+            result = db.execute(text("DELETE FROM obligations WHERE id = :id"), {"id": obligation_id})
             
-            # 4. Delete obligation_escalations
-            db.execute(
-                text("DELETE FROM obligation_escalations WHERE obligation_id = :id"),
-                {"id": obligation_id}
-            )
+            # Re-enable foreign key checks
+            db.execute(text("SET FOREIGN_KEY_CHECKS=1"))
             
-            # 5. Delete obligation_documents
-            db.execute(
-                text("DELETE FROM obligation_documents WHERE obligation_id = :id"),
-                {"id": obligation_id}
-            )
-            
-            # 6. Finally, delete the obligation itself
-            db.delete(obligation)
+            # Commit everything
             db.commit()
             
-            logger.info(f"✅ Obligation {obligation_id} deleted successfully")
+            logger.info(f"✅ Obligation {obligation_id} deleted successfully (rows: {result.rowcount})")
             
             return {
                 "success": True,
@@ -770,6 +460,7 @@ async def delete_obligation(
             
         except Exception as e:
             db.rollback()
+            db.execute(text("SET FOREIGN_KEY_CHECKS=1"))  # Re-enable on error
             logger.error(f"❌ Error during cascading delete: {str(e)}")
             raise
         
@@ -778,98 +469,6 @@ async def delete_obligation(
     except Exception as e:
         db.rollback()
         logger.error(f"❌ Error deleting obligation: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete obligation: {str(e)}"
-        )
-
-
-@router.delete("/{obligation_id}")
-async def delete_obligation(
-    obligation_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Delete an obligation - CORRECTED VERSION
-    Only deletes from tables that actually exist in your database
-    """
-    try:
-        logger.info(f"🗑️ Deleting obligation {obligation_id}")
-        
-        # Get the obligation first
-        obligation = db.query(Obligation).filter(Obligation.id == obligation_id).first()
-        
-        if not obligation:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Obligation not found"
-            )
-        
-        # Verify user has access
-        contract = db.query(Contract).filter(Contract.id == obligation.contract_id).first()
-        if contract and contract.company_id != current_user.company_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied"
-            )
-        
-        # ✅ DELETE RELATED RECORDS FROM ACTUAL TABLES ONLY
-        logger.info(f"🗑️ Deleting related records for obligation {obligation_id}")
-        
-        try:
-            # 1. Delete from obligation_updates (exists)
-            result = db.execute(
-                text("DELETE FROM obligation_updates WHERE obligation_id = :id"),
-                {"id": obligation_id}
-            )
-            logger.info(f"✅ Deleted {result.rowcount} records from obligation_updates")
-            
-            # 2. Delete from obligation_escalations (exists)
-            result = db.execute(
-                text("DELETE FROM obligation_escalations WHERE obligation_id = :id"),
-                {"id": obligation_id}
-            )
-            logger.info(f"✅ Deleted {result.rowcount} records from obligation_escalations")
-            
-            # 3. Delete from obligation_tracking (exists)
-            result = db.execute(
-                text("DELETE FROM obligation_tracking WHERE obligation_id = :id"),
-                {"id": obligation_id}
-            )
-            logger.info(f"✅ Deleted {result.rowcount} records from obligation_tracking")
-            
-            # 4. Delete from kpis table (NOT obligation_kpis)
-            result = db.execute(
-                text("DELETE FROM kpis WHERE obligation_id = :id"),
-                {"id": obligation_id}
-            )
-            logger.info(f"✅ Deleted {result.rowcount} records from kpis")
-            
-            # 5. Finally, delete the obligation itself
-            db.delete(obligation)
-            db.commit()
-            
-            logger.info(f"✅ Obligation {obligation_id} and all related records deleted successfully")
-            
-            return {
-                "success": True,
-                "message": "Obligation deleted successfully",
-                "id": obligation_id
-            }
-            
-        except Exception as e:
-            db.rollback()
-            logger.error(f"❌ Error during cascading delete: {str(e)}")
-            raise
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        logger.error(f"❌ Error deleting obligation: {str(e)}")
-        import traceback
-        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete obligation: {str(e)}"
@@ -878,15 +477,22 @@ async def delete_obligation(
 
 @router.post("/bulk-delete")
 async def bulk_delete_obligations(
-    obligation_ids: List[int],
+    request: dict,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """
-    Bulk delete obligations - CORRECTED VERSION
-    Only deletes from tables that actually exist
+    Bulk delete obligations with proper error handling
     """
     try:
+        obligation_ids = request.get("obligation_ids", [])
+        
+        if not obligation_ids:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No obligation IDs provided"
+            )
+        
         logger.info(f"🗑️ Bulk deleting {len(obligation_ids)} obligations")
         
         deleted_count = 0
@@ -906,31 +512,12 @@ async def bulk_delete_obligations(
                     errors.append(f"Access denied for obligation {obligation_id}")
                     continue
                 
-                # Delete related records from actual tables
+                # Delete related records
                 try:
-                    # Delete from obligation_updates
-                    db.execute(
-                        text("DELETE FROM obligation_updates WHERE obligation_id = :id"),
-                        {"id": obligation_id}
-                    )
-                    
-                    # Delete from obligation_escalations
-                    db.execute(
-                        text("DELETE FROM obligation_escalations WHERE obligation_id = :id"),
-                        {"id": obligation_id}
-                    )
-                    
-                    # Delete from obligation_tracking
-                    db.execute(
-                        text("DELETE FROM obligation_tracking WHERE obligation_id = :id"),
-                        {"id": obligation_id}
-                    )
-                    
-                    # Delete from kpis table
-                    db.execute(
-                        text("DELETE FROM kpis WHERE obligation_id = :id"),
-                        {"id": obligation_id}
-                    )
+                    db.execute(text("DELETE FROM obligation_updates WHERE obligation_id = :id"), {"id": obligation_id})
+                    db.execute(text("DELETE FROM obligation_escalations WHERE obligation_id = :id"), {"id": obligation_id})
+                    db.execute(text("DELETE FROM obligation_tracking WHERE obligation_id = :id"), {"id": obligation_id})
+                    db.execute(text("DELETE FROM kpis WHERE obligation_id = :id"), {"id": obligation_id})
                     
                     # Delete the obligation
                     db.delete(obligation)
@@ -943,54 +530,112 @@ async def bulk_delete_obligations(
                 
             except Exception as e:
                 errors.append(f"Error processing obligation {obligation_id}: {str(e)}")
+                continue
         
         # Commit all successful deletions
         if deleted_count > 0:
             db.commit()
-            logger.info(f"✅ Successfully deleted {deleted_count} obligations")
         
-        logger.info(f"✅ Bulk delete completed: {deleted_count} deleted, {len(errors)} errors")
+        logger.info(f"✅ Deleted {deleted_count}/{len(obligation_ids)} obligations")
         
         return {
             "success": True,
+            "message": f"Deleted {deleted_count} obligation(s)",
             "deleted_count": deleted_count,
             "total_requested": len(obligation_ids),
             "errors": errors if errors else None
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Bulk delete failed: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        logger.error(f"❌ Error in bulk delete: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Bulk delete failed: {str(e)}"
+            detail=f"Failed to delete obligations: {str(e)}"
         )
 
 
 # =====================================================
-# HELPER FUNCTION - Check which tables exist
+# 6. GET ALL USERS (FOR DROPDOWNS)
 # =====================================================
 
-async def get_related_obligation_tables(db: Session) -> list:
-    """
-    Query database to find which obligation-related tables actually exist
-    Useful for debugging and future-proofing
-    """
+@router.get("/users/list")
+async def get_users_list(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get list of users for owner/escalation dropdowns"""
     try:
-        result = db.execute(
-            text("""
-                SELECT TABLE_NAME 
-                FROM information_schema.TABLES 
-                WHERE TABLE_SCHEMA = 'lpeclk_smart_clm' 
-                AND TABLE_NAME LIKE 'obligation%'
-                OR TABLE_NAME = 'kpis'
-            """)
-        )
-        tables = [row[0] for row in result.fetchall()]
-        logger.info(f"📊 Found obligation-related tables: {tables}")
-        return tables
+        users = db.query(User).filter(
+            User.company_id == current_user.company_id,
+            User.is_active == True
+        ).all()
+        
+        return [
+            {
+                "id": user.id,
+                "name": f"{user.first_name} {user.last_name}",
+                "email": user.email
+            }
+            for user in users
+        ]
+        
     except Exception as e:
-        logger.error(f"❌ Error checking tables: {str(e)}")
-        return []
+        logger.error(f"Error fetching users: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# =====================================================
+# 7. BULK CREATE AI OBLIGATIONS
+# =====================================================
+
+@router.post("/bulk-create")
+async def bulk_create_obligations(
+    obligations: List[ObligationCreate],
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Create multiple obligations at once (from AI generation)"""
+    try:
+        created_count = 0
+        
+        for obl_data in obligations:
+            # Verify contract access
+            contract = db.query(Contract).filter(
+                Contract.id == obl_data.contract_id,
+                Contract.company_id == current_user.company_id
+            ).first()
+            
+            if not contract:
+                continue
+            
+            # Create obligation
+            obligation = Obligation(
+                contract_id=obl_data.contract_id,
+                obligation_title=obl_data.obligation_title,
+                description=obl_data.description,
+                obligation_type=obl_data.obligation_type,
+                owner_user_id=obl_data.owner_user_id,
+                escalation_user_id=obl_data.escalation_user_id,
+                threshold_date=obl_data.threshold_date,
+                due_date=obl_data.due_date,
+                status=obl_data.status,
+                is_ai_generated=obl_data.is_ai_generated
+            )
+            
+            db.add(obligation)
+            created_count += 1
+        
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Created {created_count} obligations successfully",
+            "count": created_count
+        }
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error bulk creating obligations: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
