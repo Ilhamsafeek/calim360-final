@@ -1648,12 +1648,54 @@ function searchUsers(type, query) {
     suggestionsEl.classList.add('active');
 }
 
+
 function selectUser(type, userId, userName) {
-    document.getElementById(`${type}UserId`).value = userId;
-    document.getElementById(`${type}Search`).style.display = 'none';
-    document.getElementById(`${type}Suggestions`).classList.remove('active');
-    setSelectedUser(type, userId, userName);
+    const searchInput = document.getElementById(`${type}Search`);
+    const userIdInput = document.getElementById(`${type}UserId`);
+    const selectedDiv = document.getElementById(`selected${type.charAt(0).toUpperCase() + type.slice(1)}`);
+    const suggestionsDiv = document.getElementById(`${type}Suggestions`);
+
+    userIdInput.value = userId;
+    
+    // ✅ ADD THIS - Check if owner and escalation are the same
+    const ownerUserId = document.getElementById('ownerUserId').value;
+    const escalationUserId = document.getElementById('escalationUserId').value;
+    
+    if (ownerUserId && escalationUserId && ownerUserId === escalationUserId) {
+        showNotification('Owner and Escalation Contact must be different users', 'error');
+        // Clear the selection that was just made
+        userIdInput.value = '';
+        searchInput.value = '';
+        selectedDiv.style.display = 'none';
+        searchInput.style.display = 'block';
+        suggestionsDiv.innerHTML = '';
+        return;
+    }
+
+    selectedDiv.innerHTML = `
+        <div class="user-tag">
+            <span>${userName}</span>
+            <button type="button" onclick="clearUser('${type}')" class="clear-user">×</button>
+        </div>
+    `;
+    selectedDiv.style.display = 'block';
+    searchInput.style.display = 'none';
+    searchInput.value = '';
+    suggestionsDiv.innerHTML = '';
 }
+
+
+function clearUser(type) {
+    const searchInput = document.getElementById(`${type}Search`);
+    const userIdInput = document.getElementById(`${type}UserId`);
+    const selectedDiv = document.getElementById(`selected${type.charAt(0).toUpperCase() + type.slice(1)}`);
+    
+    userIdInput.value = '';
+    selectedDiv.style.display = 'none';
+    searchInput.style.display = 'block';
+    searchInput.value = '';
+}
+
 
 function setSelectedUser(type, userId, userName) {
     const selectedEl = document.getElementById(`selected${type.charAt(0).toUpperCase() + type.slice(1)}`);

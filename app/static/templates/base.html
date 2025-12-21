@@ -1540,9 +1540,36 @@
         }
 
 
-        
+
+        .ai-loader {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--warning-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
     </style>
 
+
+ <!-- Global User Data - Available across all pages -->
+    <script>
+        // Make current user globally available
+        window.currentUser = {
+            id: {{ user.id if user else 'null' }},
+            full_name: "{{ user.full_name if user else '' }}",
+            email: "{{ user.email if user else '' }}",
+            user_type: "{{ user.user_type if user else '' }}",
+            avatar_initial: "{{ user.avatar_initial if user else 'U' }}",
+            company_id: {{ user.company_id if user else 'null' }}
+        };
+        
+        // Quick access properties
+        window.currentUserId = window.currentUser.id;
+        window.currentUserName = window.currentUser.full_name;
+        window.currentUserType = window.currentUser.user_type;
+    </script>
     <!-- Block for additional CSS from child templates -->
     {% block head %}{% endblock %}
 </head>
@@ -2168,50 +2195,50 @@
         }
 
         // ============================================
-// LOGOUT FUNCTION - FIXED WITH CORRECT ENDPOINT
-// ============================================
-async function logout(event) {
-    if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-    }
-
-    if (confirm('Are you sure you want to logout?')) {
-        console.log('🔄 Logging out...');
-
-        try {
-            // ✅ CORRECT ENDPOINT - /api/auth/logout (NOT /api/v1/auth/logout)
-            const response = await fetch('/api/auth/logout', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include' // Important for cookies
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                console.log('✅ Logout successful:', result);
-            } else {
-                console.warn('⚠️ Logout API returned error, but continuing with logout');
+        // LOGOUT FUNCTION - FIXED WITH CORRECT ENDPOINT
+        // ============================================
+        async function logout(event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
             }
-        } catch (error) {
-            console.error('❌ Logout API error:', error);
-            // Continue with logout even if API fails
+
+            if (confirm('Are you sure you want to logout?')) {
+                console.log('🔄 Logging out...');
+
+                try {
+                    // ✅ CORRECT ENDPOINT - /api/auth/logout (NOT /api/v1/auth/logout)
+                    const response = await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include' // Important for cookies
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log('✅ Logout successful:', result);
+                    } else {
+                        console.warn('⚠️ Logout API returned error, but continuing with logout');
+                    }
+                } catch (error) {
+                    console.error('❌ Logout API error:', error);
+                    // Continue with logout even if API fails
+                }
+
+                // Clear all local storage
+                localStorage.clear();
+
+                // Clear session storage
+                sessionStorage.clear();
+
+                console.log('✅ Local storage cleared');
+
+                // Redirect to login page
+                window.location.href = '/login';
+            }
         }
-
-        // Clear all local storage
-        localStorage.clear();
-        
-        // Clear session storage
-        sessionStorage.clear();
-
-        console.log('✅ Local storage cleared');
-
-        // Redirect to login page
-        window.location.href = '/login';
-    }
-}
         // ============================================
         // TOAST NOTIFICATIONS
         // ============================================
@@ -2673,7 +2700,7 @@ async function logout(event) {
         });
     </script>
 
-    
+
 
     <!-- Page Specific Scripts -->
     {% block extra_js %}

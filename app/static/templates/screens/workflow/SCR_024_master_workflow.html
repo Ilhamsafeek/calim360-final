@@ -1,202 +1,244 @@
-<!-- Master Workflow Setup Screen -->
-<!-- File: app/static/templates/screens/workflow/SCR_024_master_workflow.html -->
 {% extends "base.html" %}
 
-{% block title %}Master Workflow Setup{% endblock %}
+{% block title %}Master Workflow Setup - CALIM 360{% endblock %}
 
-{% block head %}
+{% block content %}
 <style>
-    @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
+    :root {
+        --primary-color: #2762cb;
+        --secondary-color: #73B4E0;
+        --success-color: #28a745;
+        --danger-color: #dc3545;
+        --warning-color: #ffc107;
+        --text-color: #2c3e50;
+        --text-muted: #6c757d;
+        --border-color: #dee2e6;
+        --background-light: #f8f9fa;
+        --transition: all 0.3s ease;
     }
 
+    /* Main Container */
     .workflow-container {
-        max-width: 1200px;
+        max-width: 1400px;
         margin: 2rem auto;
         padding: 0 2rem;
     }
 
+    /* Page Header */
     .page-header {
-        background: white;
-        border-radius: 12px;
-        padding: 1.5rem 2rem;
-        margin-bottom: 2rem;
-        border: 1px solid var(--border-color);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 2rem;
+        border-radius: 12px 12px 0 0;
+        margin-bottom: 0;
     }
 
-    .page-title {
+    .page-header h1 {
+        margin: 0 0 0.5rem 0;
         font-size: 1.75rem;
         font-weight: 600;
-        color: var(--text-color);
-        margin-bottom: 0.5rem;
         display: flex;
         align-items: center;
         gap: 0.75rem;
     }
 
-    .page-title i {
-        color: var(--primary-color);
-        font-size: 28px;
+    .page-header p {
+        margin: 0;
+        opacity: 0.95;
+        font-size: 0.95rem;
     }
 
-    .page-description {
-        color: var(--text-muted);
-        font-size: 0.875rem;
+    /* Alert */
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        margin: 1.5rem 0;
+        border-left: 4px solid;
     }
 
+    .alert-info {
+        background: #d1ecf1;
+        border-color: #0c5460;
+        color: #0c5460;
+    }
+
+    .alert i {
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    /* Workflow Card */
     .workflow-card {
         background: white;
         border-radius: 12px;
-        border: 1px solid var(--border-color);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 1.5rem;
     }
 
     .card-header {
-        padding: 1.5rem;
+        padding: 1.5rem 2rem;
         border-bottom: 1px solid var(--border-color);
-        background: var(--background-light);
-        border-radius: 12px 12px 0 0;
     }
 
     .card-title {
-        font-size: 1.125rem;
+        margin: 0;
+        font-size: 1.25rem;
         font-weight: 600;
         color: var(--text-color);
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-    }
-
-    .card-title i {
-        color: var(--secondary-color);
+        gap: 0.75rem;
     }
 
     .card-body {
         padding: 2rem;
     }
 
+    /* Workflow Table */
     .workflow-table {
         width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
+        border-collapse: collapse;
+        background: white;
+    }
+
+    .workflow-table thead tr {
+        background: var(--background-light);
+        border-bottom: 2px solid var(--border-color);
     }
 
     .workflow-table th {
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        color: white;
         padding: 1rem;
         text-align: left;
         font-weight: 600;
+        color: var(--text-color);
         font-size: 0.875rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        border: none;
     }
 
-    .workflow-table th:first-child {
-        border-radius: 8px 0 0 0;
-    }
-
-    .workflow-table th:last-child {
-        border-radius: 0 8px 0 0;
-    }
-
-    .workflow-table td {
-        padding: 1rem;
+    .workflow-table tbody tr {
         border-bottom: 1px solid var(--border-color);
-        vertical-align: middle;
+        transition: var(--transition);
     }
 
     .workflow-table tbody tr:hover {
         background: var(--background-light);
     }
 
+    .workflow-table td {
+        padding: 1.25rem 1rem;
+        vertical-align: middle;
+    }
+
+    /* Step Number */
     .step-number {
         width: 40px;
         height: 40px;
         background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
         color: white;
-        border-radius: 50%;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: 600;
-        font-size: 0.875rem;
+        font-size: 1rem;
     }
 
-    .form-select {
-        width: 100%;
-        padding: 0.625rem 1rem;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        font-size: 0.875rem;
-        color: var(--text-color);
-        background: white;
-        cursor: pointer;
-        transition: var(--transition);
-        appearance: none;
-        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-        background-repeat: no-repeat;
-        background-position: right 0.75rem center;
-        background-size: 20px;
-        padding-right: 2.5rem;
-    }
-
-    .form-select:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 4px rgba(39, 98, 203, 0.1);
-    }
-
+    /* Form Elements */
+    .form-select,
     .form-input {
-        padding: 0.625rem 1rem;
+        width: 100%;
+        padding: 0.625rem 0.875rem;
         border: 1px solid var(--border-color);
-        border-radius: 8px;
+        border-radius: 6px;
         font-size: 0.875rem;
-        color: var(--text-color);
-        background: white;
         transition: var(--transition);
+        background: white;
     }
 
+    .form-select:focus,
     .form-input:focus {
         outline: none;
         border-color: var(--primary-color);
-        box-shadow: 0 0 0 4px rgba(39, 98, 203, 0.1);
+        box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
     }
 
-    /* User Selection */
+    .form-input:disabled,
+    .form-select:disabled {
+        background: var(--background-light);
+        cursor: not-allowed;
+        color: var(--text-muted);
+    }
+
+    /* User Search & Dropdown */
     .user-selection-wrapper {
         position: relative;
     }
 
     .user-input-group {
+        position: relative;
         display: flex;
+        align-items: center;
         gap: 0.5rem;
-        margin-bottom: 0.5rem;
     }
 
-    .user-search {
+    .user-search-input {
         flex: 1;
-        padding: 0.5rem 1rem;
-        font-size: 0.875rem;
-    }
-
-    .btn-icon {
-        padding: 0.5rem;
+        padding: 0.625rem 2.5rem 0.625rem 0.875rem;
         border: 1px solid var(--border-color);
-        background: white;
-        color: var(--primary-color);
-        border-radius: 8px;
-        cursor: pointer;
+        border-radius: 6px;
+        font-size: 0.875rem;
         transition: var(--transition);
     }
 
-    .btn-icon:hover {
-        background: var(--primary-color);
-        color: white;
+    .user-search-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
+    }
+
+    .user-search-input.has-value {
+        background: var(--background-light);
+        border-color: var(--success-color);
+    }
+
+    .search-icon {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+    }
+
+    .clear-user-btn {
+        position: absolute;
+        right: 0.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0.25rem;
+        display: none;
+        font-size: 1rem;
+        line-height: 1;
+    }
+
+    .user-search-input.has-value ~ .clear-user-btn {
+        display: block;
+    }
+
+    .user-search-input.has-value ~ .search-icon {
+        display: none;
+    }
+
+    .clear-user-btn:hover {
+        color: var(--danger-color);
     }
 
     .user-dropdown {
@@ -206,89 +248,71 @@
         right: 0;
         background: white;
         border: 1px solid var(--border-color);
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        max-height: 300px;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        max-height: 250px;
         overflow-y: auto;
         z-index: 1000;
-        margin-top: 0.25rem;
+        margin-top: 4px;
     }
 
-    .dropdown-header {
-        position: sticky;
-        top: 0;
-        z-index: 1;
-        background: var(--background-light);
-    }
-
-    .dropdown-item {
-        padding: 0.625rem 1rem;
+    .user-dropdown-item {
+        padding: 0.75rem 1rem;
         cursor: pointer;
         transition: var(--transition);
-        border-bottom: 1px solid var(--background-light);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
-    .dropdown-item:last-child {
+    .user-dropdown-item:last-child {
         border-bottom: none;
     }
 
-    .dropdown-item:hover {
+    .user-dropdown-item:hover {
         background: var(--background-light);
     }
 
-    .user-info {
-        display: flex;
-        flex-direction: column;
-        gap: 0.125rem;
+    .user-dropdown-item .user-info strong {
+        display: block;
+        color: var(--text-color);
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
     }
 
-    .user-name {
+    .user-dropdown-item .user-info small {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+    }
+
+    .user-dropdown-item .user-badge {
+        background: var(--secondary-color);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
         font-weight: 500;
-        color: var(--text-color);
+    }
+
+    .no-users-found {
+        padding: 1rem;
+        text-align: center;
+        color: var(--text-muted);
         font-size: 0.875rem;
     }
 
-    .user-email {
-        font-size: 0.75rem;
-        color: var(--text-muted);
-    }
-
-    .selected-users {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        min-height: 32px;
-    }
-
-    .selected-tag {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-        padding: 0.375rem 0.625rem;
-        background: var(--info-bg);
-        color: var(--info-color);
-        border-radius: 6px;
-        font-size: 0.8125rem;
-    }
-
-    .selected-tag i:first-child {
-        font-size: 14px;
-    }
-
-    .selected-tag .tag-email {
-        font-size: 0.75rem;
-        color: var(--text-muted);
-        font-style: italic;
-    }
-
-    .selected-tag i:last-child {
-        cursor: pointer;
-        font-size: 14px;
-        margin-left: 0.25rem;
-    }
-
-    .selected-tag i:last-child:hover {
+    /* Remove Step Icon */
+    .remove-step {
         color: var(--danger-color);
+        cursor: pointer;
+        font-size: 1.25rem;
+        transition: var(--transition);
+    }
+
+    .remove-step:hover {
+        transform: scale(1.15);
+        opacity: 0.8;
     }
 
     /* Action Buttons */
@@ -299,6 +323,7 @@
         background: var(--background-light);
         border-top: 1px solid var(--border-color);
         border-radius: 0 0 12px 12px;
+        justify-content: flex-end;
     }
 
     .btn {
@@ -325,22 +350,9 @@
         box-shadow: 0 4px 12px rgba(39, 98, 203, 0.25);
     }
 
-    .btn-secondary {
-        background: white;
-        color: var(--text-color);
-        border: 1px solid var(--border-color);
-    }
-
-    .btn-secondary:hover {
-        background: var(--background-light);
-        border-color: var(--primary-color);
-        color: var(--primary-color);
-    }
-
     .btn-success {
         background: var(--success-color);
         color: white;
-        margin-left: auto;
     }
 
     .btn-success:hover {
@@ -371,118 +383,72 @@
         background: rgba(39, 98, 203, 0.05);
     }
 
-    /* Settings Grid (from keethan) */
-    .settings-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 2rem;
-    }
-
-    .setting-item {
-        display: flex;
-        flex-direction: column;
+    /* Department Badge */
+    .department-badge {
+        display: inline-flex;
+        align-items: center;
         gap: 0.5rem;
-    }
-
-    .setting-label {
-        font-size: 0.875rem;
-        font-weight: 600;
+        padding: 0.5rem 1rem;
+        background: var(--background-light);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
         color: var(--text-color);
+        font-size: 0.875rem;
     }
 
-    .setting-description {
-        font-size: 0.75rem;
-        color: var(--text-muted);
+    .department-badge i {
+        color: var(--primary-color);
     }
 
-    /* Toggle Switch (from keethan) */
-    .toggle-switch {
-        position: relative;
-        width: 48px;
-        height: 24px;
-        margin-top: 0.25rem;
-    }
-
-    .toggle-switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-
-    .toggle-slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: var(--border-color);
-        transition: var(--transition);
-        border-radius: 24px;
-    }
-
-    .toggle-slider:before {
-        position: absolute;
-        content: "";
-        height: 18px;
-        width: 18px;
-        left: 3px;
-        bottom: 3px;
-        background-color: white;
-        transition: var(--transition);
-        border-radius: 50%;
-    }
-
-    input:checked + .toggle-slider {
-        background-color: var(--primary-color);
-    }
-
-    input:checked + .toggle-slider:before {
-        transform: translateX(24px);
-    }
-
-    .alert {
-        padding: 1rem 1.5rem;
+    /* Notification */
+    .notification {
+        position: fixed;
+        top: 2rem;
+        right: 2rem;
+        background: white;
         border-radius: 8px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        padding: 1rem 1.5rem;
         display: flex;
         align-items: center;
-        gap: 0.75rem;
-        margin-bottom: 2rem;
+        gap: 1rem;
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
     }
 
-    .alert-info {
-        background: var(--info-bg);
-        color: var(--info-color);
-        border: 1px solid rgba(12, 84, 96, 0.2);
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
     }
 
-    .alert i {
-        font-size: 20px;
+    .notification.success {
+        border-left: 4px solid var(--success-color);
     }
 
-    .remove-step {
-        color: var(--danger-color);
-        cursor: pointer;
-        font-size: 20px;
-        transition: var(--transition);
+    .notification.error {
+        border-left: 4px solid var(--danger-color);
     }
 
-    .remove-step:hover {
-        color: #c82333;
-        transform: scale(1.1);
+    .notification.warning {
+        border-left: 4px solid var(--warning-color);
     }
 </style>
-{% endblock %}
 
-{% block content %}
 <div class="workflow-container">
+    <!-- Page Header -->
     <div class="page-header">
-        <h1 class="page-title">
-            <i class="ti ti-settings-automation"></i>
+        <h1>
+            <i class="ti ti-git-branch"></i>
             Master Workflow Setup
         </h1>
-        <p class="page-description">
-            Define the default approval workflow for your organization. This master workflow will be applied to all contracts unless overridden.
+        <p>
+            Configure the default workflow for all contracts. This workflow will be applied company-wide unless overridden.
         </p>
     </div>
 
@@ -493,6 +459,7 @@
         </div>
     </div>
 
+    <!-- Workflow Steps Configuration -->
     <div class="workflow-card">
         <div class="card-header">
             <h2 class="card-title">
@@ -506,7 +473,7 @@
                     <tr>
                         <th style="width: 80px;">Step</th>
                         <th>Role</th>
-                        <th>User(s)</th>
+                        <th>User</th>
                         <th>Department</th>
                         <th style="width: 80px;">Actions</th>
                     </tr>
@@ -523,114 +490,16 @@
         </div>
     </div>
 
-    <div class="workflow-card">
-        <div class="card-header">
-            <h2 class="card-title">
-                <i class="ti ti-settings"></i>
-                Workflow Settings
-            </h2>
-        </div>
-        <div class="card-body">
-            <div class="settings-grid">
-                <div class="setting-item">
-                    <label class="setting-label">Auto-Escalation Time</label>
-                    <p class="setting-description">Automatically escalate if no action taken within specified hours</p>
-                    <input type="number" class="form-input" id="autoEscalation" value="48" min="1" max="168">
-                </div>
-
-                <div class="setting-item">
-                    <label class="setting-label">Contract Value Threshold</label>
-                    <p class="setting-description">Apply this workflow for contracts above (QAR)</p>
-                    <input type="number" class="form-input" id="contractThreshold" value="50000" min="0">
-                </div>
-
-                <div class="setting-item">
-                    <label class="setting-label">Parallel Approval</label>
-                    <p class="setting-description">Allow multiple approvers to review simultaneously</p>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="parallelApproval" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-
-                <div class="setting-item">
-                    <label class="setting-label">Skip Empty Steps</label>
-                    <p class="setting-description">Automatically skip steps with no assigned users</p>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="skipEmptySteps">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-
-                <div class="setting-item">
-                    <label class="setting-label">Require Comments</label>
-                    <p class="setting-description">Require comments for rejections and conditional approvals</p>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="requireComments" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-
-                <div class="setting-item">
-                    <label class="setting-label">Qatar Compliance Check</label>
-                    <p class="setting-description">Enforce Qatar regulatory compliance at each step</p>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="qatarCompliance" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="workflow-card">
-        <div class="card-header">
-            <h2 class="card-title">
-                <i class="ti ti-file-off"></i>
-                Excluded Contract Types
-            </h2>
-        </div>
-        <div class="card-body">
-            <p style="color: var(--text-muted); margin-bottom: 1rem;">
-                Select contract types that should bypass this master workflow
-            </p>
-            <div class="settings-grid" id="excludedTypes">
-                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                    <input type="checkbox" value="Non-Disclosure Agreement (NDA)"> Non-Disclosure Agreement (NDA)
-                </label>
-                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                    <input type="checkbox" value="Service Agreement"> Service Agreement
-                </label>
-                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                    <input type="checkbox" value="Purchase Order"> Purchase Order
-                </label>
-                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                    <input type="checkbox" value="Internal Memo"> Internal Memo
-                </label>
-                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                    <input type="checkbox" value="Master Service Agreement"> Master Service Agreement
-                </label>
-                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                    <input type="checkbox" value="Employment Contract"> Employment Contract
-                </label>
-            </div>
-        </div>
-    </div>
-
     <!-- Action Buttons -->
     <div class="workflow-card">
         <div class="action-buttons">
-            <button class="btn btn-secondary" onclick="goBack()">
-                <i class="ti ti-arrow-left"></i>
-                Back
-            </button>
             <button class="btn btn-primary" onclick="saveWorkflow()">
                 <i class="ti ti-device-floppy"></i>
                 Save & Exit
             </button>
             <button class="btn btn-success" onclick="submitWorkflow()">
                 <i class="ti ti-check"></i>
-                Submit Workflow
+                Submit
             </button>
         </div>
     </div>
@@ -640,20 +509,39 @@
 let workflowSteps = [];
 let stepCount = 0;
 let availableRoles = ['Reviewer', 'Approver', 'Legal Reviewer', 'Finance Approver', 'Director', 'E-Sign Authority', 'Counter-Party'];
-let availableDepartments = ['Legal', 'Finance', 'Operations', 'Sales', 'HR', 'IT', 'Procurement'];
+let allUsers = []; // Store all users for quick lookup
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ Master Workflow page loaded');
+    loadAllUsers();
     loadWorkflowData();
 });
+
+// Load all users from the company
+async function loadAllUsers() {
+    try {
+        const response = await fetch('/api/workflows/users/search?query=');
+        if (response.ok) {
+            const data = await response.json();
+            allUsers = data.users || [];
+            console.log(`✅ Loaded ${allUsers.length} users`);
+        }
+    } catch (error) {
+        console.error('❌ Error loading users:', error);
+    }
+}
 
 // Load workflow data from API
 async function loadWorkflowData() {
     try {
         const response = await fetch('/api/workflows/master');
         if (response.ok) {
-            const workflow = await response.json();
+            const data = await response.json();
+            
+            // Check if data is the workflow object directly or wrapped
+            const workflow = data.workflow_name ? data : (data.workflow || null);
+            
             if (workflow && workflow.steps && workflow.steps.length > 0) {
                 console.log('📥 Loaded workflow from database:', workflow);
                 populateWorkflowFromDatabase(workflow);
@@ -671,106 +559,86 @@ async function loadWorkflowData() {
     }
 }
 
-// Populate workflow from database with proper grouping
-function populateWorkflowFromDatabase(workflow) {
-    const stepsMap = new Map();
+// Populate workflow from database
+function populateWorkflowFromDatabase(workflowData) {
+    console.log('🔄 Populating workflow from database');
     
-    console.log('📦 Raw steps from database:', workflow.steps);
-    
-    // Group by step_number and collect all users
-    workflow.steps.forEach(step => {
-        const key = step.step_number;
-        
-        if (!stepsMap.has(key)) {
-            stepsMap.set(key, {
-                step_number: step.step_number,
-                role: step.assignee_role || '',
-                department: step.department || '',
-                users: []
-            });
-            console.log(`📝 Created step ${key} with role: ${step.assignee_role}, dept: ${step.department}`);
-        }
-        
-        // Add user if exists
-        if (step.assignee_user_id && step.user_name && step.user_email) {
-            const stepData = stepsMap.get(key);
-            const userExists = stepData.users.some(u => u.id === step.assignee_user_id);
+    workflowSteps = [];
+    stepCount = 0;
+
+    if (workflowData.steps && workflowData.steps.length > 0) {
+        workflowData.steps.forEach(step => {
+            // Handle both formats - with users array or direct user_id
+            let userId = null;
+            let userName = '';
+            let userEmail = '';
+            let department = step.department || '';
             
-            if (!userExists) {
-                stepData.users.push({
-                    id: step.assignee_user_id,
-                    name: step.user_name,
-                    email: step.user_email
-                });
-                console.log(`👤 Added user to step ${key}: ${step.user_name} (${step.user_email})`);
+            if (step.users && step.users.length > 0) {
+                // Users array format
+                const user = step.users[0];
+                userId = user.id;
+                userName = user.name;
+                userEmail = user.email;
+                department = step.department || user.department || '';
+            } else if (step.assignee_user_id) {
+                // Direct user_id format (from database response)
+                userId = step.assignee_user_id;
+                userName = step.user_name || '';
+                userEmail = step.user_email || '';
+                department = step.department || '';
             }
-        }
-    });
-    
-    // Convert to array and sort
-    workflowSteps = Array.from(stepsMap.values()).sort((a, b) => a.step_number - b.step_number);
-    stepCount = workflowSteps.length;
-    
-    console.log('✅ Final workflow steps:', workflowSteps);
-    console.log('📊 Total steps:', stepCount);
-    
+            
+            workflowSteps.push({
+                step_number: step.step_number,
+                role: step.assignee_role || step.role || step.step_type || '',
+                user_id: userId,
+                user_name: userName,
+                user_email: userEmail,
+                department: department
+            });
+        });
+        stepCount = workflowSteps.length;
+        console.log(`✅ Populated ${stepCount} steps:`, workflowSteps);
+    }
+
     renderWorkflowSteps();
 }
 
-// Render all workflow steps
+// Render workflow steps
 function renderWorkflowSteps() {
+    console.log('🎨 Rendering workflow steps');
     const tbody = document.getElementById('workflowSteps');
     tbody.innerHTML = '';
-    
-    if (workflowSteps.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">
-                    No workflow steps defined. Click "Add Workflow Step" to get started.
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    
+
     workflowSteps.forEach((step, index) => {
-        tbody.appendChild(createStepRow(step, index + 1));
+        tbody.appendChild(createStepRow(step, index));
     });
-    
-    console.log('✅ Rendered', workflowSteps.length, 'workflow steps');
+
+    console.log(`✅ Rendered ${workflowSteps.length} workflow steps`);
 }
 
-// Create step row HTML
-function createStepRow(step, stepNum) {
+// Create step row
+function createStepRow(step, index) {
+    const stepNum = index + 1;
     const tr = document.createElement('tr');
     tr.className = 'workflow-step';
-    
+
     // Role options
     const roleOptions = availableRoles.map(role => 
         `<option value="${role}" ${step.role === role ? 'selected' : ''}>${role}</option>`
     ).join('');
-    
-    // Department options
-    const deptOptions = availableDepartments.map(dept => 
-        `<option value="${dept}" ${step.department === dept ? 'selected' : ''}>${dept}</option>`
-    ).join('');
-    
-    // Selected users HTML
-    const selectedUsersHtml = step.users.map(user => `
-        <div class="selected-tag" data-user-id="${user.id}">
-            <i class="ti ti-user"></i>
-            ${user.name}
-            <span class="tag-email">${user.email}</span>
-            <i class="ti ti-x" onclick="removeUser(${stepNum - 1}, ${user.id})"></i>
-        </div>
-    `).join('');
-    
+
+    // User display value
+    const userDisplayValue = step.user_name ? `${step.user_name} (${step.user_email})` : '';
+    const hasUserClass = step.user_name ? 'has-value' : '';
+
     tr.innerHTML = `
         <td>
             <div class="step-number">${stepNum}</div>
         </td>
         <td>
-            <select class="form-select" name="role_${stepNum}" onchange="updateStepRole(${stepNum - 1}, this.value)">
+            <select class="form-select" name="role_${stepNum}" onchange="updateStepRole(${index}, this.value)">
                 <option value="">Select Role</option>
                 ${roleOptions}
             </select>
@@ -778,29 +646,34 @@ function createStepRow(step, stepNum) {
         <td>
             <div class="user-selection-wrapper">
                 <div class="user-input-group">
-                    <input type="text" class="form-input user-search" placeholder="Search by name or email..." 
-                           onkeyup="searchUsers(this, ${stepNum})" onfocus="showUserDropdown(this, ${stepNum})">
-                    <button type="button" class="btn-icon" title="Search users">
-                        <i class="ti ti-search"></i>
+                    <input 
+                        type="text" 
+                        class="user-search-input ${hasUserClass}" 
+                        id="userSearch_${stepNum}"
+                        placeholder="Search by name or email..." 
+                        value="${userDisplayValue}"
+                        onkeyup="searchUsers(${index}, this.value)"
+                        onfocus="showUserDropdown(${index})"
+                        autocomplete="off">
+                    <i class="ti ti-search search-icon"></i>
+                    <button type="button" class="clear-user-btn" onclick="clearUser(${index})">
+                        <i class="ti ti-x"></i>
                     </button>
                 </div>
                 <div class="user-dropdown" id="userDropdown_${stepNum}" style="display: none;"></div>
-                <div class="selected-users" id="selectedUsers_${stepNum}">
-                    ${selectedUsersHtml || '<span style="color: var(--text-muted); font-size: 0.875rem;">No users selected</span>'}
-                </div>
             </div>
         </td>
         <td>
-            <select class="form-select" name="department_${stepNum}" onchange="updateStepDepartment(${stepNum - 1}, this.value)">
-                <option value="">Select Department</option>
-                ${deptOptions}
-            </select>
+            <div class="department-badge" id="department_${stepNum}">
+                <i class="ti ti-building"></i>
+                <span>${step.department || 'Not assigned'}</span>
+            </div>
         </td>
         <td style="text-align: center;">
-            <i class="ti ti-trash remove-step" onclick="removeStep(${stepNum - 1})"></i>
+            <i class="ti ti-trash remove-step" onclick="removeStep(${index})"></i>
         </td>
     `;
-    
+
     return tr;
 }
 
@@ -809,8 +682,10 @@ function addWorkflowStep() {
     workflowSteps.push({
         step_number: workflowSteps.length + 1,
         role: '',
-        department: '',
-        users: []
+        user_id: null,
+        user_name: '',
+        user_email: '',
+        department: ''
     });
     stepCount = workflowSteps.length;
     console.log('➕ Added new step. Total:', stepCount);
@@ -821,194 +696,263 @@ function addWorkflowStep() {
 function removeStep(index) {
     if (workflowSteps.length <= 1) {
         showNotification('At least one workflow step is required', 'warning');
-
         return;
     }
-    
+
     if (confirm('Are you sure you want to remove this workflow step?')) {
         workflowSteps.splice(index, 1);
         // Renumber steps
-        workflowSteps.forEach((step, i) => {
-            step.step_number = i + 1;
+        workflowSteps.forEach((step, idx) => {
+            step.step_number = idx + 1;
         });
         stepCount = workflowSteps.length;
-        console.log('🗑️ Removed step. Remaining:', stepCount);
+        console.log(`🗑️ Removed step. Total: ${stepCount}`);
         renderWorkflowSteps();
     }
 }
 
-// Update step data
-function updateStepRole(index, value) {
+// Update step role
+function updateStepRole(index, role) {
     if (workflowSteps[index]) {
-        workflowSteps[index].role = value;
-        console.log('📝 Updated step', index + 1, 'role:', value);
-    }
-}
-
-function updateStepDepartment(index, value) {
-    if (workflowSteps[index]) {
-        workflowSteps[index].department = value;
-        console.log('📝 Updated step', index + 1, 'department:', value);
+        workflowSteps[index].role = role;
+        console.log(`✏️ Updated step ${index + 1} role to: ${role}`);
     }
 }
 
 // Search users
-let searchTimeout = null;
-
-async function searchUsers(input, stepNum) {
+let searchTimeout;
+window.searchUsers = function(index, query) {
     clearTimeout(searchTimeout);
-    const searchTerm = input.value.toLowerCase();
+
+    const stepNum = index + 1;
     const dropdown = document.getElementById(`userDropdown_${stepNum}`);
     
     if (!dropdown) return;
-    
-    searchTimeout = setTimeout(async () => {
-        try {
-            const response = await fetch(`/api/workflows/users/search?query=${encodeURIComponent(searchTerm)}`);
-            if (response.ok) {
-                const data = await response.json();
-                displayUserDropdown(stepNum, data.users || []);
-            }
-        } catch (error) {
-            console.error('Error searching users:', error);
+
+    // If query is empty and no user selected, hide dropdown
+    if (!query.trim()) {
+        if (!workflowSteps[index] || !workflowSteps[index].user_id) {
+            hideUserDropdown(index);
         }
-    }, 300);
-}
-
-function showUserDropdown(input, stepNum) {
-    // Load all users on focus
-    searchUsers(input, stepNum);
-}
-
-function displayUserDropdown(stepNum, users) {
-    const dropdown = document.getElementById(`userDropdown_${stepNum}`);
-    if (!dropdown) return;
-    
-    if (users.length === 0) {
-        dropdown.innerHTML = '<div class="dropdown-item" style="cursor: default;">No users found</div>';
-    } else {
-        dropdown.innerHTML = users.map(user => `
-            <div class="dropdown-item" onclick="selectUser(${stepNum}, ${user.id}, '${user.name.replace(/'/g, "\\'")}', '${user.email}')">
-                <div class="user-info">
-                    <span class="user-name">${user.name}</span>
-                    <span class="user-email">${user.email}</span>
-                </div>
-            </div>
-        `).join('');
+        return;
     }
+
+    searchTimeout = setTimeout(() => {
+        const filteredUsers = allUsers.filter(user => {
+            const searchLower = query.toLowerCase();
+            return user.name.toLowerCase().includes(searchLower) || 
+                   user.email.toLowerCase().includes(searchLower);
+        });
+
+        displayUserDropdown(index, filteredUsers);
+    }, 300);
+};
+
+// Show user dropdown
+window.showUserDropdown = function(index) {
+    const stepNum = index + 1;
+    const input = document.getElementById(`userSearch_${stepNum}`);
     
+    // If user already selected, don't show dropdown on focus
+    if (workflowSteps[index] && workflowSteps[index].user_id && input && input.value) {
+        return;
+    }
+
+    // Show all users if no search query
+    displayUserDropdown(index, allUsers);
+};
+
+// Display user dropdown
+function displayUserDropdown(index, users) {
+    const stepNum = index + 1;
+    const dropdown = document.getElementById(`userDropdown_${stepNum}`);
+    
+    if (!dropdown) return;
+
+    if (users.length === 0) {
+        dropdown.innerHTML = '<div class="no-users-found">No users found</div>';
+        dropdown.style.display = 'block';
+        return;
+    }
+
+    dropdown.innerHTML = users.map(user => {
+        const userJson = JSON.stringify(user).replace(/"/g, '&quot;');
+        return `
+            <div class="user-dropdown-item" onclick="selectUser(${index}, JSON.parse(this.getAttribute('data-user')))" data-user="${userJson}">
+                <div class="user-info">
+                    <strong>${escapeHtml(user.name)}</strong>
+                    <small>${escapeHtml(user.email)}</small>
+                </div>
+                <span class="user-badge">${escapeHtml(user.department || 'No Dept')}</span>
+            </div>
+        `;
+    }).join('');
+
     dropdown.style.display = 'block';
 }
 
-function selectUser(stepNum, userId, userName, userEmail) {
-    const stepIndex = stepNum - 1;
-    if (!workflowSteps[stepIndex]) return;
-    
-    // Check if already selected
-    const exists = workflowSteps[stepIndex].users.find(u => u.id === userId);
-    if (exists) {
-        alert('User already added to this step');
-        return;
-    }
-    
-    // Add user
-    workflowSteps[stepIndex].users.push({
-        id: userId,
-        name: userName,
-        email: userEmail
-    });
-    
-    console.log('👤 Added user to step', stepNum, ':', userName);
-    
-    // Clear search and hide dropdown
-    const searchInput = document.querySelector(`#workflowSteps tr:nth-child(${stepNum}) .user-search`);
-    if (searchInput) searchInput.value = '';
-    
+// Helper function to escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Hide user dropdown
+function hideUserDropdown(index) {
+    const stepNum = index + 1;
     const dropdown = document.getElementById(`userDropdown_${stepNum}`);
-    if (dropdown) dropdown.style.display = 'none';
-    
-    renderWorkflowSteps();
+    if (dropdown) {
+        setTimeout(() => {
+            dropdown.style.display = 'none';
+        }, 200);
+    }
 }
 
-function removeUser(stepIndex, userId) {
-    if (!workflowSteps[stepIndex]) return;
-    
-    workflowSteps[stepIndex].users = workflowSteps[stepIndex].users.filter(u => u.id !== userId);
-    console.log('🗑️ Removed user from step', stepIndex + 1);
-    renderWorkflowSteps();
-}
+// Select user from dropdown
+window.selectUser = function(index, user) {
+    if (!workflowSteps[index]) return;
 
-// Close dropdowns when clicking outside
-document.addEventListener('click', function(event) {
-    if (!event.target.closest('.user-selection-wrapper')) {
+    workflowSteps[index].user_id = user.id;
+    workflowSteps[index].user_name = user.name;
+    workflowSteps[index].user_email = user.email;
+    workflowSteps[index].department = user.department || '';
+
+    console.log(`✏️ Updated step ${index + 1} user to: ${user.name} (${user.department})`);
+
+    // Update department badge
+    const stepNum = index + 1;
+    const departmentBadge = document.getElementById(`department_${stepNum}`);
+    if (departmentBadge) {
+        const span = departmentBadge.querySelector('span');
+        if (span) {
+            span.textContent = user.department || 'Not assigned';
+        }
+    }
+
+    // Update input field
+    const input = document.getElementById(`userSearch_${stepNum}`);
+    if (input) {
+        input.value = `${user.name} (${user.email})`;
+        input.classList.add('has-value');
+    }
+
+    // Hide dropdown
+    hideUserDropdown(index);
+};
+
+// Clear selected user
+window.clearUser = function(index) {
+    if (!workflowSteps[index]) return;
+
+    const stepNum = index + 1;
+
+    // Clear user data
+    workflowSteps[index].user_id = null;
+    workflowSteps[index].user_name = '';
+    workflowSteps[index].user_email = '';
+    workflowSteps[index].department = '';
+
+    // Clear input
+    const input = document.getElementById(`userSearch_${stepNum}`);
+    if (input) {
+        input.value = '';
+        input.classList.remove('has-value');
+        input.focus();
+    }
+
+    // Clear department
+    const departmentBadge = document.getElementById(`department_${stepNum}`);
+    if (departmentBadge) {
+        const span = departmentBadge.querySelector('span');
+        if (span) {
+            span.textContent = 'Not assigned';
+        }
+    }
+
+    console.log(`🗑️ Cleared user for step ${stepNum}`);
+};
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.user-selection-wrapper')) {
         document.querySelectorAll('.user-dropdown').forEach(dropdown => {
             dropdown.style.display = 'none';
         });
     }
 });
 
-// Save and submit functions
-function goBack() {
-    window.location.href = '/';
-}
-
+// Save workflow
 async function saveWorkflow() {
     if (!validateWorkflow()) return;
-    
+
     const workflowData = collectWorkflowData();
     console.log('💾 Saving workflow:', workflowData);
-    
+    console.log('📋 Steps data:', JSON.stringify(workflowData.steps, null, 2));
+
     try {
         const response = await fetch('/api/workflows/master', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify(workflowData)
         });
-        
+
         if (response.ok) {
-            alert('Master workflow saved successfully!');
-            window.location.href = '/dashboard';
+            const result = await response.json();
+            console.log('✅ Save successful:', result);
+            showNotification('Master workflow saved successfully', 'success');
+            
+            // Reload the workflow data to show what was saved
+            setTimeout(() => {
+                loadWorkflowData();
+            }, 500);
         } else {
             const error = await response.json();
-            alert('Error: ' + (error.detail || 'Failed to save workflow'));
+            console.error('❌ Server error response:', error);
+            showNotification('Error: ' + (error.detail || 'Failed to save workflow'), 'error');
         }
     } catch (error) {
-        console.error('Error:', error);
-        alert('Error saving workflow. Please try again.');
+        console.error('❌ Error:', error);
+        showNotification('Error saving workflow. Please try again.', 'error');
     }
 }
 
+// Submit workflow
 async function submitWorkflow() {
     if (!validateWorkflow()) return;
-    
+
     if (confirm('Are you sure you want to submit this master workflow? It will be applied to all new contracts.')) {
         await saveWorkflow();
     }
 }
 
+// Validate workflow
 function validateWorkflow() {
     if (workflowSteps.length === 0) {
-        alert('Please add at least one workflow step');
+        showNotification('Please add at least one workflow step', 'warning');
         return false;
     }
-    
+
     for (let i = 0; i < workflowSteps.length; i++) {
         const step = workflowSteps[i];
-        
+
         if (!step.role) {
-            alert(`Please select a role for step ${i + 1}`);
+            showNotification(`Please select a role for step ${i + 1}`, 'warning');
             return false;
         }
-        
-        if (step.users.length === 0) {
-            alert(`Please add at least one user for step ${i + 1}`);
+
+        if (!step.user_id) {
+            showNotification(`Please select a user for step ${i + 1}`, 'warning');
             return false;
         }
     }
-    
+
     return true;
 }
 
+// Collect workflow data
 function collectWorkflowData() {
     return {
         workflow_name: "Master Workflow",
@@ -1016,16 +960,37 @@ function collectWorkflowData() {
         steps: workflowSteps.map(step => ({
             step_number: step.step_number,
             step_name: step.role || `Step ${step.step_number}`,
-            step_type: step.role || 'Reviewer',
+            step_type: step.role || 'reviewer',
             role: step.role,
-            department: step.department,
-            users: step.users,
+            department: step.department || null,
+            users: step.user_id ? [{
+                id: step.user_id,
+                name: step.user_name,
+                email: step.user_email,
+                department: step.department || null
+            }] : [],
             sla_hours: 24,
             is_mandatory: true
         })),
         auto_escalation: false,
         escalation_hours: 48
     };
+}
+
+// Show notification
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <i class="ti ti-${type === 'success' ? 'check' : type === 'error' ? 'x' : 'alert-triangle'}"></i>
+        <span>${message}</span>
+    `;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.style.animation = 'slideIn 0.3s ease reverse';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
 }
 </script>
 {% endblock %}

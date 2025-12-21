@@ -1479,9 +1479,7 @@ function showLoader(message = 'Please wait...') {
     loader.className = 'contract-loader';
     loader.innerHTML = `
         <div class="loader-content">
-            <div class="spinner-border text-primary" role="status">
-                
-            </div>
+             <div class="ai-loader"></div>
             <p class="mt-3">${message}</p>
         </div>
     `;

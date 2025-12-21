@@ -23,6 +23,7 @@ class ContractService:
     @staticmethod
     def generate_contract_number(db: Session, company_id: int) -> str:
         """Generate unique contract number in format: CNT-YYYY-XXXX"""
+        
         current_year = datetime.now().year
         prefix = f"CNT-{current_year}"
         

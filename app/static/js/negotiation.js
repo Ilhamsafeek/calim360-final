@@ -14,7 +14,7 @@ let isSendingMessage = false; // Prevent double-sends
 function getContractId() {
     // Try multiple sources to get contract ID
     let id = null;
-    
+
     // 1. Try global contractId variable
     if (typeof contractId !== 'undefined' && contractId) {
         id = contractId;
@@ -31,7 +31,7 @@ function getContractId() {
             id = pathParts[contractIndex + 1];
         }
     }
-    
+
     // Validate and return
     if (!id) {
         console.error('❌ Contract ID not found!');
@@ -42,10 +42,10 @@ function getContractId() {
         });
         return null;
     }
-    
+
     // Remove any non-numeric characters
     id = String(id).replace(/\D/g, '');
-    
+
     console.log('✅ Using Contract ID:', id);
     return id;
 }
@@ -69,10 +69,10 @@ async function startInternalNegotiation() {
             showNotification('Contract ID not found. Please refresh the page.', 'error');
             return;
         }
-        
+
         showLoader();
         closeModal('negotiationModal');
-        
+
         // Start negotiation session
         const response = await fetch('/api/negotiation/sessions/start', {
             method: 'POST',
@@ -86,12 +86,12 @@ async function startInternalNegotiation() {
                 participant_ids: []
             })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             currentNegotiationSession = data;
-            
+
             // Show appropriate message
             // if (data.message === "Joined existing negotiation session") {
             //     showNotification('Joined ongoing negotiation session', 'success');
@@ -104,16 +104,16 @@ async function startInternalNegotiation() {
             } else {
                 showNotification('Negotiation session started', 'success');
             }
-            
+
             // Open live negotiation modal
             setTimeout(() => {
                 openLiveNegotiationModal('Internal Team Negotiation', 'internal');
             }, 300);
-            
+
         } else {
             showNotification(data.message || data.detail || 'Failed to start negotiation', 'error');
         }
-        
+
     } catch (error) {
         console.error('Error starting internal negotiation:', error);
         showNotification('Failed to start internal negotiation', 'error');
@@ -129,9 +129,9 @@ async function startInternalNegotiation() {
 async function startExternalNegotiation() {
 
     const openNegotiationBtn = document.getElementById('openNegotiationBtn');
-        const originalContent = openNegotiationBtn.innerHTML;
-        openNegotiationBtn.disabled = true;
-        openNegotiationBtn.innerHTML = '<i class="ti ti-loader" style="animation: spin 1s linear infinite;"></i> Opening…';
+    const originalContent = openNegotiationBtn.innerHTML;
+    openNegotiationBtn.disabled = true;
+    openNegotiationBtn.innerHTML = '<i class="ti ti-loader" style="animation: spin 1s linear infinite;"></i> Opening…';
 
     try {
         const contractId = getContractId();
@@ -139,10 +139,10 @@ async function startExternalNegotiation() {
             showNotification('Contract ID not found. Please refresh the page.', 'error');
             return;
         }
-        
+
         showLoader();
         closeModal('negotiationModal');
-        
+
         // Start negotiation session
         const response = await fetch('/api/negotiation/sessions/start', {
             method: 'POST',
@@ -156,12 +156,12 @@ async function startExternalNegotiation() {
                 participant_ids: []
             })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             currentNegotiationSession = data;
-            
+
             // Show appropriate message
             // if (data.message === "Joined existing negotiation session") {
             //     showNotification('Joined ongoing negotiation session', 'success');
@@ -169,26 +169,26 @@ async function startExternalNegotiation() {
             //     showNotification('Negotiation session started', 'success');
             // }
 
-              if (data.message === "Joined existing negotiation session") {
+            if (data.message === "Joined existing negotiation session") {
                 showNotification('Joining negotiation session', 'success');
             } else {
                 showNotification('Negotiation session started', 'success');
             }
-            
+
             // Open live negotiation modal
             setTimeout(() => {
-                
+
                 openLiveNegotiationModal('Negotiation Panel', 'external');
-               
+
             }, 300);
 
-             openNegotiationBtn.innerHTML = originalContent;
-             openNegotiationBtn.disabled = false;
-            
+            openNegotiationBtn.innerHTML = originalContent;
+            openNegotiationBtn.disabled = false;
+
         } else {
             showNotification(data.message || data.detail || 'Failed to start negotiation', 'error');
         }
-        
+
     } catch (error) {
         console.error('Error starting external negotiation:', error);
         showNotification('Failed to start external negotiation', 'error');
@@ -207,25 +207,25 @@ async function openLiveNegotiationModal(title, type) {
         if (modalTitleElement) {
             modalTitleElement.innerHTML = `<i class="ti ti-video"></i> ${title}`;
         }
-        
+
         // IMPORTANT: Clear messages area first to prevent duplicates
         const chatMessages = document.getElementById('chatMessages');
         if (chatMessages) {
             chatMessages.innerHTML = ``;
         }
-        
+
         // Clear displayed messages tracking
         displayedMessageIds.clear();
-        
+
         // Load messages (initial load)
         await loadNegotiationMessagesInitial();
-        
+
         // Load participants (including workflow participants)
-        await loadNegotiationParticipants();
-        
+        await loadNegotiationParticipants(type);
+
         // Open modal
         openModal('liveNegotiationModal');
-        
+
         // Focus on message input
         setTimeout(() => {
             const input = document.getElementById('messageInput');
@@ -233,10 +233,10 @@ async function openLiveNegotiationModal(title, type) {
                 input.focus();
             }
         }, 300);
-        
+
         // Start polling for new messages
         startMessagePolling();
-        
+
     } catch (error) {
         console.error('Error opening live negotiation:', error);
         showNotification('Failed to load negotiation session', 'error');
@@ -246,19 +246,19 @@ async function openLiveNegotiationModal(title, type) {
 
 async function loadNegotiationMessagesInitial() {
     if (!currentNegotiationSession) return;
-    
+
     try {
         const response = await fetch(`/api/negotiation/messages/${currentNegotiationSession.session_id}`, {
             credentials: 'include'
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success && data.messages.length > 0) {
             // Use displayMessages for initial load (clears and loads all)
             displayMessages(data.messages);
         }
-        
+
     } catch (error) {
         console.error('Error loading initial messages:', error);
     }
@@ -270,27 +270,27 @@ async function loadNegotiationMessagesInitial() {
 
 function smoothScrollToBottom(element) {
     if (!element) return;
-    
+
     const targetScroll = element.scrollHeight;
     const startScroll = element.scrollTop;
     const distance = targetScroll - startScroll;
     const duration = 300; // ms
     const startTime = performance.now();
-    
+
     function animation(currentTime) {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        
+
         // Ease-out function for smooth deceleration
         const easeOut = 1 - Math.pow(1 - progress, 3);
-        
+
         element.scrollTop = startScroll + (distance * easeOut);
-        
+
         if (progress < 1) {
             requestAnimationFrame(animation);
         }
     }
-    
+
     requestAnimationFrame(animation);
 }
 
@@ -300,19 +300,19 @@ function smoothScrollToBottom(element) {
 
 async function loadNegotiationMessages() {
     if (!currentNegotiationSession) return;
-    
+
     try {
         const response = await fetch(`/api/negotiation/messages/${currentNegotiationSession.session_id}`, {
             credentials: 'include'
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             // Only add NEW messages (not all messages)
             displayNewMessages(data.messages);
         }
-        
+
     } catch (error) {
         console.error('Error loading messages:', error);
     }
@@ -325,10 +325,10 @@ async function loadNegotiationMessages() {
 function displayNewMessages(messages) {
     const chatMessages = document.getElementById('chatMessages');
     if (!chatMessages) return;
-    
+
     console.log('📥 Polling returned', messages.length, 'messages');
     console.log('📋 Already displayed:', Array.from(displayedMessageIds));
-    
+
     // Filter to only NEW messages that haven't been displayed yet
     const newMessages = messages.filter(msg => {
         const isNew = !displayedMessageIds.has(msg.id);
@@ -337,9 +337,9 @@ function displayNewMessages(messages) {
         }
         return isNew;
     });
-    
+
     console.log('✨ Adding', newMessages.length, 'new messages');
-    
+
     // Add only new messages with animation
     newMessages.forEach(msg => {
         console.log('➕ Adding message:', msg.id, msg.message_content);
@@ -353,20 +353,20 @@ function displayNewMessages(messages) {
 function displayMessages(messages) {
     const chatMessages = document.getElementById('chatMessages');
     if (!chatMessages) return;
-    
+
     // Keep the welcome message, clear only the chat messages
     const welcomeMsg = chatMessages.querySelector('.welcome-message');
     chatMessages.innerHTML = '';
-    
+
     if (welcomeMsg) {
         chatMessages.appendChild(welcomeMsg);
     } else {
         chatMessages.innerHTML = ``;
     }
-    
+
     // Clear tracking
     displayedMessageIds.clear();
-    
+
     // Add each message without animation (initial load)
     messages.forEach(msg => {
         const messageDiv = createMessageElement(msg);
@@ -374,7 +374,7 @@ function displayMessages(messages) {
         chatMessages.appendChild(messageDiv);
         displayedMessageIds.add(msg.id); // Track as displayed
     });
-    
+
     // Instant scroll to bottom
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
@@ -387,7 +387,7 @@ function displayMessages(messages) {
 function createMessageElement(message) {
     const messageDiv = document.createElement('div');
     messageDiv.setAttribute('data-message-id', message.id);
-    
+
     if (message.message_type === 'system') {
         messageDiv.className = 'system-message';
         messageDiv.innerHTML = `
@@ -397,12 +397,12 @@ function createMessageElement(message) {
     } else {
         const isCurrentUser = message.sender_type === 'current_user';
         messageDiv.className = isCurrentUser ? 'message user-msg' : 'message initiator-msg';
-        
+
         const timestamp = message.created_at ? new Date(message.created_at).toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit'
         }) : 'Just now';
-        
+
         messageDiv.innerHTML = `
             ${!isCurrentUser ? '<div class="message-avatar"><i class="ti ti-user"></i></div>' : ''}
             <div class="message-content">
@@ -414,7 +414,7 @@ function createMessageElement(message) {
             </div>
         `;
     }
-    
+
     return messageDiv;
 }
 // =====================================================
@@ -424,16 +424,16 @@ function createMessageElement(message) {
 function addMessageToChat(message) {
     const chatMessages = document.getElementById('chatMessages');
     if (!chatMessages) return;
-    
+
     // Check if already displayed (prevent duplicates)
     if (displayedMessageIds.has(message.id)) {
         console.log('⏭️ Message already displayed:', message.id);
         return;
     }
-    
+
     const messageDiv = document.createElement('div');
     messageDiv.setAttribute('data-message-id', message.id);
-    
+
     if (message.message_type === 'system') {
         messageDiv.className = 'system-message';
         messageDiv.innerHTML = `
@@ -443,12 +443,12 @@ function addMessageToChat(message) {
     } else {
         const isCurrentUser = message.sender_type === 'current_user';
         messageDiv.className = isCurrentUser ? 'message user-msg' : 'message initiator-msg';
-        
+
         const timestamp = message.created_at ? new Date(message.created_at).toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit'
         }) : 'Just now';
-        
+
         messageDiv.innerHTML = `
             ${!isCurrentUser ? '<div class="message-avatar"><i class="ti ti-user"></i></div>' : ''}
             <div class="message-content">
@@ -460,21 +460,21 @@ function addMessageToChat(message) {
             </div>
         `;
     }
-    
+
     // Add with fade-in animation
     messageDiv.style.opacity = '0';
     chatMessages.appendChild(messageDiv);
-    
+
     // IMPORTANT: Track this message as displayed
     displayedMessageIds.add(message.id);
     console.log('✅ Message displayed and tracked:', message.id);
-    
+
     // Animate in
     setTimeout(() => {
         messageDiv.style.transition = 'opacity 0.3s ease';
         messageDiv.style.opacity = '1';
     }, 10);
-    
+
     // Smooth scroll to bottom
     smoothScrollToBottom(chatMessages);
 }
@@ -487,24 +487,24 @@ function addMessageToChat(message) {
 async function sendMessage() {
     const input = document.getElementById('messageInput');
     const sendBtn = document.querySelector('.send-btn');
-    
+
     if (!input || !currentNegotiationSession || isSendingMessage) {
         return;
     }
-    
+
     const message = input.value.trim();
     if (!message) return;
-    
+
     try {
         // Set loading state
         isSendingMessage = true;
         sendBtn.disabled = true;
         sendBtn.innerHTML = '<i class="ti ti-loader" style="animation: spin 1s linear infinite;"></i>';
-        
+
         // Clear input immediately for better UX
         const messageCopy = message;
         input.value = '';
-        
+
         // Send to server (NO optimistic UI - wait for confirmation)
         const response = await fetch('/api/negotiation/messages/send', {
             method: 'POST',
@@ -518,9 +518,9 @@ async function sendMessage() {
                 message_type: 'text'
             })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             // Add message immediately (server confirmed, correct sender_type)
             console.log('✅ Message sent:', data.message.id, data.message.message_content);
@@ -530,7 +530,7 @@ async function sendMessage() {
             input.value = messageCopy;
             showNotification('Failed to send message', 'error');
         }
-        
+
     } catch (error) {
         console.error('Error sending message:', error);
         input.value = message; // Restore on error
@@ -559,23 +559,23 @@ function handleMessageKeyPress(event) {
 // LOAD PARTICIPANTS (INCLUDING WORKFLOW PARTICIPANTS)
 // =====================================================
 
-async function loadNegotiationParticipants() {
+async function loadNegotiationParticipants(type) {
     if (!currentNegotiationSession) return;
-    
+
     try {
         // Get negotiation session participants
         const sessionResponse = await fetch(`/api/negotiation/sessions/${currentNegotiationSession.session_id}`, {
             credentials: 'include'
         });
-        
+
         const sessionData = await sessionResponse.json();
-        
+
         let allParticipants = [];
-        
+
         if (sessionData.success && sessionData.participants) {
             allParticipants = sessionData.participants;
         }
-        
+
         // Also fetch workflow participants from the contract
         if (currentNegotiationSession.contract_id) {
             try {
@@ -583,12 +583,12 @@ async function loadNegotiationParticipants() {
                 const workflowResponse = await fetch(`/api/contract/workflow/${currentNegotiationSession.contract_id}`, {
                     credentials: 'include'
                 });
-                
+
                 const workflowData = await workflowResponse.json();
-                
+
                 if (workflowData.success && workflowData.workflow && workflowData.workflow.steps) {
                     console.log('📋 Workflow steps found:', workflowData.workflow.steps.length);
-                    
+
                     // Extract users from workflow steps
                     workflowData.workflow.steps.forEach(step => {
                         // Each step can have multiple users
@@ -614,10 +614,10 @@ async function loadNegotiationParticipants() {
                 console.log('Could not fetch workflow participants:', workflowError);
             }
         }
-        
+
         console.log('👥 Total participants to display:', allParticipants.length);
-        updateParticipantsDisplay(allParticipants);
-        
+        updateParticipantsDisplay(allParticipants, type);
+
     } catch (error) {
         console.error('Error loading participants:', error);
     }
@@ -626,83 +626,92 @@ async function loadNegotiationParticipants() {
 // =====================================================
 // UPDATE PARTICIPANTS DISPLAY
 // =====================================================
-function updateParticipantsDisplay(participants) {
+async function updateParticipantsDisplay(participants, type) {
     const participantsContainer = document.querySelector('.participants');
     if (!participantsContainer) return;
-    
+
     // Clear existing participants
     participantsContainer.innerHTML = '';
-    
+
     if (!participants || participants.length === 0) {
         participantsContainer.innerHTML = '<div class="participant"><span>No participants</span></div>';
         return;
     }
-    
-    // Get current user ID - try multiple sources
-    let currentUserId = window.currentUserId || 
-                        document.body.dataset.userId || 
-                        sessionStorage.getItem('userId');
-    
-    // Convert to string for comparison
-    currentUserId = String(currentUserId);
-    
-    console.log('Current User ID:', currentUserId); // Debug log
-    console.log('Participants:', participants); // Debug log
-    
-    // Check if current user is initiator
-    const currentUserParticipant = participants.find(p => String(p.user_id) === currentUserId);
-    const isCurrentUserInitiator = currentUserParticipant && currentUserParticipant.role === 'initiator';
-    
-    console.log('Current user is initiator:', isCurrentUserInitiator); // Debug log
-    
+
+    // Get current user ID from global variable
+    const currentUserId = String(window.currentUserId || '');
+    const currentUserCompanyId = window.currentUser?.company_id;
+
+    // Get contract ID from URL or global variable
+    const contractId = window.contractId || document.body.dataset.contractId ||
+        window.location.pathname.split('/').pop();
+
+    // Fetch contract data to determine initiator
+    let isCurrentUserInitiator = false;
+
+    try {
+        const response = await fetch(`/api/contracts/edit/${contractId}`);
+        const data = await response.json();
+
+        console.log('Contract data received:', data);
+
+        if (data.success) {
+            const { contract } = data;
+
+            // Current user is initiator if they belong to the contract's company
+            isCurrentUserInitiator = currentUserCompanyId === contract.company_id;
+
+            console.log('Contract Company ID:', contract.company_id);
+            console.log('Current User Company ID:', currentUserCompanyId);
+            console.log('Is Current User Initiator:', isCurrentUserInitiator);
+        }
+    } catch (error) {
+        console.error('Error fetching contract data:', error);
+    }
+
+    console.log('Current User ID:', currentUserId);
+    console.log('Contract Type:', type);
+    console.log('Participants:', participants);
+
     participants.forEach(participant => {
         const participantDiv = document.createElement('div');
         participantDiv.className = 'participant online';
-        
-        // Determine if this is the current user (string comparison)
+
+        // Determine if this is the current user
         const isCurrentUser = String(participant.user_id) === currentUserId;
-        
+
         // Determine display name and role
         let displayName = participant.full_name || 'User';
         let displayRole = '';
-        
+
+        // Set display name to "You" for current user
         if (isCurrentUser) {
-            // Current user shows as "You"
             displayName = 'You';
-            if (participant.role === 'initiator') {
-                displayRole = '(Initiator)';
-            } else if (participant.role === 'participant') {
-                displayRole = '(Participant)';
-            } else if (participant.role === 'counterparty') {
-                displayRole = '(Counter-Party)';
-            }
+        }
+
+        // Determine role based on type
+        if (type === 'internal') {
+            // For internal type, no role label
+            displayRole = '';
         } else {
-            // Other participants
-            if (isCurrentUserInitiator) {
-                // If current user is initiator, show others as Counter-Party
-                displayRole = '(Counter-Party)';
+            // For external/counterparty type
+            if (isCurrentUser) {
+                // Current user's role
+                displayRole = isCurrentUserInitiator ? '(Initiator)' : '(Counter-Party)';
             } else {
-                // Show actual role
-                if (participant.role === 'initiator') {
-                    displayRole = '(Initiator)';
-                } else if (participant.role === 'participant') {
-                    displayRole = '';
-                } else if (participant.role === 'counterparty') {
-                    displayRole = '(Counter-Party)';
-                }
+                // Other participants' role (opposite of current user)
+                displayRole = isCurrentUserInitiator ? '(Counter-Party)' : '(Initiator)';
             }
         }
-        
+
         participantDiv.innerHTML = `
             <div class="status-dot"></div>
             <span>${displayName} ${displayRole}</span>
         `;
-        
+
         participantsContainer.appendChild(participantDiv);
     });
 }
-
-
 // =====================================================
 // START MESSAGE POLLING
 // =====================================================
@@ -712,7 +721,7 @@ function startMessagePolling() {
     if (messagePollingInterval) {
         clearInterval(messagePollingInterval);
     }
-    
+
     // Poll for new messages every 3 seconds
     messagePollingInterval = setInterval(() => {
         loadNegotiationMessages();
@@ -738,14 +747,14 @@ function stopMessagePolling() {
 
 async function finalizeNegotiation() {
     if (!currentNegotiationSession) return;
-    
+
     if (!confirm('Are you sure you want to finalize this negotiation? This will end the session.')) {
         return;
     }
-    
+
     try {
         showLoader();
-        
+
         const response = await fetch(`/api/negotiation/sessions/${currentNegotiationSession.session_id}/end`, {
             method: 'POST',
             headers: {
@@ -756,21 +765,21 @@ async function finalizeNegotiation() {
                 outcome: 'finalized'
             })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             showNotification('Negotiation finalized successfully!', 'success');
             stopMessagePolling();
             closeModal('liveNegotiationModal');
             currentNegotiationSession = null;
-            
+
             // Refresh contract data
             setTimeout(() => location.reload(), 1500);
         } else {
             showNotification('Failed to finalize negotiation', 'error');
         }
-        
+
     } catch (error) {
         console.error('Error finalizing negotiation:', error);
         showNotification('Failed to finalize negotiation', 'error');
@@ -785,16 +794,16 @@ async function finalizeNegotiation() {
 
 async function downloadMinutes() {
     if (!currentNegotiationSession) return;
-    
+
     try {
         showLoader();
-        
+
         const response = await fetch(`/api/negotiation/sessions/${currentNegotiationSession.session_id}/minutes`, {
             credentials: 'include'
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             // Create download link
             const blob = new Blob([data.minutes], { type: 'text/plain' });
@@ -806,12 +815,12 @@ async function downloadMinutes() {
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
-            
+
             showNotification('Minutes downloaded successfully!', 'success');
         } else {
             showNotification('Failed to download minutes', 'error');
         }
-        
+
     } catch (error) {
         console.error('Error downloading minutes:', error);
         showNotification('Failed to download minutes', 'error');
@@ -854,15 +863,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.attributeName === 'class') {
-                    const isOpen = liveNegotiationModal.classList.contains('show') || 
-                                   liveNegotiationModal.classList.contains('active');
+                    const isOpen = liveNegotiationModal.classList.contains('show') ||
+                        liveNegotiationModal.classList.contains('active');
                     if (!isOpen) {
                         stopMessagePolling();
                     }
                 }
             });
         });
-        
+
         observer.observe(liveNegotiationModal, { attributes: true });
     }
 });

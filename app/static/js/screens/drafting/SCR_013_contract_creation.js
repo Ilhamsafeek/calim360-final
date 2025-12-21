@@ -1242,9 +1242,7 @@ function showLoader(message = 'Loading...') {
         loaderDiv.id = 'loader';
         loaderDiv.className = 'loader-overlay';
         loaderDiv.innerHTML = `
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">${message}</span>
-            </div>
+             <div class="ai-loader"></div>
             <div class="loader-text mt-2">${message}</div>
         `;
         document.body.appendChild(loaderDiv);

@@ -733,68 +733,6 @@ async def get_creation_options(
         }
     }
 
-# @router.post("/create-from-template", response_model=ContractResponse)
-# def create_contract_from_template(
-#     contract_data: ContractCreateRequest,
-#     db: Session = Depends(get_db),
-#     current_user: User = Depends(get_current_user)
-# ):
-#     """Create contract from template with content"""
-    
-#     # Validate template exists
-#     if not contract_data.template_id:
-#         raise HTTPException(status_code=400, detail="Template ID is required")
-    
-#     template = db.query(ContractTemplate).filter(
-#         ContractTemplate.id == contract_data.template_id
-#     ).first()
-    
-#     if not template:
-#         raise HTTPException(status_code=404, detail="Template not found")
-    
-#     # Generate contract number
-#     year = datetime.now().year
-#     count = db.query(Contract).filter(
-#         Contract.contract_number.like(f"CNT-{year}-%")
-#     ).count()
-#     contract_number = f"CNT-{year}-{count + 1:04d}"
-    
-#     # Create contract
-#     new_contract = Contract(
-#         contract_number=contract_number,
-#         contract_title=contract_data.contract_title or template.template_name,
-#         contract_title_ar=contract_data.contract_title_ar,
-#         contract_type=contract_data.contract_type or template.template_type,
-#         profile_type=contract_data.profile_type,
-#         template_id=contract_data.template_id,
-#         contract_value=contract_data.contract_value,
-#         currency=contract_data.currency or "QAR",
-#         start_date=contract_data.start_date,
-#         end_date=contract_data.end_date,
-#         status="draft",
-#         current_version=1,
-#         created_by=current_user.id
-#     )
-    
-#     db.add(new_contract)
-#     db.flush()  # Get the contract ID
-    
-#     # Create first version with template content
-#     contract_version = ContractVersion(
-#         contract_id=new_contract.id,
-#         version_number=1,
-#         version_type="draft",
-#         contract_content=template.template_content or f"<h1>{template.template_name}</h1><p>Template content loaded.</p>",
-#         contract_content_ar=template.template_content_ar,
-#         change_summary="Initial contract creation from template",
-#         created_by=current_user.id
-#     )
-    
-#     db.add(contract_version)
-#     db.commit()
-#     db.refresh(new_contract)
-    
-#     return new_contract
 
 # =====================================================
 # Document Upload

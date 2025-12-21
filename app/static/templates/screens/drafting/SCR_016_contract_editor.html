@@ -2602,48 +2602,16 @@
                         </tr>
                     </thead>
                     <tbody id="contractWorkflowSteps">
-                        <tr>
-                            <td style="padding: 0.75rem;">
-                                <span
-                                    style="width: 28px; height: 28px; background: var(--primary-color); color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 600;">1</span>
-                            </td>
-                            <td style="padding: 0.75rem;">
-                                <select
-                                    style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem;">
-                                    <option value="">Select Role</option>
-                                    <option value="reviewer">Reviewer</option>
-                                    <option value="approver">Approver</option>
-                                </select>
-                            </td>
-                            <td style="padding: 0.75rem;">
-                                <input type="text" placeholder="Enter email or name"
-                                    style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem;">
-                            </td>
-                            <td style="padding: 0.75rem;">
-                                <select
-                                    style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem;">
-                                    <option value="">Select Department</option>
-                                    <option value="legal">Legal</option>
-                                    <option value="finance">Finance</option>
-                                    <option value="operations">Operations</option>
-                                </select>
-                            </td>
-                            <td style="padding: 0.75rem;">
-                                <button onclick="removeContractWorkflowStep(this)"
-                                    style="background: none; border: none; color: var(--danger-color); cursor: pointer;">
-                                    <i class="ti ti-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
+                        <!-- Workflow steps will be added here dynamically -->
                     </tbody>
                 </table>
 
                 <button onclick="addContractWorkflowStep()"
-                    style="margin-top: 1rem; width: 100%; padding: 0.75rem; border: 2px dashed var(--border-color); background: transparent; color: var(--primary-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                    <i class="ti ti-plus"></i>
-                    Add Workflow Step
+                    style="width: 100%; margin-top: 1rem; padding: 0.75rem; border: 2px dashed var(--border-color); background: transparent; color: var(--primary-color); border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 500; transition: all 0.2s;">
+                    <i class="ti ti-plus"></i> Add Workflow Step
                 </button>
             </div>
+
         </div>
         <div class="modal-footer"
             style="padding: 1.5rem; border-top: 1px solid var(--border-color); display: flex; gap: 1rem; justify-content: flex-end;">
@@ -4484,11 +4452,11 @@
 
                 }
 
-                actionButtons += `<button class="workflow-setup-btn" onclick="openWorkflowHistoryModal()" style="display: flex; align-items: center; gap: 0.5rem;">
+            }
+
+             actionButtons += `<button class="workflow-setup-btn" onclick="openWorkflowHistoryModal()" style="display: flex; align-items: center; gap: 0.5rem;">
                                         <i class="ti ti-history"></i> Approval History
                                     </button>`;
-
-            }
         } else if ((contract.status === 'review_completed')) {
 
             if (contract.is_initiator === true) {
@@ -6993,16 +6961,17 @@ ${contract.content && contract.content.trim() !== '' ?
 
     // Workflow Setup - CONNECTED TO BACKEND
     async function saveContractWorkflow() {
+        if (!contractId) {
+            showNotification('Contract ID not found. Please refresh the page.', 'error');
+            return;
+        }
+
         if (!selectedContractWorkflow) {
-
-            showNotification('Please select a workflow type.', 'warning');
-
+            showNotification('Please select a workflow type', 'warning');
             return;
         }
 
         console.log('🔄 Saving workflow...');
-
-
 
         const saveWorkflowBtn = document.getElementById('saveWorkflowBtn');
         const originalContent = saveWorkflowBtn.innerHTML;
@@ -7025,14 +6994,14 @@ ${contract.content && contract.content.trim() !== '' ?
             console.log(`Found ${rows.length} workflow step rows`);
 
             rows.forEach((row, index) => {
-                // Get all select and input elements in this row
+                // Get role select and email input
                 const roleSelect = row.querySelector('select:nth-of-type(1)');
                 const emailInput = row.querySelector('input[type="email"]');
-                const deptSelect = row.querySelector('select:nth-of-type(2)');
 
                 const role = roleSelect?.value || '';
                 const email = emailInput?.value || '';
-                const department = deptSelect?.value || '';
+                // Get department from input's data attribute
+                const department = emailInput?.getAttribute('data-department') || '';
 
                 console.log(`Row ${index + 1}: role="${role}", email="${email}", dept="${department}"`);
 
@@ -7051,15 +7020,7 @@ ${contract.content && contract.content.trim() !== '' ?
                         assigned_email: email,
                         department: department
                     });
-
-                    saveWorkflowBtn.innerHTML = originalContent;
-                    saveWorkflowBtn.disabled = false;
-
                 } else {
-
-                    saveWorkflowBtn.innerHTML = originalContent;
-                    saveWorkflowBtn.disabled = false;
-
                     console.warn(`⚠️ Skipping row ${index + 1}: missing role or email`);
                 }
             });
@@ -7070,71 +7031,43 @@ ${contract.content && contract.content.trim() !== '' ?
             console.log(`📦 Prepared ${steps.length} steps for backend:`, steps);
 
             if (steps.length === 0) {
-
                 saveWorkflowBtn.innerHTML = originalContent;
                 saveWorkflowBtn.disabled = false;
-
                 showNotification('Please add at least one workflow step with role and email.', 'warning');
-
                 return;
             }
         }
-
-        console.log('📤 Sending to backend:', workflowData);
-        showLoader();
 
         try {
             const response = await fetch('/api/contracts/workflow/setup', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                credentials: 'include',
                 body: JSON.stringify(workflowData)
             });
 
-            console.log('📥 Response status:', response.status);
-            const data = await response.json();
-            console.log('📥 Response data:', data);
+            const result = await response.json();
 
-            if (data.success) {
-
-                saveWorkflowBtn.innerHTML = originalContent;
-                saveWorkflowBtn.disabled = false;
-
-                showNotification('Workflow configured successfully', 'success');
+            if (response.ok) {
+                showNotification('Workflow saved successfully!', 'success');
                 closeModal('contractWorkflowModal');
 
-
-
-                // Update status text
-                document.getElementById('workflowStatusText').textContent =
-                    selectedContractWorkflow === 'master' ?
-                        'Master Workflow Applied' :
-                        'Custom Workflow Applied';
-
+                // Reload workflow to show saved data
                 setTimeout(() => {
                     location.reload();
-                }, 2000);
-
+                }, 500);
             } else {
-
-                saveWorkflowBtn.innerHTML = originalContent;
-                saveWorkflowBtn.disabled = false;
-                showNotification(data.message || 'Failed to configure workflow', 'error');
+                showNotification('Error: ' + (result.detail || 'Failed to save workflow'), 'error');
             }
         } catch (error) {
-
+            console.error('Error saving workflow:', error);
+            showNotification('Error saving workflow. Please try again.', 'error');
+        } finally {
             saveWorkflowBtn.innerHTML = originalContent;
             saveWorkflowBtn.disabled = false;
-
-            console.error('❌ Error saving workflow:', error);
-            showNotification('Failed to save workflow', 'error');
-        } finally {
-            hideLoader();
         }
     }
-
     function downloadMinutes() {
         showNotification('Downloading negotiation minutes...', 'success');
 
@@ -8330,6 +8263,10 @@ ${(riskAnalysisData.risk_items || []).map(item => `
     }
 
 
+    // Global variable to track current department badge ID
+    let currentDeptBadgeId = null;
+
+    // Updated: addContractWorkflowStep - with department badge instead of dropdown
     function addContractWorkflowStep() {
         contractWorkflowStepCount++;
         const tbody = document.getElementById('contractWorkflowSteps');
@@ -8337,6 +8274,8 @@ ${(riskAnalysisData.risk_items || []).map(item => `
 
         const uniqueId = `emailInput_${Date.now()}_${contractWorkflowStepCount}`;
         const suggestionsId = `suggestions_${Date.now()}_${contractWorkflowStepCount}`;
+        const deptBadgeId = `deptBadge_${Date.now()}_${contractWorkflowStepCount}`;
+        const clearBtnId = `clearBtn_${Date.now()}_${contractWorkflowStepCount}`;
 
         newRow.innerHTML = `
     <td style="padding: 0.75rem;">
@@ -8352,49 +8291,49 @@ ${(riskAnalysisData.risk_items || []).map(item => `
         </select>
     </td>
     <td style="padding: 0.75rem; position: relative;">
-        <input type="email" 
-            id="${uniqueId}"
-            placeholder="Type to search users..." 
-            oninput="searchWorkflowUsers(this, '${suggestionsId}')"
-            onfocus="searchWorkflowUsers(this, '${suggestionsId}')"
-            style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem;">
-        <div id="${suggestionsId}" class="user-suggestions" style="display: none;"></div>
+        <div style="position: relative;">
+            <input type="email" 
+                id="${uniqueId}"
+                placeholder="Type to search users..." 
+                oninput="searchWorkflowUsers(this, '${suggestionsId}', '${deptBadgeId}')"
+                onfocus="searchWorkflowUsers(this, '${suggestionsId}', '${deptBadgeId}')"
+                data-email=""
+                data-department=""
+                style="width: 100%; padding: 0.5rem 2.5rem 0.5rem 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem;">
+            <button type="button" 
+                id="${clearBtnId}"
+                onclick="clearWorkflowUser('${uniqueId}', '${deptBadgeId}')"
+                style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0.25rem; display: none; z-index: 10;">
+                <i class="ti ti-x" style="font-size: 1rem;"></i>
+            </button>
+            <div id="${suggestionsId}" class="email-suggestions" style="display: none;"></div>
+        </div>
     </td>
     <td style="padding: 0.75rem;">
-        <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem;">
-            <option value="">Select Department</option>
-            <option value="legal">Legal</option>
-            <option value="finance">Finance</option>
-            <option value="operations">Operations</option>
-        </select>
+        <div id="${deptBadgeId}" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--background-light); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color); font-size: 0.875rem; min-height: 38px;">
+            <i class="ti ti-building" style="color: var(--primary-color);"></i>
+            <span>Not assigned</span>
+        </div>
     </td>
-    <td style="padding: 0.75rem;">
-        <button onclick="removeContractWorkflowStep(this)"
-            style="background: none; border: none; color: var(--danger-color); cursor: pointer;">
-            <i class="ti ti-trash"></i>
+    <td style="padding: 0.75rem; text-align: center;">
+        <button onclick="removeContractWorkflowStep(this)" 
+            style="background: none; border: none; color: var(--danger-color); cursor: pointer; padding: 0.25rem 0.5rem;">
+            <i class="ti ti-trash" style="font-size: 1.125rem;"></i>
         </button>
     </td>
     `;
 
         tbody.appendChild(newRow);
-
-        // 🔥 ENABLE SAVE BUTTON when step is added
-        const saveBtn = document.getElementById('saveWorkflowBtn');
-        if (saveBtn) {
-            saveBtn.disabled = false;
-            console.log('✅ Save button enabled - step added');
-        }
+        console.log(`✅ Added workflow step ${contractWorkflowStepCount}`);
     }
 
     function removeContractWorkflowStep(button) {
         const tbody = document.getElementById('contractWorkflowSteps');
-        const rows = tbody.querySelectorAll('tr');
-
-        if (rows.length > 1) {
+        if (tbody.children.length > 1) {
             button.closest('tr').remove();
             updateContractStepNumbers();
         } else {
-            showNotification('At least one workflow step is required.', 'warning');
+            showNotification('At least one workflow step is required', 'warning');
         }
     }
 
@@ -8410,7 +8349,9 @@ ${(riskAnalysisData.risk_items || []).map(item => `
         });
 
         contractWorkflowStepCount = rows.length;
+        console.log('✅ Step numbers updated, total:', contractWorkflowStepCount);
     }
+
 
     async function openWorkflowSetupModal() {
         console.log('🔄 Opening workflow modal for contract:', contractId);
@@ -8421,23 +8362,37 @@ ${(riskAnalysisData.risk_items || []).map(item => `
             return;
         }
 
+        // Clear the table first
+        const tbody = document.getElementById('contractWorkflowSteps');
+        if (tbody) {
+            tbody.innerHTML = '';
+            contractWorkflowStepCount = 0;
+        }
+
         // Auto-select custom workflow (only option)
         selectedContractWorkflow = 'custom';
 
-        // 🔥 ENABLE THE SAVE BUTTON - Since custom workflow is pre-selected
+        // Show the modal
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+
+        // Load existing workflow data
+        await loadExistingWorkflow();
+
+        // If no workflow loaded, add empty step
+        if (tbody && tbody.children.length === 0) {
+            console.log('📝 No existing workflow, adding empty step');
+            addContractWorkflowStep();
+        }
+
+        // Enable the save button
         const saveBtn = document.getElementById('saveWorkflowBtn');
         if (saveBtn) {
             saveBtn.disabled = false;
             console.log('✅ Save button enabled');
         }
-
-        // Show the modal first
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-
-        // Then load the existing workflow data
-        await loadExistingWorkflow();
     }
+
 
     async function loadExistingWorkflow() {
         if (!contractId) {
@@ -8446,14 +8401,6 @@ ${(riskAnalysisData.risk_items || []).map(item => `
         }
 
         console.log('📥 Loading workflow for contract:', contractId);
-        showLoader();
-
-        // Clear the table FIRST before loading anything
-        const tbody = document.getElementById('contractWorkflowSteps');
-        if (tbody) {
-            tbody.innerHTML = '';
-            contractWorkflowStepCount = 0;
-        }
 
         try {
             const response = await fetch(`/api/contracts/workflow/${contractId}`);
@@ -8466,52 +8413,21 @@ ${(riskAnalysisData.risk_items || []).map(item => `
                 console.log('✅ Workflow loaded:', workflow);
                 console.log('📊 Steps:', workflow.steps);
 
-                // Only load custom workflows (master workflow removed)
-                console.log('🔧 Loading CUSTOM workflow');
-                selectContractWorkflow('custom');
-
                 if (workflow.steps && workflow.steps.length > 0) {
                     console.log(`📝 Populating ${workflow.steps.length} custom steps`);
                     populateCustomWorkflowSteps(workflow.steps);
-                } else {
-                    console.log('⚠️ No steps found, adding empty row');
-                    addContractWorkflowStep();
                 }
 
-                showNotification(`Custom Workflow: ${workflow.workflow_name}`, 'success');
-
-                // Update status text
-                const statusEl = document.getElementById('workflowStatusText');
-                if (statusEl) {
-                    statusEl.textContent = workflow.status || 'Active';
-                }
+                showNotification(`Workflow loaded: ${workflow.workflow_name || 'Custom Workflow'}`, 'success');
             } else {
                 console.log('ℹ️ No workflow found for this contract');
-                // Reset to default (custom workflow only)
-                resetWorkflowModal();
             }
-
-            // 🔥 ALWAYS ENABLE BUTTON AFTER LOADING
-            const saveBtn = document.getElementById('saveWorkflowBtn');
-            if (saveBtn) {
-                saveBtn.disabled = false;
-                console.log('✅ Save button enabled after loading');
-            }
-
         } catch (error) {
             console.error('❌ Error loading workflow:', error);
             showNotification('Could not load workflow', 'warning');
-
-            // 🔥 ENABLE BUTTON EVEN ON ERROR
-            const saveBtn = document.getElementById('saveWorkflowBtn');
-            if (saveBtn) {
-                saveBtn.disabled = false;
-                console.log('✅ Save button enabled despite error');
-            }
-        } finally {
-            hideLoader();
         }
     }
+
 
 
     // STEP 3: ADD this NEW function (resetWorkflowModal)
@@ -8574,20 +8490,22 @@ ${(riskAnalysisData.risk_items || []).map(item => `
     }
 
 
-
     function populateCustomWorkflowSteps(steps) {
         const tbody = document.getElementById('contractWorkflowSteps');
         if (!tbody) {
-            console.error('❌ contractWorkflowSteps tbody not found');
+            console.error('contractWorkflowSteps tbody not found');
             return;
         }
 
         // Clear existing rows
         tbody.innerHTML = '';
+
+        // Reset counter
         contractWorkflowStepCount = 0;
 
-        console.log(`🔄 Populating ${steps.length} workflow steps`);
+        console.log('🔄 Populating custom workflow with', steps.length, 'steps');
 
+        // Add each step - if step has multiple users, create one row per user
         steps.forEach((step, stepIndex) => {
             console.log(`Step ${stepIndex + 1}:`, step);
 
@@ -8595,30 +8513,32 @@ ${(riskAnalysisData.risk_items || []).map(item => `
                 // Create a row for each user in this step
                 step.users.forEach((user, userIndex) => {
                     contractWorkflowStepCount++;
-                    console.log(`  📧 User ${userIndex + 1}: ${user.email}`);
                     addWorkflowStepRow(step, user, contractWorkflowStepCount);
                 });
             } else {
                 // No users assigned, create empty row
                 contractWorkflowStepCount++;
-                console.log(`  ⚠️ No users for step ${stepIndex + 1}`);
                 addWorkflowStepRow(step, null, contractWorkflowStepCount);
             }
         });
 
         // Show custom workflow config
-        document.getElementById('customWorkflowConfig').style.display = 'block';
-        console.log(`✅ Populated ${contractWorkflowStepCount} workflow rows`);
+        const customConfig = document.getElementById('customWorkflowConfig');
+        if (customConfig) {
+            customConfig.style.display = 'block';
+        }
+
+        console.log('✅ Custom workflow populated with', contractWorkflowStepCount, 'rows');
     }
 
     function addWorkflowStepRow(step, user, rowNumber) {
         const tbody = document.getElementById('contractWorkflowSteps');
         const newRow = document.createElement('tr');
 
-        // Extract values
+        // Determine values
         const stepType = step.step_type || step.assignee_role || '';
         const userEmail = user ? user.email : '';
-        const department = step.department || '';
+        const department = step.department || (user ? user.department : '') || '';
 
         console.log(`➕ Adding row ${rowNumber}:`, {
             stepType: stepType,
@@ -8628,53 +8548,51 @@ ${(riskAnalysisData.risk_items || []).map(item => `
 
         const uniqueId = `emailInput_${Date.now()}_${rowNumber}`;
         const suggestionsId = `suggestions_${Date.now()}_${rowNumber}`;
+        const deptBadgeId = `deptBadge_${Date.now()}_${rowNumber}`;
 
         newRow.innerHTML = `
-        <td style="padding: 0.75rem;">
-            <span style="width: 28px; height: 28px; background: var(--primary-color); color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 600;">${rowNumber}</span>
-        </td>
-        <td style="padding: 0.75rem;">
-            <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem;">
-                <option value="">Select Role</option>
-                <option value="reviewer" ${stepType === 'reviewer' ? 'selected' : ''}>Reviewer</option>
-                <option value="approver" ${stepType === 'approver' ? 'selected' : ''}>Approver</option>
-                <option value="e-sign" ${stepType === 'e-sign' ? 'selected' : ''}>E-Sign</option>
-                <option value="counter-party" ${stepType === 'counter-party' ? 'selected' : ''}>Counter-Party</option>
-            </select>
-        </td>
-        <td style="padding: 0.75rem; position: relative;">
-            <input type="email" 
-                id="${uniqueId}"
-                placeholder="Type to search users..." 
-                value="${userEmail}"
-                oninput="searchWorkflowUsers(this, '${suggestionsId}')"
-                onfocus="searchWorkflowUsers(this, '${suggestionsId}')"
-                style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem;">
-            <div id="${suggestionsId}" class="email-suggestions" style="display: none;"></div>
-        </td>
-        <td style="padding: 0.75rem;">
-            <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem;">
-                <option value="">Select Department</option>
-                <option value="Legal" ${department === 'Legal' ? 'selected' : ''}>Legal</option>
-                <option value="Finance" ${department === 'Finance' ? 'selected' : ''}>Finance</option>
-                <option value="Operations" ${department === 'Operations' ? 'selected' : ''}>Operations</option>
-                <option value="Executive" ${department === 'Executive' ? 'selected' : ''}>Executive</option>
-                <option value="Technical" ${department === 'Technical' ? 'selected' : ''}>Technical</option>
-                <option value="Commercial" ${department === 'Commercial' ? 'selected' : ''}>Commercial</option>
-            </select>
-        </td>
-        <td style="padding: 0.75rem; text-align: center;">
-            <button onclick="removeContractWorkflowStep(this)" 
-                style="background: none; border: none; color: var(--danger-color); cursor: pointer; padding: 0.25rem 0.5rem;">
-                <i class="ti ti-trash" style="font-size: 1.125rem;"></i>
-            </button>
-        </td>
+    <td style="padding: 0.75rem;">
+        <span style="width: 28px; height: 28px; background: var(--primary-color); color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 600;">${rowNumber}</span>
+    </td>
+    <td style="padding: 0.75rem;">
+        <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem;">
+            <option value="">Select Role</option>
+            <option value="reviewer" ${stepType === 'reviewer' ? 'selected' : ''}>Reviewer</option>
+            <option value="approver" ${stepType === 'approver' ? 'selected' : ''}>Approver</option>
+            <option value="e-sign" ${stepType === 'e-sign' ? 'selected' : ''}>E-Sign</option>
+            <option value="counter-party" ${stepType === 'counter-party' ? 'selected' : ''}>Counter-Party</option>
+        </select>
+    </td>
+    <td style="padding: 0.75rem; position: relative;">
+        <input type="email" 
+            id="${uniqueId}"
+            placeholder="Type to search users..." 
+            value="${userEmail}"
+            oninput="searchWorkflowUsers(this, '${suggestionsId}', '${deptBadgeId}')"
+            onfocus="searchWorkflowUsers(this, '${suggestionsId}', '${deptBadgeId}')"
+            data-department="${department}"
+            style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem;">
+        <div id="${suggestionsId}" class="email-suggestions" style="display: none;"></div>
+    </td>
+    <td style="padding: 0.75rem;">
+        <div id="${deptBadgeId}" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--background-light); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color); font-size: 0.875rem; min-height: 38px;">
+            <i class="ti ti-building" style="color: var(--primary-color);"></i>
+            <span>${department || 'Not assigned'}</span>
+        </div>
+    </td>
+    <td style="padding: 0.75rem; text-align: center;">
+        <button onclick="removeContractWorkflowStep(this)" 
+            style="background: none; border: none; color: var(--danger-color); cursor: pointer; padding: 0.25rem 0.5rem;">
+            <i class="ti ti-trash" style="font-size: 1.125rem;"></i>
+        </button>
+    </td>
     `;
 
         tbody.appendChild(newRow);
-
         console.log(`✅ Row ${rowNumber} added with email="${userEmail}" dept="${department}"`);
     }
+
+
     // STEP 7: ADD this NEW function (removeWorkflowStepRow)
     function removeWorkflowStepRow(button) {
         const tbody = document.getElementById('contractWorkflowSteps');
@@ -8700,11 +8618,12 @@ ${(riskAnalysisData.risk_items || []).map(item => `
     }
 
     // Search users function
-    async function searchWorkflowUsers(input, suggestionsId) {
+    async function searchWorkflowUsers(input, suggestionsId, deptBadgeId) {
         const query = input.value.trim();
         const suggestionsDiv = document.getElementById(suggestionsId);
 
         currentSearchInput = input;
+        currentDeptBadgeId = deptBadgeId; // Store for use in selectWorkflowUser
 
         if (searchTimeout) {
             clearTimeout(searchTimeout);
@@ -8742,10 +8661,18 @@ ${(riskAnalysisData.risk_items || []).map(item => `
                 } else {
                     suggestionsDiv.innerHTML = users.map(user => {
                         const fullName = `${user.first_name} ${user.last_name}`.trim();
-                        const badge = user.department ? `<span style="font-size: 0.75rem; padding: 0.125rem 0.375rem; background: var(--primary-color); color: white; border-radius: 4px; margin-left: 0.25rem;">${user.department}</span>` : '';
+                        const badge = user.department ?
+                            `<span style="font-size: 0.75rem; padding: 0.125rem 0.375rem; background: var(--primary-color); color: white; border-radius: 4px; margin-left: 0.25rem;">${user.department}</span>` : '';
+
+                        // Store user data as JSON in data attribute
+                        const userData = JSON.stringify({
+                            email: user.email,
+                            department: user.department || '',
+                            fullName: fullName
+                        });
 
                         return `
-                        <div onclick="selectWorkflowUser('${user.email}', '${input.id}', '${suggestionsId}')" 
+                        <div onclick='selectWorkflowUser(${JSON.stringify(userData)}, "${input.id}", "${suggestionsId}", "${deptBadgeId}")' 
                             style="padding: 0.75rem; cursor: pointer; border-bottom: 1px solid var(--border-color); transition: background 0.2s;"
                             onmouseover="this.style.background='var(--background-light)'"
                             onmouseout="this.style.background='white'">
@@ -8769,19 +8696,72 @@ ${(riskAnalysisData.risk_items || []).map(item => `
             }
         }, 300);
     }
-
-    // Select user from suggestions
-    function selectWorkflowUser(email, inputId, suggestionsId) {
+    function clearWorkflowUser(inputId, deptBadgeId) {
         const input = document.getElementById(inputId);
-        const suggestionsDiv = document.getElementById(suggestionsId);
+        const deptBadge = document.getElementById(deptBadgeId);
+
+        console.log('🗑️ Clearing user from input:', inputId);
 
         if (input) {
-            input.value = email;
+            // Clear input value and data attributes
+            input.value = '';
+            input.setAttribute('data-email', '');
+            input.setAttribute('data-department', '');
+            input.classList.remove('has-user-selected');
+
+            // Hide clear button
+            const clearBtn = input.nextElementSibling;
+            if (clearBtn && clearBtn.tagName === 'BUTTON') {
+                clearBtn.style.display = 'none';
+            }
+
+            // Focus input for new search
+            input.focus();
         }
 
+        // Reset department badge
+        if (deptBadge) {
+            const badgeText = deptBadge.querySelector('span');
+            if (badgeText) {
+                badgeText.textContent = 'Not assigned';
+            }
+        }
+
+        console.log('✅ User cleared, ready for new search');
+    }
+
+
+    // Select user from suggestions
+    function selectWorkflowUser(userDataJson, inputId, suggestionsId, deptBadgeId) {
+        const userData = JSON.parse(userDataJson);
+        const input = document.getElementById(inputId);
+        const suggestionsDiv = document.getElementById(suggestionsId);
+        const deptBadge = document.getElementById(deptBadgeId);
+
+        console.log('👤 Selected user:', userData);
+
+        // Set email value
+        if (input) {
+            input.value = userData.email;
+            // Store department in data attribute
+            input.setAttribute('data-department', userData.department || '');
+        }
+
+        // Update department badge
+        if (deptBadge) {
+            const badgeText = deptBadge.querySelector('span');
+            if (badgeText) {
+                badgeText.textContent = userData.department || 'Not assigned';
+            }
+            console.log('🏢 Department updated to:', userData.department || 'Not assigned');
+        }
+
+        // Hide suggestions
         if (suggestionsDiv) {
             suggestionsDiv.style.display = 'none';
         }
+
+        showNotification(`Selected: ${userData.fullName}`, 'success');
     }
 
     // Close suggestions when clicking outside
@@ -8862,60 +8842,6 @@ ${(riskAnalysisData.risk_items || []).map(item => `
         // Show custom workflow config
         document.getElementById('customWorkflowConfig').style.display = 'block';
         console.log('✅ Custom workflow populated with', contractWorkflowStepCount, 'rows');
-    }
-
-
-    function addWorkflowStepRow(step, user, rowNumber) {
-        const tbody = document.getElementById('contractWorkflowSteps');
-        const newRow = document.createElement('tr');
-
-        // Determine values
-        const stepType = step.step_type || step.assignee_role || '';
-        const userEmail = user ? user.email : '';
-        const department = step.department || '';
-
-        console.log(`  Row ${rowNumber}: role=${stepType}, email=${userEmail}, dept=${department}`);
-
-        newRow.innerHTML = `
-        <td style="padding: 0.75rem;">
-            <span style="width: 28px; height: 28px; background: var(--primary-color); color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 600;">${rowNumber}</span>
-        </td>
-        <td style="padding: 0.75rem;">
-            <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem;">
-                <option value="">Select Role</option>
-                <option value="reviewer" ${stepType === 'reviewer' ? 'selected' : ''}>Reviewer</option>
-                <option value="approver" ${stepType === 'approver' ? 'selected' : ''}>Approver</option>
-                <option value="e-sign" ${stepType === 'e-sign' ? 'selected' : ''}>E-Sign</option>
-                <option value="counter-party" ${stepType === 'counter-party' ? 'selected' : ''}>Counter-Party</option>
-            </select>
-        </td>
-        <td style="padding: 0.75rem;">
-            <input type="email" 
-                placeholder="Enter email address" 
-                value="${userEmail}"
-                style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem;">
-        </td>
-        <td style="padding: 0.75rem;">
-            <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem;">
-                <option value="">Select Department</option>
-                <option value="Legal" ${department === 'Legal' ? 'selected' : ''}>Legal</option>
-                <option value="Finance" ${department === 'Finance' ? 'selected' : ''}>Finance</option>
-                <option value="Operations" ${department === 'Operations' ? 'selected' : ''}>Operations</option>
-                <option value="Executive" ${department === 'Executive' ? 'selected' : ''}>Executive</option>
-                <option value="Technical" ${department === 'Technical' ? 'selected' : ''}>Technical</option>
-                <option value="Commercial" ${department === 'Commercial' ? 'selected' : ''}>Commercial</option>
-            </select>
-        </td>
-        <td style="padding: 0.75rem; text-align: center;">
-            <button onclick="this.closest('tr').remove(); updateStepNumbers();" 
-                style="background: none; border: none; color: var(--danger-color); cursor: pointer; padding: 0.25rem 0.5rem;"
-                title="Remove this step">
-                <i class="ti ti-trash" style="font-size: 1.125rem;"></i>
-            </button>
-        </td>
-    `;
-
-        tbody.appendChild(newRow);
     }
 
 

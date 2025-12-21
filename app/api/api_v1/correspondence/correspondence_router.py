@@ -109,18 +109,22 @@ def calculate_file_hash(content: bytes) -> str:
 # =====================================================
 # DOCUMENT UPLOAD ENDPOINT
 # =====================================================
+# File: app/api/api_v1/correspondence/correspondence_router.py
+# Replace the upload endpoint with this FIXED version
+
 @router.post("/upload")
 async def upload_correspondence_documents(
     files: List[UploadFile] = File(...),
-    project_id: int = Form(...),
+    project_id: Optional[str] = Form(default=None),
     document_type: str = Form(default="correspondence"),
     notes: Optional[str] = Form(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Upload documents with FK-safe handling"""
+    """Upload documents - supports both project and document level uploads"""
     try:
-        logger.info(f"📤 Upload request: {len(files)} files for project {project_id} by user {current_user.email}")
+        logger.info(f"📤 Upload request: {len(files)} files by user {current_user.email}")
+        logger.info(f"📋 Raw project_id received: '{project_id}' (type: {type(project_id)})")
         
         if len(files) > MAX_BATCH_SIZE:
             raise HTTPException(
@@ -128,171 +132,248 @@ async def upload_correspondence_documents(
                 detail=f"Maximum {MAX_BATCH_SIZE} files allowed per upload"
             )
         
-        # Verify project exists
-        project_query = text("SELECT id, company_id FROM projects WHERE id = :project_id")
-        project_result = db.execute(project_query, {"project_id": project_id}).fetchone()
+        # ✅ FIX: Properly handle empty strings and None
+        actual_project_id = None
+        upload_mode = "document-level"
         
-        if not project_result:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Project {project_id} not found")
+        # Convert empty string to None, then try to convert to int
+        if project_id is not None and project_id.strip() != "":
+            try:
+                actual_project_id = int(project_id.strip())
+                upload_mode = "project-level"
+                logger.info(f"✅ Project-level upload for project ID: {actual_project_id}")
+            except (ValueError, AttributeError) as e:
+                logger.warning(f"⚠️ Invalid project_id '{project_id}': {e}, treating as document-level upload")
+                actual_project_id = None
+        else:
+            logger.info(f"ℹ️ Document-level upload (no project specified)")
         
-        # Get the actual user ID from the database to ensure it exists
+        # ✅ FIX: Only verify project if actual_project_id is not None
+        if actual_project_id is not None:
+            try:
+                project_query = text("SELECT id, company_id FROM projects WHERE id = :project_id")
+                project_result = db.execute(project_query, {"project_id": actual_project_id}).fetchone()
+                
+                if not project_result:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND, 
+                        detail=f"Project {actual_project_id} not found"
+                    )
+                logger.info(f"✅ Project verified: {actual_project_id}")
+            except HTTPException:
+                raise
+            except Exception as e:
+                logger.error(f"❌ Error verifying project: {str(e)}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Error verifying project: {str(e)}"
+                )
+        
+        # Verify user exists
         user_check = text("SELECT id FROM users WHERE id = :user_id")
         user_result = db.execute(user_check, {"user_id": current_user.id}).fetchone()
         
         if not user_result:
             logger.error(f"❌ User {current_user.id} not found in database!")
-            # Try to find user by email
-            email_check = text("SELECT id FROM users WHERE email = :email")
-            email_result = db.execute(email_check, {"email": current_user.email}).fetchone()
-            if email_result:
-                actual_user_id = email_result.id
-                logger.info(f"✅ Found user by email, actual id: {actual_user_id}")
-            else:
-                actual_user_id = None
-                logger.warning("⚠️ User not found, will set uploaded_by to NULL")
-        else:
-            actual_user_id = user_result.id
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found in database"
+            )
         
-        uploaded_files = []
-        failed_files = []
+        actual_user_id = user_result[0]
+        uploaded_docs = []
+        failed_uploads = []
         
+        # Process each file
         for file in files:
             try:
                 # Validate file
-                is_valid, message = validate_upload_file(file)
+                is_valid, msg = validate_upload_file(file)
                 if not is_valid:
-                    failed_files.append({"filename": file.filename, "error": message})
+                    failed_uploads.append({"filename": file.filename, "error": msg})
+                    logger.warning(f"⚠️ File validation failed: {file.filename} - {msg}")
                     continue
                 
+                # Read file content
                 content = await file.read()
                 file_size = len(content)
                 
                 if file_size > MAX_FILE_SIZE:
-                    failed_files.append({"filename": file.filename, "error": "File size exceeds 50MB limit"})
+                    error_msg = f"File size {file_size} exceeds {MAX_FILE_SIZE / (1024*1024)}MB limit"
+                    failed_uploads.append({"filename": file.filename, "error": error_msg})
+                    logger.warning(f"⚠️ {error_msg}")
                     continue
                 
+                # Generate unique document ID and hash
+                doc_id = str(uuid.uuid4())
                 file_hash = calculate_file_hash(content)
                 
-                # Create directory
-                save_dir = UPLOAD_BASE_DIR / str(current_user.company_id) / str(project_id)
-                save_dir.mkdir(parents=True, exist_ok=True)
+                # Create upload directory structure
+                if actual_project_id:
+                    upload_dir = UPLOAD_BASE_DIR / f"project_{actual_project_id}"
+                else:
+                    upload_dir = UPLOAD_BASE_DIR / "standalone"
+                    
+                upload_dir.mkdir(parents=True, exist_ok=True)
                 
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                file_ext = Path(file.filename).suffix
-                base_name = Path(file.filename).stem[:50]
-                unique_filename = f"{base_name}_{timestamp}{file_ext}"
-                file_path = save_dir / unique_filename
-                
-                with open(file_path, 'wb') as f:
+                # Save file
+                file_path = upload_dir / f"{doc_id}_{file.filename}"
+                with open(file_path, "wb") as f:
                     f.write(content)
                 
-                doc_id = str(uuid.uuid4())
-                file_ext_lower = file_ext.lower().replace('.', '')
+                # Prepare metadata
+                file_ext_lower = Path(file.filename).suffix.lower().replace('.', '')
                 mime_type = ALLOWED_EXTENSIONS.get(file_ext_lower, file.content_type or 'application/octet-stream')
                 
                 metadata = json.dumps({
-                    "project_id": project_id,
+                    "project_id": actual_project_id,
                     "original_filename": file.filename,
                     "notes": notes,
                     "upload_source": "correspondence_management",
-                    "uploader_email": current_user.email  # Store email as backup
+                    "upload_mode": upload_mode,
+                    "uploader_email": current_user.email
                 })
                 
-                # Insert with proper handling for uploaded_by
-                # If user FK is problematic, set to NULL
-                if actual_user_id is not None:
-                    insert_query = text("""
-                        INSERT INTO documents (
-                            id, company_id, document_name, document_type, 
-                            file_path, file_size, mime_type, hash_value, 
-                            uploaded_by, uploaded_at, version, access_count, metadata
-                        ) VALUES (
-                            :id, :company_id, :document_name, :document_type,
-                            :file_path, :file_size, :mime_type, :hash_value,
-                            :uploaded_by, :uploaded_at, 1, 0, :metadata
-                        )
-                    """)
-                    params = {
-                        "id": doc_id,
-                        "company_id": current_user.company_id,
-                        "document_name": file.filename,
-                        "document_type": document_type,
-                        "file_path": str(file_path),
-                        "file_size": file_size,
-                        "mime_type": mime_type,
-                        "hash_value": file_hash,
-                        "uploaded_by": actual_user_id,
-                        "uploaded_at": datetime.utcnow(),
-                        "metadata": metadata
-                    }
-                else:
-                    # Skip uploaded_by if user doesn't exist
-                    insert_query = text("""
-                        INSERT INTO documents (
-                            id, company_id, document_name, document_type, 
-                            file_path, file_size, mime_type, hash_value, 
-                            uploaded_at, version, access_count, metadata
-                        ) VALUES (
-                            :id, :company_id, :document_name, :document_type,
-                            :file_path, :file_size, :mime_type, :hash_value,
-                            :uploaded_at, 1, 0, :metadata
-                        )
-                    """)
-                    params = {
-                        "id": doc_id,
-                        "company_id": current_user.company_id,
-                        "document_name": file.filename,
-                        "document_type": document_type,
-                        "file_path": str(file_path),
-                        "file_size": file_size,
-                        "mime_type": mime_type,
-                        "hash_value": file_hash,
-                        "uploaded_at": datetime.utcnow(),
-                        "metadata": metadata
-                    }
+                # Insert into documents table
+                insert_query = text("""
+                    INSERT INTO documents (
+                        id, company_id, document_name, document_type, 
+                        file_path, file_size, mime_type, hash_value, 
+                        uploaded_by, uploaded_at, version, access_count, metadata
+                    ) VALUES (
+                        :id, :company_id, :document_name, :document_type,
+                        :file_path, :file_size, :mime_type, :hash_value,
+                        :uploaded_by, :uploaded_at, 1, 0, :metadata
+                    )
+                """)
                 
-                db.execute(insert_query, params)
+                db.execute(insert_query, {
+                    "id": doc_id,
+                    "company_id": current_user.company_id,
+                    "document_name": file.filename,
+                    "document_type": document_type,
+                    "file_path": str(file_path),
+                    "file_size": file_size,
+                    "mime_type": mime_type,
+                    "hash_value": file_hash,
+                    "uploaded_by": actual_user_id,
+                    "uploaded_at": datetime.utcnow(),
+                    "metadata": metadata
+                })
                 
-                uploaded_files.append({
+                uploaded_docs.append({
                     "id": doc_id,
                     "filename": file.filename,
-                    "file_size": file_size,
-                    "document_type": document_type,
-                    "mime_type": mime_type,
-                    "uploaded_at": datetime.utcnow().isoformat()
+                    "size": file_size
                 })
                 
-                logger.info(f"✅ Uploaded: {file.filename} ({file_size} bytes) -> {doc_id}")
+                logger.info(f"✅ Uploaded: {file.filename} ({file_size} bytes) - Mode: {upload_mode}")
                 
-            except Exception as file_error:
-                logger.error(f"❌ Error uploading {file.filename}: {str(file_error)}")
-                failed_files.append({"filename": file.filename, "error": str(file_error)})
+            except Exception as e:
+                logger.error(f"❌ Failed to upload {file.filename}: {str(e)}", exc_info=True)
+                failed_uploads.append({"filename": file.filename, "error": str(e)})
         
-        db.commit()
+        # Commit all successful uploads
+        if uploaded_docs:
+            db.commit()
+            logger.info(f"✅ Committed {len(uploaded_docs)} documents to database")
         
         return {
-            "success": len(uploaded_files) > 0,
-            "message": f"Uploaded {len(uploaded_files)} file(s) successfully",
-            "uploaded": uploaded_files,
-            "failed": failed_files,
-            "total_uploaded": len(uploaded_files),
-            "total_failed": len(failed_files)
+            "success": True,
+            "uploaded": len(uploaded_docs),
+            "failed": len(failed_uploads),
+            "upload_mode": upload_mode,
+            "project_id": actual_project_id,
+            "documents": uploaded_docs,
+            "failures": failed_uploads
         }
         
     except HTTPException:
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Upload error: {str(e)}")
+        logger.error(f"❌ Upload error: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to upload files: {str(e)}"
+            detail=f"Upload failed: {str(e)}"
         )
 
-        
+
 # =====================================================
 # GET PROJECT DOCUMENTS ENDPOINT
 # =====================================================
+
+@router.get("/documents/standalone")
+async def get_standalone_documents(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get all standalone documents (not linked to any project)"""
+    try:
+        company_id = current_user.company_id
+        logger.info(f"📂 Loading standalone documents for company {company_id}")
+        
+        # Get documents where metadata.project_id is NULL
+        query = text("""
+            SELECT 
+                d.id,
+                d.document_name,
+                d.document_type,
+                d.file_path,
+                d.file_size,
+                d.mime_type,
+                d.uploaded_at,
+                d.uploaded_by,
+                d.metadata,
+                CONCAT(u.first_name, ' ', u.last_name) as uploader_name
+            FROM documents d
+            LEFT JOIN users u ON d.uploaded_by = u.id
+            WHERE d.company_id = :company_id
+            AND d.document_type = 'correspondence'
+            AND (
+                d.metadata IS NULL 
+                OR JSON_EXTRACT(d.metadata, '$.project_id') IS NULL
+                OR JSON_EXTRACT(d.metadata, '$.upload_mode') = 'document-level'
+            )
+            ORDER BY d.uploaded_at DESC
+        """)
+        
+        result = db.execute(query, {"company_id": company_id}).fetchall()
+        
+        documents = []
+        for row in result:
+            documents.append({
+                "id": str(row.id),
+                "document_name": row.document_name,
+                "document_type": row.document_type,
+                "file_size": row.file_size,
+                "mime_type": row.mime_type,
+                "uploaded_at": row.uploaded_at.isoformat() if row.uploaded_at else None,
+                "uploaded_by": row.uploaded_by,
+                "uploader_name": row.uploader_name or "Unknown",
+                "contract_number": None,
+                "contract_title": None,
+                "project_id": None,
+                "project_name": "Standalone",
+                "project_code": "N/A"
+            })
+        
+        logger.info(f"✅ Found {len(documents)} standalone documents")
+        
+        return {
+            "success": True,
+            "documents": documents,
+            "total": len(documents)
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error fetching standalone documents: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch standalone documents: {str(e)}"
+        )
+
+
 @router.get("/documents/{project_id}")
 async def get_project_documents_for_correspondence(
     project_id: int,
@@ -523,9 +604,6 @@ Based on the {doc_count} document(s) provided, the following preliminary analysi
 """
 
 
-# =====================================================
-# AI ANALYSIS ENDPOINT (FIXED)
-# =====================================================
 @router.post("/analyze", response_model=AnalysisResponse)
 async def analyze_correspondence_documents(
     request: AnalysisRequest,
@@ -537,6 +615,7 @@ async def analyze_correspondence_documents(
     
     **Features:**
     - AI-generated analysis and recommendations
+    - PDF/DOCX content extraction
     - Confidence scoring
     - Source references
     - Suggested actions
@@ -547,6 +626,9 @@ async def analyze_correspondence_documents(
     try:
         logger.info(f"📧 Analysis request from user {current_user.email}")
         logger.info(f"   Mode: {request.mode}, Documents: {len(request.document_ids)}")
+        
+        # ✅ IMPORT DocumentParser
+        from app.utils.document_parser import DocumentParser
         
         # Fetch document contents
         doc_contents = []
@@ -565,22 +647,41 @@ async def analyze_correspondence_documents(
             doc = db.execute(doc_query, {"doc_id": doc_id}).fetchone()
             
             if doc:
-                # Try to read file content for text files
-                content_preview = "Document content not available for preview"
+                # ✅ EXTRACT ACTUAL DOCUMENT CONTENT using DocumentParser
+                content_text = ""
+                
                 try:
                     if doc.file_path and os.path.exists(doc.file_path):
-                        if doc.mime_type in ['text/plain', 'application/rtf'] or \
-                           doc.file_path.endswith(('.txt', '.md', '.rtf')):
-                            with open(doc.file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                                content_preview = f.read()[:5000]
+                        logger.info(f"📄 Extracting content from: {doc.document_name}")
+                        
+                        # Use DocumentParser to extract text from PDFs, DOCX, etc.
+                        extracted_content = DocumentParser.extract_text(doc.file_path)
+                        
+                        # Strip HTML tags for AI processing (Claude works better with plain text)
+                        import re
+                        content_text = re.sub('<[^<]+?>', '', extracted_content)
+                        content_text = content_text.strip()
+                        
+                        # Limit to first 50,000 characters to avoid token limits
+                        if len(content_text) > 50000:
+                            content_text = content_text[:50000] + "\n\n[Content truncated for processing...]"
+                        
+                        logger.info(f"✅ Extracted {len(content_text)} characters from {doc.document_name}")
+                    else:
+                        logger.warning(f"⚠️ File not found: {doc.file_path}")
+                        content_text = f"[File not accessible: {doc.document_name}]"
+                        
                 except Exception as e:
-                    logger.warning(f"Could not read file {doc.file_path}: {e}")
+                    logger.error(f"❌ Error extracting content from {doc.document_name}: {str(e)}")
+                    content_text = f"[Error extracting content: {str(e)}]"
                 
+                # ✅ PASS FULL CONTENT TO AI (not just preview!)
                 doc_contents.append({
                     "id": str(doc.id),
                     "name": doc.document_name,
                     "type": doc.document_type,
-                    "content_preview": content_preview,
+                    "content": content_text,  # ✅ FULL CONTENT
+                    "content_preview": content_text[:500] if content_text else "No content",
                     "contract_number": doc.contract_number,
                     "contract_title": doc.contract_title,
                     "date": doc.uploaded_at.isoformat() if doc.uploaded_at else None
@@ -607,11 +708,11 @@ async def analyze_correspondence_documents(
                 timestamp=datetime.utcnow().isoformat()
             )
         
-        # Call ClaudeService.analyze_correspondence (the correct method)
+        # Call ClaudeService.analyze_correspondence with FULL CONTENT
         try:
             ai_result = claude_service.analyze_correspondence(
                 query=request.query,
-                documents=doc_contents,
+                documents=doc_contents,  # ✅ Now includes full document content!
                 analysis_mode=request.mode,
                 tone=request.tone,
                 urgency=request.priority,
@@ -623,58 +724,40 @@ async def analyze_correspondence_documents(
             
             # Extract values from the AI result
             content = ai_result.get("analysis_text") or ai_result.get("content") or "Analysis completed."
-            confidence = ai_result.get("confidence_score", 75.0)
+            confidence = ai_result.get("confidence_score", 85) / 100
+            recommendations = ai_result.get("recommendations", [])
+            key_points = ai_result.get("key_points", [])
+            suggested_actions = ai_result.get("suggested_actions", [])
             tokens_used = ai_result.get("tokens_used", 0)
-            key_points = ai_result.get("key_points", ["Document review completed"])
-            recommendations = ai_result.get("recommendations", ["Review analysis results"])
-            suggested_actions = ai_result.get("suggested_actions", ["Follow up on findings"])
             
-        except Exception as claude_error:
-            logger.error(f"❌ Claude service error: {str(claude_error)}")
+            return AnalysisResponse(
+                success=True,
+                content=content,
+                confidence=confidence,
+                processing_time=time.time() - start_time,
+                sources=sources,
+                recommendations=recommendations,
+                key_points=key_points,
+                suggested_actions=suggested_actions,
+                tokens_used=tokens_used,
+                timestamp=datetime.utcnow().isoformat()
+            )
             
-            # Generate fallback response
-            content = generate_fallback_analysis(request.query, doc_contents)
-            confidence = 65.0
-            tokens_used = 0
-            key_points = ["Document review completed", "Manual analysis recommended"]
-            recommendations = ["Consult with legal team", "Review all referenced clauses"]
-            suggested_actions = ["Schedule follow-up meeting", "Document all decisions"]
+        except Exception as e:
+            logger.error(f"❌ Claude service error: {str(e)}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"AI analysis failed: {str(e)}"
+            )
         
-        processing_time = time.time() - start_time
-        
-        return AnalysisResponse(
-            success=True,
-            content=content,
-            confidence=confidence,
-            processing_time=processing_time,
-            sources=sources,
-            recommendations=recommendations,
-            key_points=key_points,
-            suggested_actions=suggested_actions,
-            tokens_used=tokens_used,
-            timestamp=datetime.utcnow().isoformat()
-        )
-        
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"❌ Analysis error: {str(e)}")
-        import traceback
-        logger.error(traceback.format_exc())
-        
-        processing_time = time.time() - start_time
-        
-        return AnalysisResponse(
-            success=False,
-            content=f"Analysis failed: {str(e)}",
-            confidence=0.0,
-            processing_time=processing_time,
-            sources=[],
-            recommendations=[],
-            key_points=[],
-            suggested_actions=[],
-            tokens_used=0,
-            timestamp=datetime.utcnow().isoformat()
+        logger.error(f"❌ Analysis error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Analysis failed: {str(e)}"
         )
-
 
 # =====================================================
 # CREATE CORRESPONDENCE

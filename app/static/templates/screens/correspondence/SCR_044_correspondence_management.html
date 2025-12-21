@@ -624,14 +624,20 @@
     }
 
     .quick-prompt {
-        padding: 1.25rem;
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        /* ✅ Align to top */
+        gap: 12px;
+        padding: 12px 16px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
         background: white;
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
-        text-align: left;
         cursor: pointer;
-        transition: var(--transition);
+        transition: all 0.2s;
+        text-align: left;
     }
+
 
     .quick-prompt:hover {
         border-color: var(--primary-color);
@@ -640,16 +646,11 @@
     }
 
     .quick-prompt-icon {
-        width: 40px;
-        height: 40px;
-        background: linear-gradient(135deg, rgba(39, 98, 203, 0.1), rgba(115, 180, 224, 0.1));
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--primary-color);
-        font-size: 1.125rem;
-        margin-bottom: 0.75rem;
+        font-size: 24px;
+        color: #2762cb;
+        flex-shrink: 0;
+        margin-top: 2px;
+        /* ✅ Slight adjustment for alignment */
     }
 
     .quick-prompt-title {
@@ -663,6 +664,12 @@
         font-size: 0.75rem;
         color: var(--text-muted);
         line-height: 1.4;
+    }
+
+    .quick-prompt-content {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
     }
 
     /* Message Bubbles */
@@ -1056,6 +1063,11 @@
         z-index: 999999 !important;
     }
 
+    .modal-container {
+        background: white !important;
+        /* The actual modal box */
+    }
+
     .modal-overlay.active {
         display: flex !important;
     }
@@ -1426,6 +1438,47 @@
             flex-direction: column;
         }
     }
+
+    .upload-area {
+        border: 2px dashed var(--border-color);
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .upload-area:hover {
+        border-color: var(--primary-color);
+        background: rgba(39, 98, 203, 0.05);
+    }
+
+    .upload-area.dragover {
+        border-color: var(--primary-color);
+        background: rgba(39, 98, 203, 0.1);
+    }
+
+    /* Standalone Document Badge */
+    .standalone-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .standalone-badge i {
+        font-size: 0.875rem;
+    }
+
+    .doc-card:has(.standalone-badge) {
+        border-left: 3px solid #10b981;
+    }
 </style>
 {% endblock %}
 
@@ -1567,23 +1620,34 @@
                 <div class="quick-prompts">
                     <button class="quick-prompt" onclick="useQuickPrompt('summary')">
                         <div class="quick-prompt-icon"><i class="ti ti-list-details"></i></div>
-                        <div class="quick-prompt-title">Summarize Documents</div>
-                        <div class="quick-prompt-desc">Get key points and obligations</div>
+                        <div class="quick-prompt-content">
+                            <div class="quick-prompt-title">Summarize Documents</div>
+                            <div class="quick-prompt-desc">Get key points and obligations</div>
+                        </div>
                     </button>
+
                     <button class="quick-prompt" onclick="useQuickPrompt('obligations')">
                         <div class="quick-prompt-icon"><i class="ti ti-checklist"></i></div>
-                        <div class="quick-prompt-title">Extract Obligations</div>
-                        <div class="quick-prompt-desc">Find deadlines and requirements</div>
+                        <div class="quick-prompt-content">
+                            <div class="quick-prompt-title">Extract Obligations</div>
+                            <div class="quick-prompt-desc">Find deadlines and requirements</div>
+                        </div>
                     </button>
+
                     <button class="quick-prompt" onclick="useQuickPrompt('risks')">
                         <div class="quick-prompt-icon"><i class="ti ti-alert-triangle"></i></div>
-                        <div class="quick-prompt-title">Risk Assessment</div>
-                        <div class="quick-prompt-desc">Identify potential risks</div>
+                        <div class="quick-prompt-content">
+                            <div class="quick-prompt-title">Risk Assessment</div>
+                            <div class="quick-prompt-desc">Identify potential risks</div>
+                        </div>
                     </button>
+
                     <button class="quick-prompt" onclick="useQuickPrompt('dispute')">
                         <div class="quick-prompt-icon"><i class="ti ti-gavel"></i></div>
-                        <div class="quick-prompt-title">Dispute Guidance</div>
-                        <div class="quick-prompt-desc">Advice on contractual disputes</div>
+                        <div class="quick-prompt-content">
+                            <div class="quick-prompt-title">Dispute Guidance</div>
+                            <div class="quick-prompt-desc">Advice on contractual disputes</div>
+                        </div>
                     </button>
                 </div>
             </div>
@@ -1648,7 +1712,6 @@
 </div>
 
 <!-- Upload Modal - Hidden by default -->
-<!-- Upload Modal -->
 <div id="uploadModal" class="modal-overlay">
     <div class="modal-container">
         <div class="modal-header">
@@ -1670,8 +1733,8 @@
             <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.rtf,.odt,.eml"
                 onchange="handleFileSelect(event)" style="display: none;">
 
-            <!-- Upload Area -->
-            <div class="upload-area" onclick="triggerFileInput()">
+            <!-- Upload Area - FIXED: Added id="uploadZone" -->
+            <div id="uploadZone" class="upload-area">
                 <i class="ti ti-cloud-upload" style="font-size: 48px; color: #2762cb;"></i>
                 <p>Click to browse or drag files here</p>
                 <p class="text-muted">Supported: PDF, DOC, DOCX, XLS, XLSX, TXT, RTF, ODT, EML</p>
@@ -1688,7 +1751,6 @@
         </div>
     </div>
 </div>
-
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
@@ -1776,6 +1838,7 @@
         // =====================================================
         async function loadProjects() {
             try {
+                // Load projects with their documents
                 const response = await fetch('/api/v1/correspondence/projects', {
                     headers: { 'Authorization': `Bearer ${getAuthToken()}` }
                 });
@@ -1794,6 +1857,7 @@
                 state.projectsList = [];
                 const contractsSet = new Set();
 
+                // Load project documents
                 (data.data || []).forEach(project => {
                     state.projectsList.push({
                         id: project.id,
@@ -1823,11 +1887,47 @@
                     });
                 });
 
+                // ✅ NEW: Load standalone documents
+                try {
+                    const standaloneResponse = await fetch('/api/v1/correspondence/documents/standalone', {
+                        headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+                    });
+
+                    if (standaloneResponse.ok) {
+                        const standaloneData = await standaloneResponse.json();
+                        console.log(`📄 Loaded ${standaloneData.documents?.length || 0} standalone documents`);
+
+                        (standaloneData.documents || []).forEach(doc => {
+                            state.allDocumentsGlobal.push({
+                                ...doc,
+                                project_id: null,
+                                project_name: "Standalone",
+                                project_code: "N/A",
+                                is_standalone: true
+                            });
+                        });
+                    }
+                } catch (standaloneError) {
+                    console.warn('Could not load standalone documents:', standaloneError);
+                }
+
+                // Populate contract filter
+                const contractFilter = document.getElementById('contractSelect');
+                if (contractFilter) {
+                    contractFilter.innerHTML = '<option value="">All Contracts</option>';
+                    state.allContracts.forEach(contract => {
+                        contractFilter.innerHTML += `<option value="${contract.number}">${escapeHtml(contract.title)}</option>`;
+                    });
+                }
+
+                // Update document list if in document mode
                 if (state.analysisMode === 'document') {
                     state.allDocuments = [...state.allDocumentsGlobal];
                     state.filteredDocs = [...state.allDocuments];
                     renderDocs();
                 }
+
+                console.log(`✅ Loaded ${state.projectsList.length} projects, ${state.allDocumentsGlobal.length} total documents`);
 
                 return state.projectsList;
 
@@ -1837,8 +1937,6 @@
                 return [];
             }
         }
-
-
         window.onProjectChange = function () {
             const select = document.getElementById('projectSelect');
             const selectedOption = select.options[select.selectedIndex];
@@ -1887,9 +1985,23 @@
             if (mode === 'document') {
                 // Document Level: Hide project selection, show contract filter, load all docs
                 document.getElementById('docsTitle').textContent = 'Select Document';
-                selectAllBtn.style.display = 'none';
-                projectSelection.style.display = 'none';
-                contractSelection.style.display = 'block';
+
+                // Safety check for selectAllBtn
+                if (selectAllBtn) {
+                    selectAllBtn.style.display = 'none';
+                }
+
+                // Safety check for projectSelection
+                if (projectSelection) {
+                    projectSelection.style.display = 'none';
+                }
+
+                // Safety check for contractSelection - only access if it exists
+                if (contractSelection) {
+                    contractSelection.style.display = 'block';
+                } else {
+                    console.warn('contractSelection element not found in HTML');
+                }
 
                 // Load all documents from all projects
                 state.allDocuments = [...state.allDocumentsGlobal];
@@ -1900,14 +2012,30 @@
             } else {
                 // Project Level: Show project selection, hide contract filter
                 document.getElementById('docsTitle').textContent = 'Documents';
-                selectAllBtn.style.display = 'flex';
-                projectSelection.style.display = 'block';
-                contractSelection.style.display = 'none';
+
+                // Safety check for selectAllBtn
+                if (selectAllBtn) {
+                    selectAllBtn.style.display = 'flex';
+                }
+
+                // Safety check for projectSelection
+                if (projectSelection) {
+                    projectSelection.style.display = 'block';
+                }
+
+                // Safety check for contractSelection
+                if (contractSelection) {
+                    contractSelection.style.display = 'none';
+                }
 
                 // Reset to require project selection
                 state.allDocuments = [];
                 state.filteredDocs = [];
-                document.getElementById('projectSelect').value = '';
+
+                const projectSelect = document.getElementById('projectSelect');
+                if (projectSelect) {
+                    projectSelect.value = '';
+                }
 
                 document.getElementById('chatHeaderSubtitle').textContent = 'Select a project to begin';
             }
@@ -1915,7 +2043,6 @@
             renderDocs();
             updateSelectionUI();
         };
-
         window.onContractFilter = function () {
             const contractNumber = document.getElementById('contractSelect').value;
             state.selectedContract = contractNumber;
@@ -1965,11 +2092,11 @@
                     : (state.selectedProject ? 'No documents found in this project' : 'Select a project to view documents');
 
                 container.innerHTML = `
-                <div class="empty-state">
-                    <i class="ti ti-file-off"></i>
-                    <p>${emptyMessage}</p>
-                </div>
-            `;
+            <div class="empty-state">
+                <i class="ti ti-file-off"></i>
+                <p>${emptyMessage}</p>
+            </div>
+        `;
                 return;
             }
 
@@ -1980,25 +2107,31 @@
             container.innerHTML = pageDocs.map(doc => {
                 const type = getDocType(doc.document_name);
                 const isSelected = state.selectedDocs.has(doc.id);
-                const projectInfo = state.analysisMode === 'document' && doc.project_name ?
+
+                // Project info
+                const projectInfo = state.analysisMode === 'document' && doc.project_name && !doc.is_standalone ?
                     `<span style="color: var(--primary-color);">${escapeHtml(doc.project_code || doc.project_name)}</span> • ` : '';
 
+                // ✅ NEW: Standalone badge
+                const standaloneBadge = doc.is_standalone
+                    ? '<span class="standalone-badge"><i class="ti ti-file-plus"></i> Standalone</span> • '
+                    : '';
+
                 return `
-                <div class="doc-item ${isSelected ? 'selected' : ''}" onclick="toggleDoc('${doc.id}')">
-                    <input type="${inputType}" class="doc-${inputType}" name="${inputName}" 
-                        ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleDoc('${doc.id}')">
-                    <div class="doc-icon ${type}">
-                        <i class="ti ti-file-text"></i>
-                    </div>
-                    <div class="doc-info">
-                        <div class="doc-name" title="${escapeHtml(doc.document_name)}">${escapeHtml(doc.document_name)}</div>
-                        <div class="doc-meta">${projectInfo}${formatDate(doc.uploaded_at)} • ${formatFileSize(doc.file_size)}</div>
-                    </div>
+            <div class="doc-item ${isSelected ? 'selected' : ''} ${doc.is_standalone ? 'standalone-doc' : ''}" onclick="toggleDoc('${doc.id}')">
+                <input type="${inputType}" class="doc-${inputType}" name="${inputName}" 
+                    ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleDoc('${doc.id}')">
+                <div class="doc-icon ${type}">
+                    <i class="ti ti-file-text"></i>
                 </div>
-            `;
+                <div class="doc-info">
+                    <div class="doc-name" title="${escapeHtml(doc.document_name)}">${escapeHtml(doc.document_name)}</div>
+                    <div class="doc-meta">${standaloneBadge}${projectInfo}${formatDate(doc.uploaded_at)} • ${formatFileSize(doc.file_size)}</div>
+                </div>
+            </div>
+        `;
             }).join('');
         }
-
         function renderPagination(totalPages) {
             const container = document.getElementById('paginationControls');
             const current = state.currentPage;
@@ -2199,11 +2332,16 @@
             event.target.value = '';
         };
 
-
         function setupDragDrop() {
             const zone = document.getElementById('uploadZone');
             const modal = document.getElementById('uploadModal');
             const fileInput = document.getElementById('fileInput');
+
+            // Safety check - if elements don't exist, exit gracefully
+            if (!zone || !modal || !fileInput) {
+                console.warn('Upload elements not found:', { zone: !!zone, modal: !!modal, fileInput: !!fileInput });
+                return;
+            }
 
             // Click on zone to trigger file input
             zone.addEventListener('click', () => {
@@ -2248,10 +2386,12 @@
                 zone.classList.remove('dragover');
                 handleFiles(e.dataTransfer.files);
             });
+
+            console.log('✅ Drag & drop setup complete');
         }
 
         function handleFiles(files) {
-            const allowedTypes = ['.pdf', '.doc', '.docx', '.eml', '.msg', '.xlsx', '.xls'];
+            const allowedTypes = ['.pdf', '.doc', '.docx', '.eml', '.msg', '.xlsx', '.xls', '.txt', '.rtf', '.odt'];
 
             Array.from(files).forEach(file => {
                 const ext = '.' + file.name.split('.').pop().toLowerCase();
@@ -2266,6 +2406,10 @@
             });
 
             renderUploadList();
+            // Reset input to allow re-selecting same files
+            if (files.target) {
+                files.target.value = '';
+            }
         }
         function renderUploadList() {
             const container = document.getElementById('uploadList');
@@ -2373,8 +2517,11 @@
                         onProjectChange();
                     }
                 } else {
-                    // Document mode - reload all documents
-                    await loadAllDocuments();
+                    // Document mode reload - reload all documents globally
+                    await loadProjects();  // This reloads allDocumentsGlobal
+                    state.allDocuments = [...state.allDocumentsGlobal];
+                    state.filteredDocs = [...state.allDocuments];
+                    renderDocs();
                 }
 
             } catch (error) {

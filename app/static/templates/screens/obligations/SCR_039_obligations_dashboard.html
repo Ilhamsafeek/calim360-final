@@ -963,12 +963,12 @@
 
     <!-- Filters Section -->
     <div class="filters-section">
-         <div class="filter-group">
+        <div class="filter-group">
             <span class="filter-label" style="color: white;">Search</span>
-        <div class="search-box">
-            <i class="ti ti-search"></i>
-            <input type="text" id="searchInput" placeholder="Search obligations..." oninput="filterObligations()">
-        </div>
+            <div class="search-box">
+                <i class="ti ti-search"></i>
+                <input type="text" id="searchInput" placeholder="Search obligations..." oninput="filterObligations()">
+            </div>
         </div>
         <div class="filter-group">
             <span class="filter-label">Status</span>
@@ -1094,12 +1094,17 @@
             <form id="obligationForm">
                 <input type="hidden" id="editObligationId">
 
-                <div class="form-group">
+                <!-- <div class="form-group">
                     <label class="form-label">Contract <span class="required">*</span></label>
                     <select class="form-control" id="obligationContractId" required>
                         <option value="">Select Contract</option>
-                        <!-- Contracts loaded dynamically -->
                     </select>
+                </div> -->
+
+                <div class="form-group">
+                    <label class="form-label">Contract</label>
+                    <input type="text" class="form-control" id="obligationContractId" disabled
+                        placeholder="Enter obligation title">
                 </div>
 
                 <div class="form-group">
@@ -1220,10 +1225,10 @@
     // =====================================================
     // INITIALIZATION
     // =====================================================
-    document.addEventListener('DOMContentLoaded', function () {
-        loadObligations();
-        loadUsers();
-        loadContracts();
+    document.addEventListener('DOMContentLoaded', async function () {
+        // await loadContracts();
+        await loadObligations();
+        await loadUsers();
         setupUserSearch();
     });
 
@@ -1273,48 +1278,51 @@
         }
     }
 
-    async function loadContracts() {
-        try {
-            const response = await fetch('/api/contracts/');
-            if (!response.ok) throw new Error('Failed to load contracts');
-            const data = await response.json();
-            contracts = data.contracts || data || [];
 
-            // Populate contract filters
-            const filterSelect = document.getElementById('contractFilter');
-            const formSelect = document.getElementById('obligationContractId');
+    // async function loadContracts() {
+    //     try {
+    //         const response = await fetch('/api/contracts/');
+    //         if (!response.ok) throw new Error('Failed to load contracts');
+    //         const data = await response.json();
+    //         contracts = data.contracts || data || [];
 
-            // Ensure contracts is an array
-            // Handle paginated response - contracts are in 'items' property
-            const contractsList = contracts.items || contracts;
+    //         const filterSelect = document.getElementById('contractFilter');
+    //         const formSelect = document.getElementById('obligationContractId');
 
-            if (Array.isArray(contractsList) && contractsList.length > 0) {
-                contractsList.forEach(contract => {
-                    const option1 = new Option(
-                        `${contract.contract_number} - ${contract.contract_title}`.substring(0, 50),
-                        contract.id
-                    );
-                    const option2 = option1.cloneNode(true);
-                    filterSelect.appendChild(option1);
-                    formSelect.appendChild(option2);
-                });
+    //         // Clear existing
+    //         if (filterSelect) filterSelect.innerHTML = '<option value="all">All Contracts</option>';
+    //         if (formSelect) formSelect.innerHTML = '<option value="">Select Contract</option>';
 
-                if (obligation.contract_id) {
-                    filterSelect.value = obligation.contract_id;
-                    formSelect.value = obligation.contract_id;
-                }
-            } else {
-                console.error('Contracts data is not valid:', contracts);
-                // Add a default option
-                const defaultOption1 = new Option('No contracts available', '');
-                const defaultOption2 = defaultOption1.cloneNode(true);
-                filterSelect.appendChild(defaultOption1);
-                formSelect.appendChild(defaultOption2);
-            }
-        } catch (error) {
-            console.error('Error loading contracts:', error);
-        }
-    }
+    //         const contractsList = contracts.items || contracts;
+
+    //         if (Array.isArray(contractsList) && contractsList.length > 0) {
+    //             contractsList.forEach(contract => {
+    //                 const text = `${contract.contract_number} - ${contract.contract_title}`;
+
+    //                 if (filterSelect) {
+    //                     const opt = document.createElement('option');
+    //                     opt.value = contract.id;
+    //                     opt.textContent = text;
+    //                     filterSelect.appendChild(opt);
+    //                 }
+
+    //                 if (formSelect) {
+    //                     const opt = document.createElement('option');
+    //                     opt.value = contract.id;
+    //                     opt.textContent = text;
+    //                     formSelect.appendChild(opt);
+    //                 }
+    //             });
+    //         }
+
+    //         return true;
+    //     } catch (error) {
+    //         console.error('Error loading contracts:', error);
+    //         return false;
+    //     }
+    // }
+
+
 
     function refreshObligations() {
         loadObligations();
@@ -1590,6 +1598,8 @@
         document.getElementById('modalTitle').textContent = 'New Obligation';
         document.getElementById('obligationForm').reset();
         document.getElementById('editObligationId').value = '';
+
+
         document.getElementById('ownerUserId').value = '';
         document.getElementById('escalationUserId').value = '';
         document.getElementById('selectedOwner').style.display = 'none';
@@ -1599,21 +1609,23 @@
         openModal('obligationModal');
     }
 
+
+
     function editObligation(id) {
         const obl = allObligations.find(o => o.id === id);
         if (!obl) return;
 
         document.getElementById('modalTitle').textContent = 'Edit Obligation';
         document.getElementById('editObligationId').value = id;
-        document.getElementById('obligationContractId').value = obl.contract_id;
         document.getElementById('obligationTitle').value = obl.obligation_title || '';
         document.getElementById('obligationDescription').value = obl.description || '';
+        document.getElementById('obligationContractId').value = obl.contract_title || '';
+        
         document.getElementById('obligationType').value = obl.obligation_type || '';
         document.getElementById('obligationStatus').value = obl.status || 'initiated';
         document.getElementById('thresholdDate').value = obl.threshold_date ? obl.threshold_date.split('T')[0] : '';
         document.getElementById('dueDate').value = obl.due_date ? obl.due_date.split('T')[0] : '';
 
-        // Set owner
         if (obl.owner_user_id) {
             document.getElementById('ownerUserId').value = obl.owner_user_id;
             setSelectedUser('owner', obl.owner_user_id, obl.owner_name);
@@ -1623,7 +1635,6 @@
             document.getElementById('ownerSearch').style.display = 'block';
         }
 
-        // Set escalation
         if (obl.escalation_user_id) {
             document.getElementById('escalationUserId').value = obl.escalation_user_id;
             setSelectedUser('escalation', obl.escalation_user_id, obl.escalation_name);
@@ -1633,9 +1644,68 @@
             document.getElementById('escalationSearch').style.display = 'block';
         }
 
+        // THEN open modal
         openModal('obligationModal');
+
+        // ✅ Double-check after modal opens
+        setTimeout(() => {
+            if (contractSelect && obl.contract_id && !contractSelect.value) {
+                contractSelect.value = String(obl.contract_id);
+            }
+        }, 100);
     }
 
+
+    // function setContractValue(contractId) {
+    //     const contractSelect = document.getElementById('obligationContractId');
+    //     if (!contractSelect) return;
+
+    //     const attempts = [0, 50, 100, 200, 500];
+
+    //     attempts.forEach(delay => {
+    //         setTimeout(() => {
+    //             const idAsString = String(contractId);
+    //             const idAsNumber = Number(contractId);
+
+    //             let optionFound = false;
+    //             for (let i = 0; i < contractSelect.options.length; i++) {
+    //                 const optValue = contractSelect.options[i].value;
+    //                 if (optValue == contractId || optValue == idAsString || optValue == idAsNumber) {
+    //                     contractSelect.selectedIndex = i;
+    //                     optionFound = true;
+    //                     break;
+    //                 }
+    //             }
+
+    //             // if (!optionFound && delay === 0) {
+    //             //     loadContracts().then(() => {
+    //             //         setTimeout(() => setContractValue(contractId), 100);
+    //             //     });
+    //             // }
+    //         }, delay);
+    //     });
+    // }
+
+
+    // ✅ NEW HELPER FUNCTION: Load contracts and set value
+    // async function loadContractsAndSet(contractId) {
+    //     try {
+    //         // Reload contracts if needed
+    //         if (!contracts || contracts.length === 0) {
+    //             await loadContracts();
+    //         }
+
+    //         // Set the value after contracts are loaded
+    //         const contractSelect = document.getElementById('obligationContractId');
+    //         if (contractSelect && contractId) {
+    //             contractSelect.value = contractId;
+    //         }
+    //     } catch (error) {
+    //         console.error('Error loading contracts for edit:', error);
+    //     }
+    // }
+   
+   
     async function saveObligation() {
         const form = document.getElementById('obligationForm');
         if (!form.checkValidity()) {
@@ -1647,7 +1717,7 @@
         const isEdit = !!editId;
 
         const payload = {
-            contract_id: parseInt(document.getElementById('obligationContractId').value),
+            // contract_id: parseInt(document.getElementById('obligationContractId').value),
             obligation_title: document.getElementById('obligationTitle').value.trim(),
             description: document.getElementById('obligationDescription').value.trim(),
             obligation_type: document.getElementById('obligationType').value,
