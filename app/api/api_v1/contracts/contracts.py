@@ -1149,6 +1149,7 @@ async def get_contract_editor_data(
             LEFT JOIN workflows w ON wi.workflow_id = w.id
             WHERE wi.contract_id = :contract_id
             AND w.company_id = :company_id
+            AND w.is_active =1
             AND wi.status IN ('pending', 'active', 'in_progress', 'completed')
             ORDER BY wi.started_at DESC
             LIMIT 1
@@ -2076,7 +2077,7 @@ async def setup_contract_workflow(
             workflow_insert = text("""
                 INSERT INTO workflows
                 (company_id, workflow_name, workflow_type, is_master, is_active, created_at, updated_at)
-                VALUES (:company_id, :workflow_name, 'contract_approval', 0, 1, NOW(), NOW())
+                VALUES (:company_id, :workflow_name, 'contract_approval', 0, 0, NOW(), NOW())
             """)
             
             result = db.execute(workflow_insert, {
@@ -2193,17 +2194,16 @@ async def setup_contract_workflow(
         logger.error(f"Traceback: ", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
-
-
 @router.get("/workflow/{contract_id}")
 async def get_contract_workflow(
     contract_id: int,
+    contract_type: str = None,  # Optional parameter: 'custom', 'master', or None
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Get workflow configuration for a specific contract"""
     try:
-        logger.info(f"Fetching workflow for contract {contract_id} - Company: {current_user.company_id}")
+        logger.info(f"Fetching workflow for contract {contract_id} - Company: {current_user.company_id}, Type: {contract_type}")
         
         # ✅ First verify the contract belongs to user's company
         contract_check = text("""
@@ -2219,8 +2219,17 @@ async def get_contract_workflow(
             logger.warning(f"Contract {contract_id} not found for company {current_user.company_id}")
             raise HTTPException(status_code=404, detail="Contract not found or access denied")
         
-        # ✅ Get workflow instance - FILTERED BY COMPANY
-        instance_query = text("""
+        # Build the is_master filter based on contract_type
+        is_master_filter = ""
+        if contract_type == "custom":
+            is_master_filter = "AND w.is_master = 0"
+            logger.info(f"Filtering for custom workflows (is_master=0)")
+        elif contract_type == "master":
+            is_master_filter = "AND w.is_master = 1"
+            logger.info(f"Filtering for master workflows (is_master=1)")
+        
+        # ✅ Get workflow instance - FILTERED BY COMPANY and optionally by is_master
+        instance_query = text(f"""
             SELECT 
                 wi.id as instance_id,
                 wi.workflow_id,
@@ -2233,6 +2242,7 @@ async def get_contract_workflow(
             LEFT JOIN workflows w ON wi.workflow_id = w.id
             WHERE wi.contract_id = :contract_id
             AND w.company_id = :company_id
+            {is_master_filter}
             ORDER BY wi.started_at DESC
             LIMIT 1
         """)
@@ -2243,10 +2253,10 @@ async def get_contract_workflow(
         }).fetchone()
         
         if not workflow_instance:
-            logger.warning(f"No workflow found for contract {contract_id} in company {current_user.company_id}")
+            logger.warning(f"No workflow found for contract {contract_id} in company {current_user.company_id} with type '{contract_type}'")
             return {
                 "success": False,
-                "message": "No workflow configured for this contract"
+                "message": f"No {'custom' if contract_type == 'custom' else 'master' if contract_type == 'master' else ''} workflow configured for this contract"
             }
         
         # Parse department mapping from workflow_json
@@ -2360,8 +2370,6 @@ async def get_contract_workflow(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
-
 @router.post("/submit-review")
 async def submit_for_internal_review(
     review_data: dict,
@@ -2404,7 +2412,94 @@ async def submit_for_internal_review(
             # Log that counterparty submitted review (status not updated)
             logger.info(f"Counterparty (Party B) user {current_user.id} submitted review for contract {contract_id} (contract status not updated)")
         
-        # Activate workflow for ALL users (including counterparties)
+        # Handle masterWorkflow and customWorkflow review types
+        if review_type == 'masterWorkflow':
+            # Deactivate all custom workflows (is_master=0) for this contract and company
+            deactivate_custom_query = text("""
+                UPDATE workflows 
+                SET is_active = 0
+                WHERE id IN (
+                    SELECT DISTINCT workflow_id 
+                    FROM workflow_instances 
+                    WHERE contract_id = :contract_id
+                )
+                AND company_id = :company_id
+                AND is_master = 0
+            """)
+            db.execute(deactivate_custom_query, {
+                "contract_id": contract_id,
+                "company_id": current_user.company_id
+            })
+            logger.info(f"Custom workflows deactivated for contract {contract_id} (masterWorkflow selected)")
+            
+            # Check if master workflow instances exist for this contract
+            check_master_instances = text("""
+                SELECT COUNT(*) as count
+                FROM workflow_instances wi
+                INNER JOIN workflows w ON wi.workflow_id = w.id
+                WHERE wi.contract_id = :contract_id
+                AND w.company_id = :company_id
+                AND w.is_master = 1
+            """)
+            master_count_result = db.execute(check_master_instances, {
+                "contract_id": contract_id,
+                "company_id": current_user.company_id
+            }).fetchone()
+            
+            master_count = master_count_result[0] if master_count_result else 0
+            
+            # If no master workflow instances exist, create them
+            if master_count == 0:
+                # Get all active master workflows for the company
+                get_master_workflows = text("""
+                    SELECT id, workflow_name
+                    FROM workflows
+                    WHERE company_id = :company_id
+                    AND is_master = 1
+                    AND is_active = 1
+                """)
+                master_workflows = db.execute(get_master_workflows, {
+                    "company_id": current_user.company_id
+                }).fetchall()
+                
+                # Create workflow instances for each master workflow
+                for workflow in master_workflows:
+                    workflow_id = workflow[0]
+                    workflow_name = workflow[1]
+                    
+                    insert_instance = text("""
+                        INSERT INTO workflow_instances 
+                        (contract_id, workflow_id, status, current_step)
+                        VALUES (:contract_id, :workflow_id, 'pending',1)
+                    """)
+                    db.execute(insert_instance, {
+                        "contract_id": contract_id,
+                        "workflow_id": workflow_id
+                    })
+                    logger.info(f"Created master workflow instance for workflow '{workflow_name}' (ID: {workflow_id}) and contract {contract_id}")
+            else:
+                logger.info(f"Master workflow instances already exist for contract {contract_id} (count: {master_count})")
+            
+        elif review_type == 'customWorkflow':
+            # Activate all custom workflows (is_master=0) for this contract and company
+            activate_custom_query = text("""
+                UPDATE workflows 
+                SET is_active = 1
+                WHERE id IN (
+                    SELECT DISTINCT workflow_id 
+                    FROM workflow_instances 
+                    WHERE contract_id = :contract_id
+                )
+                AND company_id = :company_id
+                AND is_master = 0
+            """)
+            db.execute(activate_custom_query, {
+                "contract_id": contract_id,
+                "company_id": current_user.company_id
+            })
+            logger.info(f"Custom workflows activated for contract {contract_id} (customWorkflow selected)")
+        
+        # Activate workflow instances for ALL users (including counterparties)
         activate_workflow_query = text("""
             UPDATE workflow_instances 
             SET status = 'active',
@@ -2412,8 +2507,10 @@ async def submit_for_internal_review(
             WHERE contract_id = :contract_id
             AND status IN ('pending', 'in_progress')
         """)
-        db.execute(activate_workflow_query, {"contract_id": contract_id})
-        logger.info(f"Workflow activated for contract {contract_id}")
+        db.execute(activate_workflow_query, {
+            "contract_id": contract_id
+        })
+        logger.info(f"Workflow instances activated for contract {contract_id}")
         
         # Send notifications to specific personnel (allowed for all users including counterparties)
         if review_type == 'specific' and personnel_emails:
@@ -2460,7 +2557,8 @@ async def submit_for_internal_review(
         logger.error(f"Error submitting contract for review: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-        
+
+
 # =====================================================
 # HELPER FUNCTIONS - WITH FIXED CONTRACT NUMBER GENERATION
 # =====================================================
@@ -4493,3 +4591,169 @@ def get_fallback_clause_analysis(contract_text: str):
         "total_clauses": len(clauses),
         "ai_powered": False
     }
+
+
+
+@router.get("/workflow/availability/{contract_id}")
+async def check_workflow_availability(
+    contract_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Check if master and custom workflows are available for a contract
+    """
+    try:
+        # Check for active master workflow for the company
+        master_query = text("""
+            SELECT id, workflow_name 
+            FROM workflows 
+            WHERE company_id = :company_id 
+            AND is_master = 1 
+            AND is_active = 1
+            LIMIT 1
+        """)
+        
+        master_workflow = db.execute(master_query, {
+            "company_id": current_user.company_id
+        }).fetchone()
+        
+        # Check for custom workflow for this specific contract
+        custom_query = text("""
+            SELECT w.id, w.workflow_name 
+            FROM workflows w
+            INNER JOIN workflow_instances wi ON w.id = wi.workflow_id
+            WHERE wi.contract_id = :contract_id
+            AND w.company_id = :company_id
+            AND w.is_master = 0
+            AND w.is_active = 1
+            LIMIT 1
+        """)
+        
+        custom_workflow = db.execute(custom_query, {
+            "contract_id": contract_id,
+            "company_id": current_user.company_id
+        }).fetchone()
+        
+        return {
+            "success": True,
+            "master_workflow": {
+                "available": master_workflow is not None,
+                "id": master_workflow.id if master_workflow else None,
+                "name": master_workflow.workflow_name if master_workflow else None
+            },
+            "custom_workflow": {
+                "available": custom_workflow is not None,
+                "id": custom_workflow.id if custom_workflow else None,
+                "name": custom_workflow.workflow_name if custom_workflow else None
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error checking workflow availability: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
+
+@router.post("/workflow/ensure-instance/{contract_id}")
+async def ensure_workflow_instance(
+    contract_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Ensure workflow instance exists for contract
+    - If master workflow exists for company but no instance → Create instance
+    - If custom workflow exists but no instance → Create instance
+    - Returns current workflow status
+    """
+    try:
+        # Check if workflow instance already exists
+        existing_instance_query = text("""
+            SELECT wi.id, wi.workflow_id, wi.status, w.workflow_name, w.is_master
+            FROM workflow_instances wi
+            INNER JOIN workflows w ON wi.workflow_id = w.id
+            WHERE wi.contract_id = :contract_id
+            AND w.company_id = :company_id
+            AND is_master=1
+            LIMIT 1
+        """)
+        
+        existing_instance = db.execute(existing_instance_query, {
+            "contract_id": contract_id,
+            "company_id": current_user.company_id
+        }).fetchone()
+        
+        if existing_instance:
+            logger.info(f"✅ Workflow instance already exists for contract {contract_id}")
+            return {
+                "success": True,
+                "instance_exists": True,
+                "workflow_id": existing_instance.workflow_id,
+                "workflow_name": existing_instance.workflow_name,
+                "is_master": existing_instance.is_master,
+                "status": existing_instance.status,
+                "message": "Workflow instance already exists"
+            }
+        
+        # Check for master workflow
+        master_workflow_query = text("""
+            SELECT id, workflow_name 
+            FROM workflows 
+            WHERE company_id = :company_id 
+            AND is_master = 1 
+            AND is_active = 1
+            LIMIT 1
+        """)
+        
+        master_workflow = db.execute(master_workflow_query, {
+            "company_id": current_user.company_id
+        }).fetchone()
+        
+        # If master workflow exists, create instance
+        if master_workflow:
+            insert_instance = text("""
+                INSERT INTO workflow_instances 
+                (contract_id, workflow_id, status, current_step, started_at)
+                VALUES (:contract_id, :workflow_id, 'pending', 1, NOW())
+            """)
+            
+            db.execute(insert_instance, {
+                "contract_id": contract_id,
+                "workflow_id": master_workflow.id
+            })
+            
+            db.commit()
+            
+            logger.info(f"✅ Created workflow instance for contract {contract_id} using master workflow {master_workflow.id}")
+            
+            return {
+                "success": True,
+                "instance_exists": False,
+                "instance_created": True,
+                "workflow_id": master_workflow.id,
+                "workflow_name": master_workflow.workflow_name,
+                "is_master": True,
+                "status": "pending",
+                "message": "Master workflow instance created"
+            }
+        
+        # No master workflow exists
+        logger.info(f"ℹ️ No master workflow found for company {current_user.company_id}")
+        return {
+            "success": True,
+            "instance_exists": False,
+            "instance_created": False,
+            "workflow_id": None,
+            "workflow_name": None,
+            "is_master": None,
+            "status": None,
+            "message": "No master workflow configured"
+        }
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"❌ Error ensuring workflow instance: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

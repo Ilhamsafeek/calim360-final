@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 class ApprovalRequest(BaseModel):
     contract_id: int
+    request_type: str
     action: str  # 'approve' or 'reject'
     comments: Optional[str] = None
 
@@ -46,6 +47,7 @@ async def approve_reject_workflow(
             INNER JOIN workflows w ON wi.workflow_id = w.id
             WHERE wi.contract_id = :contract_id
             AND w.company_id = :company_id
+            AND w.is_active=1
             AND wi.status IN ('active', 'in_progress','pending')
             LIMIT 1
         """)
@@ -80,16 +82,36 @@ async def approve_reject_workflow(
                     "next_step": workflow.current_step + 1,
                     "workflow_id": workflow.id
                 })
+
+                logger.info(f"✅ eeeeeeeeeeeeeeeeeeeeee {request.request_type}")
                 
                 # Update contract status to approved
-                update_contract = text("""
-                    UPDATE contracts
-                    SET approval_status = 'approved',
-                        workflow_status = 'completed'
-                    WHERE id = :contract_id
-                """)
-                db.execute(update_contract, {"contract_id": request.contract_id})
+                if request.request_type=="internal_review":
+                    update_contract = text("""
+                        UPDATE contracts
+                        SET approval_status = 'review_completed',
+                            status = 'review_completed',
+                            workflow_status = 'completed'
+                        WHERE id = :contract_id
+                    """)
+                elif request.request_type=="counterparty_review":
+                    update_contract = text("""
+                        UPDATE contracts
+                        SET approval_status = 'counterparty_review_completed',
+                            workflow_status = 'completed'
+                        WHERE id = :contract_id
+                    """)
                 
+                elif request.request_type=="approval":
+                    update_contract = text("""
+                        UPDATE contracts
+                        SET approval_status = 'approved',
+                            workflow_status = 'completed'
+                        WHERE id = :contract_id
+                    """)
+                
+                db.execute(update_contract, {"contract_id": request.contract_id})
+                    
                 message = "Contract fully approved!"
                 
                 # Create notification for contract owner

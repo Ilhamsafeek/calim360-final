@@ -47,6 +47,19 @@
         justify-content: flex-end;
     }
 
+
+    /* Disabled workflow option styles */
+    .disabled {
+        opacity: 0.5 !important;
+        cursor: not-allowed !important;
+        background: #f5f5f5 !important;
+    }
+
+    .disabled input[type="radio"] {
+        cursor: not-allowed !important;
+        pointer-events: none;
+    }
+
     /* Additional styles for workflow integration */
     .workflow-status-bar {
         background: linear-gradient(135deg, rgba(39, 98, 203, 0.05), rgba(115, 180, 224, 0.05));
@@ -2626,7 +2639,7 @@
     </div>
 </div>
 
-<!-- MOD-029: Send for Internal Review Modal -->
+<!-- MOD-029: Send for Internal Review Modal - Enhanced -->
 <div class="modal" id="internalReviewModal">
     <div class="modal-content" style="max-width: 600px;">
         <div class="modal-header">
@@ -2653,45 +2666,57 @@
                     style="background: white; padding: 0 1rem; position: relative; color: var(--text-muted); font-weight: 500; font-size: 1rem;">OR</span>
             </div>
 
-            <div style="margin-bottom: 1.5rem;">
+            <!-- Master Workflow Option -->
+            <div style="margin-bottom: 1.5rem;" id="masterWorkflowContainer">
                 <label
                     style="display: flex; align-items: center; cursor: pointer; padding: 1rem; border: 2px solid var(--border-color); border-radius: 8px; transition: all 0.3s ease;"
-                    onmouseover="this.style.borderColor='var(--primary-color)'; this.style.background='var(--background-light)'"
-                    onmouseout="this.style.borderColor='var(--border-color)'; this.style.background='white'">
+                    id="masterWorkflowLabel"
+                    onmouseover="if(!this.classList.contains('disabled')) { this.style.borderColor='var(--primary-color)'; this.style.background='var(--background-light)'; }"
+                    onmouseout="if(!this.classList.contains('disabled')) { this.style.borderColor='var(--border-color)'; this.style.background='white'; }">
                     <input type="radio" name="reviewOption" id="masterWorkflow" value="masterWorkflow"
                         style="margin-right: 0.75rem; width: 18px; height: 18px; cursor: pointer;">
-                    <div>
+                    <div style="flex: 1;">
                         <span
                             style="font-weight: 600; font-size: 0.95rem; color: var(--text-color); text-decoration: underline;">
                             USE MASTER WORKFLOW
                         </span>
-                        <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);">
+                        <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);"
+                            id="masterWorkflowDesc">
                             Automatically send to predefined reviewers in sequence
                         </p>
                     </div>
-
-
+                    <button type="button" id="masterWorkflowSetupBtn"
+                        style="display: none; margin-left: 1rem; padding: 0.5rem 1rem; background: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 0.85rem; cursor: pointer;"
+                        onclick="event.preventDefault(); event.stopPropagation(); redirectToMasterWorkflowSetup();">
+                        Setup Master Workflow
+                    </button>
                 </label>
             </div>
 
-            <div style="margin-bottom: 1.5rem;">
+            <!-- Custom Workflow Option -->
+            <div style="margin-bottom: 1.5rem;" id="customWorkflowContainer">
                 <label
                     style="display: flex; align-items: center; cursor: pointer; padding: 1rem; border: 2px solid var(--border-color); border-radius: 8px; transition: all 0.3s ease;"
-                    onmouseover="this.style.borderColor='var(--primary-color)'; this.style.background='var(--background-light)'"
-                    onmouseout="this.style.borderColor='var(--border-color)'; this.style.background='white'">
+                    id="customWorkflowLabel"
+                    onmouseover="if(!this.classList.contains('disabled')) { this.style.borderColor='var(--primary-color)'; this.style.background='var(--background-light)'; }"
+                    onmouseout="if(!this.classList.contains('disabled')) { this.style.borderColor='var(--border-color)'; this.style.background='white'; }">
                     <input type="radio" name="reviewOption" id="customWorkflow" value="customWorkflow"
                         style="margin-right: 0.75rem; width: 18px; height: 18px; cursor: pointer;">
-                    <div>
+                    <div style="flex: 1;">
                         <span
                             style="font-weight: 600; font-size: 0.95rem; color: var(--text-color); text-decoration: underline;">
                             USE CUSTOM WORKFLOW
                         </span>
-                        <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);">
-                            Automatically send to predefined reviewers in sequence
+                        <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);"
+                            id="customWorkflowDesc">
+                            Use workflow specific to this contract
                         </p>
                     </div>
-
-
+                    <button type="button" id="customWorkflowSetupBtn"
+                        style="display: none; margin-left: 1rem; padding: 0.5rem 1rem; background: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 0.85rem; cursor: pointer;"
+                        onclick="event.preventDefault(); event.stopPropagation(); openCustomWorkflowSetup();">
+                        Setup Custom Workflow
+                    </button>
                 </label>
             </div>
 
@@ -4310,9 +4335,65 @@
     // =====================================================
     document.addEventListener('DOMContentLoaded', async function () {
         console.log('Loading contract ID:', contractId);
+
+        await ensureWorkflowInstance();
+
+        await checkWorkflowAvailability();
+
         await loadContractData();
         await saveAsDraft();
     });
+
+
+
+    async function ensureWorkflowInstance() {
+
+       
+    try {
+       
+        if (!contractId) {
+            console.warn('No contract ID found');
+            return;
+        }
+        
+        const response = await fetch(`/api/contracts/workflow/ensure-instance/${contractId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getAuthToken()}`
+            }
+        });
+        
+        if (!response.ok) {
+            console.error('Failed to ensure workflow instance');
+            return;
+        }
+
+        const data = await response.json();
+         
+        
+        if (data.instance_created) {
+            console.log('✅ Workflow instance auto-created:', data.workflow_name);
+        } else if (data.instance_exists) {
+            console.log('✅ Workflow instance already exists:', data.workflow_name);
+        } else {
+            console.log('ℹ️ No master workflow configured for company');
+        }
+        
+        // Store workflow info globally for later use
+        window.contractWorkflowInfo = {
+            hasInstance: data.instance_exists || data.instance_created,
+            workflowId: data.workflow_id,
+            workflowName: data.workflow_name,
+            isMaster: data.is_master,
+            status: data.status
+        };
+        
+    } catch (error) {
+        console.error('❌ Error ensuring workflow instance:', error);
+    }
+}
+
 
     // =====================================================
     // DATA LOADING FUNCTIONS
@@ -4440,13 +4521,13 @@
 
                 if ((workflow && workflow.is_my_workflow_turn === true) && (workflow && workflow.status != 'completed')) {
 
-                    actionButtons = `
-        <button class="btn signature-btn" onclick="approveWorkflow(${contract.id})">
-            <i class="ti ti-check"></i> Approve
-        </button>
-        <button class="btn btn-danger" onclick="rejectWorkflow(${contract.id})">
-            <i class="ti ti-x"></i> Reject
-        </button>`;
+                  actionButtons = `
+    <button class="btn signature-btn" onclick="approveWorkflow(${contract.id},'internal_review')">
+        <i class="ti ti-check"></i> Approve
+    </button>
+    <button class="btn btn-danger" onclick="rejectWorkflow(${contract.id})">
+        <i class="ti ti-x"></i> Reject
+    </button>`;
                 } else {
                     actionButtons = getApprovalBadge(current_approver, workflow, 'review');
 
@@ -4454,7 +4535,7 @@
 
             }
 
-             actionButtons += `<button class="workflow-setup-btn" onclick="openWorkflowHistoryModal()" style="display: flex; align-items: center; gap: 0.5rem;">
+            actionButtons += `<button class="workflow-setup-btn" onclick="openWorkflowHistoryModal()" style="display: flex; align-items: center; gap: 0.5rem;">
                                         <i class="ti ti-history"></i> Approval History
                                     </button>`;
         } else if ((contract.status === 'review_completed')) {
@@ -4477,7 +4558,7 @@
 
             if (contract.is_counterparty === true) {
 
-                if (workflow) {
+              
 
                     if ((workflow && workflow.status != 'active')) {
 
@@ -4493,7 +4574,7 @@
                         if ((workflow && workflow.is_my_workflow_turn === true) && (workflow && workflow.status != 'completed')) {
 
                             actionButtons = `
-        <button class="btn signature-btn" onclick="approveWorkflow(${contract.id})">
+        <button class="btn signature-btn" onclick="approveWorkflow(${contract.id},'counterparty_review')">
             <i class="ti ti-check"></i> Approve
         </button>
         <button class="btn btn-danger" onclick="rejectWorkflow(${contract.id})">
@@ -4509,15 +4590,7 @@
 
                     }
 
-                } else {
-
-                    actionButtons = `<span class="comment-count-badge" style="background: rgb(255, 243, 205); color: rgb(133, 100, 4); padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-left: 8px; display: inline-flex; gap: 6px;">
-        <i class="ti ti-clock"></i> Please Setup Workflow to Continue
-    </span>`;
-
-
-
-                }
+             
             }
 
         } else if (contract.status === 'negotiation') {
@@ -4559,7 +4632,7 @@
                 if ((workflow && workflow.is_my_workflow_turn === true) && (workflow && workflow.status != 'completed')) {
 
                     actionButtons = `
-        <button class="btn signature-btn" onclick="approveWorkflow(${contract.id})">
+        <button class="btn signature-btn" onclick="approveWorkflow(${contract.id},'approval')">
             <i class="ti ti-check"></i> Approve
         </button>
         <button class="btn btn-danger" onclick="rejectWorkflow(${contract.id})">
@@ -5101,11 +5174,11 @@ ${contract.content && contract.content.trim() !== '' ?
     // Submit for Review - CONNECTED TO BACKEND
     async function submitForReview(workflow_status) {
 
-        if (workflow_status != 'nothing') {
-            openModal('internalReviewModal');
-        } else {
-            showNotification('Please setup workflow before proceeding', 'warning');
-        }
+        // if (workflow_status != 'nothing') {
+        openModal('internalReviewModal');
+        // } else {
+        // showNotification('Please setup workflow before proceeding', 'warning');
+        // }
 
     }
 
@@ -8377,7 +8450,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
         document.body.style.overflow = 'hidden';
 
         // Load existing workflow data
-        await loadExistingWorkflow();
+        await loadExistingWorkflow('custom');
 
         // If no workflow loaded, add empty step
         if (tbody && tbody.children.length === 0) {
@@ -8394,18 +8467,31 @@ ${(riskAnalysisData.risk_items || []).map(item => `
     }
 
 
-    async function loadExistingWorkflow() {
+
+
+    // Example usage:
+    // loadExistingWorkflow();           // Load any workflow
+    // loadExistingWorkflow('custom');   // Load only custom workflow (is_master=0)
+    // loadExistingWorkflow('master');   // Load only master workflow (is_master=1)
+
+
+    async function loadExistingWorkflow(contractType = null) {
         if (!contractId) {
             console.log('⚠️ No contract ID, skipping workflow load');
             return;
         }
 
-        console.log('📥 Loading workflow for contract:', contractId);
+        // Build URL with optional contract_type parameter
+        let url = `/api/contracts/workflow/${contractId}`;
+        if (contractType) {
+            url += `?contract_type=${contractType}`;
+        }
+
+        console.log(`📥 Loading workflow for contract: ${contractId}, type: ${contractType || 'any'}`);
 
         try {
-            const response = await fetch(`/api/contracts/workflow/${contractId}`);
+            const response = await fetch(url);
             const data = await response.json();
-
             console.log('📦 Workflow API response:', data);
 
             if (data.success && data.workflow) {
@@ -8414,7 +8500,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
                 console.log('📊 Steps:', workflow.steps);
 
                 if (workflow.steps && workflow.steps.length > 0) {
-                    console.log(`📝 Populating ${workflow.steps.length} custom steps`);
+                    console.log(`📝 Populating ${workflow.steps.length} ${workflow.is_master ? 'master' : 'custom'} workflow steps`);
                     populateCustomWorkflowSteps(workflow.steps);
                 }
 
@@ -8427,7 +8513,6 @@ ${(riskAnalysisData.risk_items || []).map(item => `
             showNotification('Could not load workflow', 'warning');
         }
     }
-
 
 
     // STEP 3: ADD this NEW function (resetWorkflowModal)
@@ -10710,6 +10795,14 @@ Generated by CALIM 360 Smart CLM
         return params.get('id');
     }
 
+
+async function openInternalReviewModal() {
+    await checkWorkflowAvailability();
+    openModal('internalReviewModal');
+}
+
+
+
 </script>
 
 
@@ -11100,7 +11193,7 @@ Generated by CALIM 360 Smart CLM
 
 
     // Function to approve workflow
-    async function approveWorkflow(contractId) {
+    async function approveWorkflow(contractId, type=null) {
         if (!confirm("Are you sure you want to approve this contract?")) {
             return;
         }
@@ -11115,6 +11208,7 @@ Generated by CALIM 360 Smart CLM
                 body: JSON.stringify({
                     contract_id: contractId,
                     action: 'approve',
+                    request_type: type,
                     comments: null
                 })
             });
@@ -11241,7 +11335,9 @@ Generated by CALIM 360 Smart CLM
                 body: JSON.stringify({
                     contract_id: contractId,
                     action: 'reject',
+                    request_type: '',
                     comments: comment
+
                 })
             });
 
@@ -11302,6 +11398,7 @@ Generated by CALIM 360 Smart CLM
                 body: JSON.stringify({
                     contract_id: contractId,
                     action: 'reject',
+                    request_type:'',
                     comments: comment
                 })
             });
@@ -11588,6 +11685,138 @@ Generated by CALIM 360 Smart CLM
             }
         }
     });
+
+
+
+
+// =====================================================
+// WORKFLOW AVAILABILITY CHECK
+// =====================================================
+
+let workflowAvailability = {
+    master: { available: false, id: null, name: null },
+    custom: { available: false, id: null, name: null }
+};
+
+/**
+ * Check and update workflow options availability
+ */
+async function checkWorkflowAvailability() {
+    try {
+        
+        const response = await fetch(`/api/contracts/workflow/availability/${contractId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getAuthToken()}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to check workflow availability');
+        }
+
+        const data = await response.json();
+        workflowAvailability = {
+            master: data.master_workflow,
+            custom: data.custom_workflow
+        };
+
+        console.log('✅ Workflow availability checked:', workflowAvailability);
+        updateWorkflowOptions();
+
+    } catch (error) {
+        console.error('❌ Error checking workflow availability:', error);
+        showNotification('Failed to check workflow availability', 'error');
+    }
+}
+
+
+
+/**
+ * Update workflow option UI based on availability
+ */
+function updateWorkflowOptions() {
+    const masterRadio = document.getElementById('masterWorkflow');
+    const masterLabel = document.getElementById('masterWorkflowLabel');
+    const masterDesc = document.getElementById('masterWorkflowDesc');
+    const masterSetupBtn = document.getElementById('masterWorkflowSetupBtn');
+
+    const customRadio = document.getElementById('customWorkflow');
+    const customLabel = document.getElementById('customWorkflowLabel');
+    const customDesc = document.getElementById('customWorkflowDesc');
+    const customSetupBtn = document.getElementById('customWorkflowSetupBtn');
+
+    // Handle Master Workflow
+    if (workflowAvailability.master.available) {
+        // Master workflow is available
+        masterRadio.disabled = false;
+        masterLabel.classList.remove('disabled');
+        masterLabel.style.opacity = '1';
+        masterLabel.style.cursor = 'pointer';
+        masterLabel.style.background = 'white';
+        masterDesc.textContent = `Using: ${workflowAvailability.master.name}`;
+        masterSetupBtn.style.display = 'none';
+    } else {
+        // Master workflow NOT available - show setup option
+        masterRadio.disabled = true;
+        masterRadio.checked = false;
+        masterLabel.classList.add('disabled');
+        masterLabel.style.opacity = '0.5';
+        masterLabel.style.cursor = 'not-allowed';
+        masterLabel.style.background = '#f5f5f5';
+        masterDesc.textContent = 'Master workflow not configured for your company';
+        masterSetupBtn.style.display = 'block';
+    }
+
+    // Handle Custom Workflow
+    if (workflowAvailability.custom.available) {
+        // Custom workflow is available
+        customRadio.disabled = false;
+        customLabel.classList.remove('disabled');
+        customLabel.style.opacity = '1';
+        customLabel.style.cursor = 'pointer';
+        customLabel.style.background = 'white';
+        customDesc.textContent = `Using: ${workflowAvailability.custom.name}`;
+        customSetupBtn.style.display = 'none';
+    } else {
+        // Custom workflow NOT available - show setup option
+        customRadio.disabled = true;
+        customRadio.checked = false;
+        customLabel.classList.add('disabled');
+        customLabel.style.opacity = '0.5';
+        customLabel.style.cursor = 'not-allowed';
+        customLabel.style.background = '#f5f5f5';
+        customDesc.textContent = 'No custom workflow configured for this contract';
+        customSetupBtn.style.display = 'block';
+    }
+}
+
+/**
+ * Redirect to master workflow setup page
+ */
+function redirectToMasterWorkflowSetup() {
+    if (confirm('You will be redirected to the Master Workflow Setup page. Any unsaved changes will be lost. Continue?')) {
+        window.location.href = '/workflow-setup';  // Update with your actual workflow setup page URL
+    }
+}
+
+/**
+ * Open custom workflow setup modal (using existing contractWorkflowModal)
+ */
+function openCustomWorkflowSetup() {
+    // Close the internal review modal
+    closeModal('internalReviewModal');
+    
+    // Open your existing contract workflow modal
+    openModal('contractWorkflowModal');
+    
+    // If your existing modal has any initialization function, call it here
+    // For example: initializeContractWorkflow();
+}
+
+
+
 </script>
 
 {% endblock %}
