@@ -20,7 +20,7 @@ class DocumentParser:
         """Extract text based on file extension"""
         ext = Path(file_path).suffix.lower()
         
-        logger.info(f"📄 Extracting content from: {file_path} (type: {ext})")
+        logger.info(f" Extracting content from: {file_path} (type: {ext})")
         
         if ext == '.pdf':
             return DocumentParser.extract_text_from_pdf(file_path)
@@ -41,21 +41,21 @@ class DocumentParser:
         try:
             result = DocumentParser._extract_with_pdfplumber(file_path)
             if result and len(result.strip()) > 100:
-                logger.info(f"✅ pdfplumber extracted {len(result)} characters")
+                logger.info(f" pdfplumber extracted {len(result)} characters")
                 return result
         except ImportError:
-            logger.warning("⚠️ pdfplumber not installed, falling back to PyPDF2")
+            logger.warning(" pdfplumber not installed, falling back to PyPDF2")
         except Exception as e:
-            logger.warning(f"⚠️ pdfplumber failed: {e}")
+            logger.warning(f" pdfplumber failed: {e}")
         
         # Fallback to PyPDF2
         try:
             result = DocumentParser._extract_with_pypdf2(file_path)
             if result:
-                logger.info(f"✅ PyPDF2 extracted {len(result)} characters")
+                logger.info(f" PyPDF2 extracted {len(result)} characters")
                 return result
         except Exception as e:
-            logger.error(f"❌ PyPDF2 failed: {e}")
+            logger.error(f" PyPDF2 failed: {e}")
         
         return "<p>Unable to extract text from this PDF.</p>"
     
@@ -68,7 +68,7 @@ class DocumentParser:
         
         with pdfplumber.open(file_path) as pdf:
             num_pages = len(pdf.pages)
-            logger.info(f"📄 PDF has {num_pages} pages")
+            logger.info(f" PDF has {num_pages} pages")
             
             for page_num, page in enumerate(pdf.pages, 1):
                 page_content = []
@@ -406,7 +406,7 @@ class DocumentParser:
         with open(file_path, 'rb') as file:
             pdf_reader = PyPDF2.PdfReader(file)
             num_pages = len(pdf_reader.pages)
-            logger.info(f"📄 PDF has {num_pages} pages (PyPDF2 fallback)")
+            logger.info(f" PDF has {num_pages} pages (PyPDF2 fallback)")
             
             for page_num, page in enumerate(pdf_reader.pages, 1):
                 text = page.extract_text()
@@ -470,11 +470,11 @@ class DocumentParser:
                         html_parts.append(html)
             
             result = '\n'.join(html_parts)
-            logger.info(f"✅ DOCX extracted {len(result)} characters")
+            logger.info(f" DOCX extracted {len(result)} characters")
             return result
             
         except Exception as e:
-            logger.error(f"❌ DOCX extraction error: {e}")
+            logger.error(f" DOCX extraction error: {e}")
             return f"<p>Error extracting DOCX: {str(e)}</p>"
     
     @staticmethod

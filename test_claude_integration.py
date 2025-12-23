@@ -10,7 +10,7 @@ result = claude_service.draft_clause(
     party_role="contractor"
 )
 
-print("✅ Claude API Integration Test")
+print(" Claude API Integration Test")
 print(f"Clause Body: {result['clause_body'][:200]}...")
 print(f"Confidence: {result['confidence_score']}")
 print(f"Suggestions: {result['suggestions']}")

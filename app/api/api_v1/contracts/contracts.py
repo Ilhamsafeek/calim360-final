@@ -190,7 +190,7 @@ async def list_contract_templates(
                 "is_active": row[5]
             })
         
-        logger.info(f"✅ Found {len(templates)} templates")
+        logger.info(f" Found {len(templates)} templates")
         
         return {
             "success": True,
@@ -199,7 +199,7 @@ async def list_contract_templates(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching templates: {str(e)}")
+        logger.error(f" Error fetching templates: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch templates: {str(e)}"
@@ -230,14 +230,14 @@ async def create_contract_from_template(
         
         template_id = request.get("template_id")
         
-        # ✅ CRITICAL: Load template content FIRST
+        #  CRITICAL: Load template content FIRST
         template_content = None
         template_content_ar = None
         template_name = None
         template_type = "general"
         
         if template_id:
-            logger.info(f"📄 Loading template ID: {template_id}")
+            logger.info(f" Loading template ID: {template_id}")
             
             # Fetch template with content
             template_query = text("""
@@ -258,12 +258,12 @@ async def create_contract_from_template(
             template_content = template_result[3]
             template_content_ar = template_result[4]
             
-            logger.info(f"✅ Template loaded: {template_name}")
+            logger.info(f" Template loaded: {template_name}")
             logger.info(f"📊 Content length: {len(template_content) if template_content else 0} chars")
             
             # If template has NO content, use meaningful default
             if not template_content or template_content.strip() == "":
-                logger.warning(f"⚠️ Template has no content! Using default structure")
+                logger.warning(f" Template has no content! Using default structure")
                 template_content = f"""
                 <div class="contract-document">
                     <h1>{template_name}</h1>
@@ -273,7 +273,7 @@ async def create_contract_from_template(
                 """
         else:
             # No template - blank contract
-            logger.info("📝 Creating blank contract")
+            logger.info(" Creating blank contract")
             template_content = """
             <div class="contract-document">
                 <h1>New Contract</h1>
@@ -317,14 +317,14 @@ async def create_contract_from_template(
         result = db.execute(insert_query, contract_data)
         contract_id = result.lastrowid
         
-        logger.info(f"✅ Contract created with ID: {contract_id}")
+        logger.info(f" Contract created with ID: {contract_id}")
         
-        # ✅ CRITICAL: Create contract_versions entry with ACTUAL template content
+        #  CRITICAL: Create contract_versions entry with ACTUAL template content
         version_data = {
             "contract_id": contract_id,
             "version_number": 1,
             "version_type": "draft",
-            "contract_content": template_content,  # ✅ ACTUAL CONTENT HERE
+            "contract_content": template_content,  #  ACTUAL CONTENT HERE
             "contract_content_ar": template_content_ar,
             "change_summary": f"Initial contract creation from template: {template_name}" if template_name else "Initial contract creation",
             "is_major_version": False,
@@ -347,7 +347,7 @@ async def create_contract_from_template(
         db.execute(version_insert, version_data)
         db.commit()
         
-        logger.info(f"✅ Contract version created with content length: {len(template_content)}")
+        logger.info(f" Contract version created with content length: {len(template_content)}")
         
         # Return complete contract data
         return {
@@ -363,7 +363,7 @@ async def create_contract_from_template(
         db.rollback()
         raise
     except Exception as e:
-        logger.error(f"❌ Error creating contract: {str(e)}")
+        logger.error(f" Error creating contract: {str(e)}")
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -455,7 +455,7 @@ async def create_contract_from_template(
         
 #         db.commit()
         
-#         logger.info(f"✅ Upload complete: {contract_number}")
+#         logger.info(f" Upload complete: {contract_number}")
         
 #         return {
 #             "success": True,
@@ -471,7 +471,7 @@ async def create_contract_from_template(
 #         raise
 #     except Exception as e:
 #         db.rollback()
-#         logger.error(f"❌ Upload error: {str(e)}")
+#         logger.error(f" Upload error: {str(e)}")
 #         raise HTTPException(
 #             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
 #             detail=f"Failed to upload contract: {str(e)}"
@@ -563,13 +563,13 @@ async def generate_contract_with_ai(
         # Get generated contract content
         generated_content = ai_result["contract_text"]
         
-        logger.info(f"✅ Claude generated {ai_result.get('word_count', 0)} words")
+        logger.info(f" Claude generated {ai_result.get('word_count', 0)} words")
         
         # Validate that selected clauses are included
         for clause_desc in selected_clause_descriptions:
             clause_keyword = clause_desc.split('-')[0].strip().lower()
             if clause_keyword not in generated_content.lower():
-                logger.warning(f"⚠️ Clause '{clause_keyword}' may not be fully included in generated content")
+                logger.warning(f" Clause '{clause_keyword}' may not be fully included in generated content")
         
         # SECOND: Create contract in database
         contract_number = generate_contract_number(db, current_user.company_id)
@@ -603,7 +603,7 @@ async def generate_contract_with_ai(
         contract_id = result.fetchone()[0]
         db.commit()
         
-        logger.info(f"✅ Contract created: {contract_number} (ID: {contract_id})")
+        logger.info(f" Contract created: {contract_number} (ID: {contract_id})")
         
         # THIRD: Save AI-generated content as first version
         clause_summary = ", ".join([c.split('-')[0].strip() for c in selected_clause_descriptions]) if selected_clause_descriptions else "Standard clauses"
@@ -630,7 +630,7 @@ async def generate_contract_with_ai(
         
         db.commit()
         
-        logger.info(f"✅ AI-generated content saved ({len(generated_content)} chars) with {len(selected_clause_descriptions)} clauses")
+        logger.info(f" AI-generated content saved ({len(generated_content)} chars) with {len(selected_clause_descriptions)} clauses")
         
         return {
             "success": True,
@@ -649,7 +649,7 @@ async def generate_contract_with_ai(
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error generating contract with AI: {str(e)}")
+        logger.error(f" Error generating contract with AI: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate contract: {str(e)}"
@@ -1323,7 +1323,7 @@ async def get_contract_editor_data(
                         })
                     
             except Exception as cert_error:
-                logger.warning(f"⚠️ Could not retrieve certificate data: {str(cert_error)}")
+                logger.warning(f" Could not retrieve certificate data: {str(cert_error)}")
                 certificate_data = None
         
         # ===== RETURN RESPONSE =====
@@ -1372,7 +1372,7 @@ async def get_contract_editor_data(
                 "department": current_approver.department if current_approver else None,
                 "step_type": current_approver.step_type if current_approver else None
             } if current_approver else None,
-            "certificate": certificate_data  # ✅ ADDED CERTIFICATE DATA
+            "certificate": certificate_data  #  ADDED CERTIFICATE DATA
         }
         
     except HTTPException:
@@ -1426,14 +1426,14 @@ async def save_contract_draft(
         db.execute(update_contract, {"contract_id": contract_id})
         db.commit()
 
-        # ✅ Store on blockchain WITH ACTIVITY LOGGING
+        #  Store on blockchain WITH ACTIVITY LOGGING
         blockchain_activities = []
         blockchain_success = False
         
         try:
             logger.info(f"🔗 Storing contract {contract_id} on blockchain with activity logging")
             
-            # ✅ USE THE LOGGING VERSION
+            #  USE THE LOGGING VERSION
             blockchain_result = await blockchain_service.store_contract_hash_with_logging(
                 contract_id=contract_id,
                 document_content=content.get("content", ""),
@@ -1445,17 +1445,17 @@ async def save_contract_draft(
             if blockchain_result.get("success"):
                 blockchain_success = True
                 blockchain_activities = blockchain_result.get("activities", [])
-                logger.info(f"✅ Blockchain storage successful with {len(blockchain_activities)} activity steps")
+                logger.info(f" Blockchain storage successful with {len(blockchain_activities)} activity steps")
             else:
-                logger.warning(f"⚠️ Blockchain storage failed: {blockchain_result.get('error')}")
+                logger.warning(f" Blockchain storage failed: {blockchain_result.get('error')}")
                 
         except Exception as blockchain_error:
             # Don't fail the save if blockchain fails
-            logger.error(f"❌ Blockchain storage error (non-critical): {str(blockchain_error)}")
+            logger.error(f" Blockchain storage error (non-critical): {str(blockchain_error)}")
             import traceback
             logger.error(traceback.format_exc())
         
-        # ✅ RETURN ACTIVITIES IN RESPONSE
+        #  RETURN ACTIVITIES IN RESPONSE
         response = {
             "success": True, 
             "message": "Draft saved successfully",
@@ -1464,7 +1464,7 @@ async def save_contract_draft(
             "blockchain_activities": blockchain_activities  # ← This is what frontend needs!
         }
         
-        logger.info(f"📤 Returning response with {len(blockchain_activities)} blockchain activities")
+        logger.info(f" Returning response with {len(blockchain_activities)} blockchain activities")
         return response
         
     except Exception as e:
@@ -1522,7 +1522,7 @@ async def initiate_approval_workflow(
         contract.status = 'approval'
         contract.updated_at = datetime.now()
         
-        logger.info(f"📝 Contract {contract_id} status updated to 'approval'")
+        logger.info(f" Contract {contract_id} status updated to 'approval'")
         
         # Update workflow instance status from 'active' to 'in_progress'
         activate_workflow_query = text("""
@@ -1534,7 +1534,7 @@ async def initiate_approval_workflow(
         
         db.execute(activate_workflow_query, {"contract_id": contract_id})
         
-        logger.info(f"✅ Workflow initiated for contract {contract_id}")
+        logger.info(f" Workflow initiated for contract {contract_id}")
         
         # Create activity log
         try:
@@ -1568,7 +1568,7 @@ async def initiate_approval_workflow(
         raise he
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error initiating approval workflow: {str(e)}")
+        logger.error(f" Error initiating approval workflow: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -1593,7 +1593,7 @@ async def apply_signature(
         signature_method = signature_data.get("signature_method", "draw")
         signature_value = signature_data.get("signature_data")
         
-        logger.info(f"📝 Applying signature: contract_id={contract_id}, signer_type={signer_type}")
+        logger.info(f" Applying signature: contract_id={contract_id}, signer_type={signer_type}")
         
         # STEP 1: Verify contract
         contract_check = text("""
@@ -1607,7 +1607,7 @@ async def apply_signature(
         if not contract:
             raise HTTPException(status_code=404, detail="Contract not found")
         
-        logger.info(f"✅ Contract: {contract.contract_number} - Status: {contract.status}")
+        logger.info(f" Contract: {contract.contract_number} - Status: {contract.status}")
         
         # STEP 2: Check if already signed
         check_existing = text("""
@@ -1746,7 +1746,7 @@ async def apply_signature(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error: {str(e)}")
+        logger.error(f" Error: {str(e)}")
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Failed: {str(e)}")
 
@@ -1862,7 +1862,7 @@ async def execute_contract(
                 "cert_data": json.dumps(certificate_data)
             })
         except Exception as meta_error:
-            logger.warning(f"⚠️ Could not store certificate metadata: {str(meta_error)}")
+            logger.warning(f" Could not store certificate metadata: {str(meta_error)}")
             # Continue - certificate is in response anyway
         
         # Audit log with JSON
@@ -1905,7 +1905,7 @@ async def execute_contract(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error executing contract: {str(e)}")
+        logger.error(f" Error executing contract: {str(e)}")
         logger.exception(e)
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -2024,7 +2024,7 @@ async def setup_contract_workflow(
 ):
     """Setup workflow for a specific contract"""
     try:
-        # ✅ EXTRACT ALL VARIABLES FIRST
+        #  EXTRACT ALL VARIABLES FIRST
         contract_id = workflow_data.get("contract_id")
         workflow_type = workflow_data.get("workflow_type", "custom")
         steps = workflow_data.get("steps", [])
@@ -2034,7 +2034,7 @@ async def setup_contract_workflow(
         logger.info(f"Received {len(steps)} workflow steps")
         
         if workflow_type == "master":
-            # ✅ Use master workflow - ALREADY FILTERED BY COMPANY
+            #  Use master workflow - ALREADY FILTERED BY COMPANY
             logger.info("Using master workflow")
             
             # Get company's master workflow
@@ -2070,7 +2070,7 @@ async def setup_contract_workflow(
                 raise HTTPException(status_code=404, detail="Master workflow not found for your company")
                 
         else:
-            # ✅ CUSTOM WORKFLOW - FIXED VERSION
+            #  CUSTOM WORKFLOW - FIXED VERSION
             logger.info("Creating custom workflow")
             
             # Create workflow record
@@ -2086,7 +2086,7 @@ async def setup_contract_workflow(
             })
             
             workflow_id = result.lastrowid
-            logger.info(f"✅ Created workflow with ID: {workflow_id} for company {current_user.company_id}")
+            logger.info(f" Created workflow with ID: {workflow_id} for company {current_user.company_id}")
             
             # Store departments mapping
             departments_map = {}
@@ -2101,13 +2101,13 @@ async def setup_contract_workflow(
                     assigned_email = step.get("assigned_email", "")
                     department = step.get("department", "")
                     
-                    logger.info(f"📝 Step {step_order}: role={step_label}, email={assigned_email}, dept={department}")
+                    logger.info(f" Step {step_order}: role={step_label}, email={assigned_email}, dept={department}")
                     
                     # Store department in mapping
                     if department:
                         departments_map[str(step_order)] = department
                     
-                    # ✅ Look up user by email - FILTERED BY COMPANY
+                    #  Look up user by email - FILTERED BY COMPANY
                     assignee_user_id = None
                     if assigned_email:
                         user_query = text("""
@@ -2124,11 +2124,11 @@ async def setup_contract_workflow(
                         
                         if user_result:
                             assignee_user_id = user_result.id
-                            logger.info(f"✅ Found user ID {assignee_user_id} for email {assigned_email}")
+                            logger.info(f" Found user ID {assignee_user_id} for email {assigned_email}")
                         else:
-                            logger.warning(f"⚠️ User not found in company for email: {assigned_email}")
+                            logger.warning(f" User not found in company for email: {assigned_email}")
                     
-                    # ✅ Insert step with assignee_user_id AND department
+                    #  Insert step with assignee_user_id AND department
                     step_insert = text("""
                         INSERT INTO workflow_steps
                         (workflow_id, step_number, step_name, step_type, assignee_role, assignee_user_id, department, sla_hours, is_mandatory, created_at)
@@ -2145,11 +2145,11 @@ async def setup_contract_workflow(
                         "department": department
                     })
                     
-                    logger.info(f"✅ Inserted step {step_order} with user_id={assignee_user_id}, department={department}")
+                    logger.info(f" Inserted step {step_order} with user_id={assignee_user_id}, department={department}")
             else:
                 logger.warning("No workflow steps provided")
             
-            # ✅ Update workflow with departments JSON
+            #  Update workflow with departments JSON
             if departments_map:
                 update_workflow = text("""
                     UPDATE workflows 
@@ -2163,7 +2163,7 @@ async def setup_contract_workflow(
                     "workflow_json": workflow_config
                 })
                 
-                logger.info(f"✅ Stored departments mapping: {departments_map}")
+                logger.info(f" Stored departments mapping: {departments_map}")
             
             # Create workflow instance
             instance_query = text("""
@@ -2177,7 +2177,7 @@ async def setup_contract_workflow(
                 "contract_id": contract_id
             })
             
-            logger.info(f"✅ Created workflow instance for contract {contract_id}")
+            logger.info(f" Created workflow instance for contract {contract_id}")
         
         db.commit()
         logger.info("🎉 Workflow setup completed successfully")
@@ -2190,7 +2190,7 @@ async def setup_contract_workflow(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error setting up workflow: {str(e)}")
+        logger.error(f" Error setting up workflow: {str(e)}")
         logger.error(f"Traceback: ", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -2205,7 +2205,7 @@ async def get_contract_workflow(
     try:
         logger.info(f"Fetching workflow for contract {contract_id} - Company: {current_user.company_id}, Type: {contract_type}")
         
-        # ✅ First verify the contract belongs to user's company
+        #  First verify the contract belongs to user's company
         contract_check = text("""
             SELECT id FROM contracts 
             WHERE id = :contract_id 
@@ -2228,7 +2228,7 @@ async def get_contract_workflow(
             is_master_filter = "AND w.is_master = 1"
             logger.info(f"Filtering for master workflows (is_master=1)")
         
-        # ✅ Get workflow instance - FILTERED BY COMPANY and optionally by is_master
+        #  Get workflow instance - FILTERED BY COMPANY and optionally by is_master
         instance_query = text(f"""
             SELECT 
                 wi.id as instance_id,
@@ -2272,7 +2272,7 @@ async def get_contract_workflow(
             except Exception as e:
                 logger.error(f"Error parsing workflow_json: {e}")
         
-        # ✅ Get workflow steps with user information - FILTERED BY COMPANY
+        #  Get workflow steps with user information - FILTERED BY COMPANY
         steps_query = text("""
             SELECT 
                 ws.id,
@@ -2771,7 +2771,7 @@ Please provide a detailed risk analysis in the following JSON format:
 Focus on Qatar-specific legal requirements, QFCRA regulations if applicable, and GCC commercial practices.
 IMPORTANT: Use lowercase for severity levels (critical, high, medium, low)."""
 
-        logger.info(f"📤 Sending risk analysis request to Claude AI")
+        logger.info(f" Sending risk analysis request to Claude AI")
         
         # Call Claude API
         response = claude_service.client.messages.create(
@@ -2785,7 +2785,7 @@ IMPORTANT: Use lowercase for severity levels (critical, high, medium, low)."""
         
         # Extract and parse response
         analysis_text = response.content[0].text
-        logger.info(f"✅ Received risk analysis from Claude AI")
+        logger.info(f" Received risk analysis from Claude AI")
         
         # Try to parse JSON from response
         import re
@@ -2895,7 +2895,7 @@ IMPORTANT: Use lowercase for severity levels (critical, high, medium, low)."""
         })
         db.commit()
         
-        logger.info(f"💾 Risk analysis saved to database for contract {contract_id}")
+        logger.info(f" Risk analysis saved to database for contract {contract_id}")
         
         return {
             "success": True,
@@ -2950,8 +2950,11 @@ async def upload_contract_for_risk_analysis(
 ):
     """Upload contract file and perform immediate AI risk analysis with format preservation"""
     
+
+    claude_service = ClaudeService()
+
     try:
-        logger.info(f"📤 Risk Analysis Upload from user {current_user.email}")
+        logger.info(f" Risk Analysis Upload from user {current_user.email}")
         logger.info(f"📎 File: {file.filename}, Profile: {profile_type}")
         
         # Validate file type
@@ -3022,19 +3025,19 @@ async def upload_contract_for_risk_analysis(
                 })
                 db.commit()
                 
-                logger.info(f"✅ Contract created with number: {contract_number}")
+                logger.info(f" Contract created with number: {contract_number}")
                 break  # Success - exit retry loop
                 
             except Exception as e:
                 db.rollback()
                 if "Duplicate entry" in str(e) and attempt < max_retries - 1:
-                    logger.warning(f"⚠️ Duplicate contract number {contract_number}, retrying... (attempt {attempt + 1})")
+                    logger.warning(f" Duplicate contract number {contract_number}, retrying... (attempt {attempt + 1})")
                     continue  # Retry with next number
                 elif attempt == max_retries - 1:
                     # Last attempt - use timestamp-based unique number
                     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
                     contract_number = f"CNT-{year}-{timestamp[-6:]}"
-                    logger.warning(f"⚠️ Using timestamp-based contract number: {contract_number}")
+                    logger.warning(f" Using timestamp-based contract number: {contract_number}")
                     
                     db.execute(insert_contract, {
                         "contract_number": contract_number,
@@ -3045,7 +3048,7 @@ async def upload_contract_for_risk_analysis(
                         "company_id": current_user.company_id
                     })
                     db.commit()
-                    logger.info(f"✅ Contract created with timestamp-based number: {contract_number}")
+                    logger.info(f" Contract created with timestamp-based number: {contract_number}")
                     break
                 else:
                     raise  # Re-raise if it's not a duplicate error
@@ -3065,7 +3068,7 @@ async def upload_contract_for_risk_analysis(
             raise HTTPException(status_code=500, detail="Failed to create contract")
         
         contract_id = contract_result.id
-        logger.info(f"✅ Contract created with ID: {contract_id}")
+        logger.info(f" Contract created with ID: {contract_id}")
         
         # Create upload directory
         upload_base = os.path.join("app", "uploads", "contracts", str(contract_id))
@@ -3077,12 +3080,12 @@ async def upload_contract_for_risk_analysis(
         with open(file_path, "wb") as f:
             f.write(file_content)
         
-        logger.info(f"💾 File saved to: {file_path}")
+        logger.info(f" File saved to: {file_path}")
         
         # =====================================================
         # EXTRACT TEXT USING DocumentParser (Same as upload-contract)
         # =====================================================
-        logger.info(f"📄 Extracting text from {file_ext} file...")
+        logger.info(f" Extracting text from {file_ext} file...")
         
         # Import DocumentParser
         from app.utils.document_parser import DocumentParser
@@ -3091,10 +3094,10 @@ async def upload_contract_for_risk_analysis(
         extracted_text = DocumentParser.extract_text(str(file_path))
         
         if not extracted_text or len(extracted_text.strip()) < 10:
-            logger.warning(f"⚠️ No text extracted from file, using placeholder")
+            logger.warning(f" No text extracted from file, using placeholder")
             extracted_text = f"<p>Unable to extract text from {file.filename}. Please check the file format.</p>"
         else:
-            logger.info(f"✅ Extracted {len(extracted_text)} characters from document")
+            logger.info(f" Extracted {len(extracted_text)} characters from document")
         
         # Format the extracted content as HTML (same as upload-contract)
         file_size_kb = len(file_content) / 1024
@@ -3117,7 +3120,7 @@ async def upload_contract_for_risk_analysis(
         extracted_text_plain = re.sub('<[^<]+?>', '', extracted_text)
         extracted_text_plain = re.sub(r'\s+', ' ', extracted_text_plain).strip()
         
-        logger.info(f"📝 Extracted: {len(extracted_text_plain)} chars (HTML: {len(html_content)} chars)")
+        logger.info(f" Extracted: {len(extracted_text_plain)} chars (HTML: {len(html_content)} chars)")
         
         # Save contract version with formatted HTML content
         insert_version = text("""
@@ -3138,145 +3141,106 @@ async def upload_contract_for_risk_analysis(
         })
         db.commit()
         
-        logger.info("💾 Contract version saved with preserved formatting")
+        logger.info(" Contract version saved with preserved formatting")
         
         # =====================================================
-        # AI RISK ANALYSIS - Use plain text for analysis
+        # STEP 4: AI-POWERED RISK ANALYSIS WITH CLAUDE
         # =====================================================
-        logger.info("🤖 Starting AI risk analysis with Claude...")
-        
         try:
-            # Check if Claude client is available
-            if not anthropic_client:
-                logger.warning("⚠️ Claude API not available - skipping AI analysis")
-                raise Exception("Claude API not configured")
+            logger.info("Starting AI risk analysis with Claude...")
             
-            # Use plain text for AI analysis (better for token efficiency)
-            content_for_analysis = extracted_text_plain[:8000] if len(extracted_text_plain) > 8000 else extracted_text_plain
+            # Check if Claude service is available
+            if not claude_service or not claude_service.client:
+                logger.warning("Claude service not available - skipping AI analysis")
+                raise Exception("Claude service not initialized")
             
-            claude_prompt = f"""Analyze this contract for legal and business risks. Focus on Qatar construction, oil & gas, and infrastructure sector regulations.
+            # Build risk analysis prompt
+            risk_prompt = f"""You are a contract risk analysis expert specializing in {profile_type} contracts under Qatar jurisdiction.
 
-Contract Type: {profile_type}
-Profile: {profile_type.title()} risk tolerance
+Analyze the following contract text and provide a comprehensive risk assessment.
 
-Contract Content:
-{content_for_analysis}
+**Contract Text:**
+{extracted_text_plain[:8000]}
 
-Provide a comprehensive risk assessment in this exact JSON structure (no markdown, just pure JSON):
+**Analysis Requirements:**
+Analyze from the perspective of: {profile_type}
+Focus on Qatar/QFCRA compliance requirements.
+
+**Provide your analysis in the following JSON format ONLY (no other text):**
 {{
-    "overall_risk_score": <number 0-100>,
-    "risk_level": "<Low|Medium|High|Critical>",
-    "executive_summary": "<2-3 sentence overview of key risks>",
-    "risk_factors": [
+    "overall_score": <number 0-100, where 100 is highest risk>,
+    "risk_level": "<High/Medium/Low>",
+    "executive_summary": "<2-3 sentence summary of key risks>",
+    "high_risks": <count of high severity items>,
+    "medium_risks": <count of medium severity items>,
+    "low_risks": <count of low severity items>,
+    "risk_items": [
         {{
-            "category": "<Payment|Compliance|Liability|Termination|Force Majeure|Dispute Resolution>",
-            "issue": "<specific issue title>",
-            "severity": "<low|medium|high|critical>",
-            "description": "<detailed 1-2 sentence description>",
-            "recommendation": "<specific mitigation strategy>",
-            "clause_reference": "<section or clause reference>"
+            "type": "<Legal/Financial/Operational/Compliance/Termination/Liability>",
+            "issue": "<Brief issue title>",
+            "description": "<Detailed description of the risk>",
+            "severity": "<high/medium/low>",
+            "score": <number 1-100>,
+            "clause_reference": "<Section or clause reference if identifiable>",
+            "mitigation": "<Recommended mitigation strategy>"
         }}
     ],
-    "red_flags": ["<critical issues that need immediate attention>"],
-    "recommendations": ["<actionable recommendations to reduce risk>"],
+    "red_flags": [
+        "<List of critical red flags that need immediate attention>"
+    ],
+    "recommendations": [
+        "<Actionable recommendation 1>",
+        "<Actionable recommendation 2>",
+        "<Actionable recommendation 3>"
+    ],
     "compliance_issues": [
-        {{
-            "regulation": "<Qatar Labor Law|QFCRA|FIDIC|specific regulation>",
-            "issue": "<compliance concern>",
-            "severity": "<low|medium|high>",
-            "recommendation": "<compliance action required>"
-        }}
+        "<QFCRA or Qatar-specific compliance concern>"
     ]
 }}
 
-Focus on: payment terms, liability caps, termination clauses, force majeure, dispute resolution, Qatar-specific compliance, QFCRA regulations, and construction industry standards."""
+Analyze now and respond with ONLY the JSON object:"""
 
-            # Call Claude API
-            response = anthropic_client.messages.create(
-                model="claude-sonnet-4-20250514",
+            # Call Claude API using the service
+            message = claude_service.client.messages.create(
+                model=claude_service.model,
                 max_tokens=4000,
-                messages=[{"role": "user", "content": claude_prompt}]
+                temperature=0.3,
+                messages=[{"role": "user", "content": risk_prompt}]
             )
             
-            ai_response = response.content[0].text
-            logger.info(f"🤖 Claude AI Response: {len(ai_response)} characters")
+            # Extract response text
+            ai_response = message.content[0].text.strip()
+            logger.info(f"Claude response received ({len(ai_response)} chars)")
             
-            # Parse JSON from AI response
-            json_match = re.search(r'\{[\s\S]*\}', ai_response)
-            if json_match:
-                claude_analysis = json.loads(json_match.group())
-                logger.info("✅ Successfully parsed AI JSON response")
-            else:
-                raise ValueError("No valid JSON found in AI response")
+            # Clean up response - remove markdown code blocks if present
+            if ai_response.startswith("```"):
+                ai_response = ai_response.split("```")[1]
+                if ai_response.startswith("json"):
+                    ai_response = ai_response[4:]
+                ai_response = ai_response.strip()
             
-            # Process and format risk items
-            high_risks = 0
-            medium_risks = 0
-            low_risks = 0
-            risk_items = []
+            # Parse JSON response
+            claude_analysis = json.loads(ai_response)
+            logger.info(f"AI analysis parsed successfully")
             
-            # Process risk factors
-            for factor in claude_analysis.get("risk_factors", []):
-                severity = factor.get("severity", "medium").lower()
-                
-                if severity in ["critical", "high"]:
-                    high_risks += 1
-                    risk_score = 85
-                elif severity == "medium":
-                    medium_risks += 1
-                    risk_score = 60
-                else:
-                    low_risks += 1
-                    risk_score = 30
-                
-                risk_items.append({
-                    "type": factor.get("category", "General"),
-                    "issue": factor.get("issue", "Risk Identified"),
-                    "description": factor.get("description", ""),
-                    "severity": severity,
-                    "score": risk_score,
-                    "clause_reference": factor.get("clause_reference", "General"),
-                    "mitigation": factor.get("recommendation", "Review with legal team"),
-                    "likelihood": "High" if severity in ["high", "critical"] else "Medium",
-                    "business_impact": factor.get("category", "General")
-                })
+            # Extract values with defaults
+            overall_risk_score = claude_analysis.get("overall_score", 50)
+            risk_items = claude_analysis.get("risk_items", [])
             
-            # Process compliance issues
-            for issue in claude_analysis.get("compliance_issues", []):
-                severity = issue.get("severity", "medium").lower()
-                
-                if severity in ["critical", "high"]:
-                    high_risks += 1
-                elif severity == "medium":
-                    medium_risks += 1
-                else:
-                    low_risks += 1
-                
-                risk_items.append({
-                    "type": "Compliance",
-                    "issue": f"Compliance: {issue.get('regulation', 'Regulatory Issue')}",
-                    "description": issue.get("issue", ""),
-                    "severity": severity,
-                    "score": 80 if severity == "high" else 60,
-                    "clause_reference": issue.get("regulation", "General"),
-                    "mitigation": issue.get("recommendation", "Ensure compliance"),
-                    "likelihood": "High",
-                    "business_impact": "Regulatory"
-                })
+            # Count risks by severity
+            high_risks = len([r for r in risk_items if r.get("severity", "").lower() == "high"])
+            medium_risks = len([r for r in risk_items if r.get("severity", "").lower() == "medium"])
+            low_risks = len([r for r in risk_items if r.get("severity", "").lower() == "low"])
             
-            # Calculate scores
-            overall_risk_score = claude_analysis.get("overall_risk_score", 50)
-            safety_score = 100 - overall_risk_score
-            
-            # Format final analysis
+            # Format the analysis for storage
             formatted_analysis = {
-                "overall_score": safety_score,
+                "overall_score": overall_risk_score,
                 "risk_score": overall_risk_score,
                 "risk_level": claude_analysis.get("risk_level", "Medium"),
-                "high_risks": high_risks,
-                "medium_risks": medium_risks,
-                "low_risks": low_risks,
-                "executive_summary": claude_analysis.get("executive_summary", "AI risk analysis completed successfully."),
+                "high_risks": high_risks or claude_analysis.get("high_risks", 0),
+                "medium_risks": medium_risks or claude_analysis.get("medium_risks", 0),
+                "low_risks": low_risks or claude_analysis.get("low_risks", 0),
+                "executive_summary": claude_analysis.get("executive_summary", "Contract analyzed for potential risks."),
                 "risk_items": risk_items,
                 "red_flags": claude_analysis.get("red_flags", []),
                 "recommendations": claude_analysis.get("recommendations", []),
@@ -3300,18 +3264,19 @@ Focus on: payment terms, liability caps, termination clauses, force majeure, dis
             })
             db.commit()
             
-            logger.info(f"💾 AI risk analysis saved to database (Risk Score: {overall_risk_score})")
+            logger.info(f"AI risk analysis saved to database (Risk Score: {overall_risk_score})")
             
         except json.JSONDecodeError as json_err:
-            logger.error(f"⚠️ JSON parsing error: {str(json_err)}")
-            # Continue without AI analysis
+            logger.error(f"JSON parsing error: {str(json_err)}")
+            # Continue without AI analysis - contract is still saved
             
         except Exception as ai_error:
-            logger.error(f"⚠️ AI analysis error: {str(ai_error)}")
+            logger.error(f" AI analysis error: {str(ai_error)}")
             import traceback
             logger.error(traceback.format_exc())
             # Continue without AI analysis - user can run it later
         
+        # Return success response
         return {
             "success": True,
             "contract_id": contract_id,
@@ -3327,7 +3292,7 @@ Focus on: payment terms, liability caps, termination clauses, force majeure, dis
         raise he
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error in risk analysis upload: {str(e)}")
+        logger.error(f" Error in risk analysis upload: {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
@@ -4032,7 +3997,7 @@ async def send_to_counterparty(
         raise he
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error sending to counter-party: {str(e)}")
+        logger.error(f" Error sending to counter-party: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/quick-approve")
@@ -4058,7 +4023,7 @@ async def quick_approve_contract(
         contract.status = 'negotiation_completed'
         contract.updated_at = datetime.now()
         
-        # ✅ STEP 1: Mark current user's (counter-party) workflow instance as 'completed'
+        #  STEP 1: Mark current user's (counter-party) workflow instance as 'completed'
         complete_counterparty_workflow = text("""
             UPDATE workflow_instances wi
             INNER JOIN workflows w ON wi.workflow_id = w.id
@@ -4074,9 +4039,9 @@ async def quick_approve_contract(
             "counterparty_company_id": current_user.company_id
         })
         
-        logger.info(f"✅ Completed counter-party workflow for company {current_user.company_id}")
+        logger.info(f" Completed counter-party workflow for company {current_user.company_id}")
         
-        # ✅ STEP 2: Activate initiator's workflow instance to 'active'
+        #  STEP 2: Activate initiator's workflow instance to 'active'
         activate_initiator_workflow = text("""
             UPDATE workflow_instances wi
             INNER JOIN workflows w ON wi.workflow_id = w.id
@@ -4092,7 +4057,7 @@ async def quick_approve_contract(
             "initiator_company_id": initiator_company_id
         })
         
-        logger.info(f"✅ Activated initiator workflow for company {initiator_company_id}")
+        logger.info(f" Activated initiator workflow for company {initiator_company_id}")
         
         # Create activity log
         try:
@@ -4112,7 +4077,7 @@ async def quick_approve_contract(
         
         db.commit()
         
-        logger.info(f"✅ Contract {contract_id} quick approved by user {current_user.id}")
+        logger.info(f" Contract {contract_id} quick approved by user {current_user.id}")
         
         # TODO: Send notification to initiator
         # send_notification_to_initiator(contract)
@@ -4127,7 +4092,7 @@ async def quick_approve_contract(
         raise he
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error approving contract: {str(e)}")
+        logger.error(f" Error approving contract: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -4373,9 +4338,9 @@ Begin your analysis now. Respond with ONLY the valid JSON object."""
             try:
                 result = json.loads(cleaned_text)
             except json.JSONDecodeError as json_err:
-                logger.error(f"❌ Initial JSON parse failed: {str(json_err)}")
-                logger.error(f"📄 Error at line {json_err.lineno}, column {json_err.colno}")
-                logger.error(f"📄 Problematic section: {cleaned_text[max(0, json_err.pos-100):json_err.pos+100]}")
+                logger.error(f" Initial JSON parse failed: {str(json_err)}")
+                logger.error(f" Error at line {json_err.lineno}, column {json_err.colno}")
+                logger.error(f" Problematic section: {cleaned_text[max(0, json_err.pos-100):json_err.pos+100]}")
                 
                 # Try additional cleanup
                 # Replace common problematic patterns
@@ -4385,7 +4350,7 @@ Begin your analysis now. Respond with ONLY the valid JSON object."""
                 
                 # Try parsing again
                 result = json.loads(cleaned_text)
-                logger.info("✅ Successfully parsed after additional cleanup")
+                logger.info(" Successfully parsed after additional cleanup")
             
             # Validate response structure
             if "clauses_identified" not in result:
@@ -4398,7 +4363,7 @@ Begin your analysis now. Respond with ONLY the valid JSON object."""
                 logger.warning("No clauses identified by AI, using fallback")
                 raise ValueError("No clauses identified in the contract")
             
-            logger.info(f"✅ Successfully identified {len(clauses)} clauses")
+            logger.info(f" Successfully identified {len(clauses)} clauses")
             
             # Sanitize all text fields to ensure JSON safety
             for idx, clause in enumerate(clauses):
@@ -4497,21 +4462,21 @@ Begin your analysis now. Respond with ONLY the valid JSON object."""
             }
             
         except json.JSONDecodeError as e:
-            logger.error(f"❌ JSON parsing error after all attempts: {str(e)}")
-            logger.error(f"📄 Response text (first 1000 chars): {cleaned_text[:1000]}")
+            logger.error(f" JSON parsing error after all attempts: {str(e)}")
+            logger.error(f" Response text (first 1000 chars): {cleaned_text[:1000]}")
             logger.error(f"📍 Error location: line {e.lineno}, column {e.colno}, position {e.pos}")
-            logger.warning("⚠️ Falling back to pattern matching analysis")
+            logger.warning(" Falling back to pattern matching analysis")
             return get_fallback_clause_analysis(contract_text)
             
         except Exception as e:
-            logger.error(f"❌ Claude API error: {str(e)}")
-            logger.warning("⚠️ Falling back to pattern matching analysis")
+            logger.error(f" Claude API error: {str(e)}")
+            logger.warning(" Falling back to pattern matching analysis")
             return get_fallback_clause_analysis(contract_text)
     
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error in full contract analysis: {str(e)}")
+        logger.error(f" Error in full contract analysis: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 
@@ -4687,7 +4652,7 @@ async def ensure_workflow_instance(
         }).fetchone()
         
         if existing_instance:
-            logger.info(f"✅ Workflow instance already exists for contract {contract_id}")
+            logger.info(f" Workflow instance already exists for contract {contract_id}")
             return {
                 "success": True,
                 "instance_exists": True,
@@ -4727,7 +4692,7 @@ async def ensure_workflow_instance(
             
             db.commit()
             
-            logger.info(f"✅ Created workflow instance for contract {contract_id} using master workflow {master_workflow.id}")
+            logger.info(f" Created workflow instance for contract {contract_id} using master workflow {master_workflow.id}")
             
             return {
                 "success": True,
@@ -4755,5 +4720,5 @@ async def ensure_workflow_instance(
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error ensuring workflow instance: {str(e)}")
+        logger.error(f" Error ensuring workflow instance: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

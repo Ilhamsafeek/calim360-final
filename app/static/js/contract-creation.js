@@ -39,10 +39,10 @@ async function initializeContractCreation() {
         // Load projects for save modal
         await loadProjects();
 
-        console.log('✅ Initialization complete');
+        console.log(' Initialization complete');
 
     } catch (error) {
-        console.error('❌ Initialization error:', error);
+        console.error(' Initialization error:', error);
         showNotification('Failed to initialize contract creation', 'error');
     }
 }
@@ -173,7 +173,7 @@ function bindEventListeners() {
         removeFileBtn.addEventListener('click', removeFile);
     }
 
-    console.log('✅ Event listeners bound');
+    console.log(' Event listeners bound');
 }
 
 // =====================================================
@@ -197,7 +197,7 @@ function handleContractTypeChange(event) {
             aiHint.classList.add('success');
         }
 
-        console.log('✅ AI Assistant enabled for contract type:', selectedContractType);
+        console.log(' AI Assistant enabled for contract type:', selectedContractType);
     } else {
         // Disable if no selection
         if (aiAssistantToggle) {
@@ -223,7 +223,7 @@ function toggleAiAssistant() {
     const toggle = document.getElementById('aiAssistantToggle');
 
     if (!panel || !toggle) {
-        console.error('❌ AI Assistant elements not found');
+        console.error(' AI Assistant elements not found');
         return;
     }
 
@@ -235,7 +235,7 @@ function toggleAiAssistant() {
         // Update button appearance
         toggle.innerHTML = '<i class="ti ti-sparkles"></i> AI Assistant (Open)';
 
-        console.log('✅ AI Assistant panel opened');
+        console.log(' AI Assistant panel opened');
     } else {
         // Close panel
         panel.style.display = 'none';
@@ -244,7 +244,7 @@ function toggleAiAssistant() {
         // Update button appearance
         toggle.innerHTML = '<i class="ti ti-sparkles"></i> AI Assistant';
 
-        console.log('✅ AI Assistant panel closed');
+        console.log(' AI Assistant panel closed');
     }
 }
 
@@ -261,7 +261,7 @@ function hideAiAssistant() {
         toggle.innerHTML = '<i class="ti ti-sparkles"></i> AI Assistant';
     }
 
-    console.log('✅ AI Assistant hidden');
+    console.log(' AI Assistant hidden');
 }
 
 function buildAIPrompt() {
@@ -292,7 +292,7 @@ function buildAIPrompt() {
         fullPrompt += `. Include the following clauses: ${selectedClauses.map(c => c.replace(/_/g, ' ')).join(', ')}`;
     }
 
-    console.log('✅ Built AI prompt:', fullPrompt);
+    console.log(' Built AI prompt:', fullPrompt);
 
     return fullPrompt;
 }
@@ -320,7 +320,7 @@ async function loadTemplates() {
         }
 
         const data = await response.json();
-        console.log('✅ Templates loaded:', data);
+        console.log(' Templates loaded:', data);
 
         // Hide loading state
         if (loadingTemplates) loadingTemplates.style.display = 'none';
@@ -335,15 +335,15 @@ async function loadTemplates() {
                 const templateCard = createTemplateCard(template);
                 templateGrid.appendChild(templateCard);
             });
-            console.log(`✅ Rendered ${data.templates.length} templates`);
+            console.log(` Rendered ${data.templates.length} templates`);
         } else {
             // Show no templates message
             if (noTemplates) noTemplates.style.display = 'flex';
-            console.log('⚠️ No templates available');
+            console.log(' No templates available');
         }
 
     } catch (error) {
-        console.error('❌ Error loading templates:', error);
+        console.error(' Error loading templates:', error);
 
         const loadingTemplates = document.getElementById('loadingTemplates');
         if (loadingTemplates) loadingTemplates.style.display = 'none';
@@ -443,7 +443,7 @@ function selectTemplate(element) {
     element.classList.add('selected');
     selectedTemplate = templateId;
 
-    console.log('✅ Template ID:', templateId);
+    console.log(' Template ID:', templateId);
 
     // Show preview button
     const previewBtn = document.getElementById('previewBtn');
@@ -474,11 +474,11 @@ async function loadProjects() {
         }
 
         const data = await response.json();
-        console.log('✅ Projects loaded:', data);
+        console.log(' Projects loaded:', data);
         populateProjectSelect(data.projects || []);
 
     } catch (error) {
-        console.error('❌ Error loading projects:', error);
+        console.error(' Error loading projects:', error);
     }
 }
 
@@ -506,7 +506,7 @@ function populateProjectSelect(projects) {
     createOption.style.color = 'var(--primary-color)';
     projectSelect.appendChild(createOption);
 
-    console.log(`✅ Populated ${projects.length} projects`);
+    console.log(` Populated ${projects.length} projects`);
 
     // 🔥 ADD EVENT LISTENER - Add these 2 lines
     projectSelect.removeEventListener('change', handleProjectSelectChange);
@@ -657,7 +657,7 @@ function handleFile(file) {
         actionHint.textContent = `File ready: ${file.name}`;
     }
 
-    console.log('✅ File ready for upload');
+    console.log(' File ready for upload');
 }
 
 function removeFile() {
@@ -688,7 +688,7 @@ function openModal(modalId) {
     console.log('🔓 Opening modal:', modalId);
     const modal = document.getElementById(modalId);
     if (!modal) {
-        console.error('❌ Modal not found:', modalId);
+        console.error(' Modal not found:', modalId);
         return;
     }
 
@@ -705,14 +705,14 @@ function openModal(modalId) {
     document.body.setAttribute('style', 'overflow: hidden !important;');
     document.body.classList.add('modal-open');
 
-    console.log('✅ Modal opened successfully');
+    console.log(' Modal opened successfully');
 }
 
 function closeModal(modalId) {
     console.log('🔒 Closing modal:', modalId);
     const modal = document.getElementById(modalId);
     if (!modal) {
-        console.error('❌ Modal not found:', modalId);
+        console.error(' Modal not found:', modalId);
         return;
     }
 
@@ -732,7 +732,7 @@ function closeModal(modalId) {
     const form = modal.querySelector('form');
     if (form) form.reset();
 
-    console.log('✅ Modal closed successfully');
+    console.log(' Modal closed successfully');
 }
 
 // ESC key handler
@@ -842,7 +842,7 @@ function openAIPromptModal() {
 }
 
 function applyClauseSelection() {
-    console.log('✅ Applying clause selection...');
+    console.log(' Applying clause selection...');
 
     // Clear previous selections
     selectedClauses = [];
@@ -912,7 +912,7 @@ function getClauseSelections() {
             console.log(`  ✓ Preparing clause: ${clauseKey}`);
         });
     } else {
-        console.warn('⚠️ No clauses selected by user');
+        console.warn(' No clauses selected by user');
     }
 
     console.log(`📊 Returning ${clauseSelectionArray.length} clauses for API`);
@@ -981,7 +981,7 @@ async function proceedToNext() {
                 }
                 return;
             }
-            console.log('✅ Template validation passed');
+            console.log(' Template validation passed');
 
         } else if (selectedCreationMethod === 'upload') {
             console.log('Validating file upload...');
@@ -994,7 +994,7 @@ async function proceedToNext() {
                 }
                 return;
             }
-            console.log('✅ Upload validation passed');
+            console.log(' Upload validation passed');
 
         } else if (selectedCreationMethod === 'ai') {
             console.log('Validating AI generation...');
@@ -1022,7 +1022,7 @@ async function proceedToNext() {
                 return;
             }
 
-            console.log('✅ AI validation passed');
+            console.log(' AI validation passed');
             console.log('  Full prompt:', fullPrompt);
         }
 
@@ -1035,10 +1035,10 @@ async function proceedToNext() {
         // Open save contract modal
         console.log('📂 Opening save modal...');
         openModal('saveContractModal');
-        console.log('✅ Modal opened');
+        console.log(' Modal opened');
 
     } catch (error) {
-        console.error('❌ Error in proceedToNext:', error);
+        console.error(' Error in proceedToNext:', error);
 
         // Re-enable button
         const proceedBtn = document.getElementById('proceedBtn');
@@ -1063,7 +1063,7 @@ async function saveContract() {
     const originalButtonHTML = '<i class="ti ti-device-floppy"></i> Save & Continue';
     
     try {
-        console.log('💾 Starting contract save process...');
+        console.log(' Starting contract save process...');
         console.log('Current method:', selectedCreationMethod);
         console.log('Selected template:', selectedTemplate);
         console.log('Uploaded file:', uploadedFile);
@@ -1074,7 +1074,7 @@ async function saveContract() {
         const tagsInput = document.getElementById('tagsInput');
 
         if (!contractNameInput || !projectSelect) {
-            console.error('❌ Form elements not found');
+            console.error(' Form elements not found');
             showNotification('Form elements not found. Please refresh the page.', 'error');
             return;
         }
@@ -1109,7 +1109,7 @@ async function saveContract() {
 
         } else if (selectedCreationMethod === 'upload' && uploadedFile) {
             // Upload and create
-            console.log('📤 Uploading contract file...');
+            console.log(' Uploading contract file...');
             const formData = new FormData();
             formData.append('file', uploadedFile);
             formData.append('contract_title', contractName);
@@ -1166,7 +1166,7 @@ async function saveContract() {
 
         } else {
             // Standard contract creation
-            console.log('📝 Creating standard contract...');
+            console.log(' Creating standard contract...');
             
             const contractData = {
                 contract_title: contractName,
@@ -1180,7 +1180,7 @@ async function saveContract() {
                 status: 'draft'
             };
 
-            console.log('📤 Sending contract data:', contractData);
+            console.log(' Sending contract data:', contractData);
 
             const response = await authenticatedFetch('/api/contracts/', {
                 method: 'POST',
@@ -1204,7 +1204,7 @@ async function saveContract() {
             throw new Error('Contract created but no ID returned from server');
         }
 
-        console.log('✅ Contract created with ID:', contractId);
+        console.log(' Contract created with ID:', contractId);
 
         // Hide loader
         hideLoader();
@@ -1229,7 +1229,7 @@ async function saveContract() {
         return contractId;
 
     } catch (error) {
-        console.error('❌ Error saving contract:', error);
+        console.error(' Error saving contract:', error);
         
         // Hide loader
         hideLoader();
@@ -1275,7 +1275,7 @@ function openCreateProjectModal() {
     
     const modal = document.getElementById('createProjectModal');
     if (!modal) {
-        console.error('❌ Create project modal not found');
+        console.error(' Create project modal not found');
         showNotification('Create project modal not found. Please refresh the page.', 'error');
         return;
     }
@@ -1322,7 +1322,7 @@ function generateProjectCode() {
 
 async function createNewProject() {
     try {
-        console.log('📝 Creating new project...');
+        console.log(' Creating new project...');
         
         const titleInput = document.getElementById('newProjectTitle');
         const codeInput = document.getElementById('newProjectCode');
@@ -1372,7 +1372,7 @@ async function createNewProject() {
         }
         
         const result = await response.json();
-        console.log('✅ Project created:', result);
+        console.log(' Project created:', result);
         
         hideLoader();
         showNotification('Project created successfully!', 'success');
@@ -1412,7 +1412,7 @@ async function createContractFromTemplate(templateId) {
             tags: []
         };
 
-        console.log('📤 Creating contract:', contractData);
+        console.log(' Creating contract:', contractData);
 
         // Create the contract
         const response = await authenticatedFetch('/api/contracts/', {
@@ -1429,13 +1429,13 @@ async function createContractFromTemplate(templateId) {
         }
 
         const result = await response.json();
-        console.log('✅ Contract created:', result);
+        console.log(' Contract created:', result);
 
         // CRITICAL: Check for ID in response
         const contractId = result.id || result.contract?.id;
 
         if (!contractId) {
-            console.error('❌ Response missing ID:', result);
+            console.error(' Response missing ID:', result);
             throw new Error('Contract created but no ID returned from server');
         }
 
@@ -1450,7 +1450,7 @@ async function createContractFromTemplate(templateId) {
         return contractId;
 
     } catch (error) {
-        console.error('❌ Error creating contract from template:', error);
+        console.error(' Error creating contract from template:', error);
         hideLoader();
         showNotification(error.message || 'Failed to create contract', 'error');
         return null;
@@ -1684,4 +1684,4 @@ window.openCreateProjectModal = openCreateProjectModal;
 window.closeCreateProjectModal = closeCreateProjectModal;  
 window.createNewProject = createNewProject;              
 
-console.log('✅ Contract creation script loaded successfully with AI Assistant');
+console.log(' Contract creation script loaded successfully with AI Assistant');

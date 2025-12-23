@@ -137,7 +137,7 @@ async def get_blockchain_activity(
         # =====================================================
         # 6. Return Complete Response
         # =====================================================
-        logger.info(f"✅ Retrieved {len(audit_logs)} blockchain activities for contract {contract_id}")
+        logger.info(f" Retrieved {len(audit_logs)} blockchain activities for contract {contract_id}")
         
         return {
             "success": True,
@@ -149,7 +149,7 @@ async def get_blockchain_activity(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching blockchain activity: {str(e)}")
+        logger.error(f" Error fetching blockchain activity: {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(
@@ -215,7 +215,7 @@ async def get_recent_blockchain_activity(
                 "contract_title": row.contract_title
             })
         
-        logger.info(f"✅ Retrieved {len(activities)} recent blockchain activities")
+        logger.info(f" Retrieved {len(activities)} recent blockchain activities")
         
         return {
             "success": True,
@@ -224,7 +224,7 @@ async def get_recent_blockchain_activity(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching recent activity: {str(e)}")
+        logger.error(f" Error fetching recent activity: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error fetching recent activity: {str(e)}"
@@ -279,7 +279,7 @@ async def get_blockchain_statistics(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching blockchain statistics: {str(e)}")
+        logger.error(f" Error fetching blockchain statistics: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error fetching blockchain statistics: {str(e)}"

@@ -14,7 +14,7 @@ with engine.connect() as conn:
     obligation = result.fetchone()
     
     if obligation:
-        print(f"✅ Obligation {obligation_id} EXISTS:")
+        print(f" Obligation {obligation_id} EXISTS:")
         print(f"   Title: {obligation[1]}")
         print(f"   Contract ID: {obligation[2]}")
         
@@ -26,9 +26,9 @@ with engine.connect() as conn:
                 {"id": obligation_id}
             )
             conn.commit()
-            print(f"✅ Successfully deleted! Rows affected: {result.rowcount}")
+            print(f" Successfully deleted! Rows affected: {result.rowcount}")
         except Exception as e:
-            print(f"❌ Failed: {e}")
+            print(f" Failed: {e}")
             conn.rollback()
     else:
-        print(f"❌ Obligation {obligation_id} does NOT exist")
+        print(f" Obligation {obligation_id} does NOT exist")

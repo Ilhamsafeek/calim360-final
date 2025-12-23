@@ -513,7 +513,7 @@ let allUsers = []; // Store all users for quick lookup
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('✅ Master Workflow page loaded');
+    console.log(' Master Workflow page loaded');
     loadAllUsers();
     loadWorkflowData();
 });
@@ -525,10 +525,10 @@ async function loadAllUsers() {
         if (response.ok) {
             const data = await response.json();
             allUsers = data.users || [];
-            console.log(`✅ Loaded ${allUsers.length} users`);
+            console.log(` Loaded ${allUsers.length} users`);
         }
     } catch (error) {
-        console.error('❌ Error loading users:', error);
+        console.error(' Error loading users:', error);
     }
 }
 
@@ -554,7 +554,7 @@ async function loadWorkflowData() {
             renderWorkflowSteps();
         }
     } catch (error) {
-        console.error('❌ Error loading workflow:', error);
+        console.error(' Error loading workflow:', error);
         renderWorkflowSteps();
     }
 }
@@ -599,7 +599,7 @@ function populateWorkflowFromDatabase(workflowData) {
             });
         });
         stepCount = workflowSteps.length;
-        console.log(`✅ Populated ${stepCount} steps:`, workflowSteps);
+        console.log(` Populated ${stepCount} steps:`, workflowSteps);
     }
 
     renderWorkflowSteps();
@@ -615,7 +615,7 @@ function renderWorkflowSteps() {
         tbody.appendChild(createStepRow(step, index));
     });
 
-    console.log(`✅ Rendered ${workflowSteps.length} workflow steps`);
+    console.log(` Rendered ${workflowSteps.length} workflow steps`);
 }
 
 // Create step row
@@ -887,7 +887,7 @@ async function saveWorkflow() {
     if (!validateWorkflow()) return;
 
     const workflowData = collectWorkflowData();
-    console.log('💾 Saving workflow:', workflowData);
+    console.log(' Saving workflow:', workflowData);
     console.log('📋 Steps data:', JSON.stringify(workflowData.steps, null, 2));
 
     try {
@@ -901,7 +901,7 @@ async function saveWorkflow() {
 
         if (response.ok) {
             const result = await response.json();
-            console.log('✅ Save successful:', result);
+            console.log(' Save successful:', result);
             showNotification('Master workflow saved successfully', 'success');
             
             // Reload the workflow data to show what was saved
@@ -910,11 +910,11 @@ async function saveWorkflow() {
             }, 500);
         } else {
             const error = await response.json();
-            console.error('❌ Server error response:', error);
+            console.error(' Server error response:', error);
             showNotification('Error: ' + (error.detail || 'Failed to save workflow'), 'error');
         }
     } catch (error) {
-        console.error('❌ Error:', error);
+        console.error(' Error:', error);
         showNotification('Error saving workflow. Please try again.', 'error');
     }
 }

@@ -28,15 +28,15 @@ class ChatbotClaudeService:
         try:
             api_key = settings.CLAUDE_API_KEY
             if not api_key:
-                logger.warning("⚠️ CLAUDE_API_KEY not set - chatbot will use mock responses")
+                logger.warning(" CLAUDE_API_KEY not set - chatbot will use mock responses")
                 self.client = None
                 self.model = "mock-model"
             else:
                 self.client = Anthropic(api_key=api_key)
                 self.model = getattr(settings, 'CLAUDE_MODEL', 'claude-sonnet-4-20250514')
-                logger.info(f"✅ Chatbot Claude AI initialized with model: {self.model}")
+                logger.info(f" Chatbot Claude AI initialized with model: {self.model}")
         except Exception as e:
-            logger.error(f"❌ Failed to initialize chatbot Claude client: {str(e)}")
+            logger.error(f" Failed to initialize chatbot Claude client: {str(e)}")
             self.client = None
             self.model = "mock-model"
         
@@ -115,7 +115,7 @@ class ChatbotClaudeService:
             # Calculate confidence score
             confidence = self._calculate_confidence_score(response, len(response_text))
             
-            logger.info(f"✅ Chatbot response generated: {tokens_used} tokens in {processing_time}ms")
+            logger.info(f" Chatbot response generated: {tokens_used} tokens in {processing_time}ms")
             
             return {
                 "success": True,
@@ -130,7 +130,7 @@ class ChatbotClaudeService:
             }
             
         except Exception as e:
-            logger.error(f"❌ Chatbot Claude API error: {str(e)}")
+            logger.error(f" Chatbot Claude API error: {str(e)}")
             # Return fallback response instead of raising exception
             return self._generate_mock_response(user_message, tone, language)
     
@@ -286,7 +286,7 @@ Respond in clear, professional English with these standards:
         context_section = ""
         if contract_context:
             context_section = f"""
-**📄 ACTIVE CONTRACT CONTEXT**
+** ACTIVE CONTRACT CONTEXT**
 
 You have access to specific contract information for this conversation:
 
@@ -389,51 +389,51 @@ Provide expert guidance on contract lifecycle management, legal compliance, risk
 You have expert-level knowledge in:
 
 ### **Legal & Compliance**
-✅ Qatar Civil Code (Law No. 22 of 2004)
-✅ Qatar Financial Centre Regulatory Authority (QFCRA) regulations
-✅ Qatar Commercial Law and Contract Law
-✅ FIDIC Contract Standards (Red, Yellow, Silver Books)
-✅ Construction contract law and engineering agreements
-✅ International contract law principles
-✅ Dispute resolution mechanisms (arbitration, mediation, litigation)
-✅ E-signature legal validity (Qatar Electronic Transactions Law)
+ Qatar Civil Code (Law No. 22 of 2004)
+ Qatar Financial Centre Regulatory Authority (QFCRA) regulations
+ Qatar Commercial Law and Contract Law
+ FIDIC Contract Standards (Red, Yellow, Silver Books)
+ Construction contract law and engineering agreements
+ International contract law principles
+ Dispute resolution mechanisms (arbitration, mediation, litigation)
+ E-signature legal validity (Qatar Electronic Transactions Law)
 
 ### **Contract Management**
-✅ Contract drafting, review, and negotiation
-✅ Clause analysis and risk identification
-✅ Contract lifecycle stages (initiation → execution → renewal/termination)
-✅ Template management and clause library utilization
-✅ Version control and document management
-✅ Obligation tracking and compliance monitoring
-✅ Amendment and addendum management
-✅ Contract performance monitoring
+ Contract drafting, review, and negotiation
+ Clause analysis and risk identification
+ Contract lifecycle stages (initiation → execution → renewal/termination)
+ Template management and clause library utilization
+ Version control and document management
+ Obligation tracking and compliance monitoring
+ Amendment and addendum management
+ Contract performance monitoring
 
 ### **Workflow & Process**
-✅ Approval workflow design and optimization
-✅ Role-based access control (RBAC) configuration
-✅ Master workflow vs. bespoke workflow selection
-✅ Internal review processes
-✅ Counterparty collaboration workflows
-✅ Escalation procedures
-✅ SLA management and deadline tracking
+ Approval workflow design and optimization
+ Role-based access control (RBAC) configuration
+ Master workflow vs. bespoke workflow selection
+ Internal review processes
+ Counterparty collaboration workflows
+ Escalation procedures
+ SLA management and deadline tracking
 
 ### **Technology Integration**
-✅ DocuSign e-signature integration
-✅ Hyperledger Fabric blockchain audit trails
-✅ Qatar Government APIs (QDX) for QID/CR validation
-✅ Document encryption and secure storage
-✅ Real-time collaboration features
-✅ Automated notification systems
+ DocuSign e-signature integration
+ Hyperledger Fabric blockchain audit trails
+ Qatar Government APIs (QDX) for QID/CR validation
+ Document encryption and secure storage
+ Real-time collaboration features
+ Automated notification systems
 
 ### **Qatar-Specific Expertise**
-✅ Qatar company registration (CR) requirements
-✅ Qatar ID (QID) validation procedures
-✅ Ministry of Justice requirements
-✅ Qatar Construction Standards
-✅ Local business customs and practices
-✅ Arabic contract interpretation
-✅ Qatar labor law considerations
-✅ Tax and VAT implications in Qatar
+ Qatar company registration (CR) requirements
+ Qatar ID (QID) validation procedures
+ Ministry of Justice requirements
+ Qatar Construction Standards
+ Local business customs and practices
+ Arabic contract interpretation
+ Qatar labor law considerations
+ Tax and VAT implications in Qatar
 
 ---
 
@@ -478,8 +478,8 @@ You have expert-level knowledge in:
    - Keep paragraphs concise (2-4 sentences max)
 
 3. **Key Considerations** (if applicable)
-   - **⚠️ Risks**: Highlight any legal, financial, or compliance risks
-   - **✅ Best Practices**: Recommend optimal approaches
+   - ** Risks**: Highlight any legal, financial, or compliance risks
+   - ** Best Practices**: Recommend optimal approaches
    - **📌 Important Notes**: Critical information to remember
 
 4. **Action Items** (if applicable)
@@ -495,11 +495,11 @@ You have expert-level knowledge in:
 ### **Visual Elements:**
 
 Use these emoji icons strategically:
-- ⚠️ **Warnings & Risks**
-- ✅ **Approvals & Best Practices**
+-  **Warnings & Risks**
+-  **Approvals & Best Practices**
 - 📌 **Important Notes**
 - 🔍 **Details & Analysis**
-- 📄 **Document References**
+-  **Document References**
 - 👤 **User/Role References**
 - 🌐 **External Links/APIs**
 - 🔐 **Security & Compliance**
@@ -618,33 +618,33 @@ Include subtle confidence indicators:
 
 ---
 
-## ⚠️ CRITICAL RESPONSE RULES
+##  CRITICAL RESPONSE RULES
 
 ### **Always:**
-✅ Start with a direct answer to the question
-✅ Use proper headers and formatting for scannability
-✅ Cite specific sources when making legal/regulatory claims
-✅ Flag risks prominently with ⚠️ symbol
-✅ Provide actionable next steps when appropriate
-✅ Maintain the selected tone throughout response
-✅ Reference contract context when available
-✅ Adapt technical depth to user role
-✅ Include Qatar-specific considerations for legal matters
-✅ Recommend expert consultation for complex legal issues
-✅ Reference specific screens (SCR-xxx) and modals (MOD-xxx) from Business Process Flow
-✅ Mention database tables affected by actions
+ Start with a direct answer to the question
+ Use proper headers and formatting for scannability
+ Cite specific sources when making legal/regulatory claims
+ Flag risks prominently with  symbol
+ Provide actionable next steps when appropriate
+ Maintain the selected tone throughout response
+ Reference contract context when available
+ Adapt technical depth to user role
+ Include Qatar-specific considerations for legal matters
+ Recommend expert consultation for complex legal issues
+ Reference specific screens (SCR-xxx) and modals (MOD-xxx) from Business Process Flow
+ Mention database tables affected by actions
 
 ### **Never:**
-❌ Start responses with "As an AI assistant..." or similar meta-commentary
-❌ Apologize unnecessarily or hedge excessively
-❌ Provide formal legal advice (you're an advisor, not a lawyer)
-❌ Ignore the specified tone setting
-❌ Use overly complex jargon when simplified tone is selected
-❌ Forget to reference contract context when it's provided
-❌ Make assumptions about data not provided
-❌ Recommend actions beyond the user's role authority
-❌ Violate Qatar legal or cultural norms
-❌ Provide incorrect information - acknowledge uncertainty instead
+ Start responses with "As an AI assistant..." or similar meta-commentary
+ Apologize unnecessarily or hedge excessively
+ Provide formal legal advice (you're an advisor, not a lawyer)
+ Ignore the specified tone setting
+ Use overly complex jargon when simplified tone is selected
+ Forget to reference contract context when it's provided
+ Make assumptions about data not provided
+ Recommend actions beyond the user's role authority
+ Violate Qatar legal or cultural norms
+ Provide incorrect information - acknowledge uncertainty instead
 
 ---
 
@@ -654,7 +654,7 @@ Include subtle confidence indicators:
 
 When providing legal analysis, include contextually:
 
-> **⚠️ Legal Disclaimer:**  
+> ** Legal Disclaimer:**  
 > This guidance is for informational purposes and does not constitute formal legal advice. For binding legal opinions or critical contractual matters, consult with a qualified legal professional or use the CALIM360 "Ask an Expert" feature to connect with a licensed attorney familiar with Qatar law.
 
 ### **Qatar-Specific Compliance:**
@@ -951,7 +951,7 @@ CALIM360 offers two workflow options:
 - `workflow_instances`: Tracks active contract workflows
 - `workflow_stages`: Individual approval stages
 
-**⚠️ Note:** This is a basic response. For AI-powered guidance with Claude, please ensure the API is configured in system settings.
+** Note:** This is a basic response. For AI-powered guidance with Claude, please ensure the API is configured in system settings.
 
 Need specific help with workflow configuration?"""
         
@@ -967,9 +967,9 @@ I can help you with contract-related questions. Here's general guidance:
 • Attach supporting documents
 
 **Key Considerations:**
-• **⚠️ Qatar Compliance**: Ensure QFCRA compliance for financial contracts
-• **✅ Clause Library**: Use pre-approved clauses from clause library
-• **📄 Version Control**: All changes tracked in `contract_versions` table
+• ** Qatar Compliance**: Ensure QFCRA compliance for financial contracts
+• ** Clause Library**: Use pre-approved clauses from clause library
+• ** Version Control**: All changes tracked in `contract_versions` table
 • **🔐 Security**: Documents encrypted, blockchain audit trail via Hyperledger Fabric
 
 **Workflow Options:**
@@ -981,7 +981,7 @@ I can help you with contract-related questions. Here's general guidance:
 - `contract_clauses`: Individual clauses
 - `clause_library`: Reusable clause templates
 
-**⚠️ Legal Disclaimer:**
+** Legal Disclaimer:**
 For binding legal advice, consult a qualified attorney or use the "Ask an Expert" feature.
 
 **Note:** This is a fallback response. For enhanced AI analysis, please configure Claude API in settings.
@@ -1012,10 +1012,10 @@ When evaluating contract risks in Qatar context, consider:
 • **Change Management**: Clear variation order process
 
 **Qatar-Specific:**
-✅ QID/CR validation via QDX government APIs
-✅ Arabic language requirements for official documents
-✅ Ministry of Justice filing requirements
-✅ E-signature validity under Qatar Electronic Transactions Law
+ QID/CR validation via QDX government APIs
+ Arabic language requirements for official documents
+ Ministry of Justice filing requirements
+ E-signature validity under Qatar Electronic Transactions Law
 
 **Recommended Actions:**
 1. Conduct thorough contract review
@@ -1024,7 +1024,7 @@ When evaluating contract risks in Qatar context, consider:
 4. Implement mitigation strategies
 5. Regular compliance monitoring
 
-**⚠️ Note:** This is general guidance. For AI-powered risk analysis, configure Claude API. For critical matters, consult legal expert via "Ask an Expert" feature.
+** Note:** This is general guidance. For AI-powered risk analysis, configure Claude API. For critical matters, consult legal expert via "Ask an Expert" feature.
 
 What specific risk concerns do you have?"""
         
@@ -1056,11 +1056,11 @@ CALIM360 provides comprehensive obligation management:
 - `obligation_updates`: Status change log
 
 **Best Practices:**
-✅ Set threshold date 7-14 days before due date
-✅ Assign clear ownership with backup escalation contact
-✅ Regular progress updates (weekly minimum)
-✅ Link obligations to specific contract clauses
-✅ Use obligation alerts for proactive management
+ Set threshold date 7-14 days before due date
+ Assign clear ownership with backup escalation contact
+ Regular progress updates (weekly minimum)
+ Link obligations to specific contract clauses
+ Use obligation alerts for proactive management
 
 **Navigation:**
 Dashboard → Obligations Module → Create/Track Obligations
@@ -1083,10 +1083,10 @@ CALIM360 integrates with DocuSign for legally valid digital signatures:
 6. **Blockchain Record**: Hash stored in Hyperledger Fabric
 
 **Qatar Legal Validity:**
-✅ Qatar Electronic Transactions Law recognizes e-signatures
-✅ Equivalent legal status to handwritten signatures
-✅ Must meet authentication requirements
-✅ Non-repudiation through cryptographic verification
+ Qatar Electronic Transactions Law recognizes e-signatures
+ Equivalent legal status to handwritten signatures
+ Must meet authentication requirements
+ Non-repudiation through cryptographic verification
 
 **DocuSign Features:**
 • Multi-party signing sequence
@@ -1102,7 +1102,7 @@ CALIM360 integrates with DocuSign for legally valid digital signatures:
 **Workflow Integration:**
 Master/Contract workflow includes E-SIGN stage after final approval, before counterparty review.
 
-**⚠️ Important:**
+** Important:**
 Ensure all signatories have valid email addresses and QID verification where required.
 
 **Security:**
@@ -1120,14 +1120,14 @@ Thank you for your question: "{user_message}"
 I'm here to assist you with contract lifecycle management, legal guidance, and CLM system features.
 
 **I can help you with:**
-✅ Contract drafting and review
-✅ Workflow and approval processes (Master Workflow, Contract-Specific)
-✅ Clause analysis and interpretation
-✅ Risk assessment and compliance (Qatar/QFCRA)
-✅ Obligation tracking and deadline management
-✅ E-signature processes (DocuSign integration)
-✅ Negotiation strategies and collaboration
-✅ System features and functionality
+ Contract drafting and review
+ Workflow and approval processes (Master Workflow, Contract-Specific)
+ Clause analysis and interpretation
+ Risk assessment and compliance (Qatar/QFCRA)
+ Obligation tracking and deadline management
+ E-signature processes (DocuSign integration)
+ Negotiation strategies and collaboration
+ System features and functionality
 
 **Quick Actions:**
 • **Create Contract**: Dashboard → "+ New Contract" button
@@ -1142,7 +1142,7 @@ I'm here to assist you with contract lifecycle management, legal guidance, and C
 - **Integrations**: DocuSign, QDX APIs, Hyperledger Fabric
 - **Compliance**: Qatar Civil Code, QFCRA regulations
 
-**⚠️ Note:** This is a basic response using fallback mode. For enhanced AI-powered guidance with:
+** Note:** This is a basic response using fallback mode. For enhanced AI-powered guidance with:
 - Detailed legal analysis
 - Contract-specific context
 - 12 tone variations
@@ -1171,7 +1171,7 @@ Please ensure Claude API (ANTHROPIC_API_KEY) is configured in system settings.
             "processing_time_ms": 50,
             "model_used": "mock-fallback",
             "timestamp": datetime.utcnow().isoformat(),
-            "warning": "⚠️ Claude API not configured - using intelligent fallback responses. For full AI capabilities, please configure ANTHROPIC_API_KEY in settings."
+            "warning": " Claude API not configured - using intelligent fallback responses. For full AI capabilities, please configure ANTHROPIC_API_KEY in settings."
         }
 
 

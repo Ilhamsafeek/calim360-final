@@ -19,7 +19,7 @@ class Contract(Base):
     contract_title_ar = Column(String(500))
     contract_type = Column(String(100))
     profile_type = Column(String(50))
-    contract_category = Column(String(100))  # ✅ ADD
+    contract_category = Column(String(100))  #  ADD
     template_id = Column(Integer, nullable=True)
     parent_contract_id = Column(Integer, ForeignKey("contracts.id"), nullable=True)
     
@@ -28,7 +28,7 @@ class Contract(Base):
     party_a_id = Column(Integer)
     party_b_name = Column(String(255))  # ← THIS IS THE KEY ONE
     party_b_id = Column(Integer)
-    project_name = Column(String(255))  # ✅ ADD
+    project_name = Column(String(255))  #  ADD
     
     # Financial
     contract_value = Column(Numeric(20, 2))
@@ -66,8 +66,8 @@ class Contract(Base):
     governing_law = Column(String(100))
     
     # Description fields
-    description = Column(Text)  # ✅ ADD
-    description_ar = Column(Text)  # ✅ ADD
+    description = Column(Text)  #  ADD
+    description_ar = Column(Text)  #  ADD
     
     # Flags
     is_template = Column(Boolean, default=False)
@@ -104,8 +104,8 @@ class ContractTemplate(Base):
     template_type = Column(String(100))
     template_category = Column(String(100))
     description = Column(Text)
-    template_content = Column(Text)  # ✅ ADDED: Store the actual content
-    template_content_ar = Column(Text)  # ✅ ADDED: Arabic content
+    template_content = Column(Text)  #  ADDED: Store the actual content
+    template_content_ar = Column(Text)  #  ADDED: Arabic content
     file_url = Column(Text)  # Legacy field for file-based templates
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)

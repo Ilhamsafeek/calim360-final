@@ -1361,30 +1361,30 @@
     }
 
     function init() {
-        console.log('✅ DOM Content Loaded - Starting initialization');
+        console.log(' DOM Content Loaded - Starting initialization');
         
         try {
             startSessionTimer();
-            console.log('✅ Session timer started');
+            console.log(' Session timer started');
             
             initializeChat();
-            console.log('✅ Chat initialized');
+            console.log(' Chat initialized');
             
             initializeEventListeners();
-            console.log('✅ Event listeners initialized');
+            console.log(' Event listeners initialized');
             
             setupAutoSaveNotes();
-            console.log('✅ Auto-save notes set up');
+            console.log(' Auto-save notes set up');
             
             // Sync existing messages to video overlay
             syncChatMessages();
-            console.log('✅ Chat messages synced');
+            console.log(' Chat messages synced');
             
             // Check for video mode
             const sessionType = urlParams.get('type');
             if (sessionType === 'video') {
                 switchToVideo();
-                console.log('✅ Switched to video mode');
+                console.log(' Switched to video mode');
             }
             
             // Initialize WebSocket last (so it doesn't block other initialization)
@@ -1395,7 +1395,7 @@
             console.log('%c✨ Consultation Room Ready!', 'color: #10b981; font-size: 14px; font-weight: bold;');
             
         } catch (error) {
-            console.error('❌ Initialization error:', error);
+            console.error(' Initialization error:', error);
         }
     }
 
@@ -1636,7 +1636,7 @@
             });
         });
         
-        console.log('✅ All event listeners attached successfully');
+        console.log(' All event listeners attached successfully');
     }
 
     // =====================================================
@@ -1677,7 +1677,7 @@ function initializeWebSocket() {
         ws = new WebSocket(wsUrl);
         
         ws.onopen = () => {
-            console.log('✅ WebSocket connected');
+            console.log(' WebSocket connected');
             reconnectAttempts = 0;
             showToast('Connected to consultation room', 'success');
         };
@@ -1692,7 +1692,7 @@ function initializeWebSocket() {
         };
         
         ws.onerror = (error) => {
-            console.error('❌ WebSocket error:', error);
+            console.error(' WebSocket error:', error);
             showToast('Connection error', 'error');
         };
         
@@ -1915,7 +1915,7 @@ window.addEventListener('beforeunload', function() {
     }
 
     function sendMessage(inputId = 'chatInput') {
-        console.log('📤 Send message clicked from:', inputId);
+        console.log(' Send message clicked from:', inputId);
         
         const input = document.getElementById(inputId);
         
@@ -2241,7 +2241,7 @@ window.addEventListener('beforeunload', function() {
     function handleFileUpload(event) {
         const files = event.target.files;
         if (files.length > 0) {
-            console.log(`📤 Uploading ${files.length} file(s)`);
+            console.log(` Uploading ${files.length} file(s)`);
             showToast(`Uploading ${files.length} file(s)...`, 'info');
             // Implement actual file upload logic
         }
@@ -2268,7 +2268,7 @@ window.addEventListener('beforeunload', function() {
         const notes = document.getElementById('notesEditor');
         if (!notes) return;
         
-        console.log('💾 Auto-saving notes...');
+        console.log(' Auto-saving notes...');
         
         // Save to backend via API
         fetch('/api/consultation-sessions/notes', {
@@ -2311,7 +2311,7 @@ window.addEventListener('beforeunload', function() {
     // ACTION ITEMS
     // =====================================================
     function toggleActionItem(checkbox) {
-        console.log('✅ Toggle action item');
+        console.log(' Toggle action item');
         checkbox.classList.toggle('checked');
         const checkIcon = checkbox.querySelector('i');
         if (checkIcon) {
@@ -2480,7 +2480,7 @@ window.addEventListener('beforeunload', function() {
     }
 
     function submitFeedback() {
-        console.log('📝 Submit feedback');
+        console.log(' Submit feedback');
         
         if (selectedRating === 0) {
             showToast('Please provide a rating', 'error');

@@ -718,7 +718,7 @@ if (window.location.pathname.includes('/contract/templates')) {
             const data = await response.json();
             allTemplates = data.templates;
             
-            console.log('✅ Loaded', allTemplates.length, 'templates from database');
+            console.log(' Loaded', allTemplates.length, 'templates from database');
             
             // Render template cards
             renderTemplateCards();
@@ -727,7 +727,7 @@ if (window.location.pathname.includes('/contract/templates')) {
             updateCategoryCounts();
             
         } catch (error) {
-            console.error('❌ Error loading templates:', error);
+            console.error(' Error loading templates:', error);
             document.getElementById('templateGrid').innerHTML = `
                 <div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--error-color);">
                     <i class="ti ti-alert-circle" style="font-size: 2rem;"></i>
@@ -820,7 +820,7 @@ if (window.location.pathname.includes('/contract/templates')) {
             templateGrid.appendChild(card);
         });
         
-        console.log(`✅ Rendered ${allTemplates.length} template cards`);
+        console.log(` Rendered ${allTemplates.length} template cards`);
     }
 
     // Update category counts
@@ -858,7 +858,7 @@ if (window.location.pathname.includes('/contract/templates')) {
         if (!response.ok) throw new Error('Failed to fetch template');
         
         const data = await response.json();
-        console.log('✅ Template data:', data);
+        console.log(' Template data:', data);
         
         document.getElementById('previewTemplateName').textContent = data.template_name || data.name || 'Untitled Template';
         

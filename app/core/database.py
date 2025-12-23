@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 encoded_password = quote_plus(settings.DB_PASSWORD)
 DATABASE_URL = f"mysql+pymysql://{settings.DB_USER}:{encoded_password}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
 
-logger.info(f"✅ Connecting to: {settings.DB_USER}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}")
+logger.info(f" Connecting to: {settings.DB_USER}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}")
 
 # Database engine configuration
 engine_args = {
@@ -46,9 +46,9 @@ try:
         DATABASE_URL,
         **engine_args
     )
-    logger.info(f"✅ Database engine created successfully for {settings.DB_NAME}")
+    logger.info(f" Database engine created successfully for {settings.DB_NAME}")
 except Exception as e:
-    logger.error(f"❌ Failed to create database engine: {str(e)}")
+    logger.error(f" Failed to create database engine: {str(e)}")
     raise
 
 # Create SessionLocal class
@@ -74,7 +74,7 @@ def get_db() -> Generator[Session, None, None]:
     try:
         yield db
     except Exception as e:
-        logger.error(f"❌ Database session error: {str(e)}")
+        logger.error(f" Database session error: {str(e)}")
         db.rollback()
         raise
     finally:
@@ -91,7 +91,7 @@ def get_db_session():
         yield session
         session.commit()
     except Exception as e:
-        logger.error(f"❌ Database operation failed: {str(e)}")
+        logger.error(f" Database operation failed: {str(e)}")
         session.rollback()
         raise
     finally:
@@ -105,10 +105,10 @@ def test_connection():
     try:
         with engine.connect() as conn:
             result = conn.execute(text("SELECT 1"))
-            logger.info("✅ Database connection test successful")
+            logger.info(" Database connection test successful")
             return True
     except Exception as e:
-        logger.error(f"❌ Database connection test failed: {str(e)}")
+        logger.error(f" Database connection test failed: {str(e)}")
         return False
 
 # Initialize database tables
@@ -136,9 +136,9 @@ def init_db():
             # Re-enable foreign key checks
             conn.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
         
-        logger.info("✅ Database tables created successfully")
+        logger.info(" Database tables created successfully")
     except Exception as e:
-        logger.error(f"❌ Failed to create database tables: {str(e)}")
+        logger.error(f" Failed to create database tables: {str(e)}")
         raise
 
 # Drop all tables (use with caution!)
@@ -149,7 +149,7 @@ def drop_all_tables():
     """
     try:
         Base.metadata.drop_all(bind=engine)
-        logger.info("✅ All database tables dropped successfully")
+        logger.info(" All database tables dropped successfully")
     except Exception as e:
-        logger.error(f"❌ Failed to drop database tables: {str(e)}")
+        logger.error(f" Failed to drop database tables: {str(e)}")
         raise

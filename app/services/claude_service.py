@@ -21,7 +21,7 @@ class ClaudeService:
         try:
             api_key = settings.CLAUDE_API_KEY
             if not api_key:
-                logger.warning("⚠️ CLAUDE_API_KEY not set - using mock mode")
+                logger.warning(" CLAUDE_API_KEY not set - using mock mode")
                 self.client = None
                 self.model = "mock-model"
                 self.max_tokens = 4096
@@ -31,9 +31,9 @@ class ClaudeService:
                 self.model = settings.CLAUDE_MODEL
                 self.max_tokens = settings.CLAUDE_MAX_TOKENS
                 self.temperature = settings.CLAUDE_TEMPERATURE
-                logger.info("✅ Claude API client initialized successfully")
+                logger.info(" Claude API client initialized successfully")
         except Exception as e:
-            logger.error(f"❌ Failed to initialize Claude client: {str(e)}")
+            logger.error(f" Failed to initialize Claude client: {str(e)}")
             self.client = None
             self.model = "mock-model"
             self.max_tokens = 4096
@@ -440,7 +440,7 @@ Draft the clause now:"""
                     contract_text = contract_text[:-3].strip()
             
             word_count = len(contract_text.split())
-            logger.info(f"✅ Claude generated superior {contract_type} using advanced legal reasoning ({word_count} words)")
+            logger.info(f" Claude generated superior {contract_type} using advanced legal reasoning ({word_count} words)")
             
             return {
                 "contract_text": contract_text,
@@ -453,7 +453,7 @@ Draft the clause now:"""
             }
             
         except Exception as e:
-            logger.error(f"❌ Claude API error: {str(e)}")
+            logger.error(f" Claude API error: {str(e)}")
             raise Exception(f"Failed to generate contract: {str(e)}")
     
     def analyze_contract_risks(
@@ -598,7 +598,7 @@ Analyze now:"""
         try:
             # Check if Claude client is available
             if not self.client:
-                logger.warning("⚠️ Claude API not available - using fallback analysis")
+                logger.warning(" Claude API not available - using fallback analysis")
                 return self._generate_fallback_correspondence_analysis(
                     query, documents, analysis_mode, tone, urgency, language, jurisdiction
                 )
@@ -707,7 +707,7 @@ Provide comprehensive, actionable guidance that helps resolve the correspondence
                 urgency
             )
             
-            logger.info(f"✅ Correspondence analysis completed: {tokens_used} tokens, {processing_time_ms}ms")
+            logger.info(f" Correspondence analysis completed: {tokens_used} tokens, {processing_time_ms}ms")
             
             return {
                 "analysis_text": response_text,
@@ -723,7 +723,7 @@ Provide comprehensive, actionable guidance that helps resolve the correspondence
             }
             
         except Exception as e:
-            logger.error(f"❌ Correspondence analysis error: {str(e)}")
+            logger.error(f" Correspondence analysis error: {str(e)}")
             # CRITICAL: Return fallback instead of raising exception
             return self._generate_fallback_correspondence_analysis(
                 query, documents, analysis_mode, tone, urgency, language, jurisdiction
@@ -941,9 +941,9 @@ This is a preliminary analysis based on general principles. For comprehensive AI
 # Global instance
 try:
     claude_service = ClaudeService()
-    logger.info("✅ Claude service instance created successfully")
+    logger.info(" Claude service instance created successfully")
 except Exception as e:
-    logger.error(f"❌ Failed to create Claude service instance: {str(e)}")
+    logger.error(f" Failed to create Claude service instance: {str(e)}")
     # Create a fallback instance that will use mock mode
     claude_service = ClaudeService()
 
@@ -1067,7 +1067,7 @@ IMPORTANT GUIDELINES:
 - Flag any Qatar-specific compliance concerns
 - Overall score should reflect: 90-100 (low risk), 70-89 (moderate), 50-69 (elevated), below 50 (high risk)"""
 
-        logger.info(f"📤 Sending contract to Claude for detailed risk analysis...")
+        logger.info(f" Sending contract to Claude for detailed risk analysis...")
         
         message = self.client.messages.create(
             model=self.model,
@@ -1092,7 +1092,7 @@ IMPORTANT GUIDELINES:
         # Validate and normalize the response
         analysis = self._normalize_risk_analysis(analysis)
         
-        logger.info(f"✅ Risk analysis complete - Score: {analysis['overall_score']}")
+        logger.info(f" Risk analysis complete - Score: {analysis['overall_score']}")
         
         return analysis
         
@@ -1345,12 +1345,12 @@ Example format:
                     if obl.get("party", "both").lower() == party_role.lower()
                 ]
             
-            logger.info(f"✅ Extracted {len(obligations)} obligations from contract")
+            logger.info(f" Extracted {len(obligations)} obligations from contract")
             return obligations
         else:
-            logger.warning("⚠️ Could not parse JSON from response")
+            logger.warning(" Could not parse JSON from response")
             return []
             
     except Exception as e:
-        logger.error(f"❌ Error extracting obligations: {str(e)}")
+        logger.error(f" Error extracting obligations: {str(e)}")
         return []

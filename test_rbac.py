@@ -43,10 +43,10 @@ class RBACTester:
                         "Authorization": f"Bearer {self.token}"
                     })
                     return True
-            print(f"❌ Login failed for {email}: {response.text[:200]}")
+            print(f" Login failed for {email}: {response.text[:200]}")
             return False
         except Exception as e:
-            print(f"❌ Login error: {e}")
+            print(f" Login error: {e}")
             return False
     
     def logout(self):
@@ -91,11 +91,11 @@ class RBACTester:
         actual_status = result["status"]
         
         if actual_status == expected_status:
-            print(f"  ✅ PASS: {name}")
+            print(f"   PASS: {name}")
             print(f"         Status: {actual_status}")
             return True
         else:
-            print(f"  ❌ FAIL: {name}")
+            print(f"   FAIL: {name}")
             print(f"         Expected: {expected_status}, Got: {actual_status}")
             response_preview = str(result.get("data", {}))[:150]
             print(f"         Response: {response_preview}")
@@ -119,7 +119,7 @@ def run_rbac_tests():
     print("-" * 40)
     
     if tester.login(TEST_USERS["super_admin"]["email"], TEST_USERS["super_admin"]["password"]):
-        print(f"✅ Logged in as {TEST_USERS['super_admin']['email']}")
+        print(f" Logged in as {TEST_USERS['super_admin']['email']}")
         
         tests = [
             ("Access system statistics", "GET", "/api/admin/statistics", 200),
@@ -153,7 +153,7 @@ def run_rbac_tests():
     print("-" * 40)
     
     if tester.login(TEST_USERS["admin"]["email"], TEST_USERS["admin"]["password"]):
-        print(f"✅ Logged in as {TEST_USERS['admin']['email']}")
+        print(f" Logged in as {TEST_USERS['admin']['email']}")
         
         tests = [
             ("List contracts (allowed)", "GET", "/api/contracts", 200),
@@ -169,7 +169,7 @@ def run_rbac_tests():
             else:
                 failed += 1
     else:
-        print("⚠️  Skipping admin tests (user doesn't exist)")
+        print("  Skipping admin tests (user doesn't exist)")
         failed += 3
     
     tester.logout()
@@ -181,7 +181,7 @@ def run_rbac_tests():
     print("-" * 40)
     
     if tester.login(TEST_USERS["viewer"]["email"], TEST_USERS["viewer"]["password"]):
-        print(f"✅ Logged in as {TEST_USERS['viewer']['email']}")
+        print(f" Logged in as {TEST_USERS['viewer']['email']}")
         
         tests = [
             ("List contracts (allowed)", "GET", "/api/contracts", 200),
@@ -201,7 +201,7 @@ def run_rbac_tests():
             else:
                 failed += 1
     else:
-        print("⚠️  Skipping viewer tests (user doesn't exist)")
+        print("  Skipping viewer tests (user doesn't exist)")
         failed += 3
     
     tester.logout()
@@ -232,12 +232,12 @@ def run_rbac_tests():
     print("\n" + "=" * 60)
     print("TEST RESULTS")
     print("=" * 60)
-    print(f"✅ Passed: {passed}")
-    print(f"❌ Failed: {failed}")
+    print(f" Passed: {passed}")
+    print(f" Failed: {failed}")
     print(f"📊 Total:  {passed + failed}")
     
     success_rate = (passed / (passed + failed)) * 100 if (passed + failed) > 0 else 0
-    print(f"⚠️ Success Rate: {success_rate:.1f}%")
+    print(f" Success Rate: {success_rate:.1f}%")
     
     return passed, failed
 

@@ -54,9 +54,9 @@ class SchedulerService:
                         else:
                             job["func"]()
                         job["last_run"] = now
-                        logger.info(f"✅ Job completed: {job['name']}")
+                        logger.info(f" Job completed: {job['name']}")
                     except Exception as e:
-                        logger.error(f"❌ Job failed: {job['name']} - {e}")
+                        logger.error(f" Job failed: {job['name']} - {e}")
             
             # Sleep for 1 minute before checking again
             await asyncio.sleep(60)

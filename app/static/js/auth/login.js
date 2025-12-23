@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
         } catch (error) {
-            console.error('❌ Login error:', error);
+            console.error(' Login error:', error);
             showError('Network error. Please check your connection and try again.');
         } finally {
             setLoading(false);
@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             successDiv.style.display = 'flex';
         }
-        console.log('✅ Login success:', message);
+        console.log(' Login success:', message);
     }
 
     function setLoading(loading) {

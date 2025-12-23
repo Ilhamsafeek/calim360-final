@@ -87,7 +87,7 @@ async def create_master_workflow(
             ).delete()
             
             workflow = existing_workflow
-            logger.info(f"✅ Updated master workflow for company {current_user.company_id}")
+            logger.info(f" Updated master workflow for company {current_user.company_id}")
         else:
             # Create new
             workflow = Workflow(
@@ -100,7 +100,7 @@ async def create_master_workflow(
             )
             db.add(workflow)
             db.flush()
-            logger.info(f"✅ Created new master workflow for company {current_user.company_id}")
+            logger.info(f" Created new master workflow for company {current_user.company_id}")
 
         # Create workflow steps
         for step_data in workflow_data.steps:
@@ -120,7 +120,7 @@ async def create_master_workflow(
         db.commit()
         db.refresh(workflow)
 
-        logger.info(f"✅ Workflow saved successfully with {len(workflow_data.steps)} steps")
+        logger.info(f" Workflow saved successfully with {len(workflow_data.steps)} steps")
 
         return {
             "success": True,
@@ -130,7 +130,7 @@ async def create_master_workflow(
 
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error saving master workflow: {str(e)}", exc_info=True)
+        logger.error(f" Error saving master workflow: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
@@ -186,7 +186,7 @@ async def get_master_workflow(
         }
 
     except Exception as e:
-        logger.error(f"❌ Error retrieving master workflow: {str(e)}")
+        logger.error(f" Error retrieving master workflow: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)

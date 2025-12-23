@@ -28,10 +28,10 @@ class ClaudeAPIClient:
         
         # Validate API key on initialization
         if not self.api_key or not self.api_key.startswith("sk-ant-api"):
-            logger.error("❌ Invalid or missing Anthropic API key")
+            logger.error(" Invalid or missing Anthropic API key")
             raise ValueError("Invalid Anthropic API key")
         
-        logger.info(f"✅ Claude API Client initialized with model: {self.model}")
+        logger.info(f" Claude API Client initialized with model: {self.model}")
     
     async def test_connection(self) -> Dict[str, Any]:
         """
@@ -62,7 +62,7 @@ class ClaudeAPIClient:
                 
                 if response.status_code == 200:
                     data = response.json()
-                    logger.info(f"✅ Claude API connection successful!")
+                    logger.info(f" Claude API connection successful!")
                     logger.info(f"   Model: {data.get('model')}")
                     logger.info(f"   Response: {data['content'][0]['text']}")
                     
@@ -73,7 +73,7 @@ class ClaudeAPIClient:
                         "usage": data.get("usage", {})
                     }
                 else:
-                    logger.error(f"❌ API connection failed: {response.status_code}")
+                    logger.error(f" API connection failed: {response.status_code}")
                     logger.error(f"   Error: {response.text}")
                     
                     return {
@@ -82,13 +82,13 @@ class ClaudeAPIClient:
                     }
                     
         except httpx.TimeoutException:
-            logger.error("❌ API connection timeout")
+            logger.error(" API connection timeout")
             return {
                 "success": False,
                 "error": "Connection timeout"
             }
         except Exception as e:
-            logger.error(f"❌ API connection error: {str(e)}")
+            logger.error(f" API connection error: {str(e)}")
             return {
                 "success": False,
                 "error": str(e)
@@ -128,7 +128,7 @@ class ClaudeAPIClient:
             logger.debug(f"   Prompt preview: {prompt[:200]}...")
             
             # Call Claude API
-            async with httpx.AsyncClient(timeout=float(self.timeout)) as client:
+            async with httpx.AsyncClient(timeout=300.0) as client:  # 5 minutes for contract generation
                 response = await client.post(
                     self.api_url,
                     headers={
@@ -163,7 +163,7 @@ class ClaudeAPIClient:
                     output_cost = (output_tokens / 1_000_000) * 15.0
                     total_cost = input_cost + output_cost
                     
-                    logger.info(f"✅ Successfully generated {correspondence_type}")
+                    logger.info(f" Successfully generated {correspondence_type}")
                     logger.info(f"   Tokens: {input_tokens} input + {output_tokens} output = {total_tokens} total")
                     logger.info(f"   Estimated cost: ${total_cost:.4f}")
                     logger.info(f"   Response length: {len(generated_content)} chars")
@@ -182,7 +182,7 @@ class ClaudeAPIClient:
                     }
                 else:
                     error_detail = response.text
-                    logger.error(f"❌ Claude API error: {response.status_code}")
+                    logger.error(f" Claude API error: {response.status_code}")
                     logger.error(f"   Error details: {error_detail}")
                     
                     return {
@@ -193,14 +193,14 @@ class ClaudeAPIClient:
                     }
                     
         except httpx.TimeoutException:
-            logger.error(f"❌ Claude API timeout after {self.timeout} seconds")
+            logger.error(f" Claude API timeout after {self.timeout} seconds")
             return {
                 "success": False,
                 "error": f"Request timeout after {self.timeout} seconds",
                 "content": ""
             }
         except Exception as e:
-            logger.error(f"❌ Claude API error: {str(e)}", exc_info=True)
+            logger.error(f" Claude API error: {str(e)}", exc_info=True)
             return {
                 "success": False,
                 "error": str(e),
@@ -380,7 +380,7 @@ Keep your analysis professional, factual, and focused on helping draft effective
                     usage = data.get("usage", {})
                     tokens_used = usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
                     
-                    logger.info(f"✅ Document analysis completed ({tokens_used} tokens)")
+                    logger.info(f" Document analysis completed ({tokens_used} tokens)")
                     
                     return {
                         "success": True,
@@ -388,14 +388,14 @@ Keep your analysis professional, factual, and focused on helping draft effective
                         "tokens_used": tokens_used
                     }
                 else:
-                    logger.error(f"❌ Document analysis failed: {response.status_code}")
+                    logger.error(f" Document analysis failed: {response.status_code}")
                     return {
                         "success": False,
                         "error": f"API request failed: {response.status_code}"
                     }
                     
         except Exception as e:
-            logger.error(f"❌ Document analysis error: {str(e)}")
+            logger.error(f" Document analysis error: {str(e)}")
             return {
                 "success": False,
                 "error": str(e)

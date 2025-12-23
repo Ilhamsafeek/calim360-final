@@ -27,11 +27,11 @@ async def test_blockchain():
     )
     
     if result.get("success"):
-        print("✅ PASS: Contract hash stored")
+        print(" PASS: Contract hash stored")
         print(f"   Transaction ID: {result['transaction_id']}")
         print(f"   Document Hash: {result['document_hash']}")
     else:
-        print("❌ FAIL: Failed to store contract hash")
+        print(" FAIL: Failed to store contract hash")
         return False
     
     # Test 2: Verify contract hash
@@ -42,9 +42,9 @@ async def test_blockchain():
     )
     
     if verify_result.get("success") and verify_result.get("verified"):
-        print("✅ PASS: Contract verification successful")
+        print(" PASS: Contract verification successful")
     else:
-        print("❌ FAIL: Contract verification failed")
+        print(" FAIL: Contract verification failed")
         return False
     
     # Test 3: Store audit log
@@ -61,10 +61,10 @@ async def test_blockchain():
     )
     
     if audit_result.get("success"):
-        print("✅ PASS: Audit log stored on blockchain")
+        print(" PASS: Audit log stored on blockchain")
         print(f"   Transaction ID: {audit_result['transaction_id']}")
     else:
-        print("❌ FAIL: Failed to store audit log")
+        print(" FAIL: Failed to store audit log")
         return False
     
     # Test 4: Get contract record
@@ -72,14 +72,14 @@ async def test_blockchain():
     record = await blockchain_service.get_contract_record(1)
     
     if record:
-        print("✅ PASS: Retrieved contract record")
+        print(" PASS: Retrieved contract record")
         print(f"   Contract ID: {record['contract_id']}")
     else:
-        print("❌ FAIL: Failed to retrieve contract record")
+        print(" FAIL: Failed to retrieve contract record")
         return False
     
     print("\n" + "=" * 50)
-    print("✅ ALL TESTS PASSED!")
+    print(" ALL TESTS PASSED!")
     return True
 
 if __name__ == "__main__":

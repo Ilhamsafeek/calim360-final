@@ -4373,9 +4373,9 @@
          
         
         if (data.instance_created) {
-            console.log('✅ Workflow instance auto-created:', data.workflow_name);
+            console.log(' Workflow instance auto-created:', data.workflow_name);
         } else if (data.instance_exists) {
-            console.log('✅ Workflow instance already exists:', data.workflow_name);
+            console.log(' Workflow instance already exists:', data.workflow_name);
         } else {
             console.log('ℹ️ No master workflow configured for company');
         }
@@ -4390,7 +4390,7 @@
         };
         
     } catch (error) {
-        console.error('❌ Error ensuring workflow instance:', error);
+        console.error(' Error ensuring workflow instance:', error);
     }
 }
 
@@ -5081,19 +5081,19 @@ ${contract.content && contract.content.trim() !== '' ?
 
     // Save Draft
     async function saveAsDraft() {
-        // ✅ GET BUTTON AND SHOW LOADING
+        //  GET BUTTON AND SHOW LOADING
         const saveBtn = document.getElementById('saveDraftBtn');
         const originalContent = saveBtn.innerHTML;
         saveBtn.disabled = true;
         saveBtn.innerHTML = '<i class="ti ti-loader" style="animation: spin 1s linear infinite;"></i> Saving...';
 
         try {
-            console.log('💾 Saving draft...');
+            console.log(' Saving draft...');
 
-            // ✅ FIX: Get content directly from the editor element
+            //  FIX: Get content directly from the editor element
             const editor = document.getElementById('contractContent');
             if (!editor) {
-                console.error('❌ Contract editor not found!');
+                console.error(' Contract editor not found!');
                 saveBtn.innerHTML = originalContent;
                 saveBtn.disabled = false;
                 showNotification('Contract editor not found', 'error');
@@ -5104,14 +5104,14 @@ ${contract.content && contract.content.trim() !== '' ?
             const contractContent = editor.innerHTML || editor.value || '';
 
             if (!contractContent || contractContent.trim() === '') {
-                console.warn('⚠️ Contract content is empty!');
+                console.warn(' Contract content is empty!');
                 saveBtn.innerHTML = originalContent;
                 saveBtn.disabled = false;
                 showNotification('Cannot save empty contract', 'warning');
                 return;
             }
 
-            console.log('📝 Content length:', contractContent.length, 'characters');
+            console.log(' Content length:', contractContent.length, 'characters');
 
             // Prepare data to save
             const data = {
@@ -5134,10 +5134,10 @@ ${contract.content && contract.content.trim() !== '' ?
             }
 
             const result = await response.json();
-            console.log('✅ Save response:', result);
+            console.log(' Save response:', result);
 
             if (result.success) {
-                // ✅ SHOW SUCCESS STATE
+                //  SHOW SUCCESS STATE
                 saveBtn.innerHTML = '<i class="ti ti-check"></i> Saved!';
 
                 // Display blockchain activities if available
@@ -5150,7 +5150,7 @@ ${contract.content && contract.content.trim() !== '' ?
 
                 showNotification('Draft saved successfully', 'success');
 
-                // ✅ RESTORE BUTTON AFTER 2 SECONDS
+                //  RESTORE BUTTON AFTER 2 SECONDS
                 setTimeout(() => {
                     saveBtn.innerHTML = originalContent;
                     saveBtn.disabled = false;
@@ -5161,9 +5161,9 @@ ${contract.content && contract.content.trim() !== '' ?
             }
 
         } catch (error) {
-            console.error('❌ Error saving draft:', error);
+            console.error(' Error saving draft:', error);
 
-            // ✅ RESTORE BUTTON IMMEDIATELY ON ERROR
+            //  RESTORE BUTTON IMMEDIATELY ON ERROR
             saveBtn.innerHTML = originalContent;
             saveBtn.disabled = false;
 
@@ -5453,7 +5453,7 @@ ${contract.content && contract.content.trim() !== '' ?
             return;
         }
 
-        console.log(`📄 Analyzing full contract content (${fullContent.length} characters)`);
+        console.log(` Analyzing full contract content (${fullContent.length} characters)`);
 
         // Show loading state and open modal
         openModal('clauseSuggestionModal');
@@ -6197,7 +6197,7 @@ ${contract.content && contract.content.trim() !== '' ?
     
     ${currentAnalysisData.missing_clauses && currentAnalysisData.missing_clauses.length > 0 ? `
     <div class="info-box" style="background: #fff3cd; border-left-color: #ffc107;">
-        <h3 style="margin-top: 0; color: #856404;">⚠️ Recommended Clause Additions</h3>
+        <h3 style="margin-top: 0; color: #856404;"> Recommended Clause Additions</h3>
         <ul>
             ${currentAnalysisData.missing_clauses.map(c => `<li>${escapeHtml(c)}</li>`).join('')}
         </ul>
@@ -6322,27 +6322,27 @@ ${contract.content && contract.content.trim() !== '' ?
             }
 
             console.log('🔍 Looking for text:', currentClauseText);
-            console.log('📝 Replacing with:', suggestion.suggested);
+            console.log(' Replacing with:', suggestion.suggested);
 
-            // ✅ METHOD 1: Try direct innerHTML replacement first
+            //  METHOD 1: Try direct innerHTML replacement first
             let originalContent = content.innerHTML;
             let plainOriginal = content.innerText || content.textContent || '';
 
             // Check if the text exists in plain text form
             if (!plainOriginal.includes(currentClauseText)) {
-                console.error('❌ Text not found in plain content');
+                console.error(' Text not found in plain content');
                 console.log('Expected:', currentClauseText);
                 console.log('Available:', plainOriginal.substring(0, 200) + '...');
                 showNotification('Could not find the original text to replace', 'error');
                 return;
             }
 
-            // ✅ METHOD 2: Try simple string replacement (handles HTML tags)
+            //  METHOD 2: Try simple string replacement (handles HTML tags)
             let newContent = originalContent.replace(currentClauseText, suggestion.suggested);
 
             // If simple replacement didn't work, try with normalized whitespace
             if (newContent === originalContent) {
-                console.log('⚠️ Simple replacement failed, trying normalized...');
+                console.log(' Simple replacement failed, trying normalized...');
 
                 // Normalize both strings (remove extra whitespace, trim)
                 const normalizedClause = currentClauseText.trim().replace(/\s+/g, ' ');
@@ -6359,7 +6359,7 @@ ${contract.content && contract.content.trim() !== '' ?
 
             // If still no change, try regex with escaped characters
             if (newContent === originalContent) {
-                console.log('⚠️ Normalized replacement failed, trying regex...');
+                console.log(' Normalized replacement failed, trying regex...');
 
                 // Escape special characters for regex
                 const escapedText = currentClauseText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -6368,9 +6368,9 @@ ${contract.content && contract.content.trim() !== '' ?
                 newContent = originalContent.replace(regex, suggestion.suggested);
             }
 
-            // ✅ METHOD 3: Last resort - replace in the visible text area
+            //  METHOD 3: Last resort - replace in the visible text area
             if (newContent === originalContent) {
-                console.log('⚠️ All replacements failed, trying innerText...');
+                console.log(' All replacements failed, trying innerText...');
 
                 let textContent = content.innerText || content.textContent || '';
 
@@ -6382,20 +6382,20 @@ ${contract.content && contract.content.trim() !== '' ?
                     content.innerText = textContent;
                     newContent = content.innerHTML; // Get the updated HTML
 
-                    console.log('✅ Applied via innerText');
+                    console.log(' Applied via innerText');
                 } else {
                     throw new Error('Text not found in any format');
                 }
             }
 
-            // ✅ Apply the changes
+            //  Apply the changes
             content.innerHTML = newContent;
 
-            // ✅ Force browser to recognize the change
+            //  Force browser to recognize the change
             content.dispatchEvent(new Event('input', { bubbles: true }));
             content.dispatchEvent(new Event('change', { bubbles: true }));
 
-            // ✅ Verify by checking if the NEW text exists (not the old text)
+            //  Verify by checking if the NEW text exists (not the old text)
             const verifyContent = content.innerText || content.textContent || '';
             const suggestionExists = verifyContent.includes(suggestion.suggested);
             const originalGone = !verifyContent.includes(currentClauseText);
@@ -6407,7 +6407,7 @@ ${contract.content && contract.content.trim() !== '' ?
             });
 
             if (suggestionExists || originalGone) {
-                console.log('✅ Suggestion applied successfully');
+                console.log(' Suggestion applied successfully');
 
                 // Scroll to show the change
                 content.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -6434,7 +6434,7 @@ ${contract.content && contract.content.trim() !== '' ?
 
             } else {
                 // Still failed - show what we tried
-                console.error('❌ Verification failed');
+                console.error(' Verification failed');
                 console.log('Original text:', currentClauseText);
                 console.log('Replacement text:', suggestion.suggested);
                 console.log('Current content snippet:', verifyContent.substring(0, 200));
@@ -6443,7 +6443,7 @@ ${contract.content && contract.content.trim() !== '' ?
             }
 
         } catch (error) {
-            console.error('❌ Error applying suggestion:', error);
+            console.error(' Error applying suggestion:', error);
             showNotification('Failed to apply suggestion: ' + error.message, 'error');
 
             // Offer alternative
@@ -6604,7 +6604,7 @@ ${contract.content && contract.content.trim() !== '' ?
         const includeTracked = document.getElementById('includeTrackedChanges')?.checked || false;
         const includeComments = document.getElementById('includeComments')?.checked || false;
 
-        console.log('📄 Export requested:', { format, includeTracked, includeComments, contractId });
+        console.log(' Export requested:', { format, includeTracked, includeComments, contractId });
 
         // Show loading state
         showLoader();
@@ -6659,7 +6659,7 @@ ${contract.content && contract.content.trim() !== '' ?
                 filename += `.${extensions[format] || 'pdf'}`;
             }
 
-            console.log('💾 Downloading as:', filename);
+            console.log(' Downloading as:', filename);
 
             // Get the blob
             const blob = await response.blob();
@@ -6687,10 +6687,10 @@ ${contract.content && contract.content.trim() !== '' ?
             hideLoader();
             showNotification(`Document exported successfully as ${format.toUpperCase()}`, 'success');
 
-            console.log('✅ Export completed successfully');
+            console.log(' Export completed successfully');
 
         } catch (error) {
-            console.error('❌ Export error:', error);
+            console.error(' Export error:', error);
             hideLoader();
             showNotification(`Export failed: ${error.message}`, 'error');
         }
@@ -6828,7 +6828,7 @@ ${contract.content && contract.content.trim() !== '' ?
 
     // Open Signature Modal - Enhanced version
     function openSignatureModal() {
-        // ✅ PREVENT MODAL IF NOT IN SIGNATURE STATUS
+        //  PREVENT MODAL IF NOT IN SIGNATURE STATUS
         if (contractData?.contract?.status !== 'signature') {
             showNotification('Contract must be in Signature stage before signing. Current status: ' +
                 (contractData?.contract?.status || 'unknown').toUpperCase(), 'warning');
@@ -6896,7 +6896,7 @@ ${contract.content && contract.content.trim() !== '' ?
 
     // Alternative: Open signature for specific party (used when clicking signature fields)
     function openSignature(party) {
-        // ✅ PREVENT MODAL IF NOT IN SIGNATURE STATUS
+        //  PREVENT MODAL IF NOT IN SIGNATURE STATUS
         if (contractData?.contract?.status !== 'signature') {
             showNotification('Contract must be in Signature stage before signing. Current status: ' +
                 (contractData?.contract?.status || 'unknown').toUpperCase(), 'warning');
@@ -7087,14 +7087,14 @@ ${contract.content && contract.content.trim() !== '' ?
                         department: department
                     });
 
-                    console.log(`✅ Added step ${index + 1}:`, {
+                    console.log(` Added step ${index + 1}:`, {
                         step_order: index + 1,
                         step_label: role,
                         assigned_email: email,
                         department: department
                     });
                 } else {
-                    console.warn(`⚠️ Skipping row ${index + 1}: missing role or email`);
+                    console.warn(` Skipping row ${index + 1}: missing role or email`);
                 }
             });
 
@@ -7441,7 +7441,7 @@ ${contract.content && contract.content.trim() !== '' ?
             }
 
         } catch (error) {
-            console.error('❌ Error adding comment:', error);
+            console.error(' Error adding comment:', error);
             showNotification('Failed to add comment: ' + error.message, 'error');
         } finally {
             // Restore button state
@@ -7568,7 +7568,7 @@ ${contract.content && contract.content.trim() !== '' ?
         // Add bubble to parent element
         parentElement.appendChild(bubble);
 
-        // ✅ IMPROVED: Better click handler with proper positioning
+        //  IMPROVED: Better click handler with proper positioning
         parentElement.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
@@ -7712,7 +7712,7 @@ ${contract.content && contract.content.trim() !== '' ?
             }
 
         } catch (error) {
-            console.error('❌ Error deleting comment:', error);
+            console.error(' Error deleting comment:', error);
             showNotification('Failed to delete comment: ' + error.message, 'error');
         }
     }
@@ -7734,7 +7734,7 @@ ${contract.content && contract.content.trim() !== '' ?
     // =====================================================
     async function loadExistingComments() {
         try {
-            console.log('📝 Loading comments for contract:', contractId);
+            console.log(' Loading comments for contract:', contractId);
 
             const response = await fetch(`/api/contracts/comments/${contractId}`);
             const data = await response.json();
@@ -7744,7 +7744,7 @@ ${contract.content && contract.content.trim() !== '' ?
                 return;
             }
 
-            console.log(`✅ Found ${data.comments.length} comments`);
+            console.log(` Found ${data.comments.length} comments`);
 
             // For each comment, find or create marker and attach bubble
             data.comments.forEach(comment => {
@@ -7770,7 +7770,7 @@ ${contract.content && contract.content.trim() !== '' ?
             updateCommentCount(data.comments.length);
 
         } catch (error) {
-            console.error('❌ Error loading comments:', error);
+            console.error(' Error loading comments:', error);
         }
     }
 
@@ -7808,7 +7808,7 @@ ${contract.content && contract.content.trim() !== '' ?
                 `;
 
                     range.surroundContents(span);
-                    console.log(`✅ Recreated marker for comment ${commentId}`);
+                    console.log(` Recreated marker for comment ${commentId}`);
                     return span;
 
                 } catch (e) {
@@ -8070,7 +8070,7 @@ ${contract.content && contract.content.trim() !== '' ?
             document.getElementById('companySignature')?.classList.contains('signed');
 
         if (clientSigned && providerSigned) {
-            console.log('✅ Both parties have signed! Checking backend status...');
+            console.log(' Both parties have signed! Checking backend status...');
 
             // The status should already be 'signed' from the backend
             // Let's verify and update UI accordingly
@@ -8323,7 +8323,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
         // Add default step if table is empty
         const tbody = document.getElementById('contractWorkflowSteps');
         if (tbody && tbody.children.length === 0) {
-            console.log('📝 Adding default step');
+            console.log(' Adding default step');
             addContractWorkflowStep();
         }
 
@@ -8331,7 +8331,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
         const saveBtn = document.getElementById('saveWorkflowBtn');
         if (saveBtn) {
             saveBtn.disabled = false;
-            console.log('✅ Save button enabled');
+            console.log(' Save button enabled');
         }
     }
 
@@ -8397,7 +8397,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
     `;
 
         tbody.appendChild(newRow);
-        console.log(`✅ Added workflow step ${contractWorkflowStepCount}`);
+        console.log(` Added workflow step ${contractWorkflowStepCount}`);
     }
 
     function removeContractWorkflowStep(button) {
@@ -8422,7 +8422,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
         });
 
         contractWorkflowStepCount = rows.length;
-        console.log('✅ Step numbers updated, total:', contractWorkflowStepCount);
+        console.log(' Step numbers updated, total:', contractWorkflowStepCount);
     }
 
 
@@ -8431,7 +8431,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
 
         const modal = document.getElementById('contractWorkflowModal');
         if (!modal) {
-            console.error('❌ Modal not found: contractWorkflowModal');
+            console.error(' Modal not found: contractWorkflowModal');
             return;
         }
 
@@ -8454,7 +8454,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
 
         // If no workflow loaded, add empty step
         if (tbody && tbody.children.length === 0) {
-            console.log('📝 No existing workflow, adding empty step');
+            console.log(' No existing workflow, adding empty step');
             addContractWorkflowStep();
         }
 
@@ -8462,7 +8462,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
         const saveBtn = document.getElementById('saveWorkflowBtn');
         if (saveBtn) {
             saveBtn.disabled = false;
-            console.log('✅ Save button enabled');
+            console.log(' Save button enabled');
         }
     }
 
@@ -8477,7 +8477,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
 
     async function loadExistingWorkflow(contractType = null) {
         if (!contractId) {
-            console.log('⚠️ No contract ID, skipping workflow load');
+            console.log(' No contract ID, skipping workflow load');
             return;
         }
 
@@ -8496,11 +8496,11 @@ ${(riskAnalysisData.risk_items || []).map(item => `
 
             if (data.success && data.workflow) {
                 const workflow = data.workflow;
-                console.log('✅ Workflow loaded:', workflow);
+                console.log(' Workflow loaded:', workflow);
                 console.log('📊 Steps:', workflow.steps);
 
                 if (workflow.steps && workflow.steps.length > 0) {
-                    console.log(`📝 Populating ${workflow.steps.length} ${workflow.is_master ? 'master' : 'custom'} workflow steps`);
+                    console.log(` Populating ${workflow.steps.length} ${workflow.is_master ? 'master' : 'custom'} workflow steps`);
                     populateCustomWorkflowSteps(workflow.steps);
                 }
 
@@ -8509,7 +8509,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
                 console.log('ℹ️ No workflow found for this contract');
             }
         } catch (error) {
-            console.error('❌ Error loading workflow:', error);
+            console.error(' Error loading workflow:', error);
             showNotification('Could not load workflow', 'warning');
         }
     }
@@ -8537,7 +8537,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
         const saveBtn = document.getElementById('saveWorkflowBtn');
         if (saveBtn) {
             saveBtn.disabled = false;
-            console.log('✅ Save button kept enabled');
+            console.log(' Save button kept enabled');
         }
     }
 
@@ -8547,7 +8547,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
 
         const previewContainer = document.querySelector('#masterWorkflowOption .workflow-step-preview');
         if (!previewContainer) {
-            console.warn('⚠️ Preview container not found');
+            console.warn(' Preview container not found');
             return;
         }
 
@@ -8571,7 +8571,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
 
         previewHTML += '</div>';
         previewContainer.innerHTML = previewHTML;
-        console.log('✅ Master workflow preview updated');
+        console.log(' Master workflow preview updated');
     }
 
 
@@ -8613,7 +8613,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
             customConfig.style.display = 'block';
         }
 
-        console.log('✅ Custom workflow populated with', contractWorkflowStepCount, 'rows');
+        console.log(' Custom workflow populated with', contractWorkflowStepCount, 'rows');
     }
 
     function addWorkflowStepRow(step, user, rowNumber) {
@@ -8674,7 +8674,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
     `;
 
         tbody.appendChild(newRow);
-        console.log(`✅ Row ${rowNumber} added with email="${userEmail}" dept="${department}"`);
+        console.log(` Row ${rowNumber} added with email="${userEmail}" dept="${department}"`);
     }
 
 
@@ -8699,7 +8699,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
             }
         });
         contractWorkflowStepCount = rows.length;
-        console.log('✅ Step numbers updated, total:', contractWorkflowStepCount);
+        console.log(' Step numbers updated, total:', contractWorkflowStepCount);
     }
 
     // Search users function
@@ -8812,7 +8812,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
             }
         }
 
-        console.log('✅ User cleared, ready for new search');
+        console.log(' User cleared, ready for new search');
     }
 
 
@@ -8887,7 +8887,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
 
         previewHTML += '</div>';
         previewContainer.innerHTML = previewHTML;
-        console.log('✅ Master workflow preview updated');
+        console.log(' Master workflow preview updated');
     }
 
 
@@ -8926,7 +8926,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
 
         // Show custom workflow config
         document.getElementById('customWorkflowConfig').style.display = 'block';
-        console.log('✅ Custom workflow populated with', contractWorkflowStepCount, 'rows');
+        console.log(' Custom workflow populated with', contractWorkflowStepCount, 'rows');
     }
 
 
@@ -8973,7 +8973,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
             modal.style.display = 'none';
             document.body.style.overflow = 'auto';
 
-            // ✅ If closing workflow modal, reset it
+            //  If closing workflow modal, reset it
             if (modalId === 'contractWorkflowModal') {
                 // Don't reset completely, just clear table to prevent duplicates
                 const tbody = document.getElementById('contractWorkflowSteps');
@@ -9270,7 +9270,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
 
     async function saveContract() {
         try {
-            console.log('💾 Saving contract...');
+            console.log(' Saving contract...');
 
             // Show loading
             document.getElementById('loadingOverlay')?.classList.add('show');
@@ -9299,24 +9299,24 @@ ${(riskAnalysisData.risk_items || []).map(item => `
             console.log('📦 Save result:', result);
 
             if (result.success) {
-                // ✅ ADD THIS: Display blockchain activities
+                //  ADD THIS: Display blockchain activities
                 if (result.blockchain_activities && result.blockchain_activities.length > 0) {
                     console.log('🔗 Displaying', result.blockchain_activities.length, 'blockchain activities');
                     displayBlockchainActivities(result.blockchain_activities);
                 } else {
-                    console.warn('⚠️ No blockchain activities returned');
+                    console.warn(' No blockchain activities returned');
                     console.log('Full response:', result);
                 }
 
                 showNotification('Contract saved and secured on blockchain', 'success');
             } else {
-                showNotification('❌ Failed to save contract', 'error');
+                showNotification(' Failed to save contract', 'error');
             }
 
         } catch (error) {
-            console.error('❌ Error:', error);
+            console.error(' Error:', error);
             document.getElementById('loadingOverlay')?.classList.remove('show');
-            showNotification('❌ Error: ' + error.message, 'error');
+            showNotification(' Error: ' + error.message, 'error');
         }
     }
 
@@ -9651,10 +9651,10 @@ ${(riskAnalysisData.risk_items || []).map(item => `
 This contract is secured using Hyperledger Fabric blockchain technology.
 
 Benefits:
-✅ Tamper-proof - Any changes are immediately detected
-✅ Immutable - Permanent record that cannot be altered
-✅ Transparent - Full audit trail of all changes
-✅ Compliant - Meets QFCRA regulatory requirements
+ Tamper-proof - Any changes are immediately detected
+ Immutable - Permanent record that cannot be altered
+ Transparent - Full audit trail of all changes
+ Compliant - Meets QFCRA regulatory requirements
 
 The blockchain stores a cryptographic hash (SHA-256) of your contract, ensuring document integrity and authenticity.
 
@@ -9747,7 +9747,7 @@ How it works:
             }
 
         } catch (error) {
-            console.error('❌ Error in risk analysis:', error);
+            console.error(' Error in risk analysis:', error);
             content.innerHTML = `
             <div class="text-center" style="padding: 3rem;">
                 <div style="width: 80px; height: 80px; background: rgba(220, 53, 69, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
@@ -10005,7 +10005,7 @@ Issue: ${risk.issue}
 Severity: ${risk.severity.toUpperCase()}
 Affected Clause: ${risk.clause_reference || 'General'}
 
-⚠️ RECOMMENDED MITIGATION:
+ RECOMMENDED MITIGATION:
 ${risk.mitigation}
 ═══════════════════════════════════════════════════\n`;
 
@@ -10206,7 +10206,7 @@ Generated by CALIM 360 Smart CLM
 
         const modal = document.getElementById('blockchainMonitorModal');
         if (!modal) {
-            console.error('❌ Blockchain monitor modal not found');
+            console.error(' Blockchain monitor modal not found');
             showNotification('Blockchain monitor not available', 'error');
             return;
         }
@@ -10248,7 +10248,7 @@ Generated by CALIM 360 Smart CLM
             loadBlockchainHistory();
         }, 15000);
 
-        console.log('✅ Blockchain monitoring started (15s interval)');
+        console.log(' Blockchain monitoring started (15s interval)');
     }
 
     // Stop monitoring
@@ -10399,7 +10399,7 @@ Generated by CALIM 360 Smart CLM
 
         const contractId = getContractId();
         if (!contractId) {
-            console.error('❌ No contract ID found');
+            console.error(' No contract ID found');
             showEmptyActivityState();
             return;
         }
@@ -10423,7 +10423,7 @@ Generated by CALIM 360 Smart CLM
             }
 
             const data = await response.json();
-            console.log('✅ Blockchain history loaded:', data);
+            console.log(' Blockchain history loaded:', data);
 
             // Update network status
             if (data.network_status) {
@@ -10443,7 +10443,7 @@ Generated by CALIM 360 Smart CLM
             }
 
         } catch (error) {
-            console.error('❌ Error loading blockchain history:', error);
+            console.error(' Error loading blockchain history:', error);
             showErrorState();
         }
     }
@@ -10819,10 +10819,10 @@ async function openInternalReviewModal() {
     function displayBlockchainActivities(activities) {
         console.log('📊 Displaying blockchain activities:', activities.length, 'items');
 
-        // ✅ FIX: Use correct element ID
+        //  FIX: Use correct element ID
         const stream = document.getElementById('activityStreamModal');
         if (!stream) {
-            console.error('❌ Activity stream element not found');
+            console.error(' Activity stream element not found');
             return;
         }
 
@@ -10843,7 +10843,7 @@ async function openInternalReviewModal() {
             }, index * 100); // Reduced delay for faster display
         });
 
-        console.log('✅ Successfully displayed', activities.length, 'blockchain activities');
+        console.log(' Successfully displayed', activities.length, 'blockchain activities');
     }
 
 
@@ -11308,7 +11308,7 @@ async function openInternalReviewModal() {
         console.log('🔍 Submitting rejection for contract ID:', contractId);
 
         if (!contractId) {
-            console.error('❌ Contract ID is missing!');
+            console.error(' Contract ID is missing!');
             showNotification('Error: Contract ID not found', 'error');
             return;
         }
@@ -11321,7 +11321,7 @@ async function openInternalReviewModal() {
         }
 
         try {
-            console.log('📤 Sending rejection request...', {
+            console.log(' Sending rejection request...', {
                 contract_id: contractId,
                 action: 'reject',
                 comments: comment
@@ -11353,11 +11353,11 @@ async function openInternalReviewModal() {
                     window.location.reload();
                 }, 1500);
             } else {
-                console.error('❌ Error response:', result);
+                console.error(' Error response:', result);
                 showNotification('Error: ' + (result.detail || 'Failed to reject contract'), 'error');
             }
         } catch (error) {
-            console.error('❌ Error rejecting workflow:', error);
+            console.error(' Error rejecting workflow:', error);
             showNotification('Error rejecting contract. Please try again.', 'error');
         }
     }
@@ -11722,11 +11722,11 @@ async function checkWorkflowAvailability() {
             custom: data.custom_workflow
         };
 
-        console.log('✅ Workflow availability checked:', workflowAvailability);
+        console.log(' Workflow availability checked:', workflowAvailability);
         updateWorkflowOptions();
 
     } catch (error) {
-        console.error('❌ Error checking workflow availability:', error);
+        console.error(' Error checking workflow availability:', error);
         showNotification('Failed to check workflow availability', 'error');
     }
 }

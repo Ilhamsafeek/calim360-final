@@ -112,11 +112,11 @@ class ContractService:
                     ContractTemplate.id == request.template_id
                 ).first()
                 if template:
-                    # Copy template content to contract ✅
+                    # Copy template content to contract 
                     initial_content = template.template_content or f"<h1>{template.template_name}</h1><p>Template loaded.</p>"
                     initial_content_ar = template.template_content_ar
             
-            # Create initial version WITH CONTENT ✅
+            # Create initial version WITH CONTENT 
             initial_version = ContractVersion(
                 contract_id=new_contract.id,
                 version_number=1,

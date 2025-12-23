@@ -1294,7 +1294,7 @@
             <div class="loading-text">Loading contracts...</div>
         </div>
 
-        <!-- ✅ NEW: Pagination Controls -->
+        <!--  NEW: Pagination Controls -->
         <div class="pagination-container" id="paginationContainer" style="display: none;">
             <div class="pagination-info" id="paginationInfo"></div>
             <div class="pagination-buttons">
@@ -1316,8 +1316,8 @@
     let currentModule = 'drafting';
     let currentSubTab = 'all';
     let activeFilters = {};
-    let currentUploadType = null;  // ✅ ADD THIS
-    let selectedFile = null;        // ✅ ADD THIS
+    let currentUploadType = null;  //  ADD THIS
+    let selectedFile = null;        //  ADD THIS
 
 
 
@@ -1334,7 +1334,7 @@
     }
 
     // Load contracts from database with current filters
-    // ✅ ADD: Pagination state
+    //  ADD: Pagination state
     let currentPage = 1;
     let totalPages = 1;
     let hasMore = false;
@@ -1405,7 +1405,7 @@
     }
 
 
-    // ✅ NEW: Update pagination UI
+    //  NEW: Update pagination UI
     function updatePaginationUI(pagination) {
         const paginationContainer = document.getElementById('paginationContainer');
         const paginationInfo = document.getElementById('paginationInfo');
@@ -1429,7 +1429,7 @@
         nextBtn.disabled = !pagination.has_more;
     }
 
-    // ✅ NEW: Change page function
+    //  NEW: Change page function
     function changePage(direction) {
         if (direction === 'next' && hasMore) {
             currentPage++;
@@ -1443,14 +1443,14 @@
         document.getElementById('contractsGrid').scrollIntoView({ behavior: 'smooth' });
     }
 
-    // ✅ UPDATE: Reset page when changing filters
+    //  UPDATE: Reset page when changing filters
     function applyFilters() {
         console.log('applyFilters called');  // Debug
         currentPage = 1;  // Reset to first page when filtering
         loadContractsFromDB();
     }
 
-    // ✅ UPDATE: Reset page when switching modules
+    //  UPDATE: Reset page when switching modules
     function switchModule(module) {
         currentModule = module;
         currentPage = 1;  // Reset to first page
@@ -1479,7 +1479,7 @@
         applyFilters();
     }
 
-    // ✅ UPDATE: Reset page when switching sub-tabs
+    //  UPDATE: Reset page when switching sub-tabs
     function switchSubTab(subTab) {
         currentSubTab = subTab;
         currentPage = 1;  // Reset to first page
@@ -1600,19 +1600,19 @@
     // }
     // Upload existing contract function
     function uploadExistingContract(type) {
-        currentUploadType = type;  // ✅ ADD THIS LINE
+        currentUploadType = type;  //  ADD THIS LINE
 
         // Create a file input element
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
-        fileInput.accept = '.pdf,.doc,.docx';  // ✅ REMOVE .txt
+        fileInput.accept = '.pdf,.doc,.docx';  //  REMOVE .txt
         fileInput.style.display = 'none';
 
         // Add event listener for file selection
         fileInput.addEventListener('change', function (event) {
             const file = event.target.files[0];
             if (file) {
-                selectedFile = file;  // ✅ ADD THIS LINE
+                selectedFile = file;  //  ADD THIS LINE
                 showUploadDialog(file, type);
             }
         });
@@ -1758,87 +1758,480 @@
         modal.innerHTML = modalContent;
         document.body.appendChild(modal);
     }
-    // ✅ ENHANCED: Risk Analysis Upload with Loading Indicator
-    // ✅ COMPLETE ENHANCED VERSION
-    async function processRiskAnalysisUpload(filename) {
-        const profileType = document.getElementById('uploadProfileType').value;
+  
 
-        // Remove modal
-        const modal = document.querySelector('.upload-modal');
-        if (modal) modal.remove();
+// ✅ COMPLETE ENHANCED VERSION - With Risk Analysis Results Display
+async function processRiskAnalysisUpload(filename) {
+    const profileType = document.getElementById('uploadProfileType').value;
 
-        if (!selectedFile) {
-            showNotification('No file selected', 'error');
-            return;
+    // Remove modal
+    const modal = document.querySelector('.upload-modal');
+    if (modal) modal.remove();
+
+    if (!selectedFile) {
+        showNotification('No file selected', 'error');
+        return;
+    }
+
+    try {
+        // Show comprehensive loading overlay
+        showLoadingOverlay('Preparing to upload...');
+        updateStepStatus('upload', 'active');
+
+        // Create FormData for file upload
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('profile_type', profileType);
+
+        // Update loading message
+        updateLoadingMessage('📤 Uploading file to server...');
+
+        // Upload the contract file with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minute timeout
+
+        const response = await fetch('/api/contracts/risk-analysis-upload', {
+            method: 'POST',
+            body: formData,
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || 'Upload failed');
         }
 
-        try {
-            // Show comprehensive loading overlay
-            showLoadingOverlay('Preparing to upload...');
-            updateStepStatus('upload', 'active');
+        if (data.success) {
+            // Complete all steps
+            completeProgress();
+            updateLoadingMessage('✅ Upload and analysis complete!');
 
-            // Create FormData for file upload
-            const formData = new FormData();
-            formData.append('file', selectedFile);
-            formData.append('profile_type', profileType);
-
-            // Update loading message
-            updateLoadingMessage('📤 Uploading file to server...');
-
-            // Upload the contract file with timeout
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minute timeout
-
-            const response = await fetch('/api/contracts/risk-analysis-upload', {
-                method: 'POST',
-                body: formData,
-                signal: controller.signal
-            });
-
-            clearTimeout(timeoutId);
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.detail || 'Upload failed');
-            }
-
-            if (data.success) {
-                // Complete all steps
-                completeProgress();
-                updateLoadingMessage('✅ Upload and analysis complete!');
-
-                // Hide loading after brief delay
-                setTimeout(() => {
-                    hideLoadingOverlay();
-                    showNotification(`Contract "${filename}" uploaded and analyzed successfully!`, 'success');
-
-                    // Redirect to contract editor
-                    setTimeout(() => {
-                        window.location.href = `/contract/edit/${data.contract_id}`;
-                    }, 800);
-                }, 1500);
-            } else {
-                throw new Error(data.message || 'Upload failed');
-            }
-
-        } catch (error) {
-            console.error('Error uploading contract:', error);
-
-            // Show error state
-            updateStepStatus('upload', 'error');
-            updateStepStatus('extract', 'error');
-            updateStepStatus('analyze', 'error');
-            updateStepStatus('save', 'error');
-            updateLoadingMessage('❌ Upload failed: ' + error.message);
-
+            // Hide loading overlay after brief delay
             setTimeout(() => {
                 hideLoadingOverlay();
-                showNotification('Upload failed: ' + error.message, 'error');
-            }, 2000);
+
+                // ✅ NEW: Fetch and display risk analysis results
+                if (data.contract_id) {
+                    fetchAndDisplayRiskAnalysis(data.contract_id, data.contract_number || filename);
+                } else {
+                    showNotification('Contract uploaded. View risk analysis from Contract Operations.', 'success');
+                    setTimeout(() => location.reload(), 2000);
+                }
+            }, 1500);
         }
+
+    } catch (error) {
+        console.error('Upload error:', error);
+        hideLoadingOverlay();
+        showNotification(`Upload failed: ${error.message}`, 'error');
     }
-    // ✅ NEW: Show Loading Overlay
+}
+
+// =====================================================
+// ✅ NEW FUNCTION: Fetch and Display Risk Analysis Results
+// =====================================================
+async function fetchAndDisplayRiskAnalysis(contractId, contractTitle) {
+    try {
+        // ✅ Show loading modal FIRST
+        showRiskAnalysisLoadingModal(contractTitle);
+
+        // Fetch the risk analysis from the backend
+        const response = await fetch(`/api/contracts/risk-analysis/${contractId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.analysis) {
+            // Display the Risk Analysis Results Modal (replaces loading modal)
+            displayRiskAnalysisResultsModal(contractId, contractTitle, data.analysis);
+        } else {
+            // Close loading modal
+            closeRiskResultsModal();
+            // No analysis available - redirect to contract editor
+            showNotification('Contract uploaded. Opening editor...', 'success');
+            setTimeout(() => {
+                window.location.href = `/contracts/edit/${contractId}`;
+            }, 1500);
+        }
+    } catch (error) {
+        console.error('Error fetching risk analysis:', error);
+        closeRiskResultsModal();
+        showNotification('Contract uploaded successfully!', 'success');
+        setTimeout(() => location.reload(), 2000);
+    }
+}
+
+// =====================================================
+// ✅ NEW: Loading Modal while fetching results
+// =====================================================
+function showRiskAnalysisLoadingModal(contractTitle) {
+    // Remove any existing modal
+    const existingModal = document.getElementById('riskResultsModal');
+    if (existingModal) existingModal.remove();
+
+    const modalHtml = `
+        <div id="riskResultsModal" class="modal" style="display: flex; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; padding: 1rem;">
+            <div class="modal-content" style="background: var(--card-bg, #fff); border-radius: 12px; max-width: 500px; width: 95%; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                
+                <!-- Header -->
+                <div style="background: linear-gradient(135deg, #28a745, #20c997); padding: 1.5rem; display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h3 style="margin: 0; color: white; display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem;">
+                            <i class="ti ti-shield-check"></i>
+                            Preparing Risk Analysis
+                        </h3>
+                        <p style="margin: 0.5rem 0 0; color: rgba(255,255,255,0.9); font-size: 0.875rem;">${contractTitle}</p>
+                    </div>
+                </div>
+
+                <!-- Loading Body -->
+                <div style="padding: 3rem 2rem; text-align: center;">
+                    <!-- Animated Loader -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <div style="width: 60px; height: 60px; margin: 0 auto; border: 4px solid #e9ecef; border-top-color: #28a745; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                    </div>
+                    
+                    <h4 style="margin: 0 0 0.5rem; color: var(--text-color, #333); font-weight: 600;">Loading Analysis Results</h4>
+                    <p style="margin: 0; color: var(--text-muted, #6c757d); font-size: 0.875rem;">Please wait while we retrieve your risk analysis...</p>
+                    
+                    <!-- Progress dots -->
+                    <div style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 0.5rem;">
+                        <span style="width: 8px; height: 8px; background: #28a745; border-radius: 50%; animation: pulse 1.4s ease-in-out infinite;"></span>
+                        <span style="width: 8px; height: 8px; background: #28a745; border-radius: 50%; animation: pulse 1.4s ease-in-out 0.2s infinite;"></span>
+                        <span style="width: 8px; height: 8px; background: #28a745; border-radius: 50%; animation: pulse 1.4s ease-in-out 0.4s infinite;"></span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        
+        <style>
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+            @keyframes pulse {
+                0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+                40% { opacity: 1; transform: scale(1); }
+            }
+        </style>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// =====================================================
+// ✅ NEW FUNCTION: Display Risk Analysis Results Modal
+// =====================================================
+function displayRiskAnalysisResultsModal(contractId, contractTitle, analysis) {
+    // Remove any existing modal
+    const existingModal = document.getElementById('riskResultsModal');
+    if (existingModal) existingModal.remove();
+
+    // Determine risk level color
+    const riskScore = analysis.overall_score || analysis.risk_score || 50;
+    const riskLevel = analysis.risk_level || (riskScore >= 70 ? 'High' : riskScore >= 40 ? 'Medium' : 'Low');
+    const riskColor = riskScore >= 70 ? '#dc3545' : riskScore >= 40 ? '#ffc107' : '#28a745';
+
+    // Build risk items HTML - safely extract text from all fields
+    const riskItemsHtml = (analysis.risk_items || []).map(item => {
+        const issueText = extractText(item.issue) || extractText(item.type) || 'Risk Item';
+        const descText = extractText(item.description) || 'Review recommended';
+        const mitigationText = extractText(item.mitigation);
+        const severityText = extractText(item.severity) || 'Medium';
+        const typeText = extractText(item.type) || 'General';
+        
+        return `
+            <div class="risk-item" style="background: ${getSeverityBg(severityText)}; border-left: 4px solid ${getSeverityColor(severityText)}; padding: 1rem; border-radius: 8px; margin-bottom: 0.75rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span style="font-weight: 600; color: var(--text-color);">
+                        <i class="ti ti-${getRiskIcon(typeText)}"></i> ${issueText}
+                    </span>
+                    <span class="badge" style="background: ${getSeverityColor(severityText)}; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.7rem; text-transform: uppercase;">
+                        ${severityText}
+                    </span>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0.5rem 0;">${descText}</p>
+                ${mitigationText ? `<p style="font-size: 0.8rem; color: var(--success-color); margin: 0;"><i class="ti ti-bulb"></i> ${mitigationText}</p>` : ''}
+            </div>
+        `;
+    }).join('') || '<p style="text-align: center; color: var(--text-muted);">No specific risks identified</p>';
+
+    // Build recommendations HTML - handle both string and object formats
+    const recommendationsHtml = (analysis.recommendations || []).map(rec => {
+        const recText = extractText(rec);
+        return `
+            <li style="margin-bottom: 0.5rem; color: var(--text-color);">
+                <i class="ti ti-check" style="color: var(--success-color);"></i> ${recText}
+            </li>
+        `;
+    }).join('') || '<li style="color: var(--text-muted);">No specific recommendations</li>';
+
+    // Create the modal HTML
+    const modalHtml = `
+        <div id="riskResultsModal" class="modal" style="display: flex; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; padding: 1rem;">
+            <div class="modal-content" style="background: var(--card-bg, #fff); border-radius: 12px; max-width: 900px; width: 95%; max-height: 90vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                
+                <!-- Header - Fixed alignment -->
+                <div class="modal-header" style="background: linear-gradient(135deg, ${riskColor}, ${adjustColor(riskColor, 20)}); padding: 1.5rem; color: white; display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div style="flex: 1;">
+                        <h3 style="margin: 0; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                            <i class="ti ti-shield-check"></i>
+                            Risk Analysis Complete
+                            <span style="background: rgba(255,255,255,0.2); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem;">
+                                <i class="ti ti-sparkles"></i> AI Powered
+                            </span>
+                        </h3>
+                        <p style="margin: 0.5rem 0 0; opacity: 0.9; font-size: 0.9rem;">${contractTitle}</p>
+                    </div>
+                    <button onclick="closeRiskResultsModal()" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.25rem; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-left: 1rem;">
+                        <i class="ti ti-x"></i>
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="modal-body" style="padding: 1.5rem; max-height: calc(90vh - 200px); overflow-y: auto;">
+                    
+                    <!-- Risk Score Summary -->
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                        <div style="background: linear-gradient(135deg, ${riskColor}15, ${riskColor}05); padding: 1.25rem; border-radius: 12px; text-align: center; border: 1px solid ${riskColor}30;">
+                            <div style="font-size: 2.5rem; font-weight: bold; color: ${riskColor};">${riskScore}%</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Risk Score</div>
+                        </div>
+                        <div style="background: rgba(220, 53, 69, 0.05); padding: 1.25rem; border-radius: 12px; text-align: center; border: 1px solid rgba(220, 53, 69, 0.2);">
+                            <div style="font-size: 2.5rem; font-weight: bold; color: #dc3545;">${analysis.high_risks || 0}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">High Risk</div>
+                        </div>
+                        <div style="background: rgba(255, 193, 7, 0.05); padding: 1.25rem; border-radius: 12px; text-align: center; border: 1px solid rgba(255, 193, 7, 0.2);">
+                            <div style="font-size: 2.5rem; font-weight: bold; color: #ffc107;">${analysis.medium_risks || 0}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Medium Risk</div>
+                        </div>
+                        <div style="background: rgba(40, 167, 69, 0.05); padding: 1.25rem; border-radius: 12px; text-align: center; border: 1px solid rgba(40, 167, 69, 0.2);">
+                            <div style="font-size: 2.5rem; font-weight: bold; color: #28a745;">${analysis.low_risks || 0}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Low Risk</div>
+                        </div>
+                    </div>
+
+                    <!-- Executive Summary -->
+                    <div style="background: var(--body-bg, #f8f9fa); padding: 1rem 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid var(--primary-color, #0d6efd);">
+                        <h4 style="margin: 0 0 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
+                            <i class="ti ti-file-text"></i> Executive Summary
+                        </h4>
+                        <p style="margin: 0; color: var(--text-color); line-height: 1.6;">${extractText(analysis.executive_summary) || extractText(analysis.summary) || 'Contract has been analyzed for potential risks. Review the detailed findings below.'}</p>
+                    </div>
+
+                    <!-- Risk Items -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <h4 style="margin: 0 0 1rem; color: var(--text-color); display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="ti ti-alert-triangle" style="color: var(--warning-color);"></i>
+                            Risk Items
+                        </h4>
+                        ${riskItemsHtml}
+                    </div>
+
+                    <!-- Recommendations -->
+                    <div style="background: rgba(40, 167, 69, 0.05); padding: 1.25rem; border-radius: 8px; border: 1px solid rgba(40, 167, 69, 0.2);">
+                        <h4 style="margin: 0 0 0.75rem; color: var(--success-color); display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="ti ti-bulb"></i>
+                            Recommendations
+                        </h4>
+                        <ul style="margin: 0; padding-left: 1.5rem; list-style: none;">
+                            ${recommendationsHtml}
+                        </ul>
+                    </div>
+
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer" style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color, #dee2e6); display: flex; justify-content: space-between; align-items: center; background: var(--body-bg, #f8f9fa);">
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">
+                        <i class="ti ti-clock"></i> Analyzed: ${new Date().toLocaleString()}
+                    </div>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <button onclick="downloadRiskReport('${contractId}')" class="btn" style="background: var(--secondary-color, #6c757d); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="ti ti-download"></i> Download Report
+                        </button>
+                        <button onclick="goToContractEditor('${contractId}')" class="btn" style="background: var(--primary-color, #0d6efd); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="ti ti-edit"></i> Open Contract Editor
+                        </button>
+                        <button onclick="closeRiskResultsAndRefresh()" class="btn" style="background: var(--success-color, #28a745); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="ti ti-check"></i> Done
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    `;
+
+    // Append modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // Store analysis data globally for export
+    window.currentRiskAnalysis = analysis;
+    window.currentContractId = contractId;
+    window.currentContractTitle = contractTitle;
+}
+
+// =====================================================
+// Helper Functions
+// =====================================================
+
+// ✅ Helper to safely extract text from string or object
+function extractText(value) {
+    if (!value) return '';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'object') {
+        return value.text || value.description || value.message || value.content || value.recommendation || value.value || value.name || JSON.stringify(value);
+    }
+    return String(value);
+}
+
+function getSeverityColor(severity) {
+    const colors = {
+        'high': '#dc3545',
+        'critical': '#dc3545',
+        'medium': '#ffc107',
+        'moderate': '#ffc107',
+        'low': '#28a745',
+        'minor': '#17a2b8'
+    };
+    return colors[(severity || 'medium').toLowerCase()] || '#6c757d';
+}
+
+function getSeverityBg(severity) {
+    const colors = {
+        'high': 'rgba(220, 53, 69, 0.05)',
+        'critical': 'rgba(220, 53, 69, 0.08)',
+        'medium': 'rgba(255, 193, 7, 0.05)',
+        'moderate': 'rgba(255, 193, 7, 0.05)',
+        'low': 'rgba(40, 167, 69, 0.05)',
+        'minor': 'rgba(23, 162, 184, 0.05)'
+    };
+    return colors[(severity || 'medium').toLowerCase()] || 'rgba(108, 117, 125, 0.05)';
+}
+
+function getRiskIcon(type) {
+    const icons = {
+        'Legal': 'scale',
+        'Financial': 'currency-dollar',
+        'Operational': 'settings',
+        'Compliance': 'shield-check',
+        'Dispute': 'gavel',
+        'Termination': 'door-exit',
+        'Liability': 'alert-octagon',
+        'Payment': 'cash',
+        'General': 'alert-circle'
+    };
+    return icons[type] || 'alert-triangle';
+}
+
+function adjustColor(hex, percent) {
+    // Darken/lighten hex color
+    const num = parseInt(hex.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = (num >> 16) + amt;
+    const G = (num >> 8 & 0x00FF) + amt;
+    const B = (num & 0x0000FF) + amt;
+    return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+        (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+        (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+}
+
+function closeRiskResultsModal() {
+    const modal = document.getElementById('riskResultsModal');
+    if (modal) modal.remove();
+}
+
+function closeRiskResultsAndRefresh() {
+    closeRiskResultsModal();
+    location.reload();
+}
+
+function goToContractEditor(contractId) {
+    window.location.href = `/contracts/edit/${contractId}`;
+}
+
+function downloadRiskReport(contractId) {
+    const analysis = window.currentRiskAnalysis;
+    const title = window.currentContractTitle;
+    
+    if (!analysis) {
+        showNotification('No analysis data available', 'warning');
+        return;
+    }
+
+    const reportContent = `
+════════════════════════════════════════════════════════════════════════════════
+                        CALIM 360 - RISK ANALYSIS REPORT
+════════════════════════════════════════════════════════════════════════════════
+
+CONTRACT: ${title}
+DATE: ${new Date().toLocaleString()}
+ANALYSIS TYPE: AI-Powered Risk Assessment
+
+────────────────────────────────────────────────────────────────────────────────
+                              RISK SUMMARY
+────────────────────────────────────────────────────────────────────────────────
+
+Overall Risk Score: ${analysis.overall_score || analysis.risk_score || 'N/A'}/100
+Risk Level: ${analysis.risk_level || 'Medium'}
+
+Risk Distribution:
+  • High Risk Items:   ${analysis.high_risks || 0}
+  • Medium Risk Items: ${analysis.medium_risks || 0}
+  • Low Risk Items:    ${analysis.low_risks || 0}
+  • Total Risks:       ${analysis.total_risks || (analysis.risk_items || []).length}
+
+────────────────────────────────────────────────────────────────────────────────
+                           EXECUTIVE SUMMARY
+────────────────────────────────────────────────────────────────────────────────
+
+${analysis.executive_summary || analysis.summary || 'Contract has been analyzed for potential risks.'}
+
+────────────────────────────────────────────────────────────────────────────────
+                            DETAILED FINDINGS
+────────────────────────────────────────────────────────────────────────────────
+
+${(analysis.risk_items || []).map((item, idx) => `
+[${idx + 1}] ${item.issue || item.type}
+    Severity: ${item.severity || 'Medium'}
+    Description: ${item.description || 'N/A'}
+    Clause Reference: ${item.clause_reference || 'General'}
+    Mitigation: ${item.mitigation || 'Review recommended'}
+`).join('\n') || 'No specific risks identified.'}
+
+────────────────────────────────────────────────────────────────────────────────
+                            RECOMMENDATIONS
+────────────────────────────────────────────────────────────────────────────────
+
+${(analysis.recommendations || []).map((rec, idx) => `${idx + 1}. ${rec}`).join('\n') || 'No specific recommendations.'}
+
+════════════════════════════════════════════════════════════════════════════════
+                Generated by CALIM 360 Smart CLM
+                © ${new Date().getFullYear()} All Rights Reserved
+════════════════════════════════════════════════════════════════════════════════
+`;
+
+    const blob = new Blob([reportContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Risk_Analysis_Report_${contractId}_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+
+    showNotification('Risk report downloaded successfully', 'success');
+}
+
+
+    //  NEW: Show Loading Overlay
     function showLoadingOverlay(message) {
         // Remove existing overlay if any
         hideLoadingOverlay();
@@ -1888,7 +2281,7 @@
         simulateUploadProgress();
     }
 
-    // ✅ NEW: Update Loading Message
+    //  NEW: Update Loading Message
     function updateLoadingMessage(message) {
         const messageEl = document.getElementById('uploadLoadingMessage');
         if (messageEl) {
@@ -1896,7 +2289,7 @@
         }
     }
 
-    // ✅ NEW: Update Step Status
+    //  NEW: Update Step Status
     function updateStepStatus(step, status) {
         const stepEl = document.querySelector(`.step-item[data-step="${step}"]`);
         if (stepEl) {
@@ -1917,7 +2310,7 @@
         }
     }
 
-    // ✅ NEW: Simulate Upload Progress
+    //  NEW: Simulate Upload Progress
     function simulateUploadProgress() {
         const progressBar = document.getElementById('uploadProgressBar');
         if (!progressBar) return;
@@ -1933,7 +2326,7 @@
                 if (progress > 20) {
                     updateStepStatus('upload', 'completed');
                     updateStepStatus('extract', 'active');
-                    updateLoadingMessage('📄 Extracting document content...');
+                    updateLoadingMessage(' Extracting document content...');
                 }
                 if (progress > 50) {
                     updateStepStatus('extract', 'completed');
@@ -1954,7 +2347,7 @@
         window.uploadProgressInterval = interval;
     }
 
-    // ✅ NEW: Complete Progress
+    //  NEW: Complete Progress
     function completeProgress() {
         const progressBar = document.getElementById('uploadProgressBar');
         if (progressBar) {
@@ -1975,7 +2368,7 @@
         }
     }
 
-    // ✅ NEW: Hide Loading Overlay
+    //  NEW: Hide Loading Overlay
     function hideLoadingOverlay() {
         const overlay = document.getElementById('uploadLoadingOverlay');
         if (overlay) {
@@ -2767,7 +3160,7 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         if (isInitialized) {
-            console.log('⚠️ Already initialized');
+            console.log(' Already initialized');
             return;
         }
         isInitialized = true;
@@ -2783,7 +3176,7 @@
     // Navigation functions for action buttons
     function navigateToRiskAnalysis() {
         // window.location.href = `/contract/edit`;
-        currentUploadType = 'risk_analysis';  // ✅ ADD THIS LINE
+        currentUploadType = 'risk_analysis';  //  ADD THIS LINE
         uploadExistingContract('risk_analysis')
     }
 

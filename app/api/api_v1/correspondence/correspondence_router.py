@@ -123,7 +123,7 @@ async def upload_correspondence_documents(
 ):
     """Upload documents - supports both project and document level uploads"""
     try:
-        logger.info(f"📤 Upload request: {len(files)} files by user {current_user.email}")
+        logger.info(f" Upload request: {len(files)} files by user {current_user.email}")
         logger.info(f"📋 Raw project_id received: '{project_id}' (type: {type(project_id)})")
         
         if len(files) > MAX_BATCH_SIZE:
@@ -132,7 +132,7 @@ async def upload_correspondence_documents(
                 detail=f"Maximum {MAX_BATCH_SIZE} files allowed per upload"
             )
         
-        # ✅ FIX: Properly handle empty strings and None
+        #  FIX: Properly handle empty strings and None
         actual_project_id = None
         upload_mode = "document-level"
         
@@ -141,14 +141,14 @@ async def upload_correspondence_documents(
             try:
                 actual_project_id = int(project_id.strip())
                 upload_mode = "project-level"
-                logger.info(f"✅ Project-level upload for project ID: {actual_project_id}")
+                logger.info(f" Project-level upload for project ID: {actual_project_id}")
             except (ValueError, AttributeError) as e:
-                logger.warning(f"⚠️ Invalid project_id '{project_id}': {e}, treating as document-level upload")
+                logger.warning(f" Invalid project_id '{project_id}': {e}, treating as document-level upload")
                 actual_project_id = None
         else:
             logger.info(f"ℹ️ Document-level upload (no project specified)")
         
-        # ✅ FIX: Only verify project if actual_project_id is not None
+        #  FIX: Only verify project if actual_project_id is not None
         if actual_project_id is not None:
             try:
                 project_query = text("SELECT id, company_id FROM projects WHERE id = :project_id")
@@ -159,11 +159,11 @@ async def upload_correspondence_documents(
                         status_code=status.HTTP_404_NOT_FOUND, 
                         detail=f"Project {actual_project_id} not found"
                     )
-                logger.info(f"✅ Project verified: {actual_project_id}")
+                logger.info(f" Project verified: {actual_project_id}")
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"❌ Error verifying project: {str(e)}")
+                logger.error(f" Error verifying project: {str(e)}")
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail=f"Error verifying project: {str(e)}"
@@ -174,7 +174,7 @@ async def upload_correspondence_documents(
         user_result = db.execute(user_check, {"user_id": current_user.id}).fetchone()
         
         if not user_result:
-            logger.error(f"❌ User {current_user.id} not found in database!")
+            logger.error(f" User {current_user.id} not found in database!")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found in database"
@@ -191,7 +191,7 @@ async def upload_correspondence_documents(
                 is_valid, msg = validate_upload_file(file)
                 if not is_valid:
                     failed_uploads.append({"filename": file.filename, "error": msg})
-                    logger.warning(f"⚠️ File validation failed: {file.filename} - {msg}")
+                    logger.warning(f" File validation failed: {file.filename} - {msg}")
                     continue
                 
                 # Read file content
@@ -201,7 +201,7 @@ async def upload_correspondence_documents(
                 if file_size > MAX_FILE_SIZE:
                     error_msg = f"File size {file_size} exceeds {MAX_FILE_SIZE / (1024*1024)}MB limit"
                     failed_uploads.append({"filename": file.filename, "error": error_msg})
-                    logger.warning(f"⚠️ {error_msg}")
+                    logger.warning(f" {error_msg}")
                     continue
                 
                 # Generate unique document ID and hash
@@ -267,16 +267,16 @@ async def upload_correspondence_documents(
                     "size": file_size
                 })
                 
-                logger.info(f"✅ Uploaded: {file.filename} ({file_size} bytes) - Mode: {upload_mode}")
+                logger.info(f" Uploaded: {file.filename} ({file_size} bytes) - Mode: {upload_mode}")
                 
             except Exception as e:
-                logger.error(f"❌ Failed to upload {file.filename}: {str(e)}", exc_info=True)
+                logger.error(f" Failed to upload {file.filename}: {str(e)}", exc_info=True)
                 failed_uploads.append({"filename": file.filename, "error": str(e)})
         
         # Commit all successful uploads
         if uploaded_docs:
             db.commit()
-            logger.info(f"✅ Committed {len(uploaded_docs)} documents to database")
+            logger.info(f" Committed {len(uploaded_docs)} documents to database")
         
         return {
             "success": True,
@@ -292,7 +292,7 @@ async def upload_correspondence_documents(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Upload error: {str(e)}", exc_info=True)
+        logger.error(f" Upload error: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Upload failed: {str(e)}"
@@ -358,7 +358,7 @@ async def get_standalone_documents(
                 "project_code": "N/A"
             })
         
-        logger.info(f"✅ Found {len(documents)} standalone documents")
+        logger.info(f" Found {len(documents)} standalone documents")
         
         return {
             "success": True,
@@ -367,7 +367,7 @@ async def get_standalone_documents(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching standalone documents: {str(e)}")
+        logger.error(f" Error fetching standalone documents: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch standalone documents: {str(e)}"
@@ -423,7 +423,7 @@ async def get_project_documents_for_correspondence(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching documents: {str(e)}")
+        logger.error(f" Error fetching documents: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch documents: {str(e)}"
@@ -538,7 +538,7 @@ async def get_projects_with_documents(
                 "documents": documents
             })
         
-        logger.info(f"✅ Returning {len(projects)} projects with documents")
+        logger.info(f" Returning {len(projects)} projects with documents")
         
         return {
             "success": True,
@@ -547,7 +547,7 @@ async def get_projects_with_documents(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error loading projects: {str(e)}")
+        logger.error(f" Error loading projects: {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(
@@ -627,7 +627,7 @@ async def analyze_correspondence_documents(
         logger.info(f"📧 Analysis request from user {current_user.email}")
         logger.info(f"   Mode: {request.mode}, Documents: {len(request.document_ids)}")
         
-        # ✅ IMPORT DocumentParser
+        #  IMPORT DocumentParser
         from app.utils.document_parser import DocumentParser
         
         # Fetch document contents
@@ -647,12 +647,12 @@ async def analyze_correspondence_documents(
             doc = db.execute(doc_query, {"doc_id": doc_id}).fetchone()
             
             if doc:
-                # ✅ EXTRACT ACTUAL DOCUMENT CONTENT using DocumentParser
+                #  EXTRACT ACTUAL DOCUMENT CONTENT using DocumentParser
                 content_text = ""
                 
                 try:
                     if doc.file_path and os.path.exists(doc.file_path):
-                        logger.info(f"📄 Extracting content from: {doc.document_name}")
+                        logger.info(f" Extracting content from: {doc.document_name}")
                         
                         # Use DocumentParser to extract text from PDFs, DOCX, etc.
                         extracted_content = DocumentParser.extract_text(doc.file_path)
@@ -666,21 +666,21 @@ async def analyze_correspondence_documents(
                         if len(content_text) > 50000:
                             content_text = content_text[:50000] + "\n\n[Content truncated for processing...]"
                         
-                        logger.info(f"✅ Extracted {len(content_text)} characters from {doc.document_name}")
+                        logger.info(f" Extracted {len(content_text)} characters from {doc.document_name}")
                     else:
-                        logger.warning(f"⚠️ File not found: {doc.file_path}")
+                        logger.warning(f" File not found: {doc.file_path}")
                         content_text = f"[File not accessible: {doc.document_name}]"
                         
                 except Exception as e:
-                    logger.error(f"❌ Error extracting content from {doc.document_name}: {str(e)}")
+                    logger.error(f" Error extracting content from {doc.document_name}: {str(e)}")
                     content_text = f"[Error extracting content: {str(e)}]"
                 
-                # ✅ PASS FULL CONTENT TO AI (not just preview!)
+                #  PASS FULL CONTENT TO AI (not just preview!)
                 doc_contents.append({
                     "id": str(doc.id),
                     "name": doc.document_name,
                     "type": doc.document_type,
-                    "content": content_text,  # ✅ FULL CONTENT
+                    "content": content_text,  #  FULL CONTENT
                     "content_preview": content_text[:500] if content_text else "No content",
                     "contract_number": doc.contract_number,
                     "contract_title": doc.contract_title,
@@ -712,7 +712,7 @@ async def analyze_correspondence_documents(
         try:
             ai_result = claude_service.analyze_correspondence(
                 query=request.query,
-                documents=doc_contents,  # ✅ Now includes full document content!
+                documents=doc_contents,  #  Now includes full document content!
                 analysis_mode=request.mode,
                 tone=request.tone,
                 urgency=request.priority,
@@ -720,7 +720,7 @@ async def analyze_correspondence_documents(
                 jurisdiction="Qatar"
             )
             
-            logger.info(f"✅ Claude analysis completed - Confidence: {ai_result.get('confidence_score', 0)}%")
+            logger.info(f" Claude analysis completed - Confidence: {ai_result.get('confidence_score', 0)}%")
             
             # Extract values from the AI result
             content = ai_result.get("analysis_text") or ai_result.get("content") or "Analysis completed."
@@ -744,7 +744,7 @@ async def analyze_correspondence_documents(
             )
             
         except Exception as e:
-            logger.error(f"❌ Claude service error: {str(e)}", exc_info=True)
+            logger.error(f" Claude service error: {str(e)}", exc_info=True)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"AI analysis failed: {str(e)}"
@@ -753,7 +753,7 @@ async def analyze_correspondence_documents(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Analysis error: {str(e)}", exc_info=True)
+        logger.error(f" Analysis error: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Analysis failed: {str(e)}"
@@ -797,7 +797,7 @@ async def create_new_correspondence(
         
         db.commit()
         
-        logger.info(f"✅ Created correspondence: {corr_id}")
+        logger.info(f" Created correspondence: {corr_id}")
         
         return {
             "success": True,
@@ -807,7 +807,7 @@ async def create_new_correspondence(
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error creating correspondence: {str(e)}")
+        logger.error(f" Error creating correspondence: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create correspondence: {str(e)}"
@@ -884,7 +884,7 @@ async def list_correspondence(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error listing correspondence: {str(e)}")
+        logger.error(f" Error listing correspondence: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to list correspondence: {str(e)}"
@@ -922,14 +922,14 @@ async def delete_correspondence_document(
                 os.remove(result.file_path)
                 logger.info(f"🗑️ Deleted file: {result.file_path}")
         except Exception as file_error:
-            logger.warning(f"⚠️ Could not delete file: {file_error}")
+            logger.warning(f" Could not delete file: {file_error}")
         
         # Delete from database
         delete_query = text("DELETE FROM documents WHERE id = :document_id")
         db.execute(delete_query, {"document_id": document_id})
         db.commit()
         
-        logger.info(f"✅ Document deleted: {document_id}")
+        logger.info(f" Document deleted: {document_id}")
         
         return {
             "success": True,
@@ -941,7 +941,7 @@ async def delete_correspondence_document(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error deleting document: {str(e)}")
+        logger.error(f" Error deleting document: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete document: {str(e)}"

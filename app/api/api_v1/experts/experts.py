@@ -53,8 +53,8 @@ async def create_expert_query(
         query_id = str(uuid.uuid4())
         query_code = f"EXQ-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:8].upper()}"
         
-        logger.info(f"📝 Creating query: {query_code}")
-        logger.info(f"📝 Data received: {data}")
+        logger.info(f" Creating query: {query_code}")
+        logger.info(f" Data received: {data}")
         
         # Get values from dict
         query_type = data.get("query_type", "general")
@@ -91,7 +91,7 @@ async def create_expert_query(
         
         db.commit()
         
-        logger.info(f"✅ Query created: {query_code}")
+        logger.info(f" Query created: {query_code}")
         
         return {
             "success": True,
@@ -103,7 +103,7 @@ async def create_expert_query(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error: {str(e)}")
+        logger.error(f" Error: {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
         db.rollback()
@@ -235,7 +235,7 @@ async def get_expert_directory(
             }
             experts.append(expert_data)
         
-        logger.info(f"✅ Retrieved {len(experts)} experts (Total: {total_count}, Filter: {expertise_area})")
+        logger.info(f" Retrieved {len(experts)} experts (Total: {total_count}, Filter: {expertise_area})")
         
         return {
             "success": True,
@@ -247,7 +247,7 @@ async def get_expert_directory(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching expert directory: {str(e)}")
+        logger.error(f" Error fetching expert directory: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch expert directory: {str(e)}"
@@ -289,7 +289,7 @@ async def get_expert_statistics(db: Session = Depends(get_db)):
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching expert stats: {str(e)}")
+        logger.error(f" Error fetching expert stats: {str(e)}")
         return {
             "total_experts": 0,
             "available_now": 0,
@@ -379,7 +379,7 @@ async def get_expert_profile(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error fetching expert profile: {str(e)}")
+        logger.error(f" Error fetching expert profile: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch expert profile: {str(e)}"
@@ -466,12 +466,12 @@ async def get_available_experts(
             }
             experts.append(expert)
         
-        logger.info(f"✅ Found {len(experts)} available experts" + 
+        logger.info(f" Found {len(experts)} available experts" + 
                    (f" for expertise area: {expertise_area}" if expertise_area else ""))
         return experts
         
     except Exception as e:
-        logger.error(f"❌ Error fetching experts: {str(e)}")
+        logger.error(f" Error fetching experts: {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(
@@ -572,7 +572,7 @@ async def get_query_details(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error: {str(e)}")
+        logger.error(f" Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # =====================================================
@@ -617,7 +617,7 @@ async def update_query(
         db.execute(update_sql, params)
         db.commit()
         
-        logger.info(f"✅ Query {query_id} updated to status: {update_data.status}")
+        logger.info(f" Query {query_id} updated to status: {update_data.status}")
         
         return {
             "success": True,
@@ -629,7 +629,7 @@ async def update_query(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error: {str(e)}")
+        logger.error(f" Error: {str(e)}")
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -685,7 +685,7 @@ async def assign_expert_to_query(
         db.execute(assign_sql, {"query_id": query_id, "expert_id": expert_id_int})
         db.commit()
         
-        logger.info(f"✅ Expert {expert_id} assigned to query {query_id}")
+        logger.info(f" Expert {expert_id} assigned to query {query_id}")
         
         return {
             "success": True,
@@ -698,7 +698,7 @@ async def assign_expert_to_query(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error assigning expert: {str(e)}")
+        logger.error(f" Error assigning expert: {str(e)}")
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

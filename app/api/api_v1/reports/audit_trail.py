@@ -142,7 +142,7 @@ async def get_audit_logs(
                 "blockchain_hash": None
             })
         
-        logger.info(f"✅ Retrieved {len(audit_logs)} audit logs for user {current_user.email}")
+        logger.info(f" Retrieved {len(audit_logs)} audit logs for user {current_user.email}")
         
         return {
             "success": True,
@@ -156,7 +156,7 @@ async def get_audit_logs(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching audit logs: {str(e)}")
+        logger.error(f" Error fetching audit logs: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error fetching audit logs: {str(e)}"
@@ -210,7 +210,7 @@ async def get_audit_statistics(
         action_result = db.execute(text(action_sql), params)
         action_breakdown = {row.action_type: row.count for row in action_result}
         
-        logger.info(f"✅ Retrieved audit statistics for user {current_user.email}")
+        logger.info(f" Retrieved audit statistics for user {current_user.email}")
         
         return {
             "success": True,
@@ -225,7 +225,7 @@ async def get_audit_statistics(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching statistics: {str(e)}")
+        logger.error(f" Error fetching statistics: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error fetching statistics: {str(e)}"
@@ -267,7 +267,7 @@ async def verify_blockchain_record(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error verifying blockchain record: {str(e)}")
+        logger.error(f" Error verifying blockchain record: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error verifying blockchain record: {str(e)}"
@@ -364,7 +364,7 @@ async def export_audit_logs(
             )
         
     except Exception as e:
-        logger.error(f"❌ Error exporting audit logs: {str(e)}")
+        logger.error(f" Error exporting audit logs: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error exporting audit logs: {str(e)}"
@@ -393,7 +393,7 @@ async def get_action_types(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching action types: {str(e)}")
+        logger.error(f" Error fetching action types: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error fetching action types: {str(e)}"
@@ -435,7 +435,7 @@ async def get_users_for_filter(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching users: {str(e)}")
+        logger.error(f" Error fetching users: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error fetching users: {str(e)}"

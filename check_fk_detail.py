@@ -42,9 +42,9 @@ with engine.connect() as conn:
     
     rows = result.fetchall()
     if rows:
-        print(f"❌ Found records: {rows}")
+        print(f" Found records: {rows}")
     else:
-        print("✅ No records found")
+        print(" No records found")
         
     # Try to count ALL records in obligation_updates
     result = conn.execute(text("SELECT COUNT(*) FROM obligation_updates"))

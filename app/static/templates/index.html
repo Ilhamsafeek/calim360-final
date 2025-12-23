@@ -5377,7 +5377,7 @@ Add this to your <style> section
 
             if (isUserLoggedIn) {
                 if (userSubscriptions.includes(moduleType)) {
-                    console.log('⚠️ Already subscribed');
+                    console.log(' Already subscribed');
                     showToast('info', `You are already subscribed to ${moduleType.toUpperCase()}!`);
                     return;
                 } else {
@@ -5414,7 +5414,7 @@ Add this to your <style> section
                 console.log('   Data:', data);
 
                 if (response.ok && data.success) {
-                    console.log('✅ Subscription successful');
+                    console.log(' Subscription successful');
                     userSubscriptions.push(moduleCode);
                     updateModuleButtons();
                     showToast('success', `Successfully subscribed to ${moduleCode.toUpperCase()}!`);
@@ -5423,7 +5423,7 @@ Add this to your <style> section
                 }
 
             } catch (error) {
-                console.error('❌ Subscription error:', error);
+                console.error(' Subscription error:', error);
                 const button = document.querySelector(`[data-module="${moduleCode}"] .module-cta`);
                 if (button) {
                     button.innerHTML = '<i class="ti ti-rocket"></i> Get Started';
@@ -5493,15 +5493,15 @@ Add this to your <style> section
                         .filter(m => m.subscribed)
                         .map(m => m.code);
 
-                    console.log('✅ Subscribed to:', userSubscriptions);
+                    console.log(' Subscribed to:', userSubscriptions);
                     updateModuleButtons();
                 } else {
-                    console.log('⚠️ Failed to load subscriptions');
+                    console.log(' Failed to load subscriptions');
                     userSubscriptions = [];
                 }
 
             } catch (error) {
-                console.error('❌ Error loading subscriptions:', error);
+                console.error(' Error loading subscriptions:', error);
                 userSubscriptions = [];
             }
         }
@@ -5542,7 +5542,7 @@ Add this to your <style> section
 
                     if (response.ok) {
                         const data = await response.json();
-                        console.log(`✅ Authenticated via ${endpoint}:`, data);
+                        console.log(` Authenticated via ${endpoint}:`, data);
 
                         isUserLoggedIn = true;
                         currentUser = data.user || data;
@@ -5558,7 +5558,7 @@ Add this to your <style> section
 
             // Method 3: If we have cookie but no working endpoint, assume logged in
             if (hasSessionCookie) {
-                console.log('✅ Has session cookie - assuming logged in');
+                console.log(' Has session cookie - assuming logged in');
                 isUserLoggedIn = true;
                 await loadUserSubscriptions();
             } else {
@@ -5633,7 +5633,7 @@ Add this to your <style> section
         // }
 
 
-        // ✅ 4. HELPER: Show Toast Notification
+        //  4. HELPER: Show Toast Notification
         function showToast(type, message) {
             const toast = document.createElement('div');
             const bgColors = {

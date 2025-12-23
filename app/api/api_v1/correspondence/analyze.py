@@ -142,14 +142,14 @@ async def analyze_correspondence(
             timestamp=datetime.utcnow().isoformat()
         )
         
-        logger.info(f"✅ Analysis completed in {processing_time:.2f}s")
+        logger.info(f" Analysis completed in {processing_time:.2f}s")
         
         return response
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Analysis error: {str(e)}")
+        logger.error(f" Analysis error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Analysis failed: {str(e)}"

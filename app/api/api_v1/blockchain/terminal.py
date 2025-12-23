@@ -35,7 +35,7 @@ async def get_blockchain_records(
 ):
     """Get blockchain records with contract details"""
     try:
-        # ✅ Fixed: Added COLLATE to JOIN condition
+        #  Fixed: Added COLLATE to JOIN condition
         query = text("""
             SELECT 
                 br.id, br.entity_type, br.entity_id, br.transaction_hash,
@@ -67,7 +67,7 @@ async def get_blockchain_records(
         return {"success": True, "records": records}
         
     except Exception as e:
-        logger.error(f"❌ Error fetching blockchain records: {str(e)}")
+        logger.error(f" Error fetching blockchain records: {str(e)}")
         return {"success": False, "error": str(e), "records": []}
 
         
@@ -79,7 +79,7 @@ async def query_contract_blockchain(
 ):
     """Query blockchain data for a specific contract"""
     try:
-        # ✅ Fixed: Added COLLATE to handle collation mismatch
+        #  Fixed: Added COLLATE to handle collation mismatch
         blockchain_sql = """
             SELECT br.id, br.transaction_hash, br.block_number, br.blockchain_network,
                    br.status, br.created_at
@@ -91,7 +91,7 @@ async def query_contract_blockchain(
         blockchain_result = db.execute(text(blockchain_sql), {"contract_id": str(contract_id)})
         blockchain_record = blockchain_result.fetchone()
         
-        # ✅ Fixed: Added COLLATE to handle collation mismatch
+        #  Fixed: Added COLLATE to handle collation mismatch
         integrity_sql = """
             SELECT di.id, di.document_hash, di.hash_algorithm, di.blockchain_hash,
                    di.verification_status, di.last_verified_at
@@ -140,7 +140,7 @@ async def query_contract_blockchain(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error querying contract: {str(e)}")
+        logger.error(f" Error querying contract: {str(e)}")
         return {"success": False, "error": str(e)}
 
 
@@ -183,7 +183,7 @@ async def verify_transaction(
         
         return {"success": True, "verified": False, "message": f"Transaction hash '{tx_hash}' not found"}
     except Exception as e:
-        logger.error(f"❌ Error verifying transaction: {str(e)}")
+        logger.error(f" Error verifying transaction: {str(e)}")
         return {"success": False, "verified": False, "error": str(e)}
 
 @router.get("/activity-logs")
@@ -232,7 +232,7 @@ async def get_activity_logs(
         return {"success": True, "logs": logs, "count": len(logs), "source": "audit_logs"}
         
     except Exception as e:
-        logger.error(f"❌ Error fetching activity logs: {str(e)}")
+        logger.error(f" Error fetching activity logs: {str(e)}")
         return {"success": False, "logs": [], "error": str(e)}
 
         
@@ -258,7 +258,7 @@ async def get_network_statistics(
             }
         }
     except Exception as e:
-        logger.error(f"❌ Error getting network stats: {str(e)}")
+        logger.error(f" Error getting network stats: {str(e)}")
         return {"success": True, "display": {"total_blocks": 12847, "total_txs": 45231, "uptime": "99.99%", "connected_peers": 4}}
 
 @router.get("/recent-hashes")
@@ -269,7 +269,7 @@ async def get_recent_hashes(
 ):
     """Get recent blockchain transaction hashes"""
     try:
-        # ✅ Fixed: Added COLLATE to JOIN condition
+        #  Fixed: Added COLLATE to JOIN condition
         query = text("""
             SELECT br.transaction_hash, br.entity_type, br.entity_id, br.created_at, c.contract_number
             FROM blockchain_records br
@@ -292,5 +292,5 @@ async def get_recent_hashes(
         return {"success": True, "hashes": hashes}
         
     except Exception as e:
-        logger.error(f"❌ Error fetching recent hashes: {str(e)}")
+        logger.error(f" Error fetching recent hashes: {str(e)}")
         return {"success": False, "error": str(e), "hashes": []}

@@ -28,7 +28,7 @@ async def delete_obligation(
                 detail="Access denied"
             )
         
-        # ✅ DELETE RELATED RECORDS IN CORRECT ORDER
+        #  DELETE RELATED RECORDS IN CORRECT ORDER
             # Disable FK checks temporarily
             db.execute(text("SET FOREIGN_KEY_CHECKS=0"))
         try:
@@ -60,7 +60,7 @@ async def delete_obligation(
             
             # 5. Finally, delete the obligation itself
             db.commit()
-            logger.info(f"✅ Deleted related records, now deleting obligation")
+            logger.info(f" Deleted related records, now deleting obligation")
             
             # 5. Finally, delete the obligation itself
             db.delete(obligation)
@@ -69,7 +69,7 @@ async def delete_obligation(
             
             # Re-enable FK checks
             db.execute(text("SET FOREIGN_KEY_CHECKS=1"))
-            logger.info(f"✅ Obligation {obligation_id} deleted successfully")
+            logger.info(f" Obligation {obligation_id} deleted successfully")
             
             return {
                 "success": True,
@@ -79,14 +79,14 @@ async def delete_obligation(
             
         except Exception as e:
             db.rollback()
-            logger.error(f"❌ Error during cascading delete: {str(e)}")
+            logger.error(f" Error during cascading delete: {str(e)}")
             raise
         
     except HTTPException:
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error deleting obligation: {str(e)}")
+        logger.error(f" Error deleting obligation: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete obligation: {str(e)}"

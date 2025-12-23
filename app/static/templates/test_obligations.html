@@ -60,12 +60,12 @@
                 
                 if (response.ok) {
                     document.getElementById('results').innerHTML = 
-                        '<h3 style="color: green;">✅ SUCCESS!</h3>' +
+                        '<h3 style="color: green;"> SUCCESS!</h3>' +
                         '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
                     alert('Obligation created with ID: ' + data.id);
                 } else {
                     document.getElementById('results').innerHTML = 
-                        '<h3 style="color: red;">❌ ERROR!</h3>' +
+                        '<h3 style="color: red;"> ERROR!</h3>' +
                         '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
                     alert('Error: ' + data.detail);
                 }
@@ -73,7 +73,7 @@
             } catch (error) {
                 console.error('Create failed:', error);
                 document.getElementById('results').innerHTML = 
-                    '<h3 style="color: red;">❌ EXCEPTION!</h3>' +
+                    '<h3 style="color: red;"> EXCEPTION!</h3>' +
                     '<pre>' + error.message + '</pre>';
                 alert('Exception: ' + error.message);
             }

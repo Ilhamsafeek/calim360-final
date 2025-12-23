@@ -152,7 +152,7 @@ async function loadExperts() {
         }
         
         const data = await response.json();
-        console.log('✅ Experts loaded:', data);
+        console.log(' Experts loaded:', data);
         
         if (data.success && data.experts && data.experts.length > 0) {
             allExperts = data.experts;
@@ -162,7 +162,7 @@ async function loadExperts() {
         }
         
     } catch (error) {
-        console.error('❌ Error loading experts:', error);
+        console.error(' Error loading experts:', error);
         renderEmptyState();
     }
 }

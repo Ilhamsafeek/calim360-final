@@ -52,7 +52,7 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
             try:
                 await self._log_request(request, response, start_time)
             except Exception as e:
-                logger.error(f"❌ Failed to log audit trail: {str(e)}")
+                logger.error(f" Failed to log audit trail: {str(e)}")
         
         return response
     
@@ -133,7 +133,7 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
                 db.close()
                 
         except Exception as e:
-            logger.error(f"❌ Error in audit logging: {str(e)}")
+            logger.error(f" Error in audit logging: {str(e)}")
     
     def _get_action_type(self, request: Request) -> str:
         """

@@ -158,7 +158,7 @@ async def login(
         user.last_login_ip = client_ip
         db.commit()
         
-        logger.info(f"✅ Successful login for: {user.email} - Session cookie set")
+        logger.info(f" Successful login for: {user.email} - Session cookie set")
         
         return LoginResponse(
             success=True,
@@ -234,7 +234,7 @@ async def verify_2fa(
             samesite="lax"
         )
         
-        logger.info(f"✅ 2FA verification successful for: {user.email}")
+        logger.info(f" 2FA verification successful for: {user.email}")
         
         return LoginResponse(
             success=True,
@@ -310,7 +310,7 @@ async def verify_security_question(
             samesite="lax"
         )
         
-        logger.info(f"✅ Security question verification successful for: {user.email}")
+        logger.info(f" Security question verification successful for: {user.email}")
         
         return LoginResponse(
             success=True,

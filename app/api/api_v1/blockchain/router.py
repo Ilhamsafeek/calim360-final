@@ -92,7 +92,7 @@ async def store_contract_on_blockchain(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error storing contract on blockchain: {str(e)}")
+        logger.error(f" Error storing contract on blockchain: {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
@@ -143,7 +143,7 @@ async def verify_contract_hash_endpoint(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error verifying contract hash: {str(e)}")
+        logger.error(f" Error verifying contract hash: {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
@@ -189,7 +189,7 @@ async def verify_contract_integrity(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error verifying contract: {str(e)}")
+        logger.error(f" Error verifying contract: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -228,7 +228,7 @@ async def get_blockchain_activity_log(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error retrieving activity log: {str(e)}")
+        logger.error(f" Error retrieving activity log: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -246,7 +246,7 @@ async def get_network_status(
             "network_status": status
         }
     except Exception as e:
-        logger.error(f"❌ Error getting network status: {str(e)}")
+        logger.error(f" Error getting network status: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -310,7 +310,7 @@ async def get_transaction_details(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error getting transaction details: {str(e)}")
+        logger.error(f" Error getting transaction details: {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
@@ -367,7 +367,7 @@ async def get_contract_record(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error getting record: {str(e)}")
+        logger.error(f" Error getting record: {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
         return {
@@ -516,7 +516,7 @@ async def get_blockchain_activity(
         # =====================================================
         # 6. Return Complete Response
         # =====================================================
-        logger.info(f"✅ Retrieved {len(audit_logs)} blockchain activities for contract {contract_id}")
+        logger.info(f" Retrieved {len(audit_logs)} blockchain activities for contract {contract_id}")
         
         return {
             "success": True,
@@ -528,7 +528,7 @@ async def get_blockchain_activity(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching blockchain activity: {str(e)}")
+        logger.error(f" Error fetching blockchain activity: {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(
@@ -592,7 +592,7 @@ async def get_recent_blockchain_activity(
                 "contract_title": row.contract_title
             })
         
-        logger.info(f"✅ Retrieved {len(activities)} recent blockchain activities")
+        logger.info(f" Retrieved {len(activities)} recent blockchain activities")
         
         return {
             "success": True,
@@ -601,7 +601,7 @@ async def get_recent_blockchain_activity(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching recent activity: {str(e)}")
+        logger.error(f" Error fetching recent activity: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error fetching recent activity: {str(e)}"
@@ -656,7 +656,7 @@ async def get_blockchain_statistics(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching blockchain statistics: {str(e)}")
+        logger.error(f" Error fetching blockchain statistics: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error fetching blockchain statistics: {str(e)}"

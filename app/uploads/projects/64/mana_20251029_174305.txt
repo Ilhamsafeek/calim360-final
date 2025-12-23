@@ -451,7 +451,7 @@
                     language: 'en' // or 'ar' based on user preference
                 };
 
-                console.log('📤 Sending analysis request:', requestPayload);
+                console.log(' Sending analysis request:', requestPayload);
 
                 // Call the correspondence analyze endpoint
                 const response = await fetch('/api/correspondence/analyze', {
@@ -469,7 +469,7 @@
                 }
 
                 const result = await response.json();
-                console.log('✅ Analysis response received:', result);
+                console.log(' Analysis response received:', result);
 
                 // Return formatted response for display
                 return {
@@ -485,7 +485,7 @@
                 };
 
             } catch (error) {
-                console.error('❌ AI Query Error:', error);
+                console.error(' AI Query Error:', error);
 
                 // Return error response
                 return {
@@ -2308,7 +2308,7 @@
                             }
 
                         } catch (error) {
-                            console.error('❌ Upload error:', error);
+                            console.error(' Upload error:', error);
                             showNotification(`Upload failed: ${error.message}`, 'error');
 
                             uploadBtn.disabled = false;
@@ -3695,7 +3695,7 @@
     }
 
     .doc-chip::before {
-        content: '📄';
+        content: '';
         font-size: 0.75rem;
     }
 
@@ -5002,7 +5002,7 @@
                 }
             }
 
-            console.log(`✅ Loaded ${allDocs.length} documents from ${allProjects.length} projects`);
+            console.log(` Loaded ${allDocs.length} documents from ${allProjects.length} projects`);
 
             if (allDocs.length > 0) {
                 allDocuments = allDocs;
@@ -5091,7 +5091,7 @@
             displaySuggestedActions(result.suggested_actions);
         }
 
-        console.log(`✅ AI used ${result.tokens_used || 0} tokens`);
+        console.log(` AI used ${result.tokens_used || 0} tokens`);
     }
 
     // =====================================================
@@ -5830,7 +5830,7 @@
                 language: 'en'
             };
 
-            console.log('📤 Sending analysis request:', requestPayload);
+            console.log(' Sending analysis request:', requestPayload);
 
             // Make API call with credentials
             const response = await fetch('/api/correspondence/analyze', {
@@ -5861,7 +5861,7 @@
             }
 
             const result = await response.json();
-            console.log('✅ Analysis response received:', result);
+            console.log(' Analysis response received:', result);
 
             // Display the real AI response
             displayRealAIResponse(result);
@@ -5878,7 +5878,7 @@
             showNotification('AI analysis completed successfully!', 'success');
 
         } catch (error) {
-            console.error('❌ Query submission error:', error);
+            console.error(' Query submission error:', error);
             showNotification(`Error: ${error.message}`, 'error');
             displayErrorResponse(error.message);
             document.getElementById('responseSection').style.display = 'block';
@@ -6223,7 +6223,7 @@
                 }
             }
 
-            console.log(`✅ Loaded ${allDocs.length} documents for document mode`);
+            console.log(` Loaded ${allDocs.length} documents for document mode`);
 
             if (allDocs.length > 0) {
                 renderDocumentModeGridWithDocuments(allDocs);

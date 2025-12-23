@@ -34,7 +34,7 @@ function getContractId() {
 
     // Validate and return
     if (!id) {
-        console.error('❌ Contract ID not found!');
+        console.error(' Contract ID not found!');
         console.log('Available sources:', {
             contractId: typeof contractId !== 'undefined' ? contractId : 'undefined',
             contractData: typeof contractData !== 'undefined' ? contractData : 'undefined',
@@ -46,7 +46,7 @@ function getContractId() {
     // Remove any non-numeric characters
     id = String(id).replace(/\D/g, '');
 
-    console.log('✅ Using Contract ID:', id);
+    console.log(' Using Contract ID:', id);
     return id;
 }
 
@@ -467,7 +467,7 @@ function addMessageToChat(message) {
 
     // IMPORTANT: Track this message as displayed
     displayedMessageIds.add(message.id);
-    console.log('✅ Message displayed and tracked:', message.id);
+    console.log(' Message displayed and tracked:', message.id);
 
     // Animate in
     setTimeout(() => {
@@ -523,7 +523,7 @@ async function sendMessage() {
 
         if (data.success) {
             // Add message immediately (server confirmed, correct sender_type)
-            console.log('✅ Message sent:', data.message.id, data.message.message_content);
+            console.log(' Message sent:', data.message.id, data.message.message_content);
             addMessageToChat(data.message);
         } else {
             // Restore input on failure
@@ -876,4 +876,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-console.log('✅ Negotiation module loaded');
+console.log(' Negotiation module loaded');

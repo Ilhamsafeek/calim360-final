@@ -4,7 +4,7 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('ask-expert:2683 ✅ Initializing Ask Expert page');
+    console.log('ask-expert:2683  Initializing Ask Expert page');
     
     // Initialize page
     loadContracts();
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const attachedFiles = document.getElementById('attachedFiles');
         
         if (!dropZone || !fileInput || !attachedFiles) {
-            console.log('ask-expert:2683 ⚠️ File upload elements not found');
+            console.log('ask-expert:2683  File upload elements not found');
             return;
         }
         
@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
         
-        console.log('ask-expert:2683 ✅ File upload functionality initialized');
+        console.log('ask-expert:2683  File upload functionality initialized');
     }
 
     // =====================================================
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     contracts = data.items;
                 }
                 
-                console.log('ask-expert:2683 ✅ Loaded contracts:', contracts.length);
+                console.log('ask-expert:2683  Loaded contracts:', contracts.length);
                 
                 const contractSelect = document.getElementById('contractSelect');
                 if (!contractSelect) return;
@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', function() {
             queryTypeSelect.appendChild(option);
         });
         
-        console.log('ask-expert:2683 ✅ Query types populated');
+        console.log('ask-expert:2683  Query types populated');
     }
     
     // =====================================================
@@ -273,14 +273,14 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (response.ok) {
                 const experts = await response.json();
-                console.log('ask-expert:2683 ✅ Loaded experts:', experts.length);
+                console.log('ask-expert:2683  Loaded experts:', experts.length);
                 displayExperts(experts);
             } else {
-                console.error('ask-expert:2683 ❌ Failed to load experts');
+                console.error('ask-expert:2683  Failed to load experts');
                 displayExperts([]);
             }
         } catch (error) {
-            console.error('ask-expert:2683 ❌ Error loading experts:', error);
+            console.error('ask-expert:2683  Error loading experts:', error);
             displayExperts([]);
         }
     }
@@ -291,7 +291,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayExperts(experts) {
         const expertsContainer = document.querySelector('.experts-list');
         if (!expertsContainer) {
-            console.error('ask-expert:2683 ❌ Experts list container not found');
+            console.error('ask-expert:2683  Experts list container not found');
             return;
         }
         
@@ -339,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function() {
             card.addEventListener('click', function() {
                 document.querySelectorAll('.expert-card-mini').forEach(c => c.classList.remove('selected'));
                 this.classList.add('selected');
-                console.log('ask-expert:2683 ✅ Expert selected:', this.dataset.expertId);
+                console.log('ask-expert:2683  Expert selected:', this.dataset.expertId);
             });
         });
     }
@@ -522,7 +522,7 @@ document.addEventListener('DOMContentLoaded', function() {
             preferred_expert_id: selectedExpert ? selectedExpert.dataset.expertId : null
         };
         
-        console.log('ask-expert:2683 ✅ Submitting query:', formData);
+        console.log('ask-expert:2683  Submitting query:', formData);
         
         try {
             const loadingOverlay = document.getElementById('loadingOverlay');
@@ -543,7 +543,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.ok && data.success) {
                 localStorage.removeItem('expertQueryDraft');
                 showToast(`Query submitted successfully! Query Code: ${data.query_code}`, 'success');
-                console.log('ask-expert:2683 ✅ Query submitted:', data.query_code);
+                console.log('ask-expert:2683  Query submitted:', data.query_code);
                 
                 setTimeout(() => {
                     window.location.href = `/consultations?highlight=${data.query_id}`;
@@ -554,7 +554,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             const loadingOverlay = document.getElementById('loadingOverlay');
             if (loadingOverlay) loadingOverlay.classList.remove('active');
-            console.error('ask-expert:2683 ❌ Error submitting query:', error);
+            console.error('ask-expert:2683  Error submitting query:', error);
             showToast(`Failed to submit query: ${error.message}`, 'error');
         }
     }
@@ -716,5 +716,5 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     }
     
-    console.log('ask-expert:2683 ✅ Ask Expert page initialization complete');
+    console.log('ask-expert:2683  Ask Expert page initialization complete');
 });

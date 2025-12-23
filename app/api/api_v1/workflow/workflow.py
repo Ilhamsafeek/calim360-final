@@ -76,7 +76,7 @@ async def get_workflow_users(
         # Increase limit to show more users - change from 10 to 50
         users = query.order_by(User.first_name, User.last_name).limit(50).all()
         
-        logger.info(f"✅ Found {len(users)} users for company {current_user.company_id}")
+        logger.info(f" Found {len(users)} users for company {current_user.company_id}")
         
         return {
             "success": True,
@@ -92,7 +92,7 @@ async def get_workflow_users(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching users: {str(e)}")
+        logger.error(f" Error fetching users: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
@@ -137,7 +137,7 @@ async def create_master_workflow(
             ).delete()
             
             workflow = existing_workflow
-            logger.info(f"✅ Updated master workflow for company {current_user.company_id}")
+            logger.info(f" Updated master workflow for company {current_user.company_id}")
         else:
             # Create new
             workflow = Workflow(
@@ -150,7 +150,7 @@ async def create_master_workflow(
             )
             db.add(workflow)
             db.flush()
-            logger.info(f"✅ Created new master workflow for company {current_user.company_id}")
+            logger.info(f" Created new master workflow for company {current_user.company_id}")
 
         # Create workflow steps
         for step_data in workflow_data.steps:
@@ -167,7 +167,7 @@ async def create_master_workflow(
         db.commit()
         db.refresh(workflow)
 
-        logger.info(f"✅ Workflow saved successfully with {len(workflow_data.steps)} steps")
+        logger.info(f" Workflow saved successfully with {len(workflow_data.steps)} steps")
 
         return {
             "success": True,
@@ -177,7 +177,7 @@ async def create_master_workflow(
 
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error saving master workflow: {str(e)}", exc_info=True)
+        logger.error(f" Error saving master workflow: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
@@ -202,7 +202,7 @@ async def get_master_workflow(
         ).first()
 
         if not workflow:
-            logger.info("❌ No master workflow found")
+            logger.info(" No master workflow found")
             return {
                 "success": True,
                 "message": "No master workflow found",
@@ -230,7 +230,7 @@ async def get_master_workflow(
         })
         excluded_types = workflow_json.get("excluded_types", [])
 
-        logger.info(f"✅ Returning workflow with {len(steps_data)} steps")
+        logger.info(f" Returning workflow with {len(steps_data)} steps")
         
         # Log the steps for debugging
         for i, step in enumerate(steps_data):
@@ -248,7 +248,7 @@ async def get_master_workflow(
         }
 
     except Exception as e:
-        logger.error(f"❌ Error retrieving master workflow: {str(e)}")
+        logger.error(f" Error retrieving master workflow: {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(

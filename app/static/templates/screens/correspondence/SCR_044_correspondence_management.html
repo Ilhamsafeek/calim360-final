@@ -627,7 +627,7 @@
         display: flex;
         flex-direction: row;
         align-items: flex-start;
-        /* ✅ Align to top */
+        /*  Align to top */
         gap: 12px;
         padding: 12px 16px;
         border: 1px solid #e0e0e0;
@@ -650,7 +650,7 @@
         color: #2762cb;
         flex-shrink: 0;
         margin-top: 2px;
-        /* ✅ Slight adjustment for alignment */
+        /*  Slight adjustment for alignment */
     }
 
     .quick-prompt-title {
@@ -1887,7 +1887,7 @@
                     });
                 });
 
-                // ✅ NEW: Load standalone documents
+                //  NEW: Load standalone documents
                 try {
                     const standaloneResponse = await fetch('/api/v1/correspondence/documents/standalone', {
                         headers: { 'Authorization': `Bearer ${getAuthToken()}` }
@@ -1895,7 +1895,7 @@
 
                     if (standaloneResponse.ok) {
                         const standaloneData = await standaloneResponse.json();
-                        console.log(`📄 Loaded ${standaloneData.documents?.length || 0} standalone documents`);
+                        console.log(` Loaded ${standaloneData.documents?.length || 0} standalone documents`);
 
                         (standaloneData.documents || []).forEach(doc => {
                             state.allDocumentsGlobal.push({
@@ -1927,7 +1927,7 @@
                     renderDocs();
                 }
 
-                console.log(`✅ Loaded ${state.projectsList.length} projects, ${state.allDocumentsGlobal.length} total documents`);
+                console.log(` Loaded ${state.projectsList.length} projects, ${state.allDocumentsGlobal.length} total documents`);
 
                 return state.projectsList;
 
@@ -2112,7 +2112,7 @@
                 const projectInfo = state.analysisMode === 'document' && doc.project_name && !doc.is_standalone ?
                     `<span style="color: var(--primary-color);">${escapeHtml(doc.project_code || doc.project_name)}</span> • ` : '';
 
-                // ✅ NEW: Standalone badge
+                //  NEW: Standalone badge
                 const standaloneBadge = doc.is_standalone
                     ? '<span class="standalone-badge"><i class="ti ti-file-plus"></i> Standalone</span> • '
                     : '';
@@ -2387,7 +2387,7 @@
                 handleFiles(e.dataTransfer.files);
             });
 
-            console.log('✅ Drag & drop setup complete');
+            console.log(' Drag & drop setup complete');
         }
 
         function handleFiles(files) {
@@ -2476,7 +2476,7 @@
                     formData.append('files', file);
                 });
 
-                // ✅ ALWAYS send project_id field (empty string for standalone)
+                //  ALWAYS send project_id field (empty string for standalone)
                 formData.append('project_id', projectId ? String(projectId) : '');
                 formData.append('document_type', 'correspondence');
 

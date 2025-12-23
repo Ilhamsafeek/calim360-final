@@ -48,7 +48,7 @@ class SubscriptionService:
                 )
             ).all()
             
-            # ✅ FIXED: Check validity inline instead of calling method
+            #  FIXED: Check validity inline instead of calling method
             active_codes = []
             for sub in subscriptions:
                 # Check if subscription is valid (not expired)
@@ -87,7 +87,7 @@ class SubscriptionService:
             if not subscription:
                 return False
             
-            # ✅ FIXED: Check validity inline
+            #  FIXED: Check validity inline
             if subscription.expiry_date and subscription.expiry_date < datetime.utcnow():
                 return False
             

@@ -139,16 +139,16 @@ async def generate_ai_correspondence(
         )
         
         if not result["success"]:
-            logger.warning(f"⚠️ AI generation failed: {result.get('error')}")
+            logger.warning(f" AI generation failed: {result.get('error')}")
         else:
-            logger.info(f"✅ AI correspondence generated successfully ({result.get('tokens_used', 0)} tokens)")
+            logger.info(f" AI correspondence generated successfully ({result.get('tokens_used', 0)} tokens)")
         
         return CorrespondenceGenerateResponse(**result)
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error generating correspondence: {str(e)}")
+        logger.error(f" Error generating correspondence: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate correspondence: {str(e)}"
@@ -201,7 +201,7 @@ async def analyze_documents_for_correspondence(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error analyzing documents: {str(e)}")
+        logger.error(f" Error analyzing documents: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to analyze documents: {str(e)}"
@@ -341,7 +341,7 @@ async def submit_ai_query(
             )
         ]
         
-        logger.info(f"✅ AI query processed in {analysis_time:.2f}s - Correspondence created: {created_corr['id']}")
+        logger.info(f" AI query processed in {analysis_time:.2f}s - Correspondence created: {created_corr['id']}")
         
         return AIQueryResponse(
             correspondence_id=created_corr["id"],
@@ -357,7 +357,7 @@ async def submit_ai_query(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error processing AI query: {str(e)}")
+        logger.error(f" Error processing AI query: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to process query: {str(e)}"
@@ -450,7 +450,7 @@ async def get_project_documents(
         return documents
         
     except Exception as e:
-        logger.error(f"❌ Error fetching project documents: {str(e)}")
+        logger.error(f" Error fetching project documents: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error fetching project documents: {str(e)}"
@@ -500,7 +500,7 @@ async def query_project_correspondence(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error processing project query: {str(e)}")
+        logger.error(f" Error processing project query: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing query: {str(e)}"
@@ -556,12 +556,12 @@ async def get_contract_documents(
                 "hash_value": row.hash_value
             })
         
-        logger.info(f"📄 Retrieved {len(documents)} documents for contract {contract_id}")
+        logger.info(f" Retrieved {len(documents)} documents for contract {contract_id}")
         
         return documents
         
     except Exception as e:
-        logger.error(f"❌ Error fetching contract documents: {str(e)}")
+        logger.error(f" Error fetching contract documents: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error fetching contract documents: {str(e)}"
@@ -608,7 +608,7 @@ async def query_document_correspondence(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error processing document query: {str(e)}")
+        logger.error(f" Error processing document query: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing document query: {str(e)}"
@@ -672,7 +672,7 @@ async def list_correspondence(
         return CorrespondenceListResponse(**result)
         
     except Exception as e:
-        logger.error(f"❌ Error listing correspondence: {str(e)}")
+        logger.error(f" Error listing correspondence: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch correspondence: {str(e)}"
@@ -737,7 +737,7 @@ async def get_correspondence_detail(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error fetching correspondence: {str(e)}")
+        logger.error(f" Error fetching correspondence: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch correspondence: {str(e)}"
@@ -783,13 +783,13 @@ async def create_new_correspondence(
             sender_id=str(current_user.id)
         )
         
-        logger.info(f"✅ Correspondence created: {result['id']} (status: {correspondence_data.get('status', 'draft')})")
+        logger.info(f" Correspondence created: {result['id']} (status: {correspondence_data.get('status', 'draft')})")
         
         return CorrespondenceResponse(**result)
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error creating correspondence: {str(e)}")
+        logger.error(f" Error creating correspondence: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create correspondence: {str(e)}"
@@ -891,7 +891,7 @@ async def update_existing_correspondence(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error updating correspondence: {str(e)}")
+        logger.error(f" Error updating correspondence: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update correspondence: {str(e)}"
@@ -963,7 +963,7 @@ async def delete_correspondence(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error deleting correspondence: {str(e)}")
+        logger.error(f" Error deleting correspondence: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete correspondence: {str(e)}"
@@ -1069,7 +1069,7 @@ async def upload_correspondence_attachment(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error uploading attachment: {str(e)}")
+        logger.error(f" Error uploading attachment: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to upload attachment: {str(e)}"
@@ -1146,7 +1146,7 @@ async def download_attachment(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error downloading attachment: {str(e)}")
+        logger.error(f" Error downloading attachment: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to download attachment: {str(e)}"
@@ -1186,7 +1186,7 @@ async def export_correspondence_document(
         if export_format == "pdf":
             # Generate PDF
             # Implement PDF generation service
-            logger.info(f"📄 Generating PDF export for {correspondence_id}")
+            logger.info(f" Generating PDF export for {correspondence_id}")
             
             # Mock PDF generation
             pdf_content = b"PDF content here"  # Replace with actual PDF generation
@@ -1195,7 +1195,7 @@ async def export_correspondence_document(
             
         elif export_format == "docx":
             # Generate DOCX
-            logger.info(f"📝 Generating DOCX export for {correspondence_id}")
+            logger.info(f" Generating DOCX export for {correspondence_id}")
             
             # Mock DOCX generation
             docx_content = b"DOCX content here"  # Replace with actual DOCX generation
@@ -1256,7 +1256,7 @@ async def export_correspondence_document(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error exporting correspondence: {str(e)}")
+        logger.error(f" Error exporting correspondence: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to export correspondence: {str(e)}"
@@ -1388,7 +1388,7 @@ async def get_correspondence_statistics(
         )
         
     except Exception as e:
-        logger.error(f"❌ Error generating statistics: {str(e)}")
+        logger.error(f" Error generating statistics: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate statistics: {str(e)}"
@@ -1524,7 +1524,7 @@ async def bulk_correspondence_action(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error in bulk action: {str(e)}")
+        logger.error(f" Error in bulk action: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to perform bulk action: {str(e)}"
@@ -1657,9 +1657,9 @@ async def analyze_correspondence(
                 detail="No documents found for analysis"
             )
         
-        logger.info(f"📄 Analyzing {len(documents_context)} documents")
+        logger.info(f" Analyzing {len(documents_context)} documents")
         
-        # ✅ FIXED: Try multiple AI service approaches with proper error handling
+        #  FIXED: Try multiple AI service approaches with proper error handling
         ai_result = None
         
         # Approach 1: Try claude_service
@@ -1676,13 +1676,13 @@ async def analyze_correspondence(
                     language=language,
                     jurisdiction="Qatar"
                 )
-                logger.info("✅ Used claude_service.analyze_correspondence")
+                logger.info(" Used claude_service.analyze_correspondence")
             else:
-                logger.warning("⚠️ claude_service.analyze_correspondence not found")
+                logger.warning(" claude_service.analyze_correspondence not found")
         except ImportError:
-            logger.warning("⚠️ claude_service not available")
+            logger.warning(" claude_service not available")
         except Exception as e:
-            logger.warning(f"⚠️ claude_service failed: {str(e)}")
+            logger.warning(f" claude_service failed: {str(e)}")
         
         # Approach 2: Try claude_client
         if not ai_result:
@@ -1699,9 +1699,9 @@ async def analyze_correspondence(
                     if ai_result and not isinstance(ai_result, dict):
                         ai_result = {"analysis_text": str(ai_result)}
                     
-                    logger.info("✅ Used claude_client.analyze_documents")
+                    logger.info(" Used claude_client.analyze_documents")
             except Exception as e:
-                logger.warning(f"⚠️ claude_client failed: {str(e)}")
+                logger.warning(f" claude_client failed: {str(e)}")
         
         # Approach 3: Try CorrespondenceService
         if not ai_result:
@@ -1714,16 +1714,16 @@ async def analyze_correspondence(
                     query=query_text
                 )
                 
-                logger.info("✅ Used CorrespondenceService.analyze_documents")
+                logger.info(" Used CorrespondenceService.analyze_documents")
             except Exception as e:
-                logger.warning(f"⚠️ CorrespondenceService failed: {str(e)}")
+                logger.warning(f" CorrespondenceService failed: {str(e)}")
         
         # Approach 4: Fallback to mock analysis
         if not ai_result or not isinstance(ai_result, dict):
-            logger.warning("⚠️ All AI services failed, using fallback mock analysis")
+            logger.warning(" All AI services failed, using fallback mock analysis")
             ai_result = _generate_fallback_analysis(query_text, documents_context)
         
-        # ✅ FIXED: Safely extract values with defaults
+        #  FIXED: Safely extract values with defaults
         analysis_text = (
             ai_result.get("analysis_text") or 
             ai_result.get("analysis") or 
@@ -1753,12 +1753,12 @@ async def analyze_correspondence(
                 "created_at": datetime.utcnow()
             })
             db.commit()
-            logger.info(f"✅ Analysis saved to database")
+            logger.info(f" Analysis saved to database")
         except Exception as db_error:
-            logger.warning(f"⚠️ Could not save to database: {str(db_error)}")
+            logger.warning(f" Could not save to database: {str(db_error)}")
             db.rollback()
         
-        logger.info(f"✅ Correspondence analysis completed successfully")
+        logger.info(f" Correspondence analysis completed successfully")
         
         return {
             "success": True,
@@ -1786,7 +1786,7 @@ async def analyze_correspondence(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error in correspondence analysis: {str(e)}")
+        logger.error(f" Error in correspondence analysis: {str(e)}")
         import traceback
         logger.error(f"Traceback: {traceback.format_exc()}")
         db.rollback()
@@ -1876,7 +1876,7 @@ async def get_correspondence_history(
 ):
     """Get correspondence analysis history for current user"""
     try:
-        # ✅ FIXED: Query without query_type column
+        #  FIXED: Query without query_type column
         history = db.execute(text("""
             SELECT 
                 id,
@@ -1915,7 +1915,7 @@ async def get_correspondence_history(
             ]
         }
     except Exception as e:
-        logger.error(f"❌ Error fetching correspondence history: {str(e)}")
+        logger.error(f" Error fetching correspondence history: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch history: {str(e)}"
@@ -1982,7 +1982,7 @@ async def get_available_documents(
             ]
         }
     except Exception as e:
-        logger.error(f"❌ Error fetching documents: {str(e)}")
+        logger.error(f" Error fetching documents: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch documents: {str(e)}"

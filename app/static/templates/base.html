@@ -1989,12 +1989,12 @@
                 if (response.ok) {
                     const data = await response.json();
                     currentSessionId = data.session_id;
-                    console.log('✅ Chat session created:', data.session_code);
+                    console.log(' Chat session created:', data.session_code);
                 } else {
                     console.error('Failed to create chat session');
                 }
             } catch (error) {
-                console.error('❌ Session creation error:', error);
+                console.error(' Session creation error:', error);
             }
         }
 
@@ -2054,7 +2054,7 @@
                     addMessage('I apologize, but I encountered an error processing your request. Please try again.', 'ai', { error: true });
                 }
             } catch (error) {
-                console.error('❌ Chatbot error:', error);
+                console.error(' Chatbot error:', error);
                 removeTypingIndicator();
                 addMessage('Connection error. Please check your internet connection and try again.', 'ai', { error: true });
             }
@@ -2145,7 +2145,7 @@
         // Initialize chatbot on page load
         document.addEventListener('DOMContentLoaded', () => {
             // Chatbot initialization happens on first toggle
-            console.log('✅ Chatbot ready');
+            console.log(' Chatbot ready');
         });
 
         // ============================================
@@ -2207,7 +2207,7 @@
                 console.log('🔄 Logging out...');
 
                 try {
-                    // ✅ CORRECT ENDPOINT - /api/auth/logout (NOT /api/v1/auth/logout)
+                    //  CORRECT ENDPOINT - /api/auth/logout (NOT /api/v1/auth/logout)
                     const response = await fetch('/api/auth/logout', {
                         method: 'POST',
                         headers: {
@@ -2218,12 +2218,12 @@
 
                     if (response.ok) {
                         const result = await response.json();
-                        console.log('✅ Logout successful:', result);
+                        console.log(' Logout successful:', result);
                     } else {
-                        console.warn('⚠️ Logout API returned error, but continuing with logout');
+                        console.warn(' Logout API returned error, but continuing with logout');
                     }
                 } catch (error) {
-                    console.error('❌ Logout API error:', error);
+                    console.error(' Logout API error:', error);
                     // Continue with logout even if API fails
                 }
 
@@ -2233,7 +2233,7 @@
                 // Clear session storage
                 sessionStorage.clear();
 
-                console.log('✅ Local storage cleared');
+                console.log(' Local storage cleared');
 
                 // Redirect to login page
                 window.location.href = '/login';

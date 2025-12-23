@@ -68,7 +68,7 @@ class BlockchainService:
             
             return hashlib.sha256(content.encode('utf-8')).hexdigest()
         except Exception as e:
-            logger.error(f"❌ Hash computation error: {str(e)}")
+            logger.error(f" Hash computation error: {str(e)}")
             return hashlib.sha256(str(content).encode('utf-8')).hexdigest()
     
     async def store_contract_hash(
@@ -131,7 +131,7 @@ class BlockchainService:
             
             db.commit()
             
-            logger.info(f"✅ Contract {contract_id} stored on blockchain: {transaction_id}")
+            logger.info(f" Contract {contract_id} stored on blockchain: {transaction_id}")
             
             return {
                 "success": True,
@@ -145,7 +145,7 @@ class BlockchainService:
             }
             
         except Exception as e:
-            logger.error(f"❌ Failed to store contract hash: {str(e)}")
+            logger.error(f" Failed to store contract hash: {str(e)}")
             import traceback
             logger.error(traceback.format_exc())
             return {"success": False, "error": str(e)}
@@ -305,7 +305,7 @@ class BlockchainService:
                 details="Creating immutable audit trail entry"
             )
             
-            # ✅ FIXED: Use correct AuditLog model fields
+            #  FIXED: Use correct AuditLog model fields
             audit_log = AuditLog(
                 user_id=uploaded_by,  # Integer
                 contract_id=contract_id,  # Integer
@@ -360,7 +360,7 @@ class BlockchainService:
                 details=f"Blockchain storage failed: {str(e)}",
                 metadata={"error_type": type(e).__name__}
             )
-            logger.error(f"❌ Failed to store contract hash: {str(e)}")
+            logger.error(f" Failed to store contract hash: {str(e)}")
             import traceback
             logger.error(traceback.format_exc())
             return {
@@ -393,7 +393,7 @@ class BlockchainService:
             
             is_verified = (current_hash == stored_hash)
             
-            logger.info(f"{'✅' if is_verified else '❌'} Verification: {contract_id}")
+            logger.info(f"{'' if is_verified else ''} Verification: {contract_id}")
             
             return {
                 "success": True,
@@ -402,12 +402,12 @@ class BlockchainService:
                 "stored_hash": stored_hash,
                 "contract_id": contract_id,
                 "verification_timestamp": datetime.utcnow().isoformat(),
-                "message": "Document integrity verified" if is_verified else "⚠️ Tampering detected!",
+                "message": "Document integrity verified" if is_verified else " Tampering detected!",
                 "mode": "mock" if self.mock_mode else "live"
             }
             
         except Exception as e:
-            logger.error(f"❌ Verification failed: {str(e)}")
+            logger.error(f" Verification failed: {str(e)}")
             import traceback
             logger.error(traceback.format_exc())
             return {"success": False, "verified": False, "error": str(e)}
@@ -451,7 +451,7 @@ class BlockchainService:
             return activities
             
         except Exception as e:
-            logger.error(f"❌ Error retrieving blockchain activity: {str(e)}")
+            logger.error(f" Error retrieving blockchain activity: {str(e)}")
             return []
 
 

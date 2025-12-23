@@ -82,13 +82,13 @@ function showTamperAlert(contractId) {
     indicator.innerHTML = `
         <div class="alert alert-danger mb-0">
             <i data-lucide="shield-alert" class="text-danger"></i>
-            <strong>⚠️ Warning</strong> - Document integrity compromised
+            <strong> Warning</strong> - Document integrity compromised
         </div>
     `;
     lucide.createIcons();
     
     // Show detailed modal
-    alert('⚠️ TAMPERING DETECTED!\n\nThe current document does not match the blockchain-verified hash.\nThis document may have been modified after being recorded.');
+    alert(' TAMPERING DETECTED!\n\nThe current document does not match the blockchain-verified hash.\nThis document may have been modified after being recorded.');
 }
 
 // Show error indicator
@@ -240,7 +240,7 @@ async function showBlockchainCertificateById(contractId, contractNumber) {
                                 </tr>
                                 <tr>
                                     <td><strong>Verification Status:</strong></td>
-                                    <td><span class="badge bg-success">✅ Verified</span></td>
+                                    <td><span class="badge bg-success"> Verified</span></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Recorded At:</strong></td>

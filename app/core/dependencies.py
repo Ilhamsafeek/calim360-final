@@ -37,11 +37,11 @@ async def get_current_user(
     # Try session cookie first (for web pages)
     if session_token:
         token = session_token
-        logger.debug("✅ Using session token from cookie")
+        logger.debug(" Using session token from cookie")
     # Fall back to Bearer token (for API calls)
     elif credentials and credentials.credentials:
         token = credentials.credentials
-        logger.debug("✅ Using Bearer token from Authorization header")
+        logger.debug(" Using Bearer token from Authorization header")
     
     if not token:
         # Check if this is a web request (looking for HTML response)
@@ -74,7 +74,7 @@ async def get_current_user(
         
         if not user:
             # User from token doesn't exist in database
-            logger.error(f"❌ User ID {user_id} from token not found in database")
+            logger.error(f" User ID {user_id} from token not found in database")
             
             # Clear the invalid cookie
             response.delete_cookie(
@@ -116,13 +116,13 @@ async def get_current_user(
                 detail="User account is not active"
             )
         
-        logger.debug(f"✅ Authenticated user: {user.email} (ID: {user.id})")
+        logger.debug(f" Authenticated user: {user.email} (ID: {user.id})")
         return user
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Token verification failed: {str(e)}")
+        logger.error(f" Token verification failed: {str(e)}")
         
         # Clear potentially corrupted cookie
         response.delete_cookie(

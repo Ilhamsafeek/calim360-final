@@ -35,7 +35,7 @@ def setup_tables():
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             """))
             conn.commit()
-            print("✅ Obligations table created")
+            print(" Obligations table created")
             
             # Create tracking table
             print("\n2. Creating obligation_tracking table...")
@@ -51,13 +51,13 @@ def setup_tables():
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             """))
             conn.commit()
-            print("✅ Obligation tracking table created")
+            print(" Obligation tracking table created")
             
             # Verify tables exist
             print("\n3. Verifying tables...")
             result = conn.execute(text("SHOW TABLES LIKE 'obligations'"))
             if result.fetchone():
-                print("✅ obligations table exists")
+                print(" obligations table exists")
                 
                 # Show structure
                 result = conn.execute(text("DESCRIBE obligations"))
@@ -65,13 +65,13 @@ def setup_tables():
                 for row in result:
                     print(f"  - {row[0]}: {row[1]}")
             else:
-                print("❌ obligations table NOT found!")
+                print(" obligations table NOT found!")
             
             result = conn.execute(text("SHOW TABLES LIKE 'obligation_tracking'"))
             if result.fetchone():
-                print("✅ obligation_tracking table exists")
+                print(" obligation_tracking table exists")
             else:
-                print("❌ obligation_tracking table NOT found!")
+                print(" obligation_tracking table NOT found!")
             
             # Check current data
             print("\n4. Checking existing data...")
@@ -91,11 +91,11 @@ def setup_tables():
                     print(f"   - ID {row[0]}: {row[1]} ({row[2]}) - {row[3]}")
             
             print("\n" + "=" * 60)
-            print("✅ SETUP COMPLETE!")
+            print(" SETUP COMPLETE!")
             print("=" * 60)
             
     except Exception as e:
-        print(f"\n❌ ERROR: {str(e)}")
+        print(f"\n ERROR: {str(e)}")
         import traceback
         traceback.print_exc()
 

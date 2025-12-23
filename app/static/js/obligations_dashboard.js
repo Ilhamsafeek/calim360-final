@@ -117,7 +117,7 @@ async function loadObligations() {
         // FIXED: Stats are returned directly, not wrapped
         currentStats = statsResult;
 
-        console.log('✅ Data loaded:', {
+        console.log(' Data loaded:', {
             obligations: obligationsData.length,
             stats: currentStats
         });
@@ -129,7 +129,7 @@ async function loadObligations() {
         showToast(`Loaded ${obligationsData.length} obligations successfully`, 'success');
 
     } catch (error) {
-        console.error('❌ Error loading obligations:', error);
+        console.error(' Error loading obligations:', error);
         showToast('Failed to load obligations: ' + error.message, 'error');
 
         // Show error in table
@@ -416,7 +416,7 @@ window.selectPreset = async function (index) {
         await loadObligations();
 
     } catch (error) {
-        console.error('❌ Save error:', error);
+        console.error(' Save error:', error);
         showToast(`Save failed: ${error.message}`, 'error');
     } finally {
         showLoading(false);
@@ -474,7 +474,7 @@ async function saveCustomObligation(event) {
         await loadObligations();
 
     } catch (error) {
-        console.error('❌ Save error:', error);
+        console.error(' Save error:', error);
         showToast(`Save failed: ${error.message}`, 'error');
     } finally {
         showLoading(false);
@@ -551,7 +551,7 @@ async function generateObligationsAI() {
         showToast(`AI extracted ${aiGeneratedObligations.length} obligations`, 'success');
 
     } catch (error) {
-        console.error('❌ AI generation error:', error);
+        console.error(' AI generation error:', error);
         showToast('AI generation failed: ' + error.message, 'error');
     } finally {
         const generateBtn = document.getElementById('generateAIBtn');
@@ -828,4 +828,4 @@ function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-console.log('✅ Obligations dashboard initialized');
+console.log(' Obligations dashboard initialized');

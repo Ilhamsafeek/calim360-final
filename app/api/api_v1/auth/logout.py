@@ -43,7 +43,7 @@ async def logout(
             samesite="lax"
         )
         
-        logger.info(f"✅ User logged out: {current_user.email} - Session cookie cleared")
+        logger.info(f" User logged out: {current_user.email} - Session cookie cleared")
         
         return {
             "success": True,
@@ -52,7 +52,7 @@ async def logout(
         }
         
     except Exception as e:
-        logger.error(f"❌ Logout error: {str(e)}")
+        logger.error(f" Logout error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Logout failed"
@@ -84,7 +84,7 @@ async def logout_page(
             samesite="lax"
         )
         
-        logger.info(f"✅ User logged out via GET: {current_user.email}")
+        logger.info(f" User logged out via GET: {current_user.email}")
         
         # Return redirect response for web
         from fastapi.responses import RedirectResponse
@@ -98,6 +98,6 @@ async def logout_page(
         return redirect_response
         
     except Exception as e:
-        logger.error(f"❌ Logout error: {str(e)}")
+        logger.error(f" Logout error: {str(e)}")
         from fastapi.responses import RedirectResponse
         return RedirectResponse(url="/login", status_code=302)

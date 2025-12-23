@@ -107,12 +107,29 @@
         font-size: 1.5rem;
     }
 
-    .stat-icon.blue { background: linear-gradient(135deg, #0066cc, #3b82f6); }
-    .stat-icon.green { background: linear-gradient(135deg, #10b981, #34d399); }
-    .stat-icon.orange { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
-    .stat-icon.purple { background: linear-gradient(135deg, #9333ea, #a855f7); }
-    .stat-icon.red { background: linear-gradient(135deg, #ef4444, #f87171); }
-    .stat-icon.cyan { background: linear-gradient(135deg, #06b6d4, #22d3ee); }
+    .stat-icon.blue {
+        background: linear-gradient(135deg, #0066cc, #3b82f6);
+    }
+
+    .stat-icon.green {
+        background: linear-gradient(135deg, #10b981, #34d399);
+    }
+
+    .stat-icon.orange {
+        background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    }
+
+    .stat-icon.purple {
+        background: linear-gradient(135deg, #9333ea, #a855f7);
+    }
+
+    .stat-icon.red {
+        background: linear-gradient(135deg, #ef4444, #f87171);
+    }
+
+    .stat-icon.cyan {
+        background: linear-gradient(135deg, #06b6d4, #22d3ee);
+    }
 
     .stat-info h4 {
         font-size: 0.875rem;
@@ -450,7 +467,9 @@
     }
 
     @keyframes spin {
-        to { transform: rotate(360deg); }
+        to {
+            transform: rotate(360deg);
+        }
     }
 </style>
 {% endblock %}
@@ -460,17 +479,12 @@
     <!-- Dashboard Header -->
     <div class="dashboard-header">
         <h1>Welcome back, <span id="userName">{{ user.full_name if user else 'User' }}</span>!</h1>
-        <!-- <p id="currentDateTime">Loading...</p> -->
-        
+
         <div class="quick-actions">
             <a href="/contract/create" class="btn btn-primary">
                 <i class="ti ti-plus"></i>
                 Create New Contract
             </a>
-            <!-- <a href="/contracts?module=drafting" class="btn btn-secondary">
-                <i class="ti ti-file-text"></i>
-                View All Contracts
-            </a> -->
             <a href="/reports" class="btn btn-secondary">
                 <i class="ti ti-chart-bar"></i>
                 Generate Report
@@ -491,10 +505,6 @@
                 </div>
             </div>
             <div class="stat-value" id="totalContracts">-</div>
-            <!-- <div class="stat-change positive" id="totalContractsChange" style="display: none;">
-                <i class="ti ti-trending-up"></i>
-                <span>+12% from last month</span>
-            </div> -->
         </div>
 
         <!-- Active Contracts -->
@@ -508,30 +518,26 @@
                 </div>
             </div>
             <div class="stat-value" id="activeContracts">-</div>
-            <!-- <div class="stat-change positive" id="activeContractsChange" style="display: none;">
-                <i class="ti ti-trending-up"></i>
-                <span>+8% from last month</span>
-            </div> -->
         </div>
 
-        <!-- Expiring Soon -->
+        <!-- Active Projects Card -->
         <div class="stat-card">
             <div class="stat-header">
-                <div class="stat-icon orange">
-                    <i class="ti ti-clock"></i>
+                <div class="stat-icon purple">
+                    <i class="ti ti-folder"></i>
                 </div>
                 <div class="stat-info">
-                    <h4>Expiring in 30 Days</h4>
+                    <h4>Active Projects</h4>
                 </div>
             </div>
-            <div class="stat-value" id="expiringSoon">-</div>
-            <div class="stat-change negative" id="expiringSoonChange" style="display: none;">
-                <i class="ti ti-alert-triangle"></i>
-                <span>Action required</span>
+            <div class="stat-value" id="activeProjects">-</div>
+            <div class="stat-change positive" id="activeProjectsChange" style="display: none;">
+                <i class="ti ti-trending-up"></i>
+                <span id="activeProjectsChangeText">-</span>
             </div>
         </div>
 
-        <!-- Pending Approvals -->
+        <!-- Contracts in Progress -->
         <div class="stat-card">
             <div class="stat-header">
                 <div class="stat-icon purple">
@@ -548,7 +554,7 @@
             </div>
         </div>
 
-        <!-- Overdue Obligations -->
+        <!-- All Obligations -->
         <div class="stat-card">
             <div class="stat-header">
                 <div class="stat-icon red">
@@ -565,18 +571,17 @@
             </div>
         </div>
 
-        <!-- Contract Value -->
+        <!-- Pending Actions -->
         <div class="stat-card">
             <div class="stat-header">
                 <div class="stat-icon cyan">
-                    <i class="ti ti-hourglass"></i>
+                    <i class="ti ti-clipboard-check"></i>
                 </div>
                 <div class="stat-info">
                     <h4>Pending Actions</h4>
                 </div>
             </div>
             <div class="stat-value" id="myApprovals">-</div>
-            
         </div>
     </div>
 
@@ -584,22 +589,6 @@
     <div class="content-grid">
         <!-- Left Column -->
         <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-            <!-- Expiring Contracts -->
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="ti ti-calendar-due"></i>
-                        Contracts Expiring Soon
-                    </h3>
-                    <a href="/contracts?filter=expiring" class="view-all-link">View All →</a>
-                </div>
-                <div class="contract-list" id="expiringContractsList">
-                    <div class="loading-spinner">
-                        <div class="spinner"></div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Contract Status Breakdown -->
             <div class="card">
                 <div class="card-header">
@@ -720,190 +709,152 @@
 </div>
 
 <script>
-// Update current date/time
-// function updateDateTime() {
-//     const now = new Date();
-//     const options = { 
-//         weekday: 'long', 
-//         year: 'numeric', 
-//         month: 'long', 
-//         day: 'numeric',
-//         hour: '2-digit',
-//         minute: '2-digit'
-//     };
-//     document.getElementById('currentDateTime').textContent = now.toLocaleDateString('en-US', options);
-// }
-// updateDateTime();
-// setInterval(updateDateTime, 60000); // Update every minute
+    // Fetch dashboard statistics
+    async function loadDashboardData() {
+        try {
+            // Fetch main statistics
+            const statsResponse = await fetch('/api/dashboard/statistics');
+            const statsData = await statsResponse.json();
 
-// Fetch dashboard statistics
-async function loadDashboardData() {
-    try {
-        // Fetch main statistics
-        const statsResponse = await fetch('/api/dashboard/statistics');
-        const statsData = await statsResponse.json();
-        
-        if (statsData.success) {
-            const data = statsData.data;
-            
-            // Update overview stats
-            document.getElementById('totalContracts').textContent = data.overview.total_contracts;
-            document.getElementById('activeContracts').textContent = data.overview.active_contracts;
-            document.getElementById('expiringSoon').textContent = data.overview.expiring_soon;
-            document.getElementById('pendingApprovals').textContent = data.overview.pending_approvals;
-            
-            // Update obligations
-            document.getElementById('overdueObligations').textContent = data.obligations.overdue;
-            
-            // Update contract value
-            const value = data.contracts.total_value;
-            console.log(data.overview.my_pending_approvals);
-            document.getElementById('myApprovals').textContent = data.overview.my_pending_approvals;
-            
-            // Update document stats
-            document.getElementById('totalDocuments').textContent = data.documents.total;
-            document.getElementById('signedDocuments').textContent = Math.floor(data.documents.total * 0.7); // Estimate
-            document.getElementById('pendingSignature').textContent = Math.floor(data.documents.total * 0.3); // Estimate
-            
-            // Update workflow stats
-            document.getElementById('workflowPending').textContent = data.workflows.pending || 0;
-            document.getElementById('workflowInProgress').textContent = data.workflows.in_progress || 0;
-            document.getElementById('workflowCompleted').textContent = data.workflows.completed || 0;
-            
-            // Show change indicators if there's data
-            // if (data.overview.recent_contracts > 0) {
-            //     document.getElementById('totalContractsChange').style.display = 'inline-flex';
-            // }
-            
-            // Build status breakdown
-            buildStatusBreakdown(data.contracts.by_status);
+            console.log('📊 Full API Response:', statsData); // Debug: See full response
+
+            if (statsData.success) {
+                const data = statsData.data;
+
+                // Update overview stats
+                document.getElementById('totalContracts').textContent = data.overview?.total_contracts || 0;
+                document.getElementById('activeContracts').textContent = data.overview?.active_contracts || 0;
+                document.getElementById('pendingApprovals').textContent = data.overview?.pending_approvals || 0;
+                document.getElementById('myApprovals').textContent = data.overview?.my_pending_approvals || 0;
+
+                // 🆕 UPDATE PROJECT STATISTICS (with defensive checks)
+                if (data.projects) {
+                    document.getElementById('activeProjects').textContent = data.projects.active || 0;
+
+                    // Show project change indicator if there are recent projects
+                    const projectChange = document.getElementById('activeProjectsChange');
+                    const projectChangeText = document.getElementById('activeProjectsChangeText');
+
+                    if (data.projects.recent > 0) {
+                        projectChange.style.display = 'inline-flex';
+                        projectChangeText.textContent = `${data.projects.recent} new this month`;
+                    } else if (data.projects.total > 0) {
+                        projectChange.style.display = 'inline-flex';
+                        projectChangeText.textContent = `${data.projects.total} total projects`;
+                    }
+
+                    console.log(' Project Statistics:', data.projects);
+                } else {
+                    console.warn(' Projects data not available in API response');
+                    document.getElementById('activeProjects').textContent = '0';
+                }
+
+                // Update obligations (with defensive checks)
+                document.getElementById('overdueObligations').textContent = data.obligations?.total || 0;
+
+                // Update document stats (with defensive checks)
+                const totalDocs = data.documents?.total || 0;
+                document.getElementById('totalDocuments').textContent = totalDocs;
+                document.getElementById('signedDocuments').textContent = Math.floor(totalDocs * 0.7);
+                document.getElementById('pendingSignature').textContent = Math.floor(totalDocs * 0.3);
+
+                // Update workflow stats (with defensive checks)
+                if (data.workflows) {
+                    document.getElementById('workflowPending').textContent = data.workflows.pending || 0;
+                    document.getElementById('workflowInProgress').textContent = data.workflows.in_progress || 0;
+                    document.getElementById('workflowCompleted').textContent = data.workflows.completed || 0;
+                }
+
+                // Build status breakdown (with defensive checks)
+                if (data.contracts?.by_status) {
+                    buildStatusBreakdown(data.contracts.by_status);
+                }
+            } else {
+                console.error(' API returned success: false', statsData);
+            }
+
+            // Fetch obligations
+            loadObligations();
+
+            // Fetch recent activity
+            loadRecentActivity();
+
+        } catch (error) {
+            console.error(' Error loading dashboard data:', error);
+
+            // Set default values on error
+            document.getElementById('totalContracts').textContent = '0';
+            document.getElementById('activeContracts').textContent = '0';
+            document.getElementById('activeProjects').textContent = '0';
+            document.getElementById('pendingApprovals').textContent = '0';
+            document.getElementById('myApprovals').textContent = '0';
+            document.getElementById('overdueObligations').textContent = '0';
         }
-        
-        // Fetch expiring contracts
-        loadExpiringContracts();
-        
-        // Fetch obligations
-        loadObligations();
-        
-        // Fetch recent activity
-        loadRecentActivity();
-        
-    } catch (error) {
-        console.error('Error loading dashboard data:', error);
     }
-}
 
-// Load expiring contracts
-async function loadExpiringContracts() {
-    try {
-        const response = await fetch('/api/dashboard/expiring-contracts?days=30');
-        const data = await response.json();
-        
-        const container = document.getElementById('expiringContractsList');
-        
-        if (data.success && data.data.length > 0) {
-            container.innerHTML = data.data.map(contract => {
-                const daysRemaining = contract.days_remaining;
-                const badgeClass = daysRemaining <= 7 ? 'badge-danger' : 'badge-warning';
-                
-                return `
-                    <div class="contract-item" onclick="viewContract(${contract.id})">
-                        <div class="contract-info">
-                            <div class="contract-title">${contract.title}</div>
-                            <div class="contract-meta">
-                                <span><i class="ti ti-hash"></i> ${contract.contract_number}</span>
-                                <span><i class="ti ti-building"></i> ${contract.counterparty || 'N/A'}</span>
-                            </div>
-                        </div>
-                        <span class="contract-badge ${badgeClass}">
-                            ${daysRemaining} days left
-                        </span>
-                    </div>
-                `;
-            }).join('');
-        } else {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <i class="ti ti-circle-check"></i>
-                    <p>No contracts expiring soon</p>
-                </div>
-            `;
-        }
-    } catch (error) {
-        console.error('Error loading expiring contracts:', error);
-        document.getElementById('expiringContractsList').innerHTML = `
-            <div class="empty-state">
-                <p style="color: var(--danger-color);">Failed to load contracts</p>
-            </div>
-        `;
-    }
-}
+    // Load obligations
+    async function loadObligations() {
+        try {
+            const response = await fetch('/api/dashboard/obligations-due-soon?days=7');
+            const data = await response.json();
 
-// Load obligations
-async function loadObligations() {
-    try {
-        const response = await fetch('/api/dashboard/obligations-due-soon?days=7');
-        const data = await response.json();
-        
-        const container = document.getElementById('obligationsList');
-        
-        if (data.success && data.data.length > 0) {
-            container.innerHTML = data.data.map(obligation => {
-                return `
-                    <div class="obligation-item ${obligation.priority}" onclick="viewObligation(${obligation.id})">
-                        <div class="obligation-title">${obligation.title}</div>
+            const container = document.getElementById('obligationsList');
+
+            if (data.success && data.data?.length > 0) {
+                container.innerHTML = data.data.map(obligation => {
+                    return `
+                    <div class="obligation-item ${obligation.priority || 'low'}" onclick="viewObligation('${obligation.id}')">
+                        <div class="obligation-title">${obligation.title || 'Untitled'}</div>
                         <div class="obligation-meta">
                             <span><i class="ti ti-calendar"></i> Due: ${formatDate(obligation.due_date)}</span>
-                            <span style="font-weight: 600; color: var(--primary-color);">${obligation.days_remaining} days</span>
+                            <span style="font-weight: 600; color: var(--primary-color);">${obligation.days_remaining || 0} days</span>
                         </div>
                         <div class="obligation-progress">
-                            <div class="obligation-progress-bar" style="width: ${obligation.completion_percentage}%"></div>
+                            <div class="obligation-progress-bar" style="width: ${obligation.completion_percentage || 0}%"></div>
                         </div>
                     </div>
                 `;
-            }).join('');
-        } else {
-            container.innerHTML = `
+                }).join('');
+            } else {
+                container.innerHTML = `
                 <div class="empty-state">
                     <i class="ti ti-checkbox"></i>
                     <p>No upcoming obligations</p>
                 </div>
             `;
-        }
-    } catch (error) {
-        console.error('Error loading obligations:', error);
-        document.getElementById('obligationsList').innerHTML = `
+            }
+        } catch (error) {
+            console.error(' Error loading obligations:', error);
+            document.getElementById('obligationsList').innerHTML = `
             <div class="empty-state">
                 <p style="color: var(--danger-color);">Failed to load obligations</p>
             </div>
         `;
+        }
     }
-}
 
-// Load recent activity
-async function loadRecentActivity() {
-    try {
-        const response = await fetch('/api/dashboard/recent-activity?limit=5');
-        const data = await response.json();
-        
-        const container = document.getElementById('activityFeed');
-        
-        if (data.success && data.data.length > 0) {
-            container.innerHTML = data.data.map(activity => {
-                const icon = getActivityIcon(activity.action);
-                
-                // Parse JSON description if it's JSON, otherwise use as-is
-                let displayText = activity.description;
-                try {
-                    const jsonData = JSON.parse(activity.description);
-                    // Create a user-friendly message from JSON
-                    displayText = formatActivityFromJson(jsonData, activity.action);
-                } catch (e) {
-                    // Not JSON, use the raw description
-                    displayText = activity.description;
-                }
-                
-                return `
+    // Load recent activity
+    async function loadRecentActivity() {
+        try {
+            const response = await fetch('/api/dashboard/recent-activity?limit=5');
+            const data = await response.json();
+
+            const container = document.getElementById('activityFeed');
+
+            if (data.success && data.data?.length > 0) {
+                container.innerHTML = data.data.map(activity => {
+                    const icon = getActivityIcon(activity.action);
+
+                    // Parse JSON description if it's JSON, otherwise use as-is
+                    let displayText = activity.description || 'Activity recorded';
+                    try {
+                        const jsonData = JSON.parse(activity.description);
+                        displayText = formatActivityFromJson(jsonData, activity.action);
+                    } catch (e) {
+                        displayText = activity.description || 'Activity recorded';
+                    }
+
+                    return `
                     <div class="activity-item">
                         <div class="activity-icon">
                             <i class="ti ${icon}"></i>
@@ -911,77 +862,75 @@ async function loadRecentActivity() {
                         <div class="activity-content">
                             <div class="activity-text">${displayText}</div>
                             <div class="activity-time">
-                                <i class="ti ti-clock"></i> ${formatTimeAgo(activity.timestamp)} by ${activity.user}
+                                <i class="ti ti-clock"></i> ${formatTimeAgo(activity.timestamp)} by ${activity.user || 'Unknown'}
                             </div>
                         </div>
                     </div>
                 `;
-            }).join('');
-        } else {
-            container.innerHTML = `
+                }).join('');
+            } else {
+                container.innerHTML = `
                 <div class="empty-state">
                     <i class="ti ti-activity"></i>
                     <p>No recent activity</p>
                 </div>
             `;
-        }
-    } catch (error) {
-        console.error('Error loading activity:', error);
-        document.getElementById('activityFeed').innerHTML = `
+            }
+        } catch (error) {
+            console.error(' Error loading activity:', error);
+            document.getElementById('activityFeed').innerHTML = `
             <div class="empty-state">
                 <p style="color: var(--danger-color);">Failed to load activity</p>
             </div>
         `;
+        }
     }
-}
 
-// Format activity message from JSON data
-function formatActivityFromJson(jsonData, actionType) {
-    // Handle different activity types
-    if (jsonData.event === 'signature_applied') {
-        return `✍️ ${jsonData.signer_type} signed the contract`;
-    }
-    
-    if (jsonData.event === 'contract_executed') {
-        return `✅ Contract ${jsonData.contract_number} executed and activated`;
-    }
-    
-    if (jsonData.clause_type) {
-        return `📝 Analyzed ${jsonData.clause_type} clause (${jsonData.suggestions_count || 0} suggestions)`;
-    }
-    
-    if (jsonData.overall_score !== undefined) {
-        return `⚠️ Risk assessment completed: ${jsonData.high_risks_count || 0} high risks found (Score: ${jsonData.overall_score})`;
-    }
-    
-    if (jsonData.message) {
-        return jsonData.message;
-    }
-    
-    // Default: try to create a readable summary
-    const keys = Object.keys(jsonData);
-    if (keys.length > 0) {
-        return `${actionType}: ${keys.slice(0, 3).join(', ')}`;
-    }
-    
-    return actionType || 'Activity recorded';
-}
+    // Format activity message from JSON data
+    function formatActivityFromJson(jsonData, actionType) {
+        if (jsonData.event === 'signature_applied') {
+            return `✍️ ${jsonData.signer_type} signed the contract`;
+        }
 
-// Build status breakdown
-function buildStatusBreakdown(statusData) {
-    const container = document.getElementById('statusBreakdown');
-    const statusConfig = {
-        'draft': { label: 'Draft', color: '#6b7280' },
-        'in_progress': { label: 'In Progress', color: '#3b82f6' },
-        'pending_approval': { label: 'Pending Approval', color: '#f59e0b' },
-        'active': { label: 'Active', color: '#10b981' },
-        'expired': { label: 'Expired', color: '#ef4444' },
-        'terminated': { label: 'Terminated', color: '#991b1b' }
-    };
-    
-    const html = Object.entries(statusData).map(([status, count]) => {
-        const config = statusConfig[status] || { label: status, color: '#6b7280' };
-        return `
+        if (jsonData.event === 'contract_executed') {
+            return ` Contract ${jsonData.contract_number} executed and activated`;
+        }
+
+        if (jsonData.clause_type) {
+            return ` Analyzed ${jsonData.clause_type} clause (${jsonData.suggestions_count || 0} suggestions)`;
+        }
+
+        if (jsonData.overall_score !== undefined) {
+            return ` Risk assessment completed: ${jsonData.high_risks_count || 0} high risks found (Score: ${jsonData.overall_score})`;
+        }
+
+        if (jsonData.message) {
+            return jsonData.message;
+        }
+
+        const keys = Object.keys(jsonData);
+        if (keys.length > 0) {
+            return `${actionType}: ${keys.slice(0, 3).join(', ')}`;
+        }
+
+        return actionType || 'Activity recorded';
+    }
+
+    // Build status breakdown
+    function buildStatusBreakdown(statusData) {
+        const container = document.getElementById('statusBreakdown');
+        const statusConfig = {
+            'draft': { label: 'Draft', color: '#6b7280' },
+            'in_progress': { label: 'In Progress', color: '#3b82f6' },
+            'pending_approval': { label: 'Pending Approval', color: '#f59e0b' },
+            'active': { label: 'Active', color: '#10b981' },
+            'expired': { label: 'Expired', color: '#ef4444' },
+            'terminated': { label: 'Terminated', color: '#991b1b' }
+        };
+
+        const html = Object.entries(statusData || {}).map(([status, count]) => {
+            const config = statusConfig[status] || { label: status, color: '#6b7280' };
+            return `
             <div class="status-item">
                 <span class="status-label">
                     <span class="status-dot" style="background: ${config.color};"></span>
@@ -990,68 +939,67 @@ function buildStatusBreakdown(statusData) {
                 <span class="status-count">${count}</span>
             </div>
         `;
-    }).join('');
-    
-    container.innerHTML = html || '<div class="empty-state"><p>No data available</p></div>';
-}
+        }).join('');
 
-// Helper functions
-function formatCurrency(value) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'QAR',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-    }).format(value);
-}
-
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function formatTimeAgo(timestamp) {
-    const now = new Date();
-    const past = new Date(timestamp);
-    const seconds = Math.floor((now - past) / 1000);
-    
-    if (seconds < 60) return 'just now';
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-    return formatDate(timestamp);
-}
-
-function getActivityIcon(action) {
-    const iconMap = {
-        'created': 'ti-file-plus',
-        'updated': 'ti-edit',
-        'approved': 'ti-check',
-        'rejected': 'ti-x',
-        'signed': 'ti-writing-sign',
-        'deleted': 'ti-trash'
-    };
-    return iconMap[action] || 'ti-point';
-}
-
-function viewContract(id) {
-    window.location.href = `/contracts/${id}`;
-}
-
-function viewObligation(id) {
-    window.location.href = `/obligations?id=${id}`;
-}
-
-// Set active nav item
-document.addEventListener('DOMContentLoaded', function() {
-    // Set dashboard as active in sidebar
-    const dashboardLink = document.querySelector('a[href="/"]');
-    if (dashboardLink) {
-        dashboardLink.classList.add('active');
+        container.innerHTML = html || '<div class="empty-state"><p>No data available</p></div>';
     }
-    
-    // Load all dashboard data
-    loadDashboardData();
-});
+
+    // Helper functions
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'QAR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(value);
+    }
+
+    function formatDate(dateString) {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function formatTimeAgo(timestamp) {
+        if (!timestamp) return 'recently';
+        const now = new Date();
+        const past = new Date(timestamp);
+        const seconds = Math.floor((now - past) / 1000);
+
+        if (seconds < 60) return 'just now';
+        if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+        if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+        if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+        return formatDate(timestamp);
+    }
+
+    function getActivityIcon(action) {
+        const iconMap = {
+            'created': 'ti-file-plus',
+            'updated': 'ti-edit',
+            'approved': 'ti-check',
+            'rejected': 'ti-x',
+            'signed': 'ti-writing-sign',
+            'deleted': 'ti-trash'
+        };
+        return iconMap[action] || 'ti-point';
+    }
+
+    function viewObligation(id) {
+        window.location.href = `/obligations?id=${id}`;
+    }
+
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', function () {
+        // Set dashboard as active in sidebar
+        const dashboardLink = document.querySelector('a[href="/"]');
+        if (dashboardLink) {
+            dashboardLink.classList.add('active');
+        }
+
+        // Load all dashboard data
+        loadDashboardData();
+    });
 </script>
+
 {% endblock %}

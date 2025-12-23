@@ -734,18 +734,18 @@ async function loadConsultationsData() {
                 allConsultations = [];
             }
             
-            console.log('✅ Parsed consultations:', allConsultations.length, 'items');
+            console.log(' Parsed consultations:', allConsultations.length, 'items');
             
             // Update UI
             updateStatistics();
             displayConsultations(allConsultations);
             
         } else {
-            console.error('❌ API error:', response.status, response.statusText);
+            console.error(' API error:', response.status, response.statusText);
             showError('Failed to load consultations. Status: ' + response.status);
         }
     } catch (error) {
-        console.error('❌ Error loading consultations:', error);
+        console.error(' Error loading consultations:', error);
         showError('An error occurred: ' + error.message);
     } finally {
         // Always hide loading regardless of success/error
@@ -782,7 +782,7 @@ function displayConsultations(consultations) {
     const emptyState = document.getElementById('emptyState');
 
     if (!container || !emptyState) {
-        console.error('❌ Container elements not found!');
+        console.error(' Container elements not found!');
         return;
     }
 
@@ -793,16 +793,16 @@ function displayConsultations(consultations) {
         return;
     }
 
-    console.log('✅ Rendering', consultations.length, 'consultation cards...');
+    console.log(' Rendering', consultations.length, 'consultation cards...');
     container.style.display = 'flex';
     emptyState.style.display = 'none';
     container.innerHTML = consultations.map(c => createConsultationCard(c)).join('');
-    console.log('✅ Cards rendered successfully');
+    console.log(' Cards rendered successfully');
 }
 
 // Show error message
 function showError(message) {
-    console.log('❌ Showing error:', message);
+    console.log(' Showing error:', message);
     const container = document.getElementById('consultationsList');
     container.style.display = 'block';
     container.innerHTML = `

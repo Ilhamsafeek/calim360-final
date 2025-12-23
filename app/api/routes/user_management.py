@@ -239,7 +239,7 @@ async def create_user(
         db.commit()
         db.refresh(new_user)
         
-        print(f"✅ User created successfully: {new_user.email}")
+        print(f" User created successfully: {new_user.email}")
         
         return {
             "id": new_user.id,
@@ -351,7 +351,7 @@ async def update_user(
         db.commit()
         db.refresh(user)
         
-        print(f"✅ User updated successfully: {user.email}")
+        print(f" User updated successfully: {user.email}")
         
         return {
             "id": user.id,
@@ -415,7 +415,7 @@ async def delete_user(
         
         db.commit()
         
-        print(f"✅ User deleted successfully: {user.first_name} {user.last_name}")
+        print(f" User deleted successfully: {user.first_name} {user.last_name}")
         
         return {"message": "User deleted successfully"}
         

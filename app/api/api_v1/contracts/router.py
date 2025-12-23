@@ -73,7 +73,7 @@ async def add_comment_to_contract(
         if contract.company_id != current_user.company_id:
             raise HTTPException(status_code=403, detail="Access denied")
         
-        # ✅ FIXED: Use contract_comments table with INT IDs
+        #  FIXED: Use contract_comments table with INT IDs
         query = text("""
             INSERT INTO contract_comments 
             (contract_id, user_id, comment_text, selected_text, created_at)
@@ -93,7 +93,7 @@ async def add_comment_to_contract(
         # Get the inserted comment ID
         comment_id = result.lastrowid
         
-        logger.info(f"✅ Comment {comment_id} added successfully")
+        logger.info(f" Comment {comment_id} added successfully")
         
         return {
             "success": True,
@@ -112,7 +112,7 @@ async def add_comment_to_contract(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error adding comment: {str(e)}")
+        logger.error(f" Error adding comment: {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(
@@ -143,7 +143,7 @@ async def get_contract_comments(
         if contract.company_id != current_user.company_id:
             raise HTTPException(status_code=403, detail="Access denied")
         
-        # ✅ FIXED: Query contract_comments with correct column name
+        #  FIXED: Query contract_comments with correct column name
         query = text("""
             SELECT 
                 cc.id,
@@ -173,7 +173,7 @@ async def get_contract_comments(
                 'created_at': row.created_at.isoformat() if row.created_at else None
             })
         
-        logger.info(f"✅ Found {len(comments)} comments")
+        logger.info(f" Found {len(comments)} comments")
         
         return {
             'success': True,
@@ -184,7 +184,7 @@ async def get_contract_comments(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error getting comments: {str(e)}")
+        logger.error(f" Error getting comments: {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
@@ -231,7 +231,7 @@ async def delete_comment(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error deleting comment: {str(e)}")
+        logger.error(f" Error deleting comment: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
         
 # =====================================================
@@ -306,12 +306,12 @@ async def create_contract(
                 
                 db.commit()
                 
-                logger.info(f"✅ Contract {contract.id} hash stored on blockchain: {blockchain_result['transaction_id']}")
+                logger.info(f" Contract {contract.id} hash stored on blockchain: {blockchain_result['transaction_id']}")
             else:
-                logger.warning(f"⚠️ Blockchain storage failed for contract {contract.id} (non-critical): {blockchain_result.get('error')}")
+                logger.warning(f" Blockchain storage failed for contract {contract.id} (non-critical): {blockchain_result.get('error')}")
                 
         except Exception as blockchain_error:
-            logger.warning(f"⚠️ Blockchain storage failed (non-critical): {str(blockchain_error)}")
+            logger.warning(f" Blockchain storage failed (non-critical): {str(blockchain_error)}")
             # Don't fail contract creation if blockchain fails
         
         return ContractResponse.from_orm(contract)
@@ -322,7 +322,7 @@ async def create_contract(
             detail=str(e)
         )
     except Exception as e:
-        logger.error(f"❌ Contract creation failed: {str(e)}")
+        logger.error(f" Contract creation failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create contract: {str(e)}"
@@ -756,7 +756,7 @@ async def upload_contract(
     """Upload existing contract file and extract actual content"""
     
     try:
-        logger.info(f"📤 Upload request from user {current_user.email}")
+        logger.info(f" Upload request from user {current_user.email}")
         logger.info(f"📎 File: {file.filename}, Type: {file.content_type}")
         
         # Validate file type
@@ -815,7 +815,7 @@ async def upload_contract(
         db.add(new_contract)
         db.flush()
         
-        logger.info(f"✅ Contract record created with ID: {new_contract.id}")
+        logger.info(f" Contract record created with ID: {new_contract.id}")
         
         # Create upload directory for this contract
         upload_base = FilePath(settings.UPLOAD_DIR)
@@ -828,17 +828,17 @@ async def upload_contract(
             content = await file.read()
             f.write(content)
         
-        logger.info(f"💾 File saved to: {file_path}")
+        logger.info(f" File saved to: {file_path}")
         
         # 🔥 EXTRACT ACTUAL TEXT CONTENT FROM DOCUMENT
-        logger.info(f"📄 Extracting text from {file_ext} file...")
+        logger.info(f" Extracting text from {file_ext} file...")
         extracted_text = DocumentParser.extract_text(str(file_path))
         
         if not extracted_text or len(extracted_text.strip()) < 10:
-            logger.warning(f"⚠️ No text extracted from file, using placeholder")
+            logger.warning(f" No text extracted from file, using placeholder")
             extracted_text = f"Unable to extract text from {file.filename}. Please check the file format."
         else:
-            logger.info(f"✅ Extracted {len(extracted_text)} characters from document")
+            logger.info(f" Extracted {len(extracted_text)} characters from document")
         
         # Convert extracted text to HTML format with styling
         file_size_kb = len(content) / 1024
@@ -874,8 +874,8 @@ async def upload_contract(
         db.commit()
         db.refresh(new_contract)
         
-        logger.info(f"✅ Contract uploaded successfully: {contract_number}")
-        logger.info(f"📝 Content extracted: {len(extracted_text):,} characters")
+        logger.info(f" Contract uploaded successfully: {contract_number}")
+        logger.info(f" Content extracted: {len(extracted_text):,} characters")
         
         return {
             "id": new_contract.id,
@@ -896,7 +896,7 @@ async def upload_contract(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Upload error: {str(e)}")
+        logger.error(f" Upload error: {str(e)}")
         import traceback
         traceback.print_exc()
         raise HTTPException(

@@ -39,4 +39,4 @@ content = content.replace('ContractVersion.contract_id == data.contract_id', 'Co
 with open('app/api/api_v1/obligations/obligations.py', 'w') as f:
     f.write(content)
 
-print("✅ Fixed generate-ai endpoint to accept contract_id in path")
+print(" Fixed generate-ai endpoint to accept contract_id in path")

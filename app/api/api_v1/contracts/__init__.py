@@ -14,8 +14,8 @@ try:
         prefix="/negotiation", 
         tags=["negotiation"]
     )
-    print("✅ Negotiation router loaded successfully")
+    print(" Negotiation router loaded successfully")
 except ImportError as e:
-    print(f"⚠️ Warning: Could not import negotiation router: {e}")
+    print(f" Warning: Could not import negotiation router: {e}")
 
 __all__ = ['router']

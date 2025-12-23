@@ -58,11 +58,11 @@ def create_expert_profile(db: Session, user_id: int, profile_data: dict):
             "is_available": profile_data.get("is_available", True)
         })
         db.commit()
-        logger.info(f"✅ Expert profile created for user_id: {user_id}")
+        logger.info(f" Expert profile created for user_id: {user_id}")
         return True
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error creating expert profile: {str(e)}")
+        logger.error(f" Error creating expert profile: {str(e)}")
         raise
 
 def update_expert_profile(db: Session, user_id: int, profile_data: dict):
@@ -103,7 +103,7 @@ def update_expert_profile(db: Session, user_id: int, profile_data: dict):
                 "qid_verified": profile_data.get("qid_verified", False),
                 "is_available": profile_data.get("is_available", True)
             })
-            logger.info(f"✅ Expert profile updated for user_id: {user_id}")
+            logger.info(f" Expert profile updated for user_id: {user_id}")
         else:
             # Create new profile
             create_expert_profile(db, user_id, profile_data)
@@ -112,7 +112,7 @@ def update_expert_profile(db: Session, user_id: int, profile_data: dict):
         return True
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error updating expert profile: {str(e)}")
+        logger.error(f" Error updating expert profile: {str(e)}")
         raise
 
 def delete_expert_profile(db: Session, user_id: int):
@@ -121,11 +121,11 @@ def delete_expert_profile(db: Session, user_id: int):
         delete_query = text("DELETE FROM expert_profiles WHERE user_id = :user_id")
         db.execute(delete_query, {"user_id": user_id})
         db.commit()
-        logger.info(f"✅ Expert profile deleted for user_id: {user_id}")
+        logger.info(f" Expert profile deleted for user_id: {user_id}")
         return True
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error deleting expert profile: {str(e)}")
+        logger.error(f" Error deleting expert profile: {str(e)}")
         return False
 
 # =====================================================
@@ -156,7 +156,7 @@ async def get_company_users(
             Company.company_name.label('company_name')
         ).outerjoin(Company, User.company_id == Company.id)
         
-        # ✅ INTERNAL USER CHECK - Show all users if internal
+        #  INTERNAL USER CHECK - Show all users if internal
         if current_user.user_type != 'internal':
             # Not internal user - filter by company_id
             if current_user.company_id:
@@ -229,7 +229,7 @@ async def get_company_users(
                 "is_verified": bool(user.is_verified) if user.is_verified is not None else True,
                 "last_login_at": user.last_login_at.isoformat() if user.last_login_at else None,
                 "created_at": user.created_at.isoformat() if user.created_at else None,
-                # ✅ Add company name (only meaningful for internal users viewing multiple companies)
+                #  Add company name (only meaningful for internal users viewing multiple companies)
                 "company_name": company_name or "N/A"
             }
             user_list.append(user_data)
@@ -368,9 +368,9 @@ async def create_user(
             try:
                 create_expert_profile(db, new_user.id, user_data["expert_profile"])
                 is_expert = True
-                logger.info(f"✅ Expert profile created for user {new_user.id}")
+                logger.info(f" Expert profile created for user {new_user.id}")
             except Exception as e:
-                logger.error(f"❌ Failed to create expert profile: {str(e)}")
+                logger.error(f" Failed to create expert profile: {str(e)}")
                 # Don't fail the entire user creation, just log the error
         
         return {
@@ -453,11 +453,11 @@ async def search_users(
                 "job_title": getattr(user, 'job_title', None)
             })
         
-        logger.info(f"✅ Found {len(results)} users")
+        logger.info(f" Found {len(results)} users")
         return results
         
     except Exception as e:
-        logger.error(f"❌ Error searching users: {str(e)}")
+        logger.error(f" Error searching users: {str(e)}")
         return []  # Return empty list instead of error to prevent UI break
 
 
@@ -699,7 +699,7 @@ async def get_expert_profile(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error fetching expert profile: {str(e)}")
+        logger.error(f" Error fetching expert profile: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch expert profile: {str(e)}"
@@ -801,9 +801,9 @@ async def update_user(
         if user_data.get("user_type") == "expert" and user_data.get("expert_profile"):
             try:
                 update_expert_profile(db, user_id, user_data["expert_profile"])
-                logger.info(f"✅ Expert profile updated for user {user_id}")
+                logger.info(f" Expert profile updated for user {user_id}")
             except Exception as e:
-                logger.error(f"❌ Failed to update expert profile: {str(e)}")
+                logger.error(f" Failed to update expert profile: {str(e)}")
                 # Don't fail the entire update, just log the error
         elif user_data.get("user_type") and user_data.get("user_type") != "expert":
             # If user type changed from expert to something else, mark profile as unavailable

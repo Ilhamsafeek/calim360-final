@@ -486,7 +486,7 @@ async openEditModal(projectId) {
         // Open the modal
         this.openModal('projectModal');
         
-        console.log('✅ Edit modal opened successfully');
+        console.log(' Edit modal opened successfully');
         
     } catch (error) {
         console.error('Error opening edit modal:', error);
@@ -606,7 +606,7 @@ viewProject(projectId) {
         const project = this.projects.find(p => parseInt(p.id) === numericProjectId);
         
         if (!project) {
-            console.error('❌ Project not found:', numericProjectId);
+            console.error(' Project not found:', numericProjectId);
             console.log('Available projects:', this.projects.map(p => ({
                 id: p.id, 
                 title: p.title || p.project_name
@@ -615,7 +615,7 @@ viewProject(projectId) {
             return;
         }
 
-        console.log('✅ Project found:', project);
+        console.log(' Project found:', project);
 
         this.currentProjectId = numericProjectId;
         
@@ -708,10 +708,10 @@ viewProject(projectId) {
         // Open the modal
         this.openModal('viewModal');
         
-        console.log('✅ View modal opened successfully');
+        console.log(' View modal opened successfully');
         
     } catch (error) {
-        console.error('❌ Error in viewProject:', error);
+        console.error(' Error in viewProject:', error);
         this.showToast('Failed to display project details', 'error');
     }
 },

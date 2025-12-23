@@ -75,7 +75,7 @@ class NotificationScheduler:
             replace_existing=True
         )
         
-        logger.info("✅ Notification scheduler jobs configured")
+        logger.info(" Notification scheduler jobs configured")
     
     async def scan_obligations_job(self):
         """Daily obligation scan job"""
@@ -86,10 +86,10 @@ class NotificationScheduler:
                 service = ObligationMonitorService(db)
                 stats = service.scan_obligations()
                 
-                logger.info(f"✅ Obligation scan completed: {stats}")
+                logger.info(f" Obligation scan completed: {stats}")
                 
         except Exception as e:
-            logger.error(f"❌ Error in obligation scan job: {str(e)}")
+            logger.error(f" Error in obligation scan job: {str(e)}")
     
     async def urgent_obligation_check(self):
         """Hourly check for urgent obligations (due within 24 hours)"""
@@ -136,10 +136,10 @@ class NotificationScheduler:
                         priority="critical"
                     )
                 
-                logger.info(f"✅ Processed {len(urgent_obligations)} urgent obligations")
+                logger.info(f" Processed {len(urgent_obligations)} urgent obligations")
                 
         except Exception as e:
-            logger.error(f"❌ Error in urgent obligation check: {str(e)}")
+            logger.error(f" Error in urgent obligation check: {str(e)}")
     
     async def send_pending_reminders(self):
         """Send reminder notifications for pending approvals"""
@@ -183,10 +183,10 @@ class NotificationScheduler:
                     approval.last_reminder_at = datetime.utcnow()
                 
                 db.commit()
-                logger.info(f"✅ Sent {len(pending_approvals)} reminder notifications")
+                logger.info(f" Sent {len(pending_approvals)} reminder notifications")
                 
         except Exception as e:
-            logger.error(f"❌ Error sending reminders: {str(e)}")
+            logger.error(f" Error sending reminders: {str(e)}")
     
     async def cleanup_old_notifications(self):
         """Cleanup old read notifications"""
@@ -197,10 +197,10 @@ class NotificationScheduler:
                 service = NotificationService(db)
                 deleted = service.cleanup_old_notifications(days=90)
                 
-                logger.info(f"✅ Cleaned up {deleted} old notifications")
+                logger.info(f" Cleaned up {deleted} old notifications")
                 
         except Exception as e:
-            logger.error(f"❌ Error cleaning up notifications: {str(e)}")
+            logger.error(f" Error cleaning up notifications: {str(e)}")
     
     async def retry_failed_notifications(self):
         """Retry failed notification sends"""
@@ -230,26 +230,26 @@ class NotificationScheduler:
                     except Exception as e:
                         logger.error(f"Failed to retry notification {notification.id}: {str(e)}")
                 
-                logger.info(f"✅ Retried {len(failed_notifications)} failed notifications")
+                logger.info(f" Retried {len(failed_notifications)} failed notifications")
                 
         except Exception as e:
-            logger.error(f"❌ Error retrying notifications: {str(e)}")
+            logger.error(f" Error retrying notifications: {str(e)}")
     
     def start(self):
         """Start the scheduler"""
         try:
             self.scheduler.start()
-            logger.info("✅ Notification scheduler started")
+            logger.info(" Notification scheduler started")
         except Exception as e:
-            logger.error(f"❌ Failed to start scheduler: {str(e)}")
+            logger.error(f" Failed to start scheduler: {str(e)}")
     
     def shutdown(self):
         """Shutdown the scheduler"""
         try:
             self.scheduler.shutdown()
-            logger.info("✅ Notification scheduler stopped")
+            logger.info(" Notification scheduler stopped")
         except Exception as e:
-            logger.error(f"❌ Error shutting down scheduler: {str(e)}")
+            logger.error(f" Error shutting down scheduler: {str(e)}")
 
 
 # Global scheduler instance

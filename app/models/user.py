@@ -100,7 +100,7 @@ class User(Base):
     created_by = Column(Integer)
     updated_at = Column(DateTime)
 
-    updated_by = Column(Integer)  # ✅ Your actual column
+    updated_by = Column(Integer)  #  Your actual column
     expert_profile = relationship("ExpertProfile", back_populates="user", uselist=False)
 
     updated_by = Column(Integer)

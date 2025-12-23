@@ -33,7 +33,7 @@ class ConnectionManager:
             'user_id': user_id,
             'user_name': user_name
         })
-        logger.info(f"✅ User {user_name} connected to session: {session_id}")
+        logger.info(f" User {user_name} connected to session: {session_id}")
         
         # Notify others that user joined
         await self.broadcast_to_session(session_id, {
@@ -53,7 +53,7 @@ class ConnectionManager:
             ]
             if not self.active_connections[session_id]:
                 del self.active_connections[session_id]
-        logger.info(f"❌ User {user_id} disconnected from session: {session_id}")
+        logger.info(f" User {user_id} disconnected from session: {session_id}")
     
     async def broadcast_to_session(
         self, 

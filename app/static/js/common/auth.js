@@ -102,7 +102,7 @@ async function login(email, password, rememberMe = false) {
             if (data.access_token) setAuthToken(data.access_token);
             if (data.user) setUserInfo(data.user);
 
-            console.log('✅ Login successful');
+            console.log(' Login successful');
 
             // Redirect to dashboard or intended page
             const urlParams = new URLSearchParams(window.location.search);
@@ -120,7 +120,7 @@ async function login(email, password, rememberMe = false) {
         }
 
     } catch (error) {
-        console.error('❌ Login error:', error);
+        console.error(' Login error:', error);
         throw error;
     } finally {
         hideLoading();
@@ -138,7 +138,7 @@ async function logout() {
             credentials: 'include'
         });
 
-        console.log('✅ Logout successful');
+        console.log(' Logout successful');
 
     } catch (error) {
         console.error('Logout API error:', error);
@@ -160,7 +160,7 @@ function showLoading(message = 'Loading...') {
 }
 
 function hideLoading() {
-    console.log('✅ Loading complete');
+    console.log(' Loading complete');
     // Can be extended to hide UI loading indicator
 }
 

@@ -17,7 +17,6 @@ from app.models.user import User
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
-
 @router.get("/statistics")
 async def get_dashboard_statistics(
     current_user: User = Depends(get_current_user),
@@ -27,6 +26,7 @@ async def get_dashboard_statistics(
     Get comprehensive dashboard statistics with real-time data
     Includes contracts where company is either primary party or party B
     INCLUDES: My Pending Approvals (contracts awaiting current user's approval)
+    INCLUDES: Project Statistics (active projects, project value, projects by status)
     """
     try:
         company_id = current_user.company_id
@@ -169,6 +169,83 @@ async def get_dashboard_statistics(
         ).fetchone()
         total_documents = total_documents_result.count if total_documents_result else 0
         
+        # 🆕 PROJECT STATISTICS
+        # Active Projects Count
+        active_projects_result = db.execute(
+            text("""
+                SELECT COUNT(*) as count 
+                FROM projects 
+                WHERE company_id = :company_id 
+                AND status = 'active'
+            """),
+            {"company_id": company_id}
+        ).fetchone()
+        active_projects = active_projects_result.count if active_projects_result else 0
+        
+        # Total Projects Count (all statuses)
+        total_projects_result = db.execute(
+            text("""
+                SELECT COUNT(*) as count 
+                FROM projects 
+                WHERE company_id = :company_id
+            """),
+            {"company_id": company_id}
+        ).fetchone()
+        total_projects = total_projects_result.count if total_projects_result else 0
+        
+        # Total Project Value (Active Projects)
+        total_project_value_result = db.execute(
+            text("""
+                SELECT COALESCE(SUM(project_value), 0) as total_value,
+                       COALESCE(AVG(project_value), 0) as avg_value
+                FROM projects 
+                WHERE company_id = :company_id 
+                AND status = 'active'
+                AND project_value IS NOT NULL
+            """),
+            {"company_id": company_id}
+        ).fetchone()
+        total_project_value = total_project_value_result.total_value if total_project_value_result else 0
+        avg_project_value = total_project_value_result.avg_value if total_project_value_result else 0
+        
+        # Projects by Status
+        projects_by_status_result = db.execute(
+            text("""
+                SELECT status, COUNT(*) as count 
+                FROM projects 
+                WHERE company_id = :company_id
+                GROUP BY status
+            """),
+            {"company_id": company_id}
+        ).fetchall()
+        projects_by_status = {row.status: row.count for row in projects_by_status_result}
+        
+        # Recent Projects (last 30 days)
+        thirty_days_ago = today - timedelta(days=30)
+        recent_projects_result = db.execute(
+            text("""
+                SELECT COUNT(*) as count 
+                FROM projects 
+                WHERE company_id = :company_id
+                AND created_at >= :thirty_days_ago
+            """),
+            {"company_id": company_id, "thirty_days_ago": thirty_days_ago}
+        ).fetchone()
+        recent_projects = recent_projects_result.count if recent_projects_result else 0
+        
+        # Projects by Type
+        projects_by_type_result = db.execute(
+            text("""
+                SELECT project_type, COUNT(*) as count 
+                FROM projects 
+                WHERE company_id = :company_id
+                AND project_type IS NOT NULL
+                GROUP BY project_type
+            """),
+            {"company_id": company_id}
+        ).fetchall()
+        projects_by_type = {row.project_type: row.count for row in projects_by_type_result}
+        
         # Recent Activity (last 7 days) - including party_b_id
         seven_days_ago = today - timedelta(days=7)
         recent_contracts_result = db.execute(
@@ -212,7 +289,7 @@ async def get_dashboard_statistics(
         # Risk Assessment - risk_level column doesn't exist, skip for now
         high_risk_contracts = 0
         
-        logger.info(f"📊 Dashboard Stats - User: {current_user.email}, Total: {total_contracts}, My Pending Approvals: {my_pending_approvals}, Company Pending: {pending_approvals}")
+        logger.info(f"📊 Dashboard Stats - User: {current_user.email}, Total Contracts: {total_contracts}, Active Projects: {active_projects}, My Pending Approvals: {my_pending_approvals}")
         
         return {
             "success": True,
@@ -222,7 +299,7 @@ async def get_dashboard_statistics(
                     "active_contracts": active_contracts,
                     "expiring_soon": expiring_soon,
                     "pending_approvals": pending_approvals,
-                    "my_pending_approvals": my_pending_approvals,  # 🆕 NEW: User's specific pending approvals
+                    "my_pending_approvals": my_pending_approvals,
                     "recent_contracts": recent_contracts
                 },
                 "contracts": {
@@ -245,14 +322,24 @@ async def get_dashboard_statistics(
                 },
                 "documents": {
                     "total": total_documents
+                },
+                "projects": {
+                    "total": total_projects,
+                    "active": active_projects,
+                    "total_value": float(total_project_value or 0),
+                    "average_value": float(avg_project_value or 0),
+                    "by_status": projects_by_status,
+                    "by_type": projects_by_type,
+                    "recent": recent_projects
                 }
             }
         }
         
     except Exception as e:
-        logger.error(f"Error fetching dashboard statistics: {str(e)}")
+        logger.error(f" Error fetching dashboard statistics: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+        
         
 @router.get("/expiring-contracts")
 async def get_expiring_contracts(

@@ -25,9 +25,9 @@ old_delete = '''            # 1. Delete from obligation_updates
                 {"id": obligation_id}
             )
             
-            # ✅ COMMIT THE MANUAL DELETES FIRST
+            #  COMMIT THE MANUAL DELETES FIRST
             db.commit()
-            logger.info(f"✅ Deleted related records for obligation {obligation_id}")
+            logger.info(f" Deleted related records for obligation {obligation_id}")
             
             # 5. Finally, delete the obligation itself
             db.delete(obligation)
@@ -79,4 +79,4 @@ content = content.replace(old_delete, new_delete)
 with open('app/api/api_v1/obligations/obligations.py', 'w') as f:
     f.write(content)
 
-print("✅ Fixed delete function to use raw SQL")
+print(" Fixed delete function to use raw SQL")

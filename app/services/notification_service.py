@@ -300,7 +300,7 @@ class NotificationTemplates:
     @staticmethod
     def contract_approved(contract_number: str, title: str, approver: str) -> Dict:
         return {
-            "title": "✅ Contract Approved",
+            "title": " Contract Approved",
             "message": f"Contract {contract_number} - {title} has been approved by {approver}.",
             "type": "workflow"
         }
@@ -308,7 +308,7 @@ class NotificationTemplates:
     @staticmethod
     def contract_rejected(contract_number: str, title: str, reason: str) -> Dict:
         return {
-            "title": "❌ Contract Rejected",
+            "title": " Contract Rejected",
             "message": f"Contract {contract_number} - {title} was rejected. Reason: {reason}",
             "type": "workflow",
             "priority": "high"
@@ -317,7 +317,7 @@ class NotificationTemplates:
     @staticmethod
     def sla_warning(contract_number: str, hours_remaining: int) -> Dict:
         return {
-            "title": "⚠️ SLA Warning",
+            "title": " SLA Warning",
             "message": f"Contract {contract_number} has {hours_remaining} hours remaining until SLA deadline.",
             "type": "escalation",
             "priority": "high"

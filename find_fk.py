@@ -51,8 +51,8 @@ with engine.connect() as conn:
             )
             count = check_result.scalar()
             if count > 0:
-                print(f"❌ {table:30s} {count} records (BLOCKING DELETE!)")
+                print(f" {table:30s} {count} records (BLOCKING DELETE!)")
             else:
-                print(f"✅ {table:30s} {count} records")
+                print(f" {table:30s} {count} records")
         except Exception as e:
-            print(f"⚠️  {table:30s} Error: {str(e)[:50]}")
+            print(f"  {table:30s} Error: {str(e)[:50]}")

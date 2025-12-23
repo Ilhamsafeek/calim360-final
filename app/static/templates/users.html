@@ -1285,7 +1285,7 @@ let allUsers = [];
 let currentUserId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('✅ User Management initialized');
+    console.log(' User Management initialized');
     initializeUserManagement();
 });
 
@@ -1567,7 +1567,7 @@ async function loadUserData(userId) {
     try {
         console.log('🔍 Loading user data for ID:', userId);
         
-        // ✅ FIXED: Correct endpoint
+        //  FIXED: Correct endpoint
         const response = await fetch(`/api/users/${userId}`, {
             headers: {
                 'Content-Type': 'application/json'
@@ -1579,7 +1579,7 @@ async function loadUserData(userId) {
         
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('❌ API Error:', errorText);
+            console.error(' API Error:', errorText);
             throw new Error('Failed to load user data');
         }
         
@@ -1606,7 +1606,7 @@ async function loadUserData(userId) {
         document.getElementById('timezone').value = user.timezone || 'Asia/Qatar';
         document.getElementById('isActive').checked = user.is_active !== false;
         
-        console.log('✅ All form fields populated');
+        console.log(' All form fields populated');
         
         // Load expert profile if user is an expert
         if (user.user_type === 'expert') {
@@ -1619,7 +1619,7 @@ async function loadUserData(userId) {
         }
         
     } catch (error) {
-        console.error('❌ Error loading user data:', error);
+        console.error(' Error loading user data:', error);
         showNotification('Failed to load user data: ' + error.message, 'error');
     }
 }
@@ -1628,7 +1628,7 @@ async function loadExpertProfile(userId) {
     try {
         console.log('🎓 Fetching expert profile for user:', userId);
         
-        // ✅ FIXED: Correct endpoint
+        //  FIXED: Correct endpoint
         const response = await fetch(`/api/users/expert-profiles/${userId}`, {
             headers: {
                 'Content-Type': 'application/json'
@@ -1654,7 +1654,7 @@ async function loadExpertProfile(userId) {
             document.getElementById('qidVerified').checked = profile.qid_verified || false;
             document.getElementById('isAvailable').checked = profile.is_available !== false;
             
-            console.log('✅ Expert profile fields populated');
+            console.log(' Expert profile fields populated');
         } else {
             console.log('ℹ️ No expert profile found');
         }

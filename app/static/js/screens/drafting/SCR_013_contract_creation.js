@@ -476,7 +476,7 @@ async function generateContract() {
             language: 'en'
         };
 
-        console.log('📤 Sending request to AI endpoint:', requestData);
+        console.log(' Sending request to AI endpoint:', requestData);
 
         // Call AI generation endpoint with AbortController
         const response = await fetch(`${API_BASE}/ai-generate`, {
@@ -495,7 +495,7 @@ async function generateContract() {
         }
 
         const result = await response.json();
-        console.log('✅ AI Contract generated successfully:', result);
+        console.log(' AI Contract generated successfully:', result);
 
         // Store the generated content
         generatedContractContent = result.contract_content ||
@@ -510,7 +510,7 @@ async function generateContract() {
             return;
         }
 
-        console.log('✅ Contract content stored:', generatedContractContent.substring(0, 200) + '...');
+        console.log(' Contract content stored:', generatedContractContent.substring(0, 200) + '...');
 
         // Display the generated contract
         displayContractPreview(generatedContractContent);
@@ -527,10 +527,10 @@ async function generateContract() {
         // Check if error was due to abort
         if (error.name === 'AbortError') {
             showError('AI generation was stopped due to session timeout or navigation.');
-            console.log('⚠️ AI generation aborted');
+            console.log(' AI generation aborted');
         } else {
             showError(`Failed to generate contract: ${error.message}`);
-            console.error('❌ AI generation error:', error);
+            console.error(' AI generation error:', error);
         }
         
         // Clear the controller
@@ -546,7 +546,7 @@ async function generateContract() {
 // Add this at the end of the file
 window.addEventListener('beforeunload', function() {
     if (aiGenerationController) {
-        console.log('⚠️ Page unloading, aborting AI generation');
+        console.log(' Page unloading, aborting AI generation');
         aiGenerationController.abort();
     }
 });
@@ -554,7 +554,7 @@ window.addEventListener('beforeunload', function() {
 // Also cancel when navigating away
 document.addEventListener('visibilitychange', function() {
     if (document.hidden && aiGenerationController) {
-        console.log('⚠️ Page hidden, aborting AI generation');
+        console.log(' Page hidden, aborting AI generation');
         aiGenerationController.abort();
     }
 });
@@ -602,7 +602,7 @@ async function populateProjectDropdown() {
 
     const projectSelect = document.querySelector('#saveContractModal select');
     if (!projectSelect) {
-        console.error('❌ Project select element not found');
+        console.error(' Project select element not found');
         return;
     }
 
@@ -650,7 +650,7 @@ async function populateProjectDropdown() {
 
                 projectSelect.appendChild(option);
 
-                console.log('✅ Added project:', option.textContent);
+                console.log(' Added project:', option.textContent);
             });
 
             // Add "Create New Project" option
@@ -661,7 +661,7 @@ async function populateProjectDropdown() {
             createNewOption.style.color = 'var(--primary-color)';
             projectSelect.appendChild(createNewOption);
 
-            console.log('✅ Project dropdown populated successfully');
+            console.log(' Project dropdown populated successfully');
         } else {
             // No projects found
             const noProjectsOption = document.createElement('option');
@@ -670,11 +670,11 @@ async function populateProjectDropdown() {
             noProjectsOption.style.color = 'var(--warning-color)';
             projectSelect.appendChild(noProjectsOption);
 
-            console.warn('⚠️ No projects found in database');
+            console.warn(' No projects found in database');
         }
 
     } catch (error) {
-        console.error('❌ Error loading projects:', error);
+        console.error(' Error loading projects:', error);
         projectSelect.innerHTML = '<option value="">Error loading projects</option>';
 
         const errorOption = document.createElement('option');
@@ -697,7 +697,7 @@ async function populateProjectDropdown() {
 
 async function saveContract() {
     try {
-        console.log('💾 Saving contract with content...');
+        console.log(' Saving contract with content...');
 
         // Get form values
         const contractNameInput = document.querySelector('#saveContractModal input[type="text"]');
@@ -706,7 +706,7 @@ async function saveContract() {
         const tagsInput = tagsInputs.length > 1 ? tagsInputs[1] : null;
 
         if (!contractNameInput || !projectSelect) {
-            console.error('❌ Form elements not found');
+            console.error(' Form elements not found');
             showError('Form elements not found. Please refresh the page.');
             return;
         }
@@ -753,7 +753,7 @@ async function saveContract() {
             currency: 'QAR'
         };
 
-        console.log('📤 Creating contract record:', contractData);
+        console.log(' Creating contract record:', contractData);
 
         // Step 1: Create the contract record
         const createResponse = await fetch(`${API_BASE}/`, {
@@ -771,7 +771,7 @@ async function saveContract() {
         }
 
         const createdContract = await createResponse.json();
-        console.log('✅ Contract record created:', createdContract);
+        console.log(' Contract record created:', createdContract);
 
         // Step 2: CRITICAL - Save the actual contract content as a version
         const contentData = {
@@ -780,7 +780,7 @@ async function saveContract() {
             change_summary: 'Initial AI-generated contract'
         };
 
-        console.log('📤 Saving contract content to database...');
+        console.log(' Saving contract content to database...');
         console.log('Content length:', generatedContractContent.length, 'characters');
 
         const contentResponse = await fetch(`${API_BASE}/${createdContract.id}/content`, {
@@ -799,7 +799,7 @@ async function saveContract() {
             showWarning('Contract created but content save failed. Please try editing the contract.');
         } else {
             const contentResult = await contentResponse.json();
-            console.log('✅ Contract content saved successfully:', contentResult);
+            console.log(' Contract content saved successfully:', contentResult);
             console.log('Version number:', contentResult.version_number);
             console.log('Content length saved:', contentResult.content_length);
         }
@@ -856,7 +856,7 @@ function openCreateProjectModal() {
     
     const modal = document.getElementById('createProjectModal');
     if (!modal) {
-        console.error('❌ Create project modal not found');
+        console.error(' Create project modal not found');
         showError('Create project modal not found. Please refresh the page.');
         return;
     }
@@ -903,7 +903,7 @@ function generateProjectCode() {
 
 async function createNewProject() {
     try {
-        console.log('📝 Creating new project...');
+        console.log(' Creating new project...');
         
         const titleInput = document.getElementById('newProjectTitle');
         const codeInput = document.getElementById('newProjectCode');
@@ -954,7 +954,7 @@ async function createNewProject() {
         }
         
         const result = await response.json();
-        console.log('✅ Project created:', result);
+        console.log(' Project created:', result);
         
         hideLoader();
         showSuccess('Project created successfully!');
@@ -1005,7 +1005,7 @@ function openSaveContractModal() {
             }
         }, 100);
     } else {
-        console.error('❌ Save contract modal not found');
+        console.error(' Save contract modal not found');
     }
 }
 
@@ -1055,7 +1055,7 @@ function displayContractPreview(content) {
         // Scroll to preview
         previewContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
-        console.warn('⚠️ No preview container found, creating modal...');
+        console.warn(' No preview container found, creating modal...');
         showContractInModal(content);
     }
 }
@@ -1360,4 +1360,4 @@ window.contractCreation = {
     getClauseSelections
 };
 
-console.log('✅ SCR_013 Contract Creation script loaded successfully');
+console.log(' SCR_013 Contract Creation script loaded successfully');

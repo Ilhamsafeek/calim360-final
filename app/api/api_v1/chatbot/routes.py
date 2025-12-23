@@ -121,7 +121,7 @@ async def process_chatbot_query(
                 db.add(ai_msg)
                 db.commit()
                 
-                logger.info(f"✅ Messages saved to database for session {request.session_id}")
+                logger.info(f" Messages saved to database for session {request.session_id}")
             except Exception as e:
                 logger.error(f"Failed to save messages to database: {e}")
                 db.rollback()
@@ -141,13 +141,13 @@ async def process_chatbot_query(
             processing_time_ms=ai_response.get("processing_time_ms", 0)
         )
         
-        logger.info(f"✅ Chatbot response completed in {ai_response.get('processing_time_ms', 0)}ms")
+        logger.info(f" Chatbot response completed in {ai_response.get('processing_time_ms', 0)}ms")
         return response
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Chatbot query error: {str(e)}", exc_info=True)
+        logger.error(f" Chatbot query error: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to process query: {str(e)}"
@@ -180,7 +180,7 @@ async def create_chat_session(
             session_type="ai_chatbot",
             status="active",
             contract_id=request.contract_id,
-            query_text=request.subject or "AI Chatbot Consultation"  # ✅ Use query_text instead
+            query_text=request.subject or "AI Chatbot Consultation"  #  Use query_text instead
         )
         
         db.add(session)
@@ -212,7 +212,7 @@ How can I assist you today?"""
         db.add(welcome_message)
         db.commit()
         
-        logger.info(f"✅ Chat session created: {session.id}")
+        logger.info(f" Chat session created: {session.id}")
         
         return ChatSessionResponse(
             success=True,
@@ -224,7 +224,7 @@ How can I assist you today?"""
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Session creation error: {str(e)}")
+        logger.error(f" Session creation error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create session: {str(e)}"
@@ -290,7 +290,7 @@ async def get_conversation_history(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ History retrieval error: {str(e)}")
+        logger.error(f" History retrieval error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve history: {str(e)}"
@@ -352,7 +352,7 @@ Thank you for your patience.""",
         db.add(escalation_msg)
         db.commit()
         
-        logger.info(f"✅ Session {session_id} escalated to expert. Reason: {reason}")
+        logger.info(f" Session {session_id} escalated to expert. Reason: {reason}")
         
         # TODO: Trigger expert notification system
         # - Send email/SMS to available experts
@@ -370,7 +370,7 @@ Thank you for your patience.""",
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Escalation error: {str(e)}")
+        logger.error(f" Escalation error: {str(e)}")
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

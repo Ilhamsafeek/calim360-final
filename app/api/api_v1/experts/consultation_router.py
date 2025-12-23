@@ -89,13 +89,13 @@ async def create_consultation_session(
         db.commit()
         db.refresh(new_session)
         
-        logger.info(f"✅ Session created: {session_code} for user {current_user.email}")
+        logger.info(f" Session created: {session_code} for user {current_user.email}")
         
         return new_session
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error creating session: {str(e)}")
+        logger.error(f" Error creating session: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create session: {str(e)}"
@@ -219,7 +219,7 @@ async def get_session_details(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error fetching session: {str(e)}")
+        logger.error(f" Error fetching session: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch session details"
@@ -268,7 +268,7 @@ async def start_session(
         db.add(system_msg)
         db.commit()
         
-        logger.info(f"✅ Session started: {session_id}")
+        logger.info(f" Session started: {session_id}")
         
         return {
             "success": True,
@@ -279,7 +279,7 @@ async def start_session(
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error starting session: {str(e)}")
+        logger.error(f" Error starting session: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to start session"
@@ -362,7 +362,7 @@ async def end_session(
         db.add(system_msg)
         db.commit()
         
-        logger.info(f"✅ Session ended: {session_id}")
+        logger.info(f" Session ended: {session_id}")
         
         return {
             "session_id": session_id,
@@ -377,7 +377,7 @@ async def end_session(
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error ending session: {str(e)}")
+        logger.error(f" Error ending session: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to end session"
@@ -428,7 +428,7 @@ async def send_message(
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error sending message: {str(e)}")
+        logger.error(f" Error sending message: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to send message"
@@ -490,7 +490,7 @@ async def get_session_messages(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching messages: {str(e)}")
+        logger.error(f" Error fetching messages: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch messages"
@@ -542,12 +542,12 @@ async def create_action_item(
             "updated_at": new_action.updated_at
         }
         
-        logger.info(f"✅ Action item created: {new_action.id}")
+        logger.info(f" Action item created: {new_action.id}")
         return response
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error creating action item: {str(e)}")
+        logger.error(f" Error creating action item: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create action item"
@@ -591,7 +591,7 @@ async def get_session_action_items(
         return result
         
     except Exception as e:
-        logger.error(f"❌ Error fetching action items: {str(e)}")
+        logger.error(f" Error fetching action items: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch action items"
@@ -662,7 +662,7 @@ async def update_action_item(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error updating action item: {str(e)}")
+        logger.error(f" Error updating action item: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update action item"
@@ -707,13 +707,13 @@ async def submit_feedback(
         db.commit()
         db.refresh(new_feedback)
         
-        logger.info(f"✅ Feedback submitted for session: {feedback_data.session_id}")
+        logger.info(f" Feedback submitted for session: {feedback_data.session_id}")
         
         return new_feedback
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error submitting feedback: {str(e)}")
+        logger.error(f" Error submitting feedback: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to submit feedback"
@@ -803,7 +803,7 @@ async def get_session_statistics(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching statistics: {str(e)}")
+        logger.error(f" Error fetching statistics: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch statistics"

@@ -107,7 +107,7 @@ class RBACHelper {
             }
         });
 
-        console.log('✅ RBAC UI restrictions applied');
+        console.log(' RBAC UI restrictions applied');
     }
 
     /**

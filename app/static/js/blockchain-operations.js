@@ -17,7 +17,7 @@ function openBlockchainOperations() {
     
     const modal = document.getElementById('blockchainOperationsModal');
     if (!modal) {
-        console.error('❌ Blockchain operations modal not found');
+        console.error(' Blockchain operations modal not found');
         showNotification('Blockchain operations modal not available', 'error');
         return;
     }

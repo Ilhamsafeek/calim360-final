@@ -21,7 +21,7 @@ from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
-# ✅ FIXED: Changed prefix to /api/projects to match frontend
+#  FIXED: Changed prefix to /api/projects to match frontend
 router = APIRouter(prefix="/api/projects", tags=["projects"])
 
 # =====================================================
@@ -101,7 +101,7 @@ async def get_project_stats(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching stats: {str(e)}")
+        logger.error(f" Error fetching stats: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch statistics: {str(e)}"
@@ -109,7 +109,7 @@ async def get_project_stats(
 
 
 # =====================================================
-# ✅ /list ENDPOINT - For correspondence management with pagination
+#  /list ENDPOINT - For correspondence management with pagination
 # =====================================================
 @router.get("/list")
 async def get_projects_list(
@@ -190,7 +190,7 @@ async def get_projects_list(
                 "project_manager_name": row.project_manager_name if row.project_manager_name else ""
             })
         
-        logger.info(f"✅ Returning {len(projects)} projects out of {total_count} total")
+        logger.info(f" Returning {len(projects)} projects out of {total_count} total")
         
         return {
             "success": True,
@@ -204,7 +204,7 @@ async def get_projects_list(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error in /list endpoint: {str(e)}", exc_info=True)
+        logger.error(f" Error in /list endpoint: {str(e)}", exc_info=True)
         return {
             "success": False,
             "data": [],
@@ -283,7 +283,7 @@ async def get_my_projects(
                 "manager_name": row.manager_name
             })
         
-        logger.info(f"✅ Found {len(projects)} projects")
+        logger.info(f" Found {len(projects)} projects")
         
         return {
             "success": True,
@@ -292,7 +292,7 @@ async def get_my_projects(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching projects: {str(e)}")
+        logger.error(f" Error fetching projects: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch projects: {str(e)}"
@@ -377,7 +377,7 @@ async def get_projects(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error: {str(e)}")
+        logger.error(f" Error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
@@ -396,7 +396,7 @@ async def get_project_documents(
 ):
     """Get all documents for a specific project"""
     try:
-        logger.info(f"📄 Fetching documents for project {project_id}, company {current_user.company_id}")
+        logger.info(f" Fetching documents for project {project_id}, company {current_user.company_id}")
         
         # FIXED QUERY: Join through contracts table since documents don't have project_id
         query_str = """
@@ -442,7 +442,7 @@ async def get_project_documents(
                 "contract_title": row.contract_title
             })
         
-        logger.info(f"✅ Found {len(documents)} documents for project {project_id}")
+        logger.info(f" Found {len(documents)} documents for project {project_id}")
         
         return {
             "success": True,
@@ -452,7 +452,7 @@ async def get_project_documents(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching documents: {str(e)}")
+        logger.error(f" Error fetching documents: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to fetch documents: {str(e)}"
@@ -493,7 +493,7 @@ async def upload_project_documents(
                 detail="Project not found or access denied"
             )
         
-        # ✅ FIXED: Properly verify contract exists and belongs to this project
+        #  FIXED: Properly verify contract exists and belongs to this project
         if not contract_id:
             # Check if project has any contracts
             contract_query = text("""
@@ -512,7 +512,7 @@ async def upload_project_documents(
             
             if contract:
                 contract_id = contract.id
-                logger.info(f"✅ Using existing contract {contract_id} for uploads")
+                logger.info(f" Using existing contract {contract_id} for uploads")
             else:
                 # Create a default contract for document uploads
                 create_contract_query = text("""
@@ -538,9 +538,9 @@ async def upload_project_documents(
                 
                 db.commit()
                 contract_id = result.lastrowid
-                logger.info(f"✅ Created default contract {contract_id} for document uploads")
+                logger.info(f" Created default contract {contract_id} for document uploads")
         else:
-            # ✅ VERIFY the provided contract_id exists and belongs to this project
+            #  VERIFY the provided contract_id exists and belongs to this project
             verify_contract_query = text("""
                 SELECT id 
                 FROM contracts 
@@ -556,24 +556,24 @@ async def upload_project_documents(
             }).fetchone()
             
             if not verified_contract:
-                logger.warning(f"⚠️ Contract {contract_id} not found or doesn't belong to project {project_id}")
+                logger.warning(f" Contract {contract_id} not found or doesn't belong to project {project_id}")
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Contract {contract_id} not found or doesn't belong to this project"
                 )
         
-        # ✅ DOUBLE-CHECK: Verify contract_id exists before proceeding
+        #  DOUBLE-CHECK: Verify contract_id exists before proceeding
         final_check = text("SELECT id FROM contracts WHERE id = :contract_id")
         contract_exists = db.execute(final_check, {"contract_id": contract_id}).fetchone()
         
         if not contract_exists:
-            logger.error(f"❌ Contract {contract_id} does not exist in database!")
+            logger.error(f" Contract {contract_id} does not exist in database!")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Contract verification failed. Please try again."
             )
         
-        logger.info(f"✅ Contract {contract_id} verified successfully")
+        logger.info(f" Contract {contract_id} verified successfully")
         
         uploaded_documents = []
         errors = []
@@ -642,7 +642,7 @@ async def upload_project_documents(
                     )
                 """)
                 
-                logger.info(f"📄 Inserting document '{file.filename}' with contract_id={contract_id}")
+                logger.info(f" Inserting document '{file.filename}' with contract_id={contract_id}")
                 
                 result = db.execute(insert_query, {
                     "contract_id": int(contract_id),  # Ensure it's an integer
@@ -667,10 +667,10 @@ async def upload_project_documents(
                     "type": file_ext.replace('.', '').lower()
                 })
                 
-                logger.info(f"✅ Document uploaded: {file.filename} (ID: {document_id})")
+                logger.info(f" Document uploaded: {file.filename} (ID: {document_id})")
                 
             except Exception as e:
-                logger.error(f"❌ Error uploading {file.filename}: {str(e)}")
+                logger.error(f" Error uploading {file.filename}: {str(e)}")
                 errors.append({
                     "filename": file.filename,
                     "error": str(e)
@@ -691,7 +691,7 @@ async def upload_project_documents(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Upload error: {str(e)}")
+        logger.error(f" Upload error: {str(e)}")
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -772,7 +772,7 @@ async def get_project(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error: {str(e)}")
+        logger.error(f" Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # =====================================================
@@ -835,7 +835,7 @@ async def create_project(
             {"code": project.code, "company_id": company_id}
         ).fetchone()
         
-        logger.info(f"✅ Project created: {result.id}")
+        logger.info(f" Project created: {result.id}")
         
         return {
             "success": True,
@@ -848,7 +848,7 @@ async def create_project(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error: {str(e)}")
+        logger.error(f" Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -928,7 +928,7 @@ async def update_project(
         db.execute(query, params)
         db.commit()
         
-        logger.info(f"✅ Project {project_id} updated")
+        logger.info(f" Project {project_id} updated")
         
         return {"success": True, "message": "Project updated successfully", "project_id": project_id}
         
@@ -937,7 +937,7 @@ async def update_project(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error: {str(e)}")
+        logger.error(f" Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -972,7 +972,7 @@ async def delete_project(
         )
         db.commit()
         
-        logger.info(f"✅ Project {project_id} deleted")
+        logger.info(f" Project {project_id} deleted")
         
         return {"success": True, "message": "Project deleted successfully"}
         
@@ -981,5 +981,5 @@ async def delete_project(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error: {str(e)}")
+        logger.error(f" Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

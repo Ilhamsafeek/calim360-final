@@ -300,7 +300,7 @@ function addWorkflowStep() {
         </td>
     `;
     tbody.appendChild(newRow);
-    console.log(`✅ Added empty workflow step #${stepCount}`);
+    console.log(` Added empty workflow step #${stepCount}`);
 }
 
 function removeStep(element) {
@@ -308,7 +308,7 @@ function removeStep(element) {
     const totalSteps = tbody?.querySelectorAll('.workflow-step').length || 0;
 
     if (totalSteps <= 1) {
-        alert('⚠️ At least one workflow step is required');
+        alert(' At least one workflow step is required');
         return;
     }
 
@@ -340,7 +340,7 @@ function updateStepNumbers() {
 async function saveWorkflow() {
     const workflowData = collectWorkflowData();
     
-    console.log("📤 Sending workflow data:", JSON.stringify(workflowData, null, 2));
+    console.log(" Sending workflow data:", JSON.stringify(workflowData, null, 2));
     
     try {
         const response = await fetch('/api/workflow/master', {
@@ -356,16 +356,16 @@ async function saveWorkflow() {
         console.log("📥 Response:", data);
 
         if (response.ok && data.success) {
-            alert('✅ Master workflow saved successfully!');
+            alert(' Master workflow saved successfully!');
             await loadExistingWorkflow();
         } else {
             const errorMsg = data.detail || JSON.stringify(data);
-            console.error("❌ Server error:", errorMsg);
-            alert('❌ Error: ' + errorMsg);
+            console.error(" Server error:", errorMsg);
+            alert(' Error: ' + errorMsg);
         }
     } catch (error) {
-        console.error('❌ Network error:', error);
-        alert('❌ Network error: ' + error.message);
+        console.error(' Network error:', error);
+        alert(' Network error: ' + error.message);
     }
 }
 
@@ -376,7 +376,7 @@ async function submitWorkflow() {
 
     const workflowData = collectWorkflowData();
     
-    console.log("📤 Submitting workflow data:", JSON.stringify(workflowData, null, 2));
+    console.log(" Submitting workflow data:", JSON.stringify(workflowData, null, 2));
 
     try {
         const response = await fetch('/api/workflow/master', {
@@ -390,16 +390,16 @@ async function submitWorkflow() {
         const data = await response.json();
 
         if (response.ok && data.success) {
-            alert('✅ Master workflow submitted and activated successfully!');
+            alert(' Master workflow submitted and activated successfully!');
             window.location.href = '/dashboard';
         } else {
             const errorMsg = data.detail || JSON.stringify(data);
-            console.error("❌ Server error:", errorMsg);
-            alert('❌ Error: ' + errorMsg);
+            console.error(" Server error:", errorMsg);
+            alert(' Error: ' + errorMsg);
         }
     } catch (error) {
-        console.error('❌ Network error:', error);
-        alert('❌ Network error: ' + error.message);
+        console.error(' Network error:', error);
+        alert(' Network error: ' + error.message);
     }
 }
 
@@ -491,7 +491,7 @@ function collectWorkflowData() {
         excluded_contract_types: excludedTypes
     };
     
-    console.log("✅ Collected workflow data:", result);
+    console.log(" Collected workflow data:", result);
     return result;
 }
 
@@ -527,7 +527,7 @@ async function loadExistingWorkflow() {
         console.log('📦 API Response:', JSON.stringify(data, null, 2));
         
         if (data.success && data.workflow && data.workflow.steps && data.workflow.steps.length > 0) {
-            console.log(`✅ Found ${data.workflow.steps.length} workflow steps`);
+            console.log(` Found ${data.workflow.steps.length} workflow steps`);
             await populateWorkflow(data.workflow);
             return true;
         }
@@ -535,17 +535,17 @@ async function loadExistingWorkflow() {
         console.log('ℹ️ No workflow steps to load');
         return false;
     } catch (error) {
-        console.error('❌ Error loading workflow:', error);
+        console.error(' Error loading workflow:', error);
         return false;
     }
 }
 
 async function populateWorkflow(workflowData) {
-    console.log('📝 ===== POPULATING WORKFLOW =====');
+    console.log(' ===== POPULATING WORKFLOW =====');
     
     const tbody = document.getElementById('workflowSteps');
     if (!tbody) {
-        console.error('❌ workflowSteps tbody not found');
+        console.error(' workflowSteps tbody not found');
         return;
     }
 
@@ -574,7 +574,7 @@ async function populateWorkflow(workflowData) {
         if (requireCommentsInput) requireCommentsInput.checked = settings.require_comments !== false;
         if (qatarComplianceInput) qatarComplianceInput.checked = settings.qatar_compliance !== false;
 
-        console.log('✅ Settings populated');
+        console.log(' Settings populated');
     }
 
     // Populate excluded types
@@ -587,7 +587,7 @@ async function populateWorkflow(workflowData) {
                     cb.checked = true;
                 }
             });
-            console.log('✅ Excluded types populated:', workflowData.excluded_types.length);
+            console.log(' Excluded types populated:', workflowData.excluded_types.length);
         }
     }
 
@@ -597,12 +597,12 @@ async function populateWorkflow(workflowData) {
         await addWorkflowStepWithData(stepData);
     }
     
-    console.log(`✅ Successfully populated ${workflowData.steps.length} workflow steps`);
+    console.log(` Successfully populated ${workflowData.steps.length} workflow steps`);
 }
 
 async function addWorkflowStepWithData(stepData) {
     stepCount++;
-    console.log(`\n  📝 Adding Step #${stepCount}:`, JSON.stringify(stepData, null, 2));
+    console.log(`\n   Adding Step #${stepCount}:`, JSON.stringify(stepData, null, 2));
     
     const tbody = document.getElementById('workflowSteps');
     const newRow = document.createElement('tr');
@@ -653,7 +653,7 @@ async function addWorkflowStepWithData(stepData) {
     
     // IMPORTANT: Append row to tbody FIRST before setting values
     tbody.appendChild(newRow);
-    console.log('  ✅ Row added to DOM');
+    console.log('   Row added to DOM');
 
     // Now set the values using getElementById (more reliable)
     
@@ -665,10 +665,10 @@ async function addWorkflowStepWithData(stepData) {
             console.log(`  ✓ Role: "${stepData.role}" → Selected: "${roleSelect.value}"`);
             
             if (!roleSelect.value || roleSelect.value === '') {
-                console.log(`  ⚠️ Role "${stepData.role}" not found in options!`);
+                console.log(`   Role "${stepData.role}" not found in options!`);
             }
         } else {
-            console.error(`  ❌ Could not find role select with id role_${stepCount}`);
+            console.error(`   Could not find role select with id role_${stepCount}`);
         }
     }
 
@@ -687,16 +687,16 @@ async function addWorkflowStepWithData(stepData) {
             console.log(`     Result: "${deptSelect.value}"`);
             
             if (deptSelect.value === stepData.department) {
-                console.log(`  ✅ Department successfully set to: "${deptSelect.value}"`);
+                console.log(`   Department successfully set to: "${deptSelect.value}"`);
             } else {
-                console.error(`  ❌ Department NOT set! Expected: "${stepData.department}", Got: "${deptSelect.value}"`);
+                console.error(`   Department NOT set! Expected: "${stepData.department}", Got: "${deptSelect.value}"`);
                 
                 // Debug: show all available options
                 const options = Array.from(deptSelect.options).map(o => `"${o.value}"`);
                 console.log(`     Available options: [${options.join(', ')}]`);
             }
         } else {
-            console.error(`  ❌ Could not find department select with id department_${stepCount}`);
+            console.error(`   Could not find department select with id department_${stepCount}`);
         }
     } else {
         console.log(`  ℹ️ No department specified for this step`);
@@ -720,7 +720,7 @@ async function addWorkflowStepWithData(stepData) {
                 selectedUsersDiv.appendChild(userTag);
                 console.log(`     User ${idx + 1}: ${user.name} (${user.email})`);
             });
-            console.log(`  ✅ All users added`);
+            console.log(`   All users added`);
         }
     } else {
         console.log('  ℹ️ No users for this step');
@@ -748,5 +748,5 @@ window.addEventListener('DOMContentLoaded', async function() {
         addWorkflowStep();
     }
     
-    console.log('✅ ===== INITIALIZATION COMPLETE =====');
+    console.log(' ===== INITIALIZATION COMPLETE =====');
 });

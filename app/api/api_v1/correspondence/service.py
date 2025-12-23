@@ -61,16 +61,16 @@ class CorrespondenceService:
                     )
                     
                     if result["success"]:
-                        logger.info(f"✅ AI correspondence generated successfully using Claude API")
+                        logger.info(f" AI correspondence generated successfully using Claude API")
                     else:
-                        logger.warning(f"⚠️ AI generation failed: {result.get('error')}")
+                        logger.warning(f" AI generation failed: {result.get('error')}")
                     
                     return result
                 else:
                     raise Exception("Claude API key not configured")
                     
             except Exception as claude_error:
-                logger.warning(f"⚠️ Claude API not available: {str(claude_error)}, using mock response")
+                logger.warning(f" Claude API not available: {str(claude_error)}, using mock response")
                 # Fallback to mock response
                 return CorrespondenceService._generate_mock_response(
                     query=query,
@@ -81,7 +81,7 @@ class CorrespondenceService:
                 )
             
         except Exception as e:
-            logger.error(f"❌ Error in AI correspondence generation: {str(e)}")
+            logger.error(f" Error in AI correspondence generation: {str(e)}")
             return {
                 "success": False,
                 "error": str(e),
@@ -111,18 +111,18 @@ class CorrespondenceService:
                         query=query
                     )
                     
-                    logger.info(f"✅ Document analysis completed using Claude API")
+                    logger.info(f" Document analysis completed using Claude API")
                     return result
                 else:
                     raise Exception("Claude API key not configured")
                     
             except Exception as claude_error:
-                logger.warning(f"⚠️ Claude API not available: {str(claude_error)}, using mock analysis")
+                logger.warning(f" Claude API not available: {str(claude_error)}, using mock analysis")
                 # Fallback to mock analysis
                 return CorrespondenceService._generate_mock_analysis(documents, query)
             
         except Exception as e:
-            logger.error(f"❌ Error in document analysis: {str(e)}")
+            logger.error(f" Error in document analysis: {str(e)}")
             return {
                 "success": False,
                 "error": str(e)
@@ -136,7 +136,7 @@ class CorrespondenceService:
         """
         
         try:
-            # ✅ FIXED: Added JOIN with contract_versions table
+            #  FIXED: Added JOIN with contract_versions table
             query = text("""
                 SELECT 
                     c.id,
@@ -180,7 +180,7 @@ class CorrespondenceService:
             return {}
             
         except Exception as e:
-            logger.error(f"❌ Error fetching contract context: {str(e)}")
+            logger.error(f" Error fetching contract context: {str(e)}")
             return {}
     
     @staticmethod

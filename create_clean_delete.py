@@ -35,7 +35,7 @@ async def delete_obligation(
                 detail="Access denied"
             )
         
-        # ✅ DELETE WITH FK CHECKS DISABLED
+        #  DELETE WITH FK CHECKS DISABLED
         try:
             # Disable foreign key checks to force delete
             db.execute(text("SET FOREIGN_KEY_CHECKS=0"))
@@ -55,7 +55,7 @@ async def delete_obligation(
             # Commit everything
             db.commit()
             
-            logger.info(f"✅ Obligation {obligation_id} deleted successfully (rows: {result.rowcount})")
+            logger.info(f" Obligation {obligation_id} deleted successfully (rows: {result.rowcount})")
             
             return {
                 "success": True,
@@ -66,14 +66,14 @@ async def delete_obligation(
         except Exception as e:
             db.rollback()
             db.execute(text("SET FOREIGN_KEY_CHECKS=1"))  # Re-enable on error
-            logger.error(f"❌ Error during cascading delete: {str(e)}")
+            logger.error(f" Error during cascading delete: {str(e)}")
             raise
         
     except HTTPException:
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error deleting obligation: {str(e)}")
+        logger.error(f" Error deleting obligation: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete obligation: {str(e)}"
@@ -99,6 +99,6 @@ if start_idx and end_idx:
     with open('app/api/api_v1/obligations/obligations.py', 'w') as f:
         f.writelines(new_lines)
     
-    print(f"✅ Replaced delete function (lines {start_idx}-{end_idx})")
+    print(f" Replaced delete function (lines {start_idx}-{end_idx})")
 else:
-    print("❌ Could not find delete function boundaries")
+    print(" Could not find delete function boundaries")

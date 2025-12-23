@@ -75,7 +75,7 @@ async def create_clause(
             )
 
         db.refresh(new_clause)
-        logger.info(f"✅ Clause created successfully: {new_clause.id}")
+        logger.info(f" Clause created successfully: {new_clause.id}")
 
         return {
             "success": True,

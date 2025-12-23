@@ -93,12 +93,12 @@ async def search_users(
                 job_title=getattr(user, 'job_title', None)
             ))
         
-        logger.info(f"✅ Found {len(results)} users")
+        logger.info(f" Found {len(results)} users")
         
         return results
         
     except Exception as e:
-        logger.error(f"❌ Error searching users: {str(e)}")
+        logger.error(f" Error searching users: {str(e)}")
         # Return empty list instead of error to prevent breaking the UI
         return []
 
@@ -144,7 +144,7 @@ async def get_user_by_id(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error fetching user: {str(e)}")
+        logger.error(f" Error fetching user: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
@@ -196,10 +196,10 @@ async def get_all_company_users(
                 job_title=getattr(user, 'job_title', None)
             ))
         
-        logger.info(f"✅ Found {len(results)} company users")
+        logger.info(f" Found {len(results)} company users")
         
         return results
         
     except Exception as e:
-        logger.error(f"❌ Error fetching company users: {str(e)}")
+        logger.error(f" Error fetching company users: {str(e)}")
         return []

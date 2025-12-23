@@ -35,7 +35,7 @@ def test_create_obligation():
         
         if response.status_code == 201:
             result = response.json()
-            print("\n✅ SUCCESS! Obligation created:")
+            print("\n SUCCESS! Obligation created:")
             print(json.dumps(result, indent=2))
             
             obligation_id = result['id']
@@ -45,16 +45,16 @@ def test_create_obligation():
             verify_response = requests.get(f"{BASE_URL}/api/obligations/{obligation_id}")
             
             if verify_response.status_code == 200:
-                print("✅ Verification successful! Obligation exists in database.")
+                print(" Verification successful! Obligation exists in database.")
             else:
-                print("❌ Verification failed!")
+                print(" Verification failed!")
                 
         else:
-            print("\n❌ FAILED!")
+            print("\n FAILED!")
             print(f"Response: {response.text}")
             
     except Exception as e:
-        print(f"\n❌ ERROR: {str(e)}")
+        print(f"\n ERROR: {str(e)}")
         import traceback
         traceback.print_exc()
 
@@ -71,7 +71,7 @@ def test_fetch_obligations():
         
         if response.status_code == 200:
             obligations = response.json()
-            print(f"\n✅ Found {len(obligations)} obligations")
+            print(f"\n Found {len(obligations)} obligations")
             
             if obligations:
                 print("\nObligations:")
@@ -80,14 +80,14 @@ def test_fetch_obligations():
             else:
                 print("  (No obligations found)")
         else:
-            print(f"❌ Failed: {response.text}")
+            print(f" Failed: {response.text}")
             
     except Exception as e:
-        print(f"❌ ERROR: {str(e)}")
+        print(f" ERROR: {str(e)}")
 
 if __name__ == "__main__":
     # Make sure your FastAPI server is running first!
-    print("\n⚠️  Make sure your FastAPI server is running on port 8000!\n")
+    print("\n  Make sure your FastAPI server is running on port 8000!\n")
     input("Press Enter to continue...")
     
     test_create_obligation()

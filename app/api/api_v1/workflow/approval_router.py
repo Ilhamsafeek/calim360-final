@@ -83,7 +83,7 @@ async def approve_reject_workflow(
                     "workflow_id": workflow.id
                 })
 
-                logger.info(f"✅ eeeeeeeeeeeeeeeeeeeeee {request.request_type}")
+                logger.info(f" eeeeeeeeeeeeeeeeeeeeee {request.request_type}")
                 
                 # Update contract status to approved
                 if request.request_type=="internal_review":
@@ -211,7 +211,7 @@ async def approve_reject_workflow(
             })
             
             db.commit()
-            logger.info(f"✅ Approval processed for contract {request.contract_id}")
+            logger.info(f" Approval processed for contract {request.contract_id}")
             return {"success": True, "message": message}
             
         elif request.action == "reject":
@@ -235,7 +235,7 @@ async def approve_reject_workflow(
             # The audit_logs table is the authoritative record
             
             db.commit()
-            logger.info(f"✅ Rejection saved for contract {request.contract_id}")
+            logger.info(f" Rejection saved for contract {request.contract_id}")
             return {"success": True, "message": "Rejection comment saved"}
         
         else:
@@ -245,7 +245,7 @@ async def approve_reject_workflow(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error in approve/reject: {str(e)}", exc_info=True)
+        logger.error(f" Error in approve/reject: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -310,7 +310,7 @@ async def get_workflow_history(
             "company_id": user_company_id
         }).fetchall()
         
-        logger.info(f"✅ User {current_user.email} (Company {user_company_id}) accessed workflow history for contract {contract_id}")
+        logger.info(f" User {current_user.email} (Company {user_company_id}) accessed workflow history for contract {contract_id}")
         
         history = []
         for row in results:
@@ -354,6 +354,6 @@ async def get_workflow_history(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error fetching workflow history for contract {contract_id} by user {current_user.email}: {str(e)}")
+        logger.error(f" Error fetching workflow history for contract {contract_id} by user {current_user.email}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 

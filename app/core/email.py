@@ -35,12 +35,12 @@ if EMAIL_CONFIGURED:
             VALIDATE_CERTS=True
         )
         fm = FastMail(conf)
-        logger.info("✅ Email service configured successfully")
+        logger.info(" Email service configured successfully")
     except Exception as e:
-        logger.warning(f"⚠️ Email configuration failed: {str(e)}")
+        logger.warning(f" Email configuration failed: {str(e)}")
         EMAIL_CONFIGURED = False
 else:
-    logger.warning("⚠️ Email credentials not found in environment. Email features will be simulated.")
+    logger.warning(" Email credentials not found in environment. Email features will be simulated.")
 
 async def send_verification_email(email: str, first_name: str, verification_link: str):
     """
@@ -160,7 +160,7 @@ async def send_verification_email(email: str, first_name: str, verification_link
                 </center>
                 
                 <div class="warning">
-                    <strong>⚠️ Important:</strong> This verification link will expire in 24 hours for security purposes.
+                    <strong> Important:</strong> This verification link will expire in 24 hours for security purposes.
                 </div>
                 
                 <p>If the button doesn't work, copy and paste this link into your browser:</p>
@@ -191,13 +191,13 @@ async def send_verification_email(email: str, first_name: str, verification_link
         )
         
         await fm.send_message(message)
-        logger.info(f"✅ Verification email sent to {email}")
+        logger.info(f" Verification email sent to {email}")
         return {
             "status": "sent",
             "message": "Email sent successfully"
         }
     except Exception as e:
-        logger.error(f"❌ Failed to send verification email to {email}: {str(e)}")
+        logger.error(f" Failed to send verification email to {email}: {str(e)}")
         # Fall back to console logging
         logger.info("=" * 70)
         logger.info("📧 EMAIL FALLBACK (SMTP failed)")
@@ -264,9 +264,9 @@ async def send_password_reset_email(email: str, first_name: str, reset_link: str
             subtype="html"
         )
         await fm.send_message(message)
-        logger.info(f"✅ Password reset email sent to {email}")
+        logger.info(f" Password reset email sent to {email}")
     except Exception as e:
-        logger.error(f"❌ Failed to send password reset email: {str(e)}")
+        logger.error(f" Failed to send password reset email: {str(e)}")
 
 async def send_welcome_email(email: str, first_name: str):
     """
@@ -312,6 +312,6 @@ async def send_welcome_email(email: str, first_name: str):
             subtype="html"
         )
         await fm.send_message(message)
-        logger.info(f"✅ Welcome email sent to {email}")
+        logger.info(f" Welcome email sent to {email}")
     except Exception as e:
-        logger.error(f"❌ Failed to send welcome email: {str(e)}")
+        logger.error(f" Failed to send welcome email: {str(e)}")

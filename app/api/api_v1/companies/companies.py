@@ -44,7 +44,7 @@ async def get_companies(
         if type:
             filters.append(Company.company_type == type)
         
-        # Filter by active status - ✅ FIXED: Use 'status' column
+        # Filter by active status -  FIXED: Use 'status' column
         if is_active is not None:
             if is_active:
                 filters.append(Company.status.in_(['ACTIVE', 'active']))

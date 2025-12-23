@@ -74,12 +74,12 @@ class AuditService:
             # Get the inserted ID
             log_id = result.lastrowid
             
-            logger.info(f"✅ Audit log created: {action_type} by user {user_id}")
+            logger.info(f" Audit log created: {action_type} by user {user_id}")
             return log_id
             
         except Exception as e:
             self.db.rollback()
-            logger.error(f"❌ Error creating audit log: {str(e)}")
+            logger.error(f" Error creating audit log: {str(e)}")
             raise
 
 # =====================================================

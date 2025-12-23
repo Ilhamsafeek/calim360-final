@@ -47,23 +47,23 @@ from app.api.api_v1.auth.logout import router as logout_router
 # User routers (Required)
 from app.api.api_v1.users.settings import router as settings_router
 from app.api.api_v1.users.users import router as users_router
-
+from app.api.api_v1.reports.analytics_router import router as analytics_router
 
 admin_router = None
 try:
     from app.api.api_v1.admin.super_admin import router as admin_router
-    logger.info("✅ Admin router imported")
+    logger.info(" Admin router imported")
 except ImportError:
-    logger.warning("⚠️ Admin router not found")
+    logger.warning(" Admin router not found")
 
     
 # User management router with error handling
 user_router = None
 try:
     from app.api.api_v1.users.user_management import router as user_router
-    logger.info("✅ User management router imported")
+    logger.info(" User management router imported")
 except ImportError:
-    logger.warning("⚠️ User management router not found")
+    logger.warning(" User management router not found")
 
 # Business logic routers (Required)
 from app.api.api_v1.projects.projects import router as projects_router
@@ -74,23 +74,23 @@ contracts_router = None
 contracts_api_router = None
 try:
     from app.api.api_v1.contracts.contracts import router as contracts_router
-    logger.info("✅ Contracts router (contracts.py) imported")
+    logger.info(" Contracts router (contracts.py) imported")
 except ImportError:
-    logger.warning("⚠️ Contracts router (contracts.py) not found")
+    logger.warning(" Contracts router (contracts.py) not found")
 
 try:
     from app.api.api_v1.contracts.router import router as contracts_api_router
-    logger.info("✅ Contracts API router (router.py) imported")
+    logger.info(" Contracts API router (router.py) imported")
 except ImportError:
-    logger.warning("⚠️ Contracts API router (router.py) not found")
+    logger.warning(" Contracts API router (router.py) not found")
 
 # Dashboard router
 dashboard_router = None
 try:
     from app.api.api_v1.dashboard.router import router as dashboard_router
-    logger.info("✅ Dashboard router imported")
+    logger.info(" Dashboard router imported")
 except ImportError:
-    logger.warning("⚠️ Dashboard router not found")
+    logger.warning(" Dashboard router not found")
 
 # Workflow routers
 master_workflow_router = None
@@ -99,54 +99,54 @@ workflow_api_router = None
 
 try:
     from app.api.api_v1.workflow.master_workflow import router as master_workflow_router
-    logger.info("✅ Master workflow router imported")
+    logger.info(" Master workflow router imported")
 except ImportError:
-    logger.warning("⚠️ Master workflow router not found")
+    logger.warning(" Master workflow router not found")
 
 try:
     from app.api.api_v1.workflow.workflow import router as workflow_router
-    logger.info("✅ Workflow router imported")
+    logger.info(" Workflow router imported")
 except ImportError:
-    logger.warning("⚠️ Workflow router not found")
+    logger.warning(" Workflow router not found")
 
 try:
     from app.api.api_v1.workflow.router import router as workflow_api_router
-    logger.info("✅ Workflow API router imported")
+    logger.info(" Workflow API router imported")
 except ImportError:
-    logger.warning("⚠️ Workflow API router not found")
+    logger.warning(" Workflow API router not found")
 
 # Reports routers
 audit_trail_router = None
 try:
     from app.api.api_v1.reports.audit_trail import router as audit_trail_router
-    logger.info("✅ Audit trail router imported")
+    logger.info(" Audit trail router imported")
 except ImportError:
-    logger.warning("⚠️ Audit trail router not found")
+    logger.warning(" Audit trail router not found")
 
 # Middleware
 audit_middleware = None
 try:
     from app.middleware.audit_middleware import AuditLoggingMiddleware
     audit_middleware = AuditLoggingMiddleware
-    logger.info("✅ Audit middleware imported")
+    logger.info(" Audit middleware imported")
 except ImportError:
-    logger.warning("⚠️ Audit middleware not found")
+    logger.warning(" Audit middleware not found")
 
 # Obligations router
 obligations_router = None
 try:
     from app.api.api_v1.obligations import router as obligations_router    
-    logger.info("✅ Obligations router imported")
+    logger.info(" Obligations router imported")
 except ImportError:
-    logger.warning("⚠️ Obligations router not found")
+    logger.warning(" Obligations router not found")
 
 # Drafting routers
 clause_library_router = None
 try:
     from app.api.api_v1.drafting.clause_library import router as clause_library_router
-    logger.info("✅ Clause library router imported")
+    logger.info(" Clause library router imported")
 except ImportError:
-    logger.warning("⚠️ Clause library router not found")
+    logger.warning(" Clause library router not found")
 
 # Expert consultation routers
 experts_router = None
@@ -157,45 +157,45 @@ ws_consultation_router = None
 
 try:
     from app.api.api_v1.consultations import consultations_router
-    logger.info("✅ Consultations router imported")
+    logger.info(" Consultations router imported")
 except ImportError:
-    logger.warning("⚠️ Consultations router not found")
+    logger.warning(" Consultations router not found")
 
 try:
     from app.api.api_v1.experts import router as experts_router
-    logger.info("✅ Experts router (general) imported")
+    logger.info(" Experts router (general) imported")
 except ImportError:
-    logger.warning("⚠️ Experts router (general) not found")
+    logger.warning(" Experts router (general) not found")
 
 try:
     from app.api.api_v1.experts.experts import router as experts_api_router
-    logger.info("✅ Experts API router imported")
+    logger.info(" Experts API router imported")
 except ImportError:
-    logger.warning("⚠️ Experts API router not found")
+    logger.warning(" Experts API router not found")
 
 try:
     from app.api.api_v1.experts.consultation_router import router as consultation_router
-    logger.info("✅ Consultation router imported")
+    logger.info(" Consultation router imported")
 except ImportError:
-    logger.warning("⚠️ Consultation router not found")
+    logger.warning(" Consultation router not found")
 
 try:
     from app.api.api_v1.experts.websocket_consultation import router as ws_consultation_router
-    logger.info("✅ WebSocket consultation router imported")
+    logger.info(" WebSocket consultation router imported")
 except ImportError:
-    logger.warning("⚠️ WebSocket consultation router not found")
+    logger.warning(" WebSocket consultation router not found")
 
 # Correspondence router (with error handling)
 correspondence_router = None
 try:
     from app.api.api_v1.correspondence.correspondence_router import router as correspondence_router
-    logger.info("✅ Correspondence router imported")
+    logger.info(" Correspondence router imported")
 except ImportError:
     try:
         from app.api.api_v1.correspondence import router as correspondence_router
-        logger.info("✅ Correspondence router imported (alternate path)")
+        logger.info(" Correspondence router imported (alternate path)")
     except ImportError:
-        logger.warning("⚠️ Correspondence router not found")
+        logger.warning(" Correspondence router not found")
 
 
 
@@ -204,10 +204,10 @@ from app.api.api_v1.blockchain.router import router as blockchain_router
 
 try:
     from app.api.api_v1.contracts.negotiation import router as negotiation_router
-    logger.info("✅ Negotiation router imported")
+    logger.info(" Negotiation router imported")
 except ImportError as e:
     negotiation_router = None
-    logger.warning(f"⚠️ Negotiation router not found: {e}")
+    logger.warning(f" Negotiation router not found: {e}")
 
 
 from app.api.api_v1.blockchain.terminal import router as terminal_router
@@ -285,12 +285,12 @@ async def lifespan(app: FastAPI):
     
     # Test database connection
     if test_connection():
-        logger.info("✅ Database connection successful")
+        logger.info(" Database connection successful")
         init_db()
-        logger.info("✅ Database tables initialized")
+        logger.info(" Database tables initialized")
     else:
-        logger.error("❌ Database connection failed! Running without database.")
-        logger.info("⚠️  Application will run with limited functionality")
+        logger.error(" Database connection failed! Running without database.")
+        logger.info("  Application will run with limited functionality")
     
     yield
     
@@ -298,7 +298,7 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down CALIM 360 application...")
     try:
         engine.dispose()
-        logger.info("✅ Database connections closed")
+        logger.info(" Database connections closed")
     except:
         pass
 
@@ -327,20 +327,20 @@ app.add_middleware(
 # Add audit logging middleware (if available)
 if audit_middleware:
     app.add_middleware(audit_middleware)
-    logger.info("✅ Audit logging middleware registered")
+    logger.info(" Audit logging middleware registered")
 
 
 try:
     from app.middleware.blockchain_middleware import BlockchainVerificationMiddleware
     app.add_middleware(BlockchainVerificationMiddleware)
-    logger.info("✅ Blockchain verification middleware registered")
+    logger.info(" Blockchain verification middleware registered")
 except ImportError:
-    logger.warning("⚠️ Blockchain verification middleware not found")
+    logger.warning(" Blockchain verification middleware not found")
 
 # Add audit logging middleware (if available)
 if audit_middleware:
     app.add_middleware(audit_middleware)
-    logger.info("✅ Audit logging middleware registered")
+    logger.info(" Audit logging middleware registered")
 
 # =====================================================
 # INCLUDE ALL API ROUTERS
@@ -356,7 +356,7 @@ app.include_router(
     tags=["workflow"]
 )
 
-
+app.include_router(analytics_router)
 app.include_router(terminal_router, prefix="/terminal")
 
 if negotiation_router:
@@ -365,7 +365,7 @@ if negotiation_router:
         prefix="/api/negotiation",
         tags=["negotiation"]
     )
-    logger.info("✅ Negotiation router registered at /api/negotiation")
+    logger.info(" Negotiation router registered at /api/negotiation")
 
 
 app.include_router(
@@ -375,7 +375,7 @@ app.include_router(
 )
 
 
-logger.info("✅ Auth routers registered")
+logger.info(" Auth routers registered")
 
 # Register router
 app.include_router(chatbot_router, tags=["AI Chatbot"])
@@ -387,11 +387,11 @@ app.include_router(blockchain_router, prefix="/api/blockchain", tags=["Blockchai
 # Admin/Super Admin routes
 if admin_router:
     app.include_router(admin_router, tags=["admin"])  # Remove prefix - router already has it
-    logger.info("✅ Admin router registered at /api/admin")
+    logger.info(" Admin router registered at /api/admin")
 
 # Projects router - NO /api/v1 prefix! Router already has /api/projects
 app.include_router(projects_router)
-logger.info("✅ Projects router registered at /api/projects")
+logger.info(" Projects router registered at /api/projects")
 
 # Company and user routers
 app.include_router(companies_router)
@@ -399,70 +399,70 @@ app.include_router(users_router)
 
 if user_router:
     app.include_router(user_router, prefix="/api/users", tags=["users"])
-    logger.info("✅ User management router registered")
+    logger.info(" User management router registered")
 
 # Contract routers (if available)
 if contracts_router:
     app.include_router(contracts_router)
-    logger.info("✅ Contracts router registered")
+    logger.info(" Contracts router registered")
 
 if contracts_api_router:
     app.include_router(contracts_api_router)
-    logger.info("✅ Contracts API router registered")
+    logger.info(" Contracts API router registered")
 
 # Workflow routers (if available)
 if master_workflow_router:
     app.include_router(master_workflow_router)
-    logger.info("✅ Master workflow router registered")
+    logger.info(" Master workflow router registered")
 
 if workflow_router:
     app.include_router(workflow_router)
-    logger.info("✅ Workflow router registered")
+    logger.info(" Workflow router registered")
 
 if workflow_api_router:
     app.include_router(workflow_api_router)
-    logger.info("✅ Workflow API router registered")
+    logger.info(" Workflow API router registered")
 
 # Report routers (if available)
 if audit_trail_router:
     app.include_router(audit_trail_router)
-    logger.info("✅ Audit trail router registered")
+    logger.info(" Audit trail router registered")
 
 # Dashboard router (if available)
 if dashboard_router:
     app.include_router(dashboard_router)
-    logger.info("✅ Dashboard router registered")
+    logger.info(" Dashboard router registered")
 
 # Obligations router (if available)
 if obligations_router:
     app.include_router(obligations_router)
-    logger.info("✅ Obligations router registered")
+    logger.info(" Obligations router registered")
 
 # Drafting routers (if available)
 if clause_library_router:
     app.include_router(clause_library_router, prefix="/api/clause-library", tags=["clause-library"])
-    logger.info("✅ Clause library router registered")
+    logger.info(" Clause library router registered")
 
 # Expert and consultation routers (if available)
 if experts_router:
     app.include_router(experts_router, prefix="/api/experts", tags=["experts"])
-    logger.info("✅ Experts router registered")
+    logger.info(" Experts router registered")
 
 if experts_api_router:
     app.include_router(experts_api_router)
-    logger.info("✅ Experts API router registered")
+    logger.info(" Experts API router registered")
 
 if consultations_router:
     app.include_router(consultations_router, prefix="/api/v1/consultations", tags=["Consultations"])
-    logger.info("✅ Consultations router registered")
+    logger.info(" Consultations router registered")
 
 if consultation_router:
     app.include_router(consultation_router)
-    logger.info("✅ Consultation router registered")
+    logger.info(" Consultation router registered")
 
 if ws_consultation_router:
     app.include_router(ws_consultation_router)
-    logger.info("✅ WebSocket consultation router registered")
+    logger.info(" WebSocket consultation router registered")
 
 app.include_router(
     correspondence_router,
@@ -470,7 +470,7 @@ app.include_router(
     tags=["Correspondence"]
 )
 
-logger.info("✅ All available API routers registered successfully")
+logger.info(" All available API routers registered successfully")
 
 
 app.include_router(subscription_router.router)
@@ -494,7 +494,7 @@ async def legacy_register(request: Request, db: Session = Depends(get_db)):
     """Legacy registration endpoint for backward compatibility"""
     try:
         body = await request.json()
-        logger.info(f"📝 Registration request received: {body.get('email', 'unknown')}")
+        logger.info(f" Registration request received: {body.get('email', 'unknown')}")
         
         user_data = UserRegistration(**body)
         from app.api.api_v1.auth.registration import register_user
@@ -502,7 +502,7 @@ async def legacy_register(request: Request, db: Session = Depends(get_db)):
         return result
         
     except Exception as e:
-        logger.error(f"❌ Registration error: {str(e)}")
+        logger.error(f" Registration error: {str(e)}")
         return JSONResponse(
             status_code=400,
             content={
@@ -525,7 +525,7 @@ async def legacy_login(request: Request, db: Session = Depends(get_db)):
         return result
         
     except Exception as e:
-        logger.error(f"❌ Login error: {str(e)}")
+        logger.error(f" Login error: {str(e)}")
         return JSONResponse(
             status_code=401,
             content={
@@ -686,7 +686,7 @@ async def login_page(request: Request, db: Session = Depends(get_db)):
                 current_user = db.query(User).filter(User.id == int(user_id)).first()
                 
                 if current_user and current_user.is_active:
-                    logger.info(f"✅ User {current_user.email} already authenticated")
+                    logger.info(f" User {current_user.email} already authenticated")
                     return RedirectResponse(url="/dashboard", status_code=302)
         
         return templates.TemplateResponse("screens/auth/SCR_002_login.html", {
@@ -1028,7 +1028,7 @@ async def check_templates(db: Session = Depends(get_db)):
         
 #         return {
 #             "success": True, 
-#             "message": "✅ Column 'template_content' added successfully!"
+#             "message": " Column 'template_content' added successfully!"
 #         }
 #     except Exception as e:
 #         if "Duplicate column name" in str(e):
@@ -1104,7 +1104,7 @@ async def check_templates(db: Session = Depends(get_db)):
         
 #         return {
 #             "success": True,
-#             "message": f"✅ Added content to {len(templates_content)} templates!"
+#             "message": f" Added content to {len(templates_content)} templates!"
 #         }
         
 #     except Exception as e:
@@ -1378,7 +1378,7 @@ async def consultation_room_page(
     except HTTPException as he:
         raise he
     except Exception as e:
-        logger.error(f"❌ Error loading consultation room: {str(e)}")
+        logger.error(f" Error loading consultation room: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to load consultation room: {str(e)}"
@@ -1469,7 +1469,7 @@ if __name__ == "__main__":
         reload = True
         workers = 1
     
-    print(f"📝 API Documentation: http://localhost:{port}/docs")
+    print(f" API Documentation: http://localhost:{port}/docs")
     print(f"🌐 Application: http://localhost:{port}")
     print(f"📋 Registration: http://localhost:{port}/register")
     print(f"✉️  Email Verification: http://localhost:{port}/verify-email")

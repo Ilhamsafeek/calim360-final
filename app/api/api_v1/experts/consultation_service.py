@@ -92,7 +92,7 @@ class ConsultationService:
         query.status = 'assigned'
         self.db.commit()
         
-        logger.info(f"✅ Session created: {session.session_code}")
+        logger.info(f" Session created: {session.session_code}")
         return session
     
     def _auto_assign_expert(self, query: ExpertQuery) -> Optional[str]:

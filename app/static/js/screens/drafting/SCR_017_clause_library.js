@@ -100,7 +100,7 @@ async function loadClausesFromAPI() {
             icon: 'file-text'
         }));
         
-        console.log(`✅ Loaded ${allClauses.length} clauses`);
+        console.log(` Loaded ${allClauses.length} clauses`);
         
         // Render clauses
         renderClauses();
@@ -109,7 +109,7 @@ async function loadClausesFromAPI() {
         await updateCategoryCounts();
         
     } catch (error) {
-        console.error('❌ Error loading clauses:', error);
+        console.error(' Error loading clauses:', error);
         
         // Show empty state on error
         if (gridEl) gridEl.style.display = 'none';
@@ -121,7 +121,7 @@ async function loadClausesFromAPI() {
         
     } finally {
         // CRITICAL: Always hide loading state
-        console.log('✅ Hiding loading state');
+        console.log(' Hiding loading state');
         if (loadingEl) {
             loadingEl.style.display = 'none';
         }
@@ -136,7 +136,7 @@ function renderClauses() {
     const emptyState = document.getElementById('emptyState');
     
     if (!grid) {
-        console.error('❌ Grid element not found');
+        console.error(' Grid element not found');
         return;
     }
     
@@ -161,7 +161,7 @@ function renderClauses() {
         grid.appendChild(card);
     });
     
-    console.log(`✅ Rendered ${allClauses.length} clause cards`);
+    console.log(` Rendered ${allClauses.length} clause cards`);
 }
 
 // Create clause card element
@@ -284,7 +284,7 @@ function openAddClauseModal() {
 }
 
 async function saveClause() {
-    console.log('💾 Saving clause...');
+    console.log(' Saving clause...');
     
     const title = document.getElementById('clauseTitle').value.trim();
     const category = document.getElementById('clauseCategory').value;
@@ -328,7 +328,7 @@ async function saveClause() {
         }
         
         const result = await response.json();
-        console.log('✅ Clause saved:', result);
+        console.log(' Clause saved:', result);
         
         showNotification(currentClauseId ? 'Clause updated successfully!' : 'Clause added successfully!', 'success');
         closeModal('addClauseModal');
@@ -337,7 +337,7 @@ async function saveClause() {
         await loadClausesFromAPI();
         
     } catch (error) {
-        console.error('❌ Error saving clause:', error);
+        console.error(' Error saving clause:', error);
         showNotification('Failed to save clause: ' + error.message, 'error');
     }
 }
@@ -398,7 +398,7 @@ async function openClauseDetail(clauseId) {
         document.getElementById('clauseDetailModal').classList.add('show');
         
     } catch (error) {
-        console.error('❌ Error loading clause detail:', error);
+        console.error(' Error loading clause detail:', error);
         showNotification('Failed to load clause details: ' + error.message, 'error');
     }
 }

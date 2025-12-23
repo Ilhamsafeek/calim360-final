@@ -18,7 +18,7 @@ class Project(Base):
     project_name_ar = Column(String(255))
     description = Column(Text)
     
-    # ✅ ADDED: project_manager_id column
+    #  ADDED: project_manager_id column
     project_manager_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     
     # Existing client_id column

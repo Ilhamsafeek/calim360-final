@@ -64,7 +64,7 @@ async def start_negotiation_session(
                 detail=f"Invalid contract_id format: '{data.contract_id}'. Expected integer."
             )
         
-        # ✅ FETCH CONTRACT DETAILS FIRST TO DETERMINE ROLES
+        #  FETCH CONTRACT DETAILS FIRST TO DETERMINE ROLES
         contract_data = db.execute(
             text("""
             SELECT created_by, company_id FROM contracts WHERE id = :contract_id
@@ -75,7 +75,7 @@ async def start_negotiation_session(
         if not contract_data:
             raise HTTPException(status_code=404, detail="Contract not found")
         
-        # ✅ CHECK IF CURRENT USER IS THE CONTRACT CREATOR
+        #  CHECK IF CURRENT USER IS THE CONTRACT CREATOR
         is_contract_creator = (contract_data.created_by == current_user.id)
         
         session_id = str(uuid.uuid4())
@@ -116,7 +116,7 @@ async def start_negotiation_session(
             ).fetchone()
             
             if not is_participant:
-                # ✅ DETERMINE ROLE BASED ON CONTRACT CREATOR STATUS
+                #  DETERMINE ROLE BASED ON CONTRACT CREATOR STATUS
                 if is_contract_creator:
                     participant_role = 'initiator'
                 elif data.session_type == "internal":
@@ -184,11 +184,11 @@ async def start_negotiation_session(
                 "session_id": session_id,
                 "contract_id": contract_id,
                 "session_code": session_code,
-                "initiator_id": contract_data.created_by  # ✅ ALWAYS USE CONTRACT CREATOR AS INITIATOR
+                "initiator_id": contract_data.created_by  #  ALWAYS USE CONTRACT CREATOR AS INITIATOR
             }
         )
         
-        # ✅ ADD CURRENT USER AS PARTICIPANT WITH APPROPRIATE ROLE
+        #  ADD CURRENT USER AS PARTICIPANT WITH APPROPRIATE ROLE
         if is_contract_creator:
             current_user_role = 'initiator'
         elif data.session_type == "internal":
@@ -211,7 +211,7 @@ async def start_negotiation_session(
             }
         )
         
-        logger.info(f"✅ Added current user with role: {current_user_role}")
+        logger.info(f" Added current user with role: {current_user_role}")
         
         # Add other participants based on session type
         if data.session_type == "internal":
@@ -237,11 +237,11 @@ async def start_negotiation_session(
                 }
             ).fetchall()
             
-            logger.info(f"✅ Found {len(workflow_users)} workflow participants for internal negotiation")
+            logger.info(f" Found {len(workflow_users)} workflow participants for internal negotiation")
             
             for user in workflow_users:
                 if user.user_id != current_user.id:
-                    # ✅ CHECK IF THIS USER IS THE CONTRACT CREATOR
+                    #  CHECK IF THIS USER IS THE CONTRACT CREATOR
                     user_role = 'initiator' if user.user_id == contract_data.created_by else 'participant'
                     
                     db.execute(
@@ -258,10 +258,10 @@ async def start_negotiation_session(
                             "role": user_role
                         }
                     )
-                    logger.info(f"✅ Added workflow participant: {user.full_name} (user_id={user.user_id}, role={user_role})")
+                    logger.info(f" Added workflow participant: {user.full_name} (user_id={user.user_id}, role={user_role})")
         
         elif data.session_type == "external":
-            # ✅ ADD CONTRACT CREATOR AS INITIATOR IF NOT CURRENT USER
+            #  ADD CONTRACT CREATOR AS INITIATOR IF NOT CURRENT USER
             if not is_contract_creator:
                 db.execute(
                     text("""
@@ -276,7 +276,7 @@ async def start_negotiation_session(
                         "company_id": contract_data.company_id
                     }
                 )
-                logger.info(f"✅ Added contract creator (user_id={contract_data.created_by}) as initiator to external session")
+                logger.info(f" Added contract creator (user_id={contract_data.created_by}) as initiator to external session")
         
         # Get user full name
         user_full_name = f"{current_user.first_name or ''} {current_user.last_name or ''}".strip()
@@ -314,7 +314,7 @@ async def start_negotiation_session(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error starting negotiation session: {str(e)}")
+        logger.error(f" Error starting negotiation session: {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Failed to start session: {str(e)}")

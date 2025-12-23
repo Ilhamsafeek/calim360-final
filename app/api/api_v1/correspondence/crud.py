@@ -81,7 +81,7 @@ def create_correspondence(
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error creating correspondence: {str(e)}")
+        logger.error(f" Error creating correspondence: {str(e)}")
         raise
 
 
@@ -193,7 +193,7 @@ def get_correspondence_list(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error fetching correspondence list: {str(e)}")
+        logger.error(f" Error fetching correspondence list: {str(e)}")
         raise
 
 
@@ -252,7 +252,7 @@ def get_correspondence_by_id(
         return None
         
     except Exception as e:
-        logger.error(f"❌ Error fetching correspondence by ID: {str(e)}")
+        logger.error(f" Error fetching correspondence by ID: {str(e)}")
         raise
 
 
@@ -287,7 +287,7 @@ def get_documents_by_ids(
         return [dict(row._mapping) for row in results]
         
     except Exception as e:
-        logger.error(f"❌ Error fetching documents by IDs: {str(e)}")
+        logger.error(f" Error fetching documents by IDs: {str(e)}")
         return []
 
 
@@ -353,7 +353,7 @@ def update_correspondence(
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error updating correspondence: {str(e)}")
+        logger.error(f" Error updating correspondence: {str(e)}")
         raise
 
 
@@ -390,7 +390,7 @@ def update_correspondence_status(
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error updating correspondence status: {str(e)}")
+        logger.error(f" Error updating correspondence status: {str(e)}")
         return False
 
 
@@ -425,7 +425,7 @@ def delete_correspondence_record(
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error deleting correspondence: {str(e)}")
+        logger.error(f" Error deleting correspondence: {str(e)}")
         return False
 
 
@@ -449,7 +449,7 @@ def archive_correspondence(
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error archiving correspondence: {str(e)}")
+        logger.error(f" Error archiving correspondence: {str(e)}")
         return False
 
 
@@ -502,7 +502,7 @@ def create_correspondence_attachment(
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error creating attachment: {str(e)}")
+        logger.error(f" Error creating attachment: {str(e)}")
         raise
 
 
@@ -532,7 +532,7 @@ def get_correspondence_attachments(
         return [dict(row._mapping) for row in results]
         
     except Exception as e:
-        logger.error(f"❌ Error fetching attachments: {str(e)}")
+        logger.error(f" Error fetching attachments: {str(e)}")
         return []
 
 
@@ -555,7 +555,7 @@ def delete_correspondence_attachment(
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error deleting attachment: {str(e)}")
+        logger.error(f" Error deleting attachment: {str(e)}")
         return False
 
 
@@ -673,7 +673,7 @@ def get_correspondence_statistics(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error generating statistics: {str(e)}")
+        logger.error(f" Error generating statistics: {str(e)}")
         raise
 
 
@@ -741,7 +741,7 @@ def get_correspondence_trends(
         }
         
     except Exception as e:
-        logger.error(f"❌ Error generating trends: {str(e)}")
+        logger.error(f" Error generating trends: {str(e)}")
         raise
 
 
@@ -781,7 +781,7 @@ def bulk_update_correspondence_status(
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error bulk updating status: {str(e)}")
+        logger.error(f" Error bulk updating status: {str(e)}")
         return 0
 
 
@@ -818,5 +818,5 @@ def bulk_delete_correspondence(
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error bulk deleting correspondence: {str(e)}")
+        logger.error(f" Error bulk deleting correspondence: {str(e)}")
         return 0

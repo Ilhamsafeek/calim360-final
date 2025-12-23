@@ -430,7 +430,7 @@ class WorkflowEnforcementService:
                      'contract', :contract_id, 0, NOW())
                 """), {
                     "user_id": row.approver_user_id,
-                    "title": "⚠️ SLA BREACH - Approval Required",
+                    "title": " SLA BREACH - Approval Required",
                     "message": f"Contract {row.contract_number} has exceeded SLA deadline. Immediate action required.",
                     "contract_id": row.contract_id
                 })

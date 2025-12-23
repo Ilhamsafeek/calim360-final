@@ -673,7 +673,7 @@ async function loadExpertStats() {
         document.getElementById('platformRating').textContent = data.platform_rating || '4.5';
         
     } catch (error) {
-        console.error('❌ Error loading stats:', error);
+        console.error(' Error loading stats:', error);
     }
 }
 
@@ -702,7 +702,7 @@ async function loadExperts() {
         }
         
         const data = await response.json();
-        console.log('✅ Experts loaded:', data);
+        console.log(' Experts loaded:', data);
         
         if (data.success && data.experts && data.experts.length > 0) {
             allExperts = data.experts;
@@ -712,7 +712,7 @@ async function loadExperts() {
         }
         
     } catch (error) {
-        console.error('❌ Error loading experts:', error);
+        console.error(' Error loading experts:', error);
         renderEmptyState();
     }
 }
@@ -864,12 +864,12 @@ async function viewProfile(expertId) {
         }
         
         const expert = await response.json();
-        console.log('✅ Profile loaded:', expert);
+        console.log(' Profile loaded:', expert);
         
         showExpertProfileModal(expert);
         
     } catch (error) {
-        console.error('❌ Error loading profile:', error);
+        console.error(' Error loading profile:', error);
         showToast('Failed to load expert profile', 'error');
     }
 }

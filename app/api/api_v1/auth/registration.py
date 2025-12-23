@@ -31,7 +31,7 @@ async def register_user(
 ):
     """Register new user with automatic CLM module subscription"""
     try:
-        logger.info(f"📝 Starting registration for: {user_data.email}")
+        logger.info(f" Starting registration for: {user_data.email}")
         
         # VALIDATION - Check existing user
         existing_user = db.query(User).filter(
@@ -89,7 +89,7 @@ async def register_user(
         db.add(new_company)
         db.flush()  # Get company ID
         
-        logger.info(f"✅ Company created: {new_company.company_name} (ID: {new_company.id})")
+        logger.info(f" Company created: {new_company.company_name} (ID: {new_company.id})")
         
         # CREATE USER - EXACT field names from User model
         verification_token = secrets.token_urlsafe(32)
@@ -101,8 +101,8 @@ async def register_user(
             first_name=user_data.firstName,
             last_name=user_data.lastName,
             job_title=user_data.jobTitle,
-            qid_number=user_data.authRepQID if user_data.authRepQID else None,  # ✅ Convert empty to None
-            mobile_number=user_data.phoneNumber if user_data.phoneNumber else None,  # ✅ Convert empty to None
+            qid_number=user_data.authRepQID if user_data.authRepQID else None,  #  Convert empty to None
+            mobile_number=user_data.phoneNumber if user_data.phoneNumber else None,  #  Convert empty to None
             user_type=user_data.userType,
             language_preference=user_data.languagePreference,
             timezone=user_data.timeZone,
@@ -119,7 +119,7 @@ async def register_user(
         db.add(new_user)
         db.flush()  # Get user ID
         
-        logger.info(f"✅ User created: {new_user.email} (ID: {new_user.id})")
+        logger.info(f" User created: {new_user.email} (ID: {new_user.id})")
         
         # CREATE DEFAULT CLM MODULE SUBSCRIPTION
         subscription = CompanyModuleSubscription(
@@ -131,7 +131,7 @@ async def register_user(
         )
         db.add(subscription)
         
-        logger.info(f"✅ CLM module subscription created for company: {new_company.id}")
+        logger.info(f" CLM module subscription created for company: {new_company.id}")
         
         # COMMIT ALL CHANGES
         db.commit()
@@ -143,9 +143,9 @@ async def register_user(
                 first_name=new_user.first_name,
                 verification_token=verification_token
             )
-            logger.info(f"✅ Verification email sent to: {new_user.email}")
+            logger.info(f" Verification email sent to: {new_user.email}")
         except Exception as email_error:
-            logger.error(f"⚠️ Failed to send verification email: {str(email_error)}")
+            logger.error(f" Failed to send verification email: {str(email_error)}")
             # Don't fail registration if email fails
         
         return RegistrationResponse(
@@ -163,7 +163,7 @@ async def register_user(
         
     except IntegrityError as e:
         db.rollback()
-        logger.error(f"❌ Database integrity error: {str(e)}")
+        logger.error(f" Database integrity error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Registration failed due to duplicate data."
@@ -171,7 +171,7 @@ async def register_user(
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Registration error: {str(e)}")
+        logger.error(f" Registration error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Registration failed: {str(e)}"

@@ -83,7 +83,7 @@ async def create_obligation(
 ):
     """Create a new obligation"""
     try:
-        logger.info(f"📝 Creating obligation for contract {request.contract_id}")
+        logger.info(f" Creating obligation for contract {request.contract_id}")
         
         # Verify contract exists and belongs to user's company
         contract = db.query(Contract).filter(
@@ -92,7 +92,7 @@ async def create_obligation(
         ).first()
         
         if not contract:
-            logger.error(f"❌ Contract {request.contract_id} not found")
+            logger.error(f" Contract {request.contract_id} not found")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Contract not found"
@@ -139,7 +139,7 @@ async def create_obligation(
         result = db.execute(text("SELECT LAST_INSERT_ID()")).fetchone()
         new_id = result[0] if result else None
         
-        logger.info(f"✅ Created obligation ID: {new_id}")
+        logger.info(f" Created obligation ID: {new_id}")
         
         return {
             "success": True,
@@ -151,7 +151,7 @@ async def create_obligation(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error creating obligation: {str(e)}")
+        logger.error(f" Error creating obligation: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create obligation: {str(e)}"
@@ -238,11 +238,11 @@ async def get_obligations(
                 "contract_number": row[17]
             })
         
-        logger.info(f"✅ Found {len(obligations)} obligations")
+        logger.info(f" Found {len(obligations)} obligations")
         return obligations
         
     except Exception as e:
-        logger.error(f"❌ Error fetching obligations: {str(e)}")
+        logger.error(f" Error fetching obligations: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch obligations: {str(e)}"
@@ -317,7 +317,7 @@ async def get_obligation(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error fetching obligation {obligation_id}: {str(e)}")
+        logger.error(f" Error fetching obligation {obligation_id}: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch obligation: {str(e)}"
@@ -337,7 +337,7 @@ async def update_obligation(
 ):
     """Update an existing obligation"""
     try:
-        logger.info(f"📝 Updating obligation {obligation_id}")
+        logger.info(f" Updating obligation {obligation_id}")
         
         # Verify obligation exists and belongs to user's company
         check_query = """
@@ -404,7 +404,7 @@ async def update_obligation(
             db.execute(text(update_query), params)
             db.commit()
         
-        logger.info(f"✅ Updated obligation {obligation_id}")
+        logger.info(f" Updated obligation {obligation_id}")
         
         return {
             "success": True,
@@ -416,7 +416,7 @@ async def update_obligation(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error updating obligation {obligation_id}: {str(e)}")
+        logger.error(f" Error updating obligation {obligation_id}: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update obligation: {str(e)}"
@@ -495,7 +495,7 @@ async def delete_obligation(
         )
         
         db.commit()
-        logger.info(f"✅ Successfully deleted obligation {obligation_id}")
+        logger.info(f" Successfully deleted obligation {obligation_id}")
         
         return {
             "success": True,
@@ -506,7 +506,7 @@ async def delete_obligation(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error deleting obligation {obligation_id}: {str(e)}")
+        logger.error(f" Error deleting obligation {obligation_id}: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete obligation: {str(e)}"
@@ -551,7 +551,7 @@ async def generate_ai_obligations(
         contract_content = result[0] if result else None
         
         if not contract_content:
-            logger.warning(f"⚠️ No contract content found for contract {contract_id}")
+            logger.warning(f" No contract content found for contract {contract_id}")
             return generate_fallback_obligations(contract.contract_type)
         
         # Try to use Claude API for extraction
@@ -568,7 +568,7 @@ async def generate_ai_obligations(
                 if obligations:
                     return obligations
         except Exception as e:
-            logger.warning(f"⚠️ Claude API not available: {str(e)}")
+            logger.warning(f" Claude API not available: {str(e)}")
         
         # Fallback to pattern-based extraction
         return generate_fallback_obligations(contract.contract_type)
@@ -576,7 +576,7 @@ async def generate_ai_obligations(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error generating AI obligations: {str(e)}")
+        logger.error(f" Error generating AI obligations: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate obligations: {str(e)}"
