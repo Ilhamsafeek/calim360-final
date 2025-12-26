@@ -1527,9 +1527,10 @@
         const createButton = document.getElementById('new');
 
         if (module === 'negotiation') {
-            createButton.style.display = 'block'; // Make sure it's visible
-            createButton.innerHTML = '<i class="ti ti-upload"></i> Upload Existing Contract';
-            createButton.onclick = () => uploadExistingContract('create');
+            // createButton.style.display = 'block'; // Make sure it's visible
+            // createButton.innerHTML = '<i class="ti ti-upload"></i> Upload Existing Contract';
+            // createButton.onclick = () => uploadExistingContract('create');
+            createButton.style.display = 'none';
         } else if (module === 'operations') {
             createButton.style.display = 'none'; // Hide the button completely
         } else {
