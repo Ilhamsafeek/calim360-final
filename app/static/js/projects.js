@@ -1,5 +1,5 @@
 /**
- * Complete Project Dashboard JavaScript with Manager & Client
+ * Complete Project Dashboard JavaScript with Manager & Client + Document Upload
  * File: app/static/js/projects.js
  */
 
@@ -11,6 +11,10 @@ const ProjectManager = {
     currentFilter: 'all',
     currentView: 'grid',
     currentProjectId: null,
+    
+    // Document upload properties
+    selectedFiles: [],
+    currentUploadProjectId: null,
 
     // Initialize
     async init() {
@@ -251,7 +255,7 @@ const ProjectManager = {
         document.getElementById('projectCount').textContent = this.filteredProjects.length;
     },
 
-    // Render grid view
+    // Render grid view - UPDATED with fixed menu icon
     renderGrid() {
         const grid = document.getElementById('projectsGrid');
         
@@ -263,7 +267,7 @@ const ProjectManager = {
                     <p>Create your first project to get started</p>
                     <br>
                     <button class="btn btn-primary" onclick="ProjectManager.openCreateModal()">
-                        <i class=""></i> Create Project
+                        <i class="ti ti-plus"></i> Create Project
                     </button>
                 </div>
             `;
@@ -273,12 +277,15 @@ const ProjectManager = {
         grid.innerHTML = this.filteredProjects.map(project => `
             <div class="project-card" onclick="ProjectManager.viewProject('${project.id}')">
                 <button class="project-menu-btn" onclick="event.stopPropagation(); ProjectManager.showProjectMenu(event, '${project.id}')">
-                    <i class="ti ti-dots-vertical"></i>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="1"></circle>
+                        <circle cx="12" cy="5" r="1"></circle>
+                        <circle cx="12" cy="19" r="1"></circle>
+                    </svg>
                 </button>
                 <div class="project-header">
                     <div class="project-title-row">
                         <div>
-                          
                             <div class="project-code">${project.project_code || project.code || ''}</div>
                             <h3 class="project-title">${project.project_name || project.title || 'Untitled Project'}</h3>
                         </div>
@@ -304,7 +311,6 @@ const ProjectManager = {
                     </div>
                 </div>
                 <div class="project-body">
-                    
                     <div class="progress-section">
                         <div class="progress-header">
                             <span>Progress</span>
@@ -388,111 +394,60 @@ const ProjectManager = {
         this.openModal('projectModal');
     },
 
-    // Open edit modal
-// Open edit modal - FIXED
-async openEditModal(projectId) {
-    try {
-        // 🔥 FIX: Convert projectId to integer for comparison
-        const numericProjectId = parseInt(projectId, 10);
-        
-        console.log('Opening edit modal for project:', numericProjectId);
-        
-        // 🔥 FIX: Compare as integers
-        const project = this.projects.find(p => parseInt(p.id) === numericProjectId);
-        
-        if (!project) {
-            console.error('Project not found in local array:', numericProjectId);
-            console.log('Available projects:', this.projects.map(p => ({id: p.id, title: p.title || p.project_name})));
-            this.showToast('Project not found', 'error');
-            return;
-        }
-
-        console.log('Project data:', project);
-
-        // Set modal title
-        document.getElementById('modalTitle').textContent = 'Edit Project';
-        
-        // Set hidden project ID field
-        document.getElementById('projectId').value = numericProjectId;
-        
-        // Fill form fields
-        document.getElementById('projectTitle').value = project.project_name || project.title || '';
-        document.getElementById('projectCode').value = project.project_code || project.code || '';
-        document.getElementById('projectStatus').value = project.status || 'planning';
-        document.getElementById('projectStartDate').value = project.start_date || project.startDate || '';
-        document.getElementById('projectEndDate').value = project.end_date || project.endDate || '';
-        document.getElementById('projectValue').value = project.project_value || project.value || 0;
-        document.getElementById('projectDescription').value = project.description || '';
-        
-        // Set Project Manager dropdown
-        const managerId = project.project_manager_id;
-        console.log('Setting manager ID:', managerId);
-        
-        if (managerId && this.users.length > 0) {
-            const manager = this.users.find(u => parseInt(u.id) === parseInt(managerId));
-            console.log('Found manager:', manager);
+    // Open edit modal - FIXED
+    async openEditModal(projectId) {
+        try {
+            const numericProjectId = parseInt(projectId, 10);
+            console.log('Opening edit modal for project:', numericProjectId);
             
-            if (manager) {
-                document.getElementById('projectManager').value = managerId;
-                const managerName = `${manager.first_name || ''} ${manager.last_name || ''}`.trim() || manager.email || manager.username;
-                document.getElementById('managerDisplay').innerHTML = `
-                    <span>${managerName}</span>
-                    <i class="ti ti-chevron-down"></i>
-                `;
-            } else {
-                console.warn('Manager not found with ID:', managerId);
-                document.getElementById('managerDisplay').innerHTML = `
-                    <span style="color: var(--text-muted);">Manager not found (ID: ${managerId})</span>
-                    <i class="ti ti-chevron-down"></i>
-                `;
-            }
-        } else {
-            console.log('No manager ID or users not loaded');
-            document.getElementById('managerDisplay').innerHTML = `
-                <span>Select Manager</span>
-                <i class="ti ti-chevron-down"></i>
-            `;
-        }
-        
-        // Set Client dropdown
-        const clientId = project.client_id;
-        console.log('Setting client ID:', clientId);
-        
-        if (clientId && this.clients.length > 0) {
-            const client = this.clients.find(c => parseInt(c.id) === parseInt(clientId));
-            console.log('Found client:', client);
+            const project = this.projects.find(p => parseInt(p.id) === numericProjectId);
             
-            if (client) {
-                document.getElementById('projectClient').value = clientId;
-                document.getElementById('clientDisplay').innerHTML = `
-                    <span>${client.company_name}</span>
-                    <i class="ti ti-chevron-down"></i>
-                `;
-            } else {
-                console.warn('Client not found with ID:', clientId);
-                document.getElementById('clientDisplay').innerHTML = `
-                    <span style="color: var(--text-muted);">Client not found (ID: ${clientId})</span>
-                    <i class="ti ti-chevron-down"></i>
-                `;
+            if (!project) {
+                console.error('Project not found in local array:', numericProjectId);
+                this.showToast('Project not found', 'error');
+                return;
             }
-        } else {
-            console.log('No client ID or clients not loaded');
-            document.getElementById('clientDisplay').innerHTML = `
-                <span>Select Client</span>
-                <i class="ti ti-chevron-down"></i>
-            `;
+
+            document.getElementById('modalTitle').textContent = 'Edit Project';
+            document.getElementById('projectId').value = numericProjectId;
+            document.getElementById('projectTitle').value = project.project_name || project.title || '';
+            document.getElementById('projectCode').value = project.project_code || project.code || '';
+            document.getElementById('projectStatus').value = project.status || 'planning';
+            document.getElementById('projectStartDate').value = project.start_date || project.startDate || '';
+            document.getElementById('projectEndDate').value = project.end_date || project.endDate || '';
+            document.getElementById('projectValue').value = project.project_value || project.value || 0;
+            document.getElementById('projectDescription').value = project.description || '';
+            
+            const managerId = project.project_manager_id;
+            if (managerId && this.users.length > 0) {
+                const manager = this.users.find(u => parseInt(u.id) === parseInt(managerId));
+                if (manager) {
+                    document.getElementById('projectManager').value = managerId;
+                    const managerName = `${manager.first_name || ''} ${manager.last_name || ''}`.trim() || manager.email || manager.username;
+                    document.getElementById('managerDisplay').innerHTML = `<span>${managerName}</span><i class="ti ti-chevron-down"></i>`;
+                }
+            } else {
+                document.getElementById('managerDisplay').innerHTML = `<span>Select Manager</span><i class="ti ti-chevron-down"></i>`;
+            }
+            
+            const clientId = project.client_id;
+            if (clientId && this.clients.length > 0) {
+                const client = this.clients.find(c => parseInt(c.id) === parseInt(clientId));
+                if (client) {
+                    document.getElementById('projectClient').value = clientId;
+                    document.getElementById('clientDisplay').innerHTML = `<span>${client.company_name}</span><i class="ti ti-chevron-down"></i>`;
+                }
+            } else {
+                document.getElementById('clientDisplay').innerHTML = `<span>Select Client</span><i class="ti ti-chevron-down"></i>`;
+            }
+            
+            this.openModal('projectModal');
+            
+        } catch (error) {
+            console.error('Error opening edit modal:', error);
+            this.showToast('Failed to load project details', 'error');
         }
-        
-        // Open the modal
-        this.openModal('projectModal');
-        
-        console.log(' Edit modal opened successfully');
-        
-    } catch (error) {
-        console.error('Error opening edit modal:', error);
-        this.showToast('Failed to load project details', 'error');
-    }
-},
+    },
 
     // Save project
     async saveProject() {
@@ -511,7 +466,6 @@ async openEditModal(projectId) {
                 client_id: document.getElementById('projectClient').value || null
             };
 
-            // Validation
             if (!projectData.title || !projectData.code) {
                 this.showToast('Please fill in all required fields', 'error');
                 return;
@@ -534,9 +488,7 @@ async openEditModal(projectId) {
 
             const response = await fetch(url, {
                 method: method,
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify(projectData)
             });
@@ -595,126 +547,103 @@ async openEditModal(projectId) {
     },
 
     // View project
-viewProject(projectId) {
-    try {
-        // 🔥 FIX: Convert to integer for comparison
-        const numericProjectId = parseInt(projectId, 10);
-        
-        console.log('📖 Opening view modal for project:', numericProjectId);
-        
-        // 🔥 FIX: Compare as integers
-        const project = this.projects.find(p => parseInt(p.id) === numericProjectId);
-        
-        if (!project) {
-            console.error(' Project not found:', numericProjectId);
-            console.log('Available projects:', this.projects.map(p => ({
-                id: p.id, 
-                title: p.title || p.project_name
-            })));
-            this.showToast('Project not found', 'error');
-            return;
+    viewProject(projectId) {
+        try {
+            const numericProjectId = parseInt(projectId, 10);
+            console.log('📖 Opening view modal for project:', numericProjectId);
+            
+            const project = this.projects.find(p => parseInt(p.id) === numericProjectId);
+            
+            if (!project) {
+                console.error('Project not found:', numericProjectId);
+                this.showToast('Project not found', 'error');
+                return;
+            }
+
+            this.currentProjectId = numericProjectId;
+            
+            const modalBody = document.getElementById('viewModalBody');
+            modalBody.innerHTML = `
+                <div style="display: grid; gap: 2rem;">
+                    <div>
+                        <h2 style="margin: 0 0 1rem 0; color: var(--text-color);">
+                            ${project.project_name || project.title || 'Untitled Project'}
+                        </h2>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                            <div>
+                                <strong style="color: var(--text-muted); font-size: 0.875rem;">Project Code:</strong>
+                                <div style="margin-top: 0.25rem;">${project.project_code || project.code || 'N/A'}</div>
+                            </div>
+                            <div>
+                                <strong style="color: var(--text-muted); font-size: 0.875rem;">Status:</strong>
+                                <div style="margin-top: 0.25rem;">
+                                    <span class="status-badge ${project.status || 'planning'}">
+                                        ${(project.status || 'planning').replace('-', ' ').toUpperCase()}
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <strong style="color: var(--text-muted); font-size: 0.875rem;">Project Manager:</strong>
+                                <div style="margin-top: 0.25rem;">${this.getManagerName(project.project_manager_id)}</div>
+                            </div>
+                            <div>
+                                <strong style="color: var(--text-muted); font-size: 0.875rem;">Client:</strong>
+                                <div style="margin-top: 0.25rem;">${this.getClientName(project.client_id)}</div>
+                            </div>
+                            <div>
+                                <strong style="color: var(--text-muted); font-size: 0.875rem;">Start Date:</strong>
+                                <div style="margin-top: 0.25rem;">${this.formatDate(project.start_date || project.startDate)}</div>
+                            </div>
+                            <div>
+                                <strong style="color: var(--text-muted); font-size: 0.875rem;">End Date:</strong>
+                                <div style="margin-top: 0.25rem;">
+                                    ${project.end_date || project.endDate ? this.formatDate(project.end_date || project.endDate) : 'Not set'}
+                                </div>
+                            </div>
+                            <div>
+                                <strong style="color: var(--text-muted); font-size: 0.875rem;">Project Value:</strong>
+                                <div style="margin-top: 0.25rem; font-weight: 600; color: var(--primary-color);">
+                                    ${this.formatCurrency(project.project_value || project.value || 0)}
+                                </div>
+                            </div>
+                            <div>
+                                <strong style="color: var(--text-muted); font-size: 0.875rem;">Progress:</strong>
+                                <div style="margin-top: 0.25rem;">${project.progress || 0}%</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0 0 0.75rem 0; color: var(--text-color); font-size: 1.125rem;">Progress Overview</h3>
+                        <div class="progress-bar" style="height: 24px; border-radius: 12px;">
+                            <div class="progress-fill" style="width: ${project.progress || 0}%; border-radius: 12px;"></div>
+                        </div>
+                        <div style="margin-top: 0.5rem; text-align: right; color: var(--text-muted); font-size: 0.875rem;">
+                            ${project.progress || 0}% Complete
+                        </div>
+                    </div>
+                    <div style="padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; font-size: 0.875rem;">
+                            <div>
+                                <strong style="color: var(--text-muted);">Created:</strong>
+                                <span style="color: var(--text-color);">${this.formatDate(project.created_at || project.createdDate)}</span>
+                            </div>
+                            <div>
+                                <strong style="color: var(--text-muted);">Last Updated:</strong>
+                                <span style="color: var(--text-color);">${this.formatDate(project.updated_at || project.updatedDate)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('viewModalTitle').textContent = project.project_name || project.title || 'Project Details';
+            this.openModal('viewModal');
+            
+        } catch (error) {
+            console.error('Error in viewProject:', error);
+            this.showToast('Failed to display project details', 'error');
         }
-
-        console.log(' Project found:', project);
-
-        this.currentProjectId = numericProjectId;
-        
-        // Build detailed project view
-        const modalBody = document.getElementById('viewModalBody');
-        modalBody.innerHTML = `
-            <div style="display: grid; gap: 2rem;">
-                <!-- Project Header -->
-                <div>
-                    <h2 style="margin: 0 0 1rem 0; color: var(--text-color);">
-                        ${project.project_name || project.title || 'Untitled Project'}
-                    </h2>
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
-                        <div>
-                            <strong style="color: var(--text-muted); font-size: 0.875rem;">Project Code:</strong>
-                            <div style="margin-top: 0.25rem;">${project.project_code || project.code || 'N/A'}</div>
-                        </div>
-                        <div>
-                            <strong style="color: var(--text-muted); font-size: 0.875rem;">Status:</strong>
-                            <div style="margin-top: 0.25rem;">
-                                <span class="status-badge ${project.status || 'planning'}">
-                                    ${(project.status || 'planning').replace('-', ' ').toUpperCase()}
-                                </span>
-                            </div>
-                        </div>
-                        <div>
-                            <strong style="color: var(--text-muted); font-size: 0.875rem;">Project Manager:</strong>
-                            <div style="margin-top: 0.25rem;">${this.getManagerName(project.project_manager_id)}</div>
-                        </div>
-                        <div>
-                            <strong style="color: var(--text-muted); font-size: 0.875rem;">Client:</strong>
-                            <div style="margin-top: 0.25rem;">${this.getClientName(project.client_id)}</div>
-                        </div>
-                        <div>
-                            <strong style="color: var(--text-muted); font-size: 0.875rem;">Start Date:</strong>
-                            <div style="margin-top: 0.25rem;">${this.formatDate(project.start_date || project.startDate)}</div>
-                        </div>
-                        <div>
-                            <strong style="color: var(--text-muted); font-size: 0.875rem;">End Date:</strong>
-                            <div style="margin-top: 0.25rem;">
-                                ${project.end_date || project.endDate ? this.formatDate(project.end_date || project.endDate) : 'Not set'}
-                            </div>
-                        </div>
-                        <div>
-                            <strong style="color: var(--text-muted); font-size: 0.875rem;">Project Value:</strong>
-                            <div style="margin-top: 0.25rem; font-weight: 600; color: var(--primary-color);">
-                                ${this.formatCurrency(project.project_value || project.value || 0)}
-                            </div>
-                        </div>
-                        <div>
-                            <strong style="color: var(--text-muted); font-size: 0.875rem;">Progress:</strong>
-                            <div style="margin-top: 0.25rem;">${project.progress || 0}%</div>
-                        </div>
-                    </div>
-                </div>
-
-               
-                <!-- Progress Overview -->
-                <div>
-                    <h3 style="margin: 0 0 0.75rem 0; color: var(--text-color); font-size: 1.125rem;">
-                        Progress Overview
-                    </h3>
-                    <div class="progress-bar" style="height: 24px; border-radius: 12px;">
-                        <div class="progress-fill" style="width: ${project.progress || 0}%; border-radius: 12px;"></div>
-                    </div>
-                    <div style="margin-top: 0.5rem; text-align: right; color: var(--text-muted); font-size: 0.875rem;">
-                        ${project.progress || 0}% Complete
-                    </div>
-                </div>
-
-                <!-- Additional Info -->
-                <div style="padding-top: 1rem; border-top: 1px solid var(--border-color);">
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; font-size: 0.875rem;">
-                        <div>
-                            <strong style="color: var(--text-muted);">Created:</strong>
-                            <span style="color: var(--text-color);">${this.formatDate(project.created_at || project.createdDate)}</span>
-                        </div>
-                        <div>
-                            <strong style="color: var(--text-muted);">Last Updated:</strong>
-                            <span style="color: var(--text-color);">${this.formatDate(project.updated_at || project.updatedDate)}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        // Set modal title
-        document.getElementById('viewModalTitle').textContent = project.project_name || project.title || 'Project Details';
-        
-        // Open the modal
-        this.openModal('viewModal');
-        
-        console.log(' View modal opened successfully');
-        
-    } catch (error) {
-        console.error(' Error in viewProject:', error);
-        this.showToast('Failed to display project details', 'error');
-    }
-},
+    },
 
     // Edit from view
     editFromView() {
@@ -790,7 +719,7 @@ viewProject(projectId) {
         this.render();
     },
 
-    // Show project menu
+    // Show project menu - UPDATED with document upload options
     showProjectMenu(event, projectId) {
         event.stopPropagation();
         
@@ -810,6 +739,13 @@ viewProject(projectId) {
             <button class="dropdown-item" onclick="ProjectManager.viewProject('${projectId}')">
                 <i class="ti ti-eye"></i> View Details
             </button>
+            <button class="dropdown-item" onclick="ProjectManager.openUploadModal('${projectId}')">
+                <i class="ti ti-upload"></i> Upload Documents
+            </button>
+            <button class="dropdown-item" onclick="ProjectManager.viewProjectDocuments('${projectId}')">
+                <i class="ti ti-files"></i> View Documents
+            </button>
+            <div style="height: 1px; background: var(--border-color); margin: 0.25rem 0;"></div>
             <button class="dropdown-item" onclick="ProjectManager.openEditModal('${projectId}')">
                 <i class="ti ti-edit"></i> Edit Project
             </button>
@@ -820,7 +756,6 @@ viewProject(projectId) {
         
         document.body.appendChild(menu);
         
-        // Close on click outside
         setTimeout(() => {
             const closeMenu = (e) => {
                 if (!menu.contains(e.target)) {
@@ -831,6 +766,344 @@ viewProject(projectId) {
             document.addEventListener('click', closeMenu);
         }, 0);
     },
+
+    // =================================================
+    // DOCUMENT UPLOAD FUNCTIONS
+    // =================================================
+
+    openUploadModal(projectId) {
+        const project = this.projects.find(p => p.id == projectId);
+        if (!project) {
+            this.showToast('Project not found', 'error');
+            return;
+        }
+        
+        this.currentUploadProjectId = projectId;
+        this.selectedFiles = [];
+        
+        document.getElementById('uploadProjectName').textContent = project.project_name || project.title;
+        document.getElementById('projectFileInput').value = '';
+        document.getElementById('uploadNotes').value = '';
+        document.getElementById('selectedFilesList').style.display = 'none';
+        document.getElementById('filesContainer').innerHTML = '';
+        document.getElementById('fileCount').textContent = '0';
+        document.getElementById('uploadButton').disabled = true;
+        document.getElementById('uploadProgress').style.display = 'none';
+        
+        this.openModal('uploadDocumentsModal');
+        this.setupUploadEventListeners();
+    },
+
+    setupUploadEventListeners() {
+        const dropZone = document.getElementById('fileDropZone');
+        const fileInput = document.getElementById('projectFileInput');
+        
+        dropZone.onclick = (e) => {
+            if (e.target.tagName !== 'BUTTON') {
+                fileInput.click();
+            }
+        };
+        
+        fileInput.onchange = (e) => {
+            this.handleFileSelect(e.target.files);
+        };
+        
+        dropZone.ondragover = (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        };
+        
+        dropZone.ondragleave = () => {
+            dropZone.classList.remove('drag-over');
+        };
+        
+        dropZone.ondrop = (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            this.handleFileSelect(e.dataTransfer.files);
+        };
+    },
+
+    handleFileSelect(files) {
+        const allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'rtf', 'odt', 'eml'];
+        const maxSize = 50 * 1024 * 1024;
+        
+        Array.from(files).forEach(file => {
+            const ext = file.name.split('.').pop().toLowerCase();
+            
+            if (!allowedExtensions.includes(ext)) {
+                this.showToast(`${file.name}: File type not allowed`, 'error');
+                return;
+            }
+            
+            if (file.size > maxSize) {
+                this.showToast(`${file.name}: File size exceeds 50MB`, 'error');
+                return;
+            }
+            
+            if (this.selectedFiles.find(f => f.name === file.name)) {
+                this.showToast(`${file.name}: Already added`, 'warning');
+                return;
+            }
+            
+            this.selectedFiles.push(file);
+        });
+        
+        this.renderSelectedFiles();
+    },
+
+    renderSelectedFiles() {
+        const container = document.getElementById('filesContainer');
+        const filesList = document.getElementById('selectedFilesList');
+        const fileCount = document.getElementById('fileCount');
+        const uploadButton = document.getElementById('uploadButton');
+        
+        if (this.selectedFiles.length === 0) {
+            filesList.style.display = 'none';
+            uploadButton.disabled = true;
+            return;
+        }
+        
+        filesList.style.display = 'block';
+        fileCount.textContent = this.selectedFiles.length;
+        uploadButton.disabled = false;
+        
+        container.innerHTML = this.selectedFiles.map((file, index) => {
+            const sizeStr = this.formatFileSize(file.size);
+            const icon = this.getFileIcon(file.name);
+            
+            return `
+                <div class="file-item">
+                    <div class="file-item-info">
+                        <i class="ti ${icon} file-item-icon"></i>
+                        <div class="file-item-details">
+                            <div class="file-item-name">${file.name}</div>
+                            <div class="file-item-size">${sizeStr}</div>
+                        </div>
+                    </div>
+                    <button class="file-item-remove" onclick="ProjectManager.removeFile(${index})" title="Remove">
+                        <i class="ti ti-x"></i>
+                    </button>
+                </div>
+            `;
+        }).join('');
+    },
+
+    removeFile(index) {
+        this.selectedFiles.splice(index, 1);
+        this.renderSelectedFiles();
+    },
+
+    async uploadDocuments() {
+        if (this.selectedFiles.length === 0) {
+            this.showToast('Please select files to upload', 'error');
+            return;
+        }
+        
+        const uploadButton = document.getElementById('uploadButton');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const progressBar = document.getElementById('uploadProgressBar');
+        const uploadStatus = document.getElementById('uploadStatus');
+        
+        try {
+            uploadButton.disabled = true;
+            uploadProgress.style.display = 'block';
+            progressBar.style.width = '0%';
+            uploadStatus.textContent = 'Preparing upload...';
+            
+            const formData = new FormData();
+            this.selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+            
+            const notes = document.getElementById('uploadNotes').value;
+            if (notes) {
+                formData.append('notes', notes);
+            }
+            
+            formData.append('document_type', 'project_document');
+            
+            progressBar.style.width = '50%';
+            uploadStatus.textContent = `Uploading ${this.selectedFiles.length} file(s)...`;
+            
+            const response = await fetch(`/api/projects/${this.currentUploadProjectId}/documents/upload`, {
+                method: 'POST',
+                credentials: 'include',
+                body: formData
+            });
+            
+            progressBar.style.width = '100%';
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Upload failed');
+            }
+            
+            const result = await response.json();
+            uploadStatus.textContent = 'Upload complete!';
+            
+            const uploadedCount = result.data?.uploaded?.length || 0;
+            const errorCount = result.data?.errors?.length || 0;
+            
+            if (uploadedCount > 0) {
+                this.showToast(`Successfully uploaded ${uploadedCount} document(s)`, 'success');
+            }
+            
+            if (errorCount > 0) {
+                this.showToast(`${errorCount} file(s) failed to upload`, 'error');
+            }
+            
+            setTimeout(() => {
+                this.closeModal('uploadDocumentsModal');
+                this.viewProjectDocuments(this.currentUploadProjectId);
+            }, 1500);
+            
+        } catch (error) {
+            console.error('Upload error:', error);
+            this.showToast(error.message || 'Upload failed', 'error');
+            uploadButton.disabled = false;
+            uploadProgress.style.display = 'none';
+        }
+    },
+
+    async viewProjectDocuments(projectId) {
+        const project = this.projects.find(p => p.id == projectId);
+        if (!project) {
+            this.showToast('Project not found', 'error');
+            return;
+        }
+        
+        this.currentUploadProjectId = projectId;
+        document.getElementById('docProjectName').textContent = project.project_name || project.title;
+        this.openModal('viewDocumentsModal');
+        
+        await this.loadProjectDocuments(projectId);
+    },
+
+    async loadProjectDocuments(projectId) {
+        const tbody = document.getElementById('documentsTableBody');
+        
+        try {
+            const response = await fetch(`/api/projects/${projectId}/documents`, {
+                credentials: 'include'
+            });
+            
+            if (!response.ok) throw new Error('Failed to load documents');
+            
+            const result = await response.json();
+            const documents = result.data || [];
+            
+            if (documents.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                            <i class="ti ti-folder-off" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                            <p>No documents uploaded yet</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = documents.map(doc => `
+                <tr>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="ti ${this.getFileIcon(doc.name)}" style="color: var(--primary-color);"></i>
+                            <span>${doc.name}</span>
+                        </div>
+                    </td>
+                    <td>${doc.type || 'Unknown'}</td>
+                    <td>${doc.size || 'Unknown'}</td>
+                    <td>${doc.uploaded_by_name || 'Unknown'}</td>
+                    <td>${doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString() : 'Unknown'}</td>
+                    <td>
+                        <div class="doc-actions">
+                            <button class="doc-action-btn" onclick="ProjectManager.downloadDocument('${doc.id}')" title="Download">
+                                <i class="ti ti-download"></i>
+                            </button>
+                            <button class="doc-action-btn" onclick="ProjectManager.deleteDocument('${doc.id}', '${projectId}')" title="Delete" style="color: var(--danger-color, #ef4444);">
+                                <i class="ti ti-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            
+        } catch (error) {
+            console.error('Error loading documents:', error);
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2rem; color: var(--danger-color, #ef4444);">
+                        <i class="ti ti-alert-circle" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                        <p>Failed to load documents</p>
+                    </td>
+                </tr>
+            `;
+        }
+    },
+
+    closeDocumentsModal() {
+        this.closeModal('viewDocumentsModal');
+    },
+
+    openUploadModalFromDocs() {
+        this.closeDocumentsModal();
+        this.openUploadModal(this.currentUploadProjectId);
+    },
+
+    downloadDocument(documentId) {
+        window.open(`/api/documents/${documentId}/download`, '_blank');
+    },
+
+    async deleteDocument(documentId, projectId) {
+        if (!confirm('Are you sure you want to delete this document?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/documents/${documentId}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+            
+            if (!response.ok) throw new Error('Delete failed');
+            
+            this.showToast('Document deleted successfully', 'success');
+            await this.loadProjectDocuments(projectId);
+            
+        } catch (error) {
+            console.error('Delete error:', error);
+            this.showToast('Failed to delete document', 'error');
+        }
+    },
+
+    getFileIcon(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        const iconMap = {
+            'pdf': 'ti-file-type-pdf',
+            'doc': 'ti-file-type-doc',
+            'docx': 'ti-file-type-docx',
+            'xls': 'ti-file-type-xls',
+            'xlsx': 'ti-file-type-xlsx',
+            'txt': 'ti-file-text',
+            'rtf': 'ti-file-text',
+            'odt': 'ti-file-text',
+            'eml': 'ti-mail'
+        };
+        return iconMap[ext] || 'ti-file';
+    },
+
+    formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+        if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+    },
+
+    // =================================================
+    // END DOCUMENT UPLOAD FUNCTIONS
+    // =================================================
 
     // Export/Import (placeholder)
     exportData() {
@@ -931,7 +1204,6 @@ viewProject(projectId) {
     },
 
     setupEventListeners() {
-        // Close dropdowns on outside click
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.dropdown') && !e.target.closest('.searchable-select')) {
                 document.querySelectorAll('.dropdown-menu, .select-dropdown').forEach(menu => {
@@ -940,20 +1212,18 @@ viewProject(projectId) {
             }
         });
 
-        // ESC key to close modals
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                ['projectModal', 'viewModal', 'contractsModal', 'addContractModal'].forEach(modalId => {
-                    const modal = document.getElementById(modalId);
-                    if (modal && modal.classList.contains('show')) {
-                        this.closeModal(modalId);
-                    }
-                });
-            }
-        });
+        // document.addEventListener('keydown', (e) => {
+        //     if (e.key === 'Escape') {
+        //         ['projectModal', 'viewModal', 'uploadDocumentsModal', 'viewDocumentsModal'].forEach(modalId => {
+        //             const modal = document.getElementById(modalId);
+        //             if (modal && modal.classList.contains('show')) {
+        //                 this.closeModal(modalId);
+        //             }
+        //         });
+        //     }
+        // });
 
-        // Modal background click
-        ['projectModal', 'viewModal', 'contractsModal', 'addContractModal'].forEach(modalId => {
+        ['projectModal', 'viewModal', 'uploadDocumentsModal', 'viewDocumentsModal'].forEach(modalId => {
             const modal = document.getElementById(modalId);
             if (modal) {
                 modal.addEventListener('click', (e) => {

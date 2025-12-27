@@ -273,15 +273,29 @@ async function updateCategoryCounts() {
 // =====================================================
 // MODAL FUNCTIONS
 // =====================================================
-
 function openAddClauseModal() {
     console.log('➕ Opening add clause modal');
+    
     document.getElementById('modalTitle').textContent = 'Add New Clause';
+    
     const form = document.getElementById('clauseForm');
     if (form) form.reset();
+    
+    // Make clause code field editable for new clauses
+    const codeInput = document.getElementById('clauseCode');
+    if (codeInput) {
+        codeInput.removeAttribute('readonly');
+        codeInput.style.backgroundColor = '';
+        codeInput.style.cursor = '';
+        codeInput.placeholder = 'Auto-generated (leave empty)';
+        codeInput.value = '';
+    }
+    
     currentClauseId = null;
     document.getElementById('addClauseModal').classList.add('show');
 }
+
+
 
 async function saveClause() {
     console.log(' Saving clause...');
@@ -404,26 +418,197 @@ async function openClauseDetail(clauseId) {
 }
 
 function editClauseFromDetail() {
-    if (!currentClauseId) return;
-    
-    const clause = allClauses.find(c => c.id === currentClauseId);
-    if (!clause) return;
-    
-    closeModal('clauseDetailModal');
-    
-    // Open edit modal with clause data
-    document.getElementById('modalTitle').textContent = 'Edit Clause';
-    document.getElementById('clauseTitle').value = clause.title;
-    document.getElementById('clauseCategory').value = clause.category || '';
-    document.getElementById('clauseText').value = clause.fullText;
-    document.getElementById('clauseTags').value = (clause.tags || []).join(', ');
-    
-    const typeRadio = document.querySelector(`input[name="clauseType"][value="${clause.type}"]`);
-    if (typeRadio) {
-        typeRadio.checked = true;
+    if (!currentClauseId) {
+        console.error('No clause ID set');
+        return;
     }
     
+    const clause = allClauses.find(c => c.id === currentClauseId);
+    if (!clause) {
+        console.error('Clause not found in allClauses array');
+        showNotification('Clause not found', 'error');
+        return;
+    }
+    
+    console.log('📝 Editing clause:', clause);
+    
+    // Close detail modal
+    closeModal('clauseDetailModal');
+    
+    // Change modal title
+    document.getElementById('modalTitle').textContent = 'Edit Clause';
+    
+    // 1. Clause Code (AUTO-GENERATED - Make readonly when editing)
+    const codeInput = document.getElementById('clauseCode');
+    if (codeInput) {
+        codeInput.value = clause.clause_code || '';
+        codeInput.setAttribute('readonly', 'readonly');
+        codeInput.style.backgroundColor = '#f8f9fa';
+        codeInput.style.cursor = 'not-allowed';
+    }
+    
+    // 2. Clause Title (REQUIRED)
+    const titleInput = document.getElementById('clauseTitle');
+    if (titleInput) {
+        titleInput.value = clause.clause_title || clause.title || '';
+    }
+    
+    // 3. Clause Text (REQUIRED)
+    const textArea = document.getElementById('clauseText');
+    if (textArea) {
+        textArea.value = clause.clause_text || clause.description || clause.fullText || '';
+    }
+    
+    // 4. Category
+    const categorySelect = document.getElementById('clauseCategory');
+    if (categorySelect) {
+        categorySelect.value = clause.category || 'general';
+    }
+    
+    // 5. Sub-Category (if exists)
+    const subCategoryInput = document.getElementById('clauseSubCategory');
+    if (subCategoryInput) {
+        subCategoryInput.value = clause.sub_category || clause.category || '';
+    }
+    
+    // 6. Clause Type (radio buttons)
+    const typeRadio = document.querySelector(`input[name="clauseType"][value="${clause.clause_type || clause.type || 'standard'}"]`);
+    if (typeRadio) {
+        typeRadio.checked = true;
+    } else {
+        // Default to 'standard' if not found
+        const standardRadio = document.querySelector(`input[name="clauseType"][value="standard"]`);
+        if (standardRadio) standardRadio.checked = true;
+    }
+    
+    // 7. Risk Level (if exists)
+    const riskLevelSelect = document.getElementById('clauseRiskLevel');
+    if (riskLevelSelect) {
+        riskLevelSelect.value = clause.risk_level || 'low';
+    }
+    
+    // 8. Tags
+    const tagsInput = document.getElementById('clauseTags');
+    if (tagsInput) {
+        let tagsValue = '';
+        if (Array.isArray(clause.tags)) {
+            tagsValue = clause.tags.join(', ');
+        } else if (typeof clause.tags === 'string') {
+            try {
+                // Try to parse if it's a JSON string
+                const parsed = JSON.parse(clause.tags);
+                if (Array.isArray(parsed)) {
+                    tagsValue = parsed.join(', ');
+                } else {
+                    tagsValue = clause.tags;
+                }
+            } catch {
+                tagsValue = clause.tags;
+            }
+        }
+        tagsInput.value = tagsValue;
+    }
+    
+    // 9. Active Status
+    const activeCheckbox = document.getElementById('clauseActive');
+    if (activeCheckbox) {
+        activeCheckbox.checked = clause.is_active !== false; // Default to true
+    }
+    
+    // Set current clause ID for update
+    currentClauseId = clause.id;
+    
+    // Open edit modal
     document.getElementById('addClauseModal').classList.add('show');
+    
+    console.log('✅ Edit form populated with ALL clause data including code:', clause.clause_code);
+}
+
+
+function setButtonLoading(buttonElement, loadingText = 'Processing...') {
+    if (!buttonElement) return;
+    
+    // Store original content
+    buttonElement.dataset.originalHtml = buttonElement.innerHTML;
+    buttonElement.dataset.originalDisabled = buttonElement.disabled;
+    
+    // Set loading state with rotating Tabler icon
+    buttonElement.disabled = true;
+    buttonElement.style.opacity = '0.7';
+    buttonElement.style.cursor = 'not-allowed';
+    buttonElement.innerHTML = `
+        <i class="ti ti-loader rotating"></i>
+        <span style="margin-left: 0.5rem;">${loadingText}</span>
+    `;
+}
+
+
+function removeButtonLoading(buttonElement) {
+    if (!buttonElement) return;
+    
+    // Restore original content
+    buttonElement.innerHTML = buttonElement.dataset.originalHtml || buttonElement.innerHTML;
+    buttonElement.disabled = buttonElement.dataset.originalDisabled === 'true';
+    buttonElement.style.opacity = '1';
+    buttonElement.style.cursor = 'pointer';
+    
+    // Clean up
+    delete buttonElement.dataset.originalHtml;
+    delete buttonElement.dataset.originalDisabled;
+}
+
+
+
+async function deleteClause(clauseId) {
+    // If clauseId not provided, use currentClauseId
+    const idToDelete = clauseId || currentClauseId;
+    
+    if (!idToDelete) {
+        console.error('No clause ID provided');
+        return;
+    }
+    
+    // Confirm deletion
+    if (!confirm('Are you sure you want to delete this clause? This action cannot be undone.')) {
+        return;
+    }
+    
+    console.log('🗑️ Deleting clause:', idToDelete);
+    
+    try {
+        const response = await fetch(`${API_BASE}/clauses/${idToDelete}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to delete clause');
+        }
+        
+        const result = await response.json();
+        console.log('✅ Clause deleted:', result);
+        
+        // Close detail modal if open
+        closeModal('clauseDetailModal');
+        
+        // Show success notification
+        showNotification('Clause deleted successfully!', 'success');
+        
+        // Reload clauses
+        await loadClausesFromAPI();
+        
+    } catch (error) {
+        console.error('❌ Error deleting clause:', error);
+        showNotification('Failed to delete clause: ' + error.message, 'error');
+    }
+}
+
+function deleteClauseFromDetail() {
+    deleteClause(currentClauseId);
 }
 
 function useClause() {
@@ -432,12 +617,21 @@ function useClause() {
         closeModal('clauseDetailModal');
     }
 }
-
 function closeModal(modalId) {
     document.getElementById(modalId).classList.remove('show');
+    
     if (modalId === 'addClauseModal') {
         const form = document.getElementById('clauseForm');
         if (form) form.reset();
+        
+        // Reset clause code field
+        const codeInput = document.getElementById('clauseCode');
+        if (codeInput) {
+            codeInput.removeAttribute('readonly');
+            codeInput.style.backgroundColor = '';
+            codeInput.style.cursor = '';
+        }
+        
         currentClauseId = null;
     }
 }
@@ -576,3 +770,34 @@ function showNotification(message, type = 'info') {
         setTimeout(() => notification.remove(), 300);
     }, 3000);
 }
+
+
+
+const rotatingIconStyles = `
+<style id="rotating-icon-styles">
+    .rotating {
+        animation: rotate 1s linear infinite;
+    }
+
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+</style>
+`;
+
+// Inject styles if not already present
+if (!document.getElementById('rotating-icon-styles')) {
+    document.head.insertAdjacentHTML('beforeend', rotatingIconStyles);
+}
+
+// Export functions
+window.setButtonLoading = setButtonLoading;
+window.removeButtonLoading = removeButtonLoading;
+
+
+window.editClauseFromDetail = editClauseFromDetail;
+window.deleteClause = deleteClause;
+window.deleteClauseFromDetail = deleteClauseFromDetail;
+window.openAddClauseModal = openAddClauseModal;
+window.closeModal = closeModal;

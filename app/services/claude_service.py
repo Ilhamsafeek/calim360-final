@@ -186,7 +186,6 @@ Draft the clause now:"""
             "suggestions": suggestions[:3],  # Max 3
             "confidence": confidence
         }
-    
     def generate_full_contract(
         self,
         contract_type: str,
@@ -197,241 +196,75 @@ Draft the clause now:"""
         language: str = "en"
     ) -> Dict:
         """
-        Generate a complete contract draft using Claude's advanced legal reasoning capabilities
-        
-        Leverages Claude's strengths:
-        - Deep legal analysis and risk awareness
-        - Contextual integration of requirements
-        - Balanced, enforceable language
-        - Jurisdictional intelligence
+        Generate a complete contract draft using Claude's natural legal reasoning
         """
         try:
-            # Extract special instructions if provided
-            special_instructions = key_terms.get("Additional Requirements", "")
+            # Extract required clauses if provided
+            required_clauses = key_terms.get("REQUIRED CLAUSES (MUST INCLUDE)", "")
+            additional_requirements = key_terms.get("Additional Requirements", "")
             
-            # Build key terms section
+            # Build simple key terms list
             key_terms_text = "\n".join([
                 f"- {key}: {value}" 
                 for key, value in key_terms.items() 
-                if key != "Additional Requirements"
+                if key not in ["REQUIRED CLAUSES (MUST INCLUDE)", "Additional Requirements"]
             ])
             
-            # Build comprehensive prompt leveraging Claude's strengths
-            prompt = f"""You are drafting a {contract_type} as an expert legal advisor with deep expertise in {jurisdiction} commercial law. Your approach combines legal precision with practical enforceability.
+            # Enhanced prompt emphasizing legal enforceability
+            prompt = f"""Draft a comprehensive, contractually and legally binding {contract_type} contract that is fully enforceable under {jurisdiction} law.
 
-    **CONTRACT FUNDAMENTALS:**
-    Parties: {party_a} (Party A) and {party_b} (Party B)
-    Jurisdiction: {jurisdiction}
-    Language: {language}
+    **PARTIES:**
+    - Party A: {party_a}
+    - Party B: {party_b}
 
-    **KEY COMMERCIAL TERMS:**
+    **JURISDICTION:** {jurisdiction}
+
+    **KEY TERMS:**
     {key_terms_text}
 
-    **CLIENT'S SPECIFIC REQUIREMENTS:**
-    {special_instructions if special_instructions else "Draft comprehensive, professionally detailed clauses appropriate for this contract type."}
+    **REQUIRED CLAUSES (must include these specific provisions with full legal detail):**
+    {required_clauses if required_clauses else "Include all standard clauses necessary for a legally binding contract"}
+
+    **ADDITIONAL REQUIREMENTS:**
+    {additional_requirements if additional_requirements else "None"}
 
     ---
 
-    **YOUR APPROACH TO DRAFTING:**
+    **CRITICAL REQUIREMENTS:**
 
-    As Claude, you excel at:
-    1. **Integrated Reasoning**: Weaving client requirements naturally into legal frameworks
-    2. **Risk-Aware Language**: Drafting clauses that protect both parties while enabling business objectives
-    3. **Contextual Intelligence**: Understanding how clauses interact and support each other
-    4. **Practical Enforceability**: Creating terms that courts in {jurisdiction} will uphold
+    This contract must be **contractually and legally binding** with:
 
-    **DRAFTING PRINCIPLES:**
+    1. **Complete legal enforceability** - Include all elements required for a valid, binding contract under {jurisdiction} law
+    2. **Comprehensive rights and obligations** - Clearly define what each party must do, may do, and cannot do
+    3. **Enforceable remedies** - Specify consequences for breach, termination rights, and dispute resolution mechanisms
+    4. **All required clauses fully developed** - Each clause must include detailed provisions, sub-clauses, procedures, and timelines
+    5. **No placeholders** - Use actual dates, values, and specific terms provided. No [TBD], [INSERT], or generic text
+    6. **Production-ready quality** - This contract should be ready for signature and legal enforcement
 
-    When the client requests elaboration (like "elaborate term clause in details"), you should:
-    - Provide comprehensive legal definitions and scope
-    - Include procedural mechanisms (notification, cure periods, escalation)
-    - Enumerate specific examples and scenarios
-    - Detail rights, obligations, and consequences
-    - Address exceptions and limitations
-    - Integrate timelines and deadlines naturally
-    - Cross-reference related provisions
+    **DELIVERABLE:**
+    - Minimum 3,500 words with thorough legal detail
+    - Professional contract language suitable for commercial transactions
+    - All provisions must be specific, measurable, and actionable
+    - Include proper definitions, cross-references, and legal protections
 
-    **STRUCTURAL APPROACH:**
+    **FORMAT:**
+    - Use clean HTML: <h2> for sections, <h3> for subsections, <p> for paragraphs, <strong> for defined terms
+    - Wrap in: <div class="contract-document">...</div>
+    - No markdown code blocks
 
-    Draft the contract with this logical flow:
+    Generate the complete, legally binding contract now:"""
 
-    1. **PREAMBLE & CONTEXT**
-    - Contract title and execution date
-    - Party identification with full legal details
-    - Background recitals (WHEREAS clauses) explaining business context and objectives
-
-    2. **DEFINITIONS & INTERPRETATION**
-    - Comprehensive definitions of all key terms
-    - Interpretation rules (headings, singular/plural, time calculations)
-    - Include Business Day definition for {jurisdiction}
-
-    3. **CORE COMMERCIAL TERMS**
-    Develop detailed sections for:
-    - Scope of Work/Services (what is being delivered)
-    - Contract Price and Payment Terms (how and when payment occurs)
-    - Term and Duration (start, end, renewal mechanisms)
-    - Deliverables and Acceptance Criteria
-
-    4. **OBLIGATIONS & PERFORMANCE**
-    For each party, detail:
-    - Affirmative obligations (what must be done)
-    - Negative obligations (what is prohibited)
-    - Performance standards and KPIs
-    - Cooperation and coordination duties
-    - Resource provision responsibilities
-
-    5. **LEGAL PROTECTIONS**
-    Draft comprehensive clauses for:
-    - Representations and Warranties (accuracy of information provided)
-    - Confidentiality and Data Protection
-    - Intellectual Property Rights (ownership and licensing)
-    - Insurance Requirements (types, amounts, evidence)
-    - Indemnification (who protects whom, from what, subject to what limits)
-    - Limitation of Liability (caps, carve-outs, consequential damages)
-
-    6. **RISK ALLOCATION**
-    Address:
-    - Force Majeure (comprehensive definition, procedures, remedies)
-    - Change Management (how to handle scope changes)
-    - Delays and Extensions of Time
-    - Quality Issues and Defects
-    - Third Party Claims
-
-    7. **CONTRACT GOVERNANCE**
-    Establish:
-    - Amendment procedures
-    - Assignment and subcontracting rules
-    - Notices (methods, addresses, deemed receipt)
-    - Relationship of parties (independent contractors, not partners)
-    - Audit and inspection rights
-
-    8. **TERMINATION & EXIT**
-    Detail:
-    - Termination for convenience (notice periods, costs)
-    - Termination for cause (material breach, insolvency, force majeure)
-    - Consequences of termination (wind-down, payment, return of property)
-    - Survival of obligations post-termination
-
-    9. **DISPUTE RESOLUTION**
-    Create escalation framework:
-    - Senior management negotiation
-    - Mediation procedures
-    - Arbitration (seat, rules, language, number of arbitrators)
-    - Governing law and jurisdiction specific to {jurisdiction}
-
-    10. **GENERAL PROVISIONS**
-        - Entire agreement and integration
-        - Severability and blue-pencil rule
-        - Waiver (no waiver by conduct)
-        - Counterparts and electronic signatures
-        - Further assurances
-
-    11. **EXECUTION**
-        - Signature blocks with proper legal authority
-        - Witness requirements per {jurisdiction} law
-        - Date and place of execution
-
-    **HANDLING SPECIAL INSTRUCTIONS:**
-
-    When client provides specific instructions like date ranges, elaboration requests, or custom requirements:
-
-    ✓ Integrate them organically into the relevant clauses
-    ✓ Don't just add as an appendix - weave into the legal fabric
-    ✓ Maintain professional legal tone while addressing specific needs
-    ✓ Use the instruction as a guide for the LEVEL of detail expected across ALL clauses
-
-    For example: If client says "elaborate Force Majeure clause with dates January 1, 2025 to December 31, 2028":
-    - Don't just mention the dates in passing
-    - Create a comprehensive Force Majeure framework that:
-    * Defines Force Majeure events with specificity
-    * Lists categories (natural disasters, political events, epidemics, etc.)
-    * Details notification requirements ("within 7 days of occurrence")
-    * Explains impact on performance obligations during the specified contract term
-    * Sets thresholds for prolonged events (90 days continuous/120 days aggregate)
-    * Addresses extensions of time and payment implications
-    * Covers termination rights if event persists
-    * Explicitly excludes financial hardship and ordinary business risks
-
-    **{jurisdiction.upper()}-SPECIFIC REQUIREMENTS:**
-
-    Apply relevant legal standards:
-    - Qatar Civil Code compliance for commercial contracts
-    - QFCRA regulations if applicable to parties
-    - Qatar Labor Law integration for service contracts
-    - Local dispute resolution mechanisms (Qatar International Court/QICDRC)
-    - Currency provisions (QAR as standard, exchange rate mechanisms)
-    - Arabic translation requirements for certain contract types
-    - Notarization and authentication requirements
-    - Force majeure aligned with Qatar law interpretation
-
-    **HTML FORMATTING:**
-
-    Structure the contract with semantic HTML:
-
-    ```html
-    <div class="contract-document">
-    <header class="contract-header">
-        <h1 class="contract-title">[TITLE]</h1>
-        <p class="contract-date">Dated: [DATE]</p>
-    </header>
-    
-    <section class="recitals">
-        <h2>RECITALS</h2>
-        [WHEREAS clauses]
-    </section>
-    
-    <section class="definitions">
-        <h2>1. DEFINITIONS AND INTERPRETATION</h2>
-        <p>1.1 In this Agreement, unless the context otherwise requires:</p>
-        <dl>
-        <dt><strong>"Term"</strong></dt>
-        <dd>means definition...</dd>
-        </dl>
-    </section>
-    
-    <section class="scope">
-        <h2>2. SCOPE OF [WORK/SERVICES]</h2>
-        <p>2.1 First provision...</p>
-        <p>2.2 Second provision...</p>
-    </section>
-    
-    [Continue with logical section progression]
-    </div>
-    ```
-
-    **QUALITY BENCHMARKS:**
-
-    Your output should demonstrate:
-    ✓ Legal sophistication appropriate for commercial transactions
-    ✓ Balanced protection for both parties
-    ✓ Practical enforceability in {jurisdiction} courts
-    ✓ Comprehensive coverage without unnecessary verbosity
-    ✓ Clear cross-referencing between related provisions
-    ✓ Professional terminology and defined terms consistency
-    ✓ Proper numbering hierarchy (1, 1.1, 1.1.1)
-    ✓ Thorough treatment of standard commercial risks
-
-    **OUTPUT REQUIREMENTS:**
-
-    - Begin with: <div class="contract-document">
-    - NO markdown code blocks (```html)
-    - NO placeholder text like [INSERT] or [TBD]
-    - Use actual dates, values, and names provided
-    - Ensure all HTML tags properly closed
-    - Create a complete, execution-ready contract draft
-
-    Draft the comprehensive, professionally detailed contract now, leveraging your analytical depth and legal reasoning to create superior contract language:"""
-
+            # Call Claude with higher token limit
             message = self.client.messages.create(
                 model=self.model,
-                max_tokens=4000,
-                temperature=0.4,  # Balanced for legal creativity and consistency
+                max_tokens=8000,
+                temperature=0.4,
                 messages=[{"role": "user", "content": prompt}]
             )
             
             contract_text = message.content[0].text
             
-            # Clean up markdown artifacts
+            # Clean up any markdown artifacts
             contract_text = contract_text.strip()
             for marker in ["```html", "```"]:
                 if contract_text.startswith(marker):
@@ -440,20 +273,26 @@ Draft the clause now:"""
                     contract_text = contract_text[:-3].strip()
             
             word_count = len(contract_text.split())
-            logger.info(f" Claude generated superior {contract_type} using advanced legal reasoning ({word_count} words)")
+            tokens_used = message.usage.input_tokens + message.usage.output_tokens
+            
+            logger.info(f"✅ Claude generated legally binding {contract_type}: {word_count} words, {tokens_used} tokens")
+            
+            # Warn if content seems too short for a binding contract
+            if word_count < 2500:
+                logger.warning(f"⚠️ Generated contract may lack sufficient detail for enforceability: {word_count} words")
             
             return {
                 "contract_text": contract_text,
                 "ai_generated": True,
                 "model_used": self.model,
                 "word_count": word_count,
+                "tokens_used": tokens_used,
                 "formatted": True,
-                "format_type": "html",
-                "generation_approach": "claude_native_reasoning"
+                "format_type": "html"
             }
             
         except Exception as e:
-            logger.error(f" Claude API error: {str(e)}")
+            logger.error(f"❌ Claude API error: {str(e)}")
             raise Exception(f"Failed to generate contract: {str(e)}")
     
     def analyze_contract_risks(
@@ -1354,3 +1193,70 @@ Example format:
     except Exception as e:
         logger.error(f" Error extracting obligations: {str(e)}")
         return []
+
+
+
+async def generate_contract_stream(
+    self,
+    contract_type: str,
+    party_a: str,
+    party_b: str,
+    jurisdiction: str,
+    key_terms: Dict,
+    language: str = "en"
+):
+    """
+    Stream contract generation in real-time
+    Yields chunks of content as they're generated
+    """
+    try:
+        # Extract requirements
+        required_clauses = key_terms.get("REQUIRED CLAUSES (MUST INCLUDE)", "")
+        additional_requirements = key_terms.get("Additional Requirements", "")
+        
+        # Build key terms text
+        key_terms_text = "\n".join([
+            f"- {key}: {value}" 
+            for key, value in key_terms.items() 
+            if key not in ["REQUIRED CLAUSES (MUST INCLUDE)", "Additional Requirements"]
+        ])
+        
+        # Simplified prompt for maximum output
+        prompt = f"""Draft a comprehensive, contractually and legally binding {contract_type} contract that is fully enforceable under {jurisdiction} law.
+
+**PARTIES:**
+- Party A: {party_a}
+- Party B: {party_b}
+
+**JURISDICTION:** {jurisdiction}
+
+**KEY TERMS:**
+{key_terms_text}
+
+**REQUIRED CLAUSES (must include with full legal detail):**
+{required_clauses if required_clauses else "Include all standard clauses necessary for a legally binding contract"}
+
+**ADDITIONAL REQUIREMENTS:**
+{additional_requirements if additional_requirements else "None"}
+
+---
+
+This contract must be **contractually and legally binding** with complete legal enforceability. Include all elements required for a valid, binding contract under {jurisdiction} law. Minimum 4,000 words with comprehensive legal detail.
+
+**FORMAT:** Use clean HTML with <h2> for sections, <h3> for subsections, <p> for paragraphs. Wrap in <div class="contract-document">...</div>. No markdown.
+
+Generate the complete, legally binding contract now:"""
+
+        # Stream from Claude API
+        with self.client.messages.stream(
+            model=self.model,
+            max_tokens=16000,  # Maximum for comprehensive contracts
+            temperature=0.4,
+            messages=[{"role": "user", "content": prompt}]
+        ) as stream:
+            for text in stream.text_stream:
+                yield text
+                
+    except Exception as e:
+        logger.error(f"❌ Claude streaming error: {str(e)}")
+        raise Exception(f"Failed to stream contract: {str(e)}")

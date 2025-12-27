@@ -1214,3 +1214,47 @@
             transform: rotate(360deg);
         }
     }
+
+
+
+
+    /* Streaming Modal Styles */
+#streamingModal .modal-content {
+    max-width: 1200px;
+}
+
+#stream-output {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    max-height: 500px;
+    overflow-y: auto;
+    font-family: Georgia, serif;
+    line-height: 1.8;
+}
+
+#stream-output h2 {
+    color: #2c3e50;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+#stream-output h3 {
+    color: #34495e;
+    margin-top: 15px;
+    margin-bottom: 8px;
+}
+
+#stream-output p {
+    margin-bottom: 12px;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+#stream-status i {
+    animation: pulse 1.5s ease-in-out infinite;
+}

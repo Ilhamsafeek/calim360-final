@@ -1479,6 +1479,36 @@
     .doc-card:has(.standalone-badge) {
         border-left: 3px solid #10b981;
     }
+
+    .doc-delete-btn {
+    padding: 0.25rem 0.5rem;
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+    color: #dc2626;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: all 0.2s;
+    opacity: 0;
+    flex-shrink: 0;
+}
+
+.doc-item:hover .doc-delete-btn {
+    opacity: 1;
+}
+
+.doc-delete-btn:hover {
+    background: #dc2626;
+    color: white;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
 </style>
 {% endblock %}
 
@@ -2128,6 +2158,9 @@
                     <div class="doc-name" title="${escapeHtml(doc.document_name)}">${escapeHtml(doc.document_name)}</div>
                     <div class="doc-meta">${standaloneBadge}${projectInfo}${formatDate(doc.uploaded_at)} • ${formatFileSize(doc.file_size)}</div>
                 </div>
+                <button class="doc-delete-btn" onclick="event.stopPropagation(); deleteDocument('${doc.id}')" title="Delete document">
+                <i class="ti ti-trash"></i>
+                </button>
             </div>
         `;
             }).join('');
@@ -2830,5 +2863,57 @@
             showToast('1. Select mode → 2. Choose project → 3. Select documents → 4. Ask questions', 'info');
         };
     })();
+
+
+window.deleteDocument = async function(docId) {
+    if (!confirm('Are you sure you want to delete this document? This action cannot be undone.')) {
+        return;
+    }
+
+    const deleteBtn = event.target.closest('.doc-delete-btn');
+    const originalContent = deleteBtn.innerHTML;
+    
+    try {
+        // Show loading state
+        deleteBtn.disabled = true;
+        deleteBtn.innerHTML = '<i class="ti ti-loader-2" style="animation: spin 1s linear infinite;"></i> Deleting...';
+        
+        const response = await fetch(`/api/v1/correspondence/documents/${docId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to delete document');
+
+        const result = await response.json();
+        showToast(result.message || 'Document deleted successfully', 'success');
+
+    } catch (error) {
+        console.error('Delete error:', error);
+        showToast('Failed to delete document', 'error');
+        deleteBtn.disabled = false;
+        deleteBtn.innerHTML = originalContent;
+        return; // Exit if delete failed
+    }
+
+    // Reload documents (separate try-catch)
+    try {
+        await loadProjects();
+        if (state.analysisMode === 'project' && state.selectedProject) {
+            const projectSelect = document.getElementById('projectSelect');
+            projectSelect.value = state.selectedProject;
+            onProjectChange();
+        } else {
+            state.allDocuments = [...state.allDocumentsGlobal];
+            state.filteredDocs = [...state.allDocuments];
+            renderDocs();
+        }
+    } catch (reloadError) {
+        console.error('Reload error:', reloadError);
+        // Document deleted but reload failed - just refresh manually
+        location.reload();
+    }
+};
+
 </script>
 {% endblock %}

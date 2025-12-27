@@ -1550,21 +1550,48 @@
             animation: spin 1s linear infinite;
             margin: 0 auto;
         }
+
+
+        /* Prevent ALL modals from closing on outside click */
+        .modal,
+        .project-modal,
+        .modal-overlay,
+        [id$="Modal"],
+        [class*="modal"] {
+            pointer-events: none !important;
+        }
+
+        /* Allow clicking inside modals */
+        .modal .modal-dialog,
+        .modal .modal-content,
+        .project-modal .modal-dialog,
+        .modal-overlay .modal-dialog,
+        [id$="Modal"] .modal-dialog,
+        [class*="modal"] .modal-dialog {
+            pointer-events: auto !important;
+        }
+
+        /* Ensure all buttons/inputs work */
+        .modal *,
+        .project-modal *,
+        .modal-overlay * {
+            pointer-events: auto !important;
+        }
     </style>
 
 
- <!-- Global User Data - Available across all pages -->
+    <!-- Global User Data - Available across all pages -->
     <script>
         // Make current user globally available
         window.currentUser = {
             id: {{ user.id if user else 'null' }},
-            full_name: "{{ user.full_name if user else '' }}",
+        full_name: "{{ user.full_name if user else '' }}",
             email: "{{ user.email if user else '' }}",
-            user_type: "{{ user.user_type if user else '' }}",
-            avatar_initial: "{{ user.avatar_initial if user else 'U' }}",
-            company_id: {{ user.company_id if user else 'null' }}
+                user_type: "{{ user.user_type if user else '' }}",
+                    avatar_initial: "{{ user.avatar_initial if user else 'U' }}",
+                        company_id: { { user.company_id if user else 'null' } }
         };
-        
+
         // Quick access properties
         window.currentUserId = window.currentUser.id;
         window.currentUserName = window.currentUser.full_name;
@@ -1706,9 +1733,9 @@
             <header class="header">
                 <div class="header-content">
                     <!-- Mobile Menu Toggle -->
-                    <button class="header-btn mobile-menu-btn" onclick="toggleSidebar()">
-                        <i class="ti ti-menu-2"></i>
-                    </button>
+                    <!-- <button class="header-btn mobile-menu-btn" onclick="toggleSidebar()">
+                        <i class="ti ti-caret-left-filled"></i>
+                    </button> -->
 
                     <!-- Search -->
                     <div class="header-search">
@@ -2155,21 +2182,11 @@
             const sidebar = document.getElementById('sidebar');
 
             sidebar.classList.toggle('collapsed');
-            sidebar.classList.toggle('sidebar-collapsed'); // Add this line
+            sidebar.classList.toggle('sidebar-collapsed');
 
             localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+
         }
-
-        // Load sidebar preference - CORRECTED
-        window.addEventListener('DOMContentLoaded', () => {
-            const collapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-            const sidebar = document.getElementById('sidebar');
-
-            if (collapsed) {
-                sidebar.classList.add('collapsed');
-                sidebar.classList.add('sidebar-collapsed'); // Add this line
-            }
-        });
 
         // ============================================
         // USER MENU DROPDOWN - FIXED
@@ -2616,6 +2633,32 @@
         // DOCUMENT READY & EVENT LISTENERS
         // ============================================
         document.addEventListener('DOMContentLoaded', () => {
+
+            // Sidebar hover toggle
+            const sidebar = document.getElementById('sidebar');
+            const menuBtn = document.querySelector('.header-btn.mobile-menu-btn');
+
+            if (sidebar) {
+                sidebar.addEventListener('mouseenter', function () {
+                    if (sidebar.classList.contains('collapsed')) {
+                        toggleSidebar();
+                        // Change icon to left arrow
+                        if (menuBtn) {
+                            menuBtn.innerHTML = '<i class="ti ti-caret-left-filled"></i>';
+                        }
+                    }
+                });
+
+                sidebar.addEventListener('mouseleave', function () {
+                    if (!sidebar.classList.contains('collapsed')) {
+                        toggleSidebar();
+                        // Change icon to right arrow
+                        if (menuBtn) {
+                            menuBtn.innerHTML = '<i class="ti ti-caret-right-filled"></i>';
+                        }
+                    }
+                });
+            }
             // Load saved dropdown states
             loadDropdownStates();
 

@@ -3884,9 +3884,9 @@
             <button class="btn btn-outline-secondary" onclick="closeModal('clauseSuggestionModal')">
                 Cancel
             </button>
-            <button class="btn btn-warning" onclick="editClauseManually()">
+            <!-- <button class="btn btn-warning" onclick="editClauseManually()">
                 <i class="ti ti-edit"></i> Edit Manually
-            </button>
+            </button> -->
             <!-- <button class="btn btn-success" onclick="acceptSuggestion()">
                 <i class="ti ti-check"></i> Accept Suggestion
             </button> -->
@@ -5660,21 +5660,7 @@ ${contract.content && contract.content.trim() !== '' ?
                 </div>
                 ` : ''}
                 
-                ${!isReplaced ? `
-                <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
-                   
-                    <button class="btn btn-outline-primary btn-sm" 
-                            onclick="editClauseManually(${index}, '${escapeHtml(clause.clause_name)}', '${escapeHtml(clause.clause_text)}')"
-                            style="flex: 1;">
-                        <i class="ti ti-edit"></i> Edit Manually
-                    </button>
-                    <button class="btn btn-outline-secondary btn-sm" 
-                            onclick="skipClauseSuggestion(${index})"
-                            style="flex: 1;">
-                        <i class="ti ti-x"></i> Skip
-                    </button>
-                </div>
-                ` : ''}
+              
             </div>
         `;
         });

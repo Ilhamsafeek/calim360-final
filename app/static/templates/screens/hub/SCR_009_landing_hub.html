@@ -191,11 +191,11 @@
             left: 12%;
         }
 
-        /* App icon base styles */
+        /* App icon base styles - Mobile App Style */
         .app-icon {
             width: 130px;
             height: 130px;
-            border-radius: 24px;
+            border-radius: 28px;
             background: rgba(255, 255, 255, 0.12);
             backdrop-filter: blur(20px);
             border: 2px solid rgba(255, 255, 255, 0.3);
@@ -207,7 +207,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 48px;
+            font-size: 64px;
             color: white;
             transition: var(--transition);
             position: relative;
@@ -230,6 +230,25 @@
             padding: 1rem;
         }
 
+        /* Mobile App Icon Styles */
+        .app-icon i {
+            font-size: 64px;
+            z-index: 2;
+            position: relative;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+        }
+
+        /* Background accent for mobile apps */
+        .app-icon::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 28px;
+            opacity: 0.15;
+            z-index: 1;
+        }
+
         /* App name labels */
         .app-name {
             margin-top: 0.75rem;
@@ -241,45 +260,102 @@
             white-space: nowrap;
         }
 
-        /* Individual color schemes for each app */
+        /* Individual color schemes for each app - Professional Mobile App Style */
+        
+        /* Tender - Professional Blue */
         .app.top .app-icon {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.3) 100%);
-            border-color: rgba(59, 130, 246, 0.5);
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-color: rgba(59, 130, 246, 0.6);
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.4), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
 
+        .app.top .app-icon::before {
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3), transparent 70%);
+        }
+
+        /* Bid - Amber/Gold */
         .app.top-right .app-icon {
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.3) 100%);
-            border-color: rgba(245, 158, 11, 0.5);
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border-color: rgba(245, 158, 11, 0.6);
+            box-shadow: 0 8px 32px rgba(245, 158, 11, 0.4), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
 
+        .app.top-right .app-icon::before {
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3), transparent 70%);
+        }
+
+        /* Communication - Cyan */
         .app.right .app-icon {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(124, 58, 237, 0.3) 100%);
-            border-color: rgba(139, 92, 246, 0.5);
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            border-color: rgba(6, 182, 212, 0.6);
+            box-shadow: 0 8px 32px rgba(6, 182, 212, 0.4), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
 
+        .app.right .app-icon::before {
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3), transparent 70%);
+        }
+
+        /* Variation - Orange */
         .app.bottom-right .app-icon {
-            background: linear-gradient(135deg, rgba(236, 72, 153, 0.2) 0%, rgba(219, 39, 119, 0.3) 100%);
-            border-color: rgba(236, 72, 153, 0.5);
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            border-color: rgba(249, 115, 22, 0.6);
+            box-shadow: 0 8px 32px rgba(249, 115, 22, 0.4), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
 
+        .app.bottom-right .app-icon::before {
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3), transparent 70%);
+        }
+
+        /* Claim - Red */
         .app.bottom .app-icon {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.3) 100%);
-            border-color: rgba(239, 68, 68, 0.5);
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border-color: rgba(239, 68, 68, 0.6);
+            box-shadow: 0 8px 32px rgba(239, 68, 68, 0.4), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
 
+        .app.bottom .app-icon::before {
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3), transparent 70%);
+        }
+
+        /* CLM - Emerald Green (Active) */
         .app.bottom-left .app-icon {
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(147, 51, 234, 0.3) 100%);
-            border-color: rgba(168, 85, 247, 0.5);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-color: rgba(16, 185, 129, 0.6);
+            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.4), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
 
+        .app.bottom-left .app-icon::before {
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3), transparent 70%);
+        }
+
+        /* Closeout - Purple */
         .app.left .app-icon {
-            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(22, 163, 74, 0.3) 100%);
-            border-color: rgba(34, 197, 94, 0.5);
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            border-color: rgba(139, 92, 246, 0.6);
+            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
 
+        .app.left .app-icon::before {
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3), transparent 70%);
+        }
+
+        /* DPR - Indigo */
         .app.top-left .app-icon {
-            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2) 0%, rgba(8, 145, 178, 0.3) 100%);
-            border-color: rgba(6, 182, 212, 0.5);
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            border-color: rgba(99, 102, 241, 0.6);
+            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.4), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .app.top-left .app-icon::before {
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3), transparent 70%);
         }
 
         /* Coming Soon Badge */
@@ -455,7 +531,15 @@
             .app-icon {
                 width: 110px;
                 height: 110px;
-                font-size: 40px;
+                border-radius: 24px;
+            }
+
+            .app-icon i {
+                font-size: 52px;
+            }
+
+            .app-icon::before {
+                border-radius: 24px;
             }
 
             .app.center .app-icon {
@@ -485,8 +569,15 @@
             .app-icon {
                 width: 85px;
                 height: 85px;
-                font-size: 32px;
-                border-radius: 18px;
+                border-radius: 20px;
+            }
+
+            .app-icon i {
+                font-size: 40px;
+            }
+
+            .app-icon::before {
+                border-radius: 20px;
             }
 
             .app.center .app-icon {
@@ -544,8 +635,15 @@
             .app-icon {
                 width: 70px;
                 height: 70px;
-                font-size: 28px;
-                border-radius: 16px;
+                border-radius: 18px;
+            }
+
+            .app-icon i {
+                font-size: 34px;
+            }
+
+            .app-icon::before {
+                border-radius: 18px;
             }
 
             .app.center .app-icon {
@@ -670,79 +768,79 @@
 
                 <!-- Surrounding apps - 8 positions -->
 
-                <!-- Top - Tender -->
+                <!-- Top - Tender (Blue) -->
                 <div class="app top" data-module="tender" onclick="handleModuleClick('tender', 'Tender Management')">
                     <div class="coming-soon-badge">Soon</div>
                     <div class="app-icon">
-                        <img src="/static/img/tender.png" alt="Tender">
+                        <i class="ti ti-file-invoice"></i>
                     </div>
                     <div class="app-name">Tender</div>
                 </div>
 
-                <!-- Top Right - Bid -->
+                <!-- Top Right - Bid (Amber/Gold) -->
                 <div class="app top-right" data-module="bid" onclick="handleModuleClick('bid', 'Bid Management')">
                     <div class="coming-soon-badge">Soon</div>
                     <div class="app-icon">
-                        <img src="/static/img/bid.png" alt="Bid">
+                        <i class="ti ti-gavel"></i>
                     </div>
                     <div class="app-name">Bid</div>
                 </div>
 
-                <!-- Right - Communication -->
+                <!-- Right - Communication (Cyan) -->
                 <div class="app right" data-module="communication"
                     onclick="handleModuleClick('communication', 'Communication')">
                     <div class="coming-soon-badge">Soon</div>
                     <div class="app-icon">
-                        <img src="/static/img/communication.png" alt="Communication">
+                        <i class="ti ti-messages"></i>
                     </div>
                     <div class="app-name">Communication</div>
                 </div>
 
-                <!-- Bottom Right - Variation -->
+                <!-- Bottom Right - Variation (Orange) -->
                 <div class="app bottom-right" data-module="variation"
                     onclick="handleModuleClick('variation', 'Variation Orders')">
                     <div class="coming-soon-badge">Soon</div>
                     <div class="app-icon">
-                        <img src="/static/img/variation.png" alt="Variation">
+                        <i class="ti ti-arrows-exchange"></i>
                     </div>
-                    <!-- <div class="app-name">Variation</div> -->
+                    <div class="app-name">Variation</div>
                 </div>
 
-                <!-- Bottom - Claim -->
+                <!-- Bottom - Claim (Red) -->
                 <div class="app bottom" data-module="claim" onclick="handleModuleClick('claim', 'Claims Management')">
                     <div class="coming-soon-badge">Soon</div>
                     <div class="app-icon">
-                        <img src="/static/img/claim.png" alt="Claim">
+                        <i class="ti ti-alert-triangle"></i>
                     </div>
-                    <!-- <div class="app-name">Claim</div> -->
+                    <div class="app-name">Claim</div>
                 </div>
 
-                <!-- Bottom Left - CLM (Active) -->
+                <!-- Bottom Left - CLM (Emerald Green - Active) -->
                 <a href="/dashboard" class="app bottom-left" data-module="clm">
                     <div class="active-badge">Active</div>
                     <div class="app-icon">
-                        <img src="/static/img/clm.png" alt="CLM">
+                        <i class="ti ti-file-check"></i>
                     </div>
-                    <!-- <div class="app-name">CLM</div> -->
+                    <div class="app-name">CLM</div>
                 </a>
 
-                <!-- Left - Closeout -->
+                <!-- Left - Closeout (Purple) -->
                 <div class="app left" data-module="closeout"
                     onclick="handleModuleClick('closeout', 'Project Closeout')">
                     <div class="coming-soon-badge">Soon</div>
                     <div class="app-icon">
-                        <img src="/static/img/closeout.png" alt="Closeout">
+                        <i class="ti ti-circle-check"></i>
                     </div>
-                    <!-- <div class="app-name">Closeout</div> -->
+                    <div class="app-name">Closeout</div>
                 </div>
 
-                <!-- Top Left - DPR -->
+                <!-- Top Left - DPR (Indigo) -->
                 <div class="app top-left" data-module="dpr" onclick="handleModuleClick('dpr', 'Daily Progress Report')">
                     <div class="coming-soon-badge">Soon</div>
                     <div class="app-icon">
-                        <img src="/static/img/dpr.png" alt="DPR">
+                        <i class="ti ti-report-analytics"></i>
                     </div>
-                    <!-- <div class="app-name">DPR</div> -->
+                    <div class="app-name">DPR</div>
                 </div>
             </div>
         </div>

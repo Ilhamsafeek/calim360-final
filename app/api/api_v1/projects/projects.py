@@ -983,3 +983,281 @@ async def delete_project(
         db.rollback()
         logger.error(f" Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
+# =====================================================
+# FILE: app/api/api_v1/projects/projects.py
+# Add this endpoint for direct project-level document uploads
+# =====================================================
+
+@router.post("/{project_id}/documents/upload")
+async def upload_project_documents(
+    project_id: int,
+    files: List[UploadFile] = File(...),
+    document_type: str = Form(default="project_document"),
+    notes: Optional[str] = Form(default=None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Upload documents directly to a project
+    Documents are stored in the documents table and linked via project_documents junction table
+    """
+    try:
+        from pathlib import Path
+        import hashlib
+        import uuid
+        from datetime import datetime
+        
+        logger.info(f"📤 Uploading {len(files)} documents to project {project_id}")
+        
+        # Verify project exists and user has access
+        project_query = text("""
+            SELECT id, project_name, project_code 
+            FROM projects 
+            WHERE id = :project_id AND company_id = :company_id
+        """)
+        
+        project = db.execute(project_query, {
+            "project_id": project_id,
+            "company_id": current_user.company_id
+        }).fetchone()
+        
+        if not project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Project not found or access denied"
+            )
+        
+        # Define upload directory
+        UPLOAD_BASE_DIR = Path("app/static/uploads/project_documents")
+        project_upload_dir = UPLOAD_BASE_DIR / f"project_{project_id}"
+        project_upload_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Allowed file extensions
+        ALLOWED_EXTENSIONS = {
+            'pdf': 'application/pdf',
+            'doc': 'application/msword',
+            'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls': 'application/vnd.ms-excel',
+            'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'txt': 'text/plain',
+            'rtf': 'application/rtf',
+            'odt': 'application/vnd.oasis.opendocument.text',
+            'eml': 'message/rfc822'
+        }
+        
+        MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+        
+        uploaded_documents = []
+        errors = []
+        
+        for file in files:
+            try:
+                # Validate file extension
+                file_ext = Path(file.filename).suffix.lower().replace('.', '')
+                if file_ext not in ALLOWED_EXTENSIONS:
+                    errors.append({
+                        "filename": file.filename,
+                        "error": f"File type .{file_ext} not allowed"
+                    })
+                    continue
+                
+                # Read file content
+                content = await file.read()
+                file_size = len(content)
+                
+                # Validate file size
+                if file_size > MAX_FILE_SIZE:
+                    errors.append({
+                        "filename": file.filename,
+                        "error": f"File size exceeds 50MB limit"
+                    })
+                    continue
+                
+                # Generate unique document ID and hash
+                doc_id = str(uuid.uuid4())
+                file_hash = hashlib.sha256(content).hexdigest()
+                
+                # Save file
+                file_path = project_upload_dir / f"{doc_id}_{file.filename}"
+                with open(file_path, "wb") as f:
+                    f.write(content)
+                
+                # Get relative path for database
+                relative_path = str(file_path.relative_to(Path("app")))
+                
+                # Prepare metadata - MUST include project_id for correspondence integration
+                metadata = json.dumps({
+                    "project_id": int(project_id),  # Ensure integer for correspondence queries
+                    "project_name": project.project_name,
+                    "project_code": project.project_code,
+                    "original_filename": file.filename,
+                    "notes": notes,
+                    "upload_source": "project_dashboard",
+                    "upload_mode": "project-level",
+                    "uploader_email": current_user.email
+                })
+                
+                # Insert into documents table
+                insert_doc_query = text("""
+                    INSERT INTO documents (
+                        id, company_id, document_name, document_type,
+                        file_path, file_size, mime_type, hash_value,
+                        uploaded_by, uploaded_at, version, access_count, metadata
+                    ) VALUES (
+                        :id, :company_id, :document_name, :document_type,
+                        :file_path, :file_size, :mime_type, :hash_value,
+                        :uploaded_by, :uploaded_at, 1, 0, :metadata
+                    )
+                """)
+                
+                db.execute(insert_doc_query, {
+                    "id": doc_id,
+                    "company_id": current_user.company_id,
+                    "document_name": file.filename,
+                    "document_type": document_type,
+                    "file_path": relative_path,
+                    "file_size": file_size,
+                    "mime_type": ALLOWED_EXTENSIONS.get(file_ext, 'application/octet-stream'),
+                    "hash_value": file_hash,
+                    "uploaded_by": current_user.id,
+                    "uploaded_at": datetime.utcnow(),
+                    "metadata": metadata
+                })
+                
+                # Link document to project via project_documents junction table
+                link_query = text("""
+                    INSERT INTO project_documents (project_id, document_id, created_at)
+                    VALUES (:project_id, :document_id, :created_at)
+                    ON DUPLICATE KEY UPDATE created_at = :created_at
+                """)
+                
+                db.execute(link_query, {
+                    "project_id": project_id,
+                    "document_id": doc_id,
+                    "created_at": datetime.utcnow()
+                })
+                
+                db.commit()
+                
+                uploaded_documents.append({
+                    "id": doc_id,
+                    "name": file.filename,
+                    "size": file_size,
+                    "type": file_ext,
+                    "uploaded_at": datetime.utcnow().isoformat()
+                })
+                
+                logger.info(f"✅ Uploaded: {file.filename} (ID: {doc_id})")
+                
+            except Exception as e:
+                logger.error(f"❌ Error uploading {file.filename}: {str(e)}")
+                errors.append({
+                    "filename": file.filename,
+                    "error": str(e)
+                })
+                db.rollback()
+        
+        return {
+            "success": True,
+            "message": f"Uploaded {len(uploaded_documents)} of {len(files)} files",
+            "data": {
+                "uploaded": uploaded_documents,
+                "errors": errors,
+                "project_id": project_id,
+                "project_name": project.project_name
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Upload error: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Upload failed: {str(e)}"
+        )
+
+
+@router.get("/{project_id}/documents")
+async def get_project_documents(
+    project_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all documents for a specific project"""
+    try:
+        logger.info(f"📂 Fetching documents for project {project_id}")
+        
+        # Query documents linked via project_documents junction table
+        query_str = """
+            SELECT
+                d.id,
+                d.document_name as name,
+                d.document_type as type,
+                d.file_size as size,
+                d.file_path as path,
+                d.uploaded_at as uploadedAt,
+                d.uploaded_by,
+                CONCAT(u.first_name, ' ', u.last_name) as uploaded_by_name
+            FROM documents d
+            INNER JOIN project_documents pd ON d.id = pd.document_id
+            LEFT JOIN users u ON d.uploaded_by = u.id
+            WHERE pd.project_id = :project_id
+            AND d.company_id = :company_id
+            ORDER BY d.uploaded_at DESC
+        """
+        
+        result = db.execute(
+            text(query_str), 
+            {
+                "project_id": project_id,
+                "company_id": current_user.company_id
+            }
+        )
+        
+        documents = []
+        for row in result:
+            # Format file size
+            size_str = "Unknown"
+            if row.size:
+                size_bytes = int(row.size)
+                if size_bytes < 1024:
+                    size_str = f"{size_bytes} B"
+                elif size_bytes < 1024 * 1024:
+                    size_str = f"{size_bytes / 1024:.2f} KB"
+                elif size_bytes < 1024 * 1024 * 1024:
+                    size_str = f"{size_bytes / (1024 * 1024):.2f} MB"
+                else:
+                    size_str = f"{size_bytes / (1024 * 1024 * 1024):.2f} GB"
+            
+            documents.append({
+                "id": row.id,
+                "name": row.name,
+                "type": row.type,
+                "size": size_str,
+                "path": row.path,
+                "uploadedAt": row.uploadedAt.isoformat() if row.uploadedAt else None,
+                "uploaded_by": row.uploaded_by,
+                "uploaded_by_name": row.uploaded_by_name or "Unknown"
+            })
+        
+        logger.info(f"✅ Found {len(documents)} documents")
+        
+        return {
+            "success": True,
+            "data": documents,
+            "count": len(documents),
+            "message": f"Found {len(documents)} documents"
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error fetching documents: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch documents: {str(e)}"
+        )

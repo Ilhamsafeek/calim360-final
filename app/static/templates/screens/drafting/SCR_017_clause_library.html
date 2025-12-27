@@ -133,7 +133,8 @@
         color: var(--text-muted);
     }
 
-    .filter-btn, .sort-select {
+    .filter-btn,
+    .sort-select {
         padding: 0.625rem 1.25rem;
         border: 1px solid var(--border-color);
         background: white;
@@ -147,7 +148,8 @@
         transition: all 0.2s;
     }
 
-    .filter-btn:hover, .sort-select:hover {
+    .filter-btn:hover,
+    .sort-select:hover {
         border-color: var(--primary-color);
         background: var(--background-light);
     }
@@ -198,8 +200,13 @@
     }
 
     @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
     }
 
     /* Clause Cards Grid - 3 COLUMNS */
@@ -234,7 +241,7 @@
 
     .clause-card:hover {
         border-color: var(--primary-color);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         transform: translateY(-2px);
     }
 
@@ -548,7 +555,122 @@
     input[type="checkbox"] {
         accent-color: var(--primary-color);
     }
+
+    /* ============================================================================
+   SOLID FIX FOR CLAUSES MODAL SCROLLING ISSUE
+   Add this to the END of: app/static/css/contract-creation.css
+   ============================================================================ */
+
+    /* Fix for addClauseModal - Allow scrolling */
+    #addClauseModal .modal-content {
+        overflow: visible !important;
+        /* Allow inner content to scroll */
+    }
+
+    #addClauseModal .modal-body {
+        max-height: 65vh;
+        /* Set maximum height */
+        overflow-y: auto;
+        /* Enable vertical scrolling */
+        overflow-x: hidden;
+        /* Prevent horizontal scroll */
+    }
+
+    /* Optional: Custom scrollbar styling for better UX */
+    #addClauseModal .modal-body::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    #addClauseModal .modal-body::-webkit-scrollbar-track {
+        background: #f1f3f5;
+        border-radius: 4px;
+    }
+
+    #addClauseModal .modal-body::-webkit-scrollbar-thumb {
+        background: #adb5bd;
+        border-radius: 4px;
+    }
+
+    #addClauseModal .modal-body::-webkit-scrollbar-thumb:hover {
+        background: #868e96;
+    }
+
+    /* Ensure modal footer stays at bottom */
+    #addClauseModal .modal-footer {
+        flex-shrink: 0;
+    }
+
+    /* Ensure modal header doesn't scroll */
+    #addClauseModal .modal-header {
+        flex-shrink: 0;
+    }
 </style>
+
+<style>
+    /* Delete button styling */
+
+    .btn-danger {
+
+        background: #dc3545;
+
+        color: white;
+
+        border: none;
+
+        padding: 0.625rem 1.25rem;
+
+        border-radius: 8px;
+
+        font-size: 0.875rem;
+
+        font-weight: 500;
+
+        cursor: pointer;
+
+        display: inline-flex;
+
+        align-items: center;
+
+        gap: 0.5rem;
+
+        transition: all 0.2s ease;
+
+    }
+
+    .btn-danger:hover {
+
+        background: #c82333;
+
+        transform: translateY(-1px);
+
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+
+    }
+
+    .btn-danger:active {
+
+        transform: translateY(0);
+
+    }
+
+    /* Ensure modal footer spacing */
+
+    .modal-footer {
+
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+
+        padding: 1.5rem;
+
+        border-top: 1px solid var(--border-color);
+
+    }
+</style>
+
+
 {% endblock %}
 
 {% block content %}
@@ -624,7 +746,8 @@
     <div class="actions-bar">
         <div class="search-container">
             <i class="ti ti-search search-icon"></i>
-            <input type="text" class="search-input" id="searchInput" placeholder="Search clauses by keyword, tag, or content...">
+            <input type="text" class="search-input" id="searchInput"
+                placeholder="Search clauses by keyword, tag, or content...">
         </div>
         <button class="filter-btn" onclick="openFilterModal()">
             <i class="ti ti-adjustments-horizontal"></i>
@@ -650,7 +773,8 @@
                 animation: spin 1s linear infinite;
                 margin: 0 auto;
             "></div>
-            <p style="margin-top: 1.5rem; color: var(--text-muted); font-size: 0.95rem; font-weight: 500;">Loading clauses...</p>
+            <p style="margin-top: 1.5rem; color: var(--text-muted); font-size: 0.95rem; font-weight: 500;">Loading
+                clauses...</p>
         </div>
     </div>
 
@@ -744,6 +868,8 @@
     </div>
 </div>
 
+
+
 <!-- Add/Edit Clause Modal -->
 <div class="modal" id="addClauseModal">
     <div class="modal-content" style="max-width: 900px;">
@@ -762,16 +888,11 @@
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.875rem;">
                             Clause Code <span style="color: var(--danger-color);">*</span>
                         </label>
-                        <input 
-                            type="text" 
-                            id="clauseCode" 
-                            name="clauseCode"
-                            placeholder="e.g., PAY-001, CONF-001" 
-                            required
-                            pattern="[A-Z0-9-]+"
-                            title="Use uppercase letters, numbers, and hyphens only"
+                        <input type="text" id="clauseCode" name="clauseCode" placeholder="e.g., PAY-001, CONF-001"
+                            required pattern="[A-Z0-9-]+" title="Use uppercase letters, numbers, and hyphens only"
                             style="width: 100%; padding: 0.625rem; border: 1px solid var(--border-color); border-radius: 8px;">
-                        <small style="color: var(--text-muted); font-size: 0.75rem;">Unique identifier for this clause</small>
+                        <small style="color: var(--text-muted); font-size: 0.75rem;">Unique identifier for this
+                            clause</small>
                     </div>
 
                     <!-- Clause Title -->
@@ -779,12 +900,7 @@
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.875rem;">
                             Clause Title <span style="color: var(--danger-color);">*</span>
                         </label>
-                        <input 
-                            type="text" 
-                            id="clauseTitle" 
-                            name="clauseTitle"
-                            placeholder="Enter clause title" 
-                            required
+                        <input type="text" id="clauseTitle" name="clauseTitle" placeholder="Enter clause title" required
                             maxlength="255"
                             style="width: 100%; padding: 0.625rem; border: 1px solid var(--border-color); border-radius: 8px;">
                     </div>
@@ -794,13 +910,8 @@
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.875rem;">
                             Clause Title (Arabic)
                         </label>
-                        <input 
-                            type="text" 
-                            id="clauseTitleAr" 
-                            name="clauseTitleAr"
-                            placeholder="أدخل عنوان البند" 
-                            dir="rtl"
-                            maxlength="255"
+                        <input type="text" id="clauseTitleAr" name="clauseTitleAr" placeholder="أدخل عنوان البند"
+                            dir="rtl" maxlength="255"
                             style="width: 100%; padding: 0.625rem; border: 1px solid var(--border-color); border-radius: 8px;">
                     </div>
 
@@ -809,10 +920,7 @@
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.875rem;">
                             Category <span style="color: var(--danger-color);">*</span>
                         </label>
-                        <select 
-                            id="clauseCategory" 
-                            name="clauseCategory"
-                            required
+                        <select id="clauseCategory" name="clauseCategory" required
                             style="width: 100%; padding: 0.625rem; border: 1px solid var(--border-color); border-radius: 8px;">
                             <option value="">Select category</option>
                             <option value="standard">Standard Clauses</option>
@@ -832,12 +940,8 @@
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.875rem;">
                             Sub-Category
                         </label>
-                        <input 
-                            type="text" 
-                            id="clauseSubCategory" 
-                            name="clauseSubCategory"
-                            placeholder="e.g., For Cause, Mutual Termination" 
-                            maxlength="100"
+                        <input type="text" id="clauseSubCategory" name="clauseSubCategory"
+                            placeholder="e.g., For Cause, Mutual Termination" maxlength="100"
                             style="width: 100%; padding: 0.625rem; border: 1px solid var(--border-color); border-radius: 8px;">
                     </div>
 
@@ -888,12 +992,8 @@
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.875rem;">
                             Clause Text <span style="color: var(--danger-color);">*</span>
                         </label>
-                        <textarea 
-                            id="clauseText" 
-                            name="clauseText"
-                            placeholder="Enter the complete clause text..." 
-                            required
-                            rows="8"
+                        <textarea id="clauseText" name="clauseText" placeholder="Enter the complete clause text..."
+                            required rows="8"
                             style="width: 100%; padding: 0.625rem; border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit; resize: vertical;"></textarea>
                         <small style="color: var(--text-muted); font-size: 0.75rem;">
                             <span id="charCount">0</span> characters
@@ -905,23 +1005,17 @@
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.875rem;">
                             Clause Text (Arabic)
                         </label>
-                        <textarea 
-                            id="clauseTextAr" 
-                            name="clauseTextAr"
-                            placeholder="أدخل نص البند بالعربية..." 
-                            dir="rtl"
-                            rows="6"
+                        <textarea id="clauseTextAr" name="clauseTextAr" placeholder="أدخل نص البند بالعربية..."
+                            dir="rtl" rows="6"
                             style="width: 100%; padding: 0.625rem; border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit; resize: vertical;"></textarea>
                     </div>
 
                     <!-- Tags -->
                     <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.875rem;">Tags</label>
-                        <input 
-                            type="text" 
-                            id="clauseTags" 
-                            name="clauseTags"
-                            placeholder="payment, invoice, net-30 (comma separated)" 
+                        <label
+                            style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.875rem;">Tags</label>
+                        <input type="text" id="clauseTags" name="clauseTags"
+                            placeholder="payment, invoice, net-30 (comma separated)"
                             style="width: 100%; padding: 0.625rem; border: 1px solid var(--border-color); border-radius: 8px;">
                         <small style="color: var(--text-muted); font-size: 0.75rem;">Separate tags with commas</small>
                     </div>
@@ -929,15 +1023,12 @@
                     <!-- Active Status -->
                     <div>
                         <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                            <input 
-                                type="checkbox" 
-                                id="clauseActive" 
-                                name="clauseActive"
-                                checked
+                            <input type="checkbox" id="clauseActive" name="clauseActive" checked
                                 style="width: 18px; height: 18px; cursor: pointer;">
                             <span style="font-weight: 500; font-size: 0.875rem;">Active</span>
                         </label>
-                        <small style="color: var(--text-muted); font-size: 0.75rem; margin-left: 26px;">Inactive clauses won't appear in search results</small>
+                        <small style="color: var(--text-muted); font-size: 0.75rem; margin-left: 26px;">Inactive clauses
+                            won't appear in search results</small>
                     </div>
 
                 </div>
@@ -955,32 +1046,75 @@
 
 
 <!-- Clause Detail Modal -->
+
+
 <div class="modal" id="clauseDetailModal">
+
     <div class="modal-content" style="max-width: 900px;">
+
         <div class="modal-header">
+
             <div>
+
                 <h3 class="modal-title" id="clauseDetailTitle">Clause Details</h3>
+
             </div>
+
             <button class="modal-close" onclick="closeModal('clauseDetailModal')">
+
                 <i class="ti ti-x"></i>
+
             </button>
+
         </div>
-        <div class="modal-body" id="clauseDetailContent">
+
+        <div class="modal-body" id="clauseDetailContent" style="max-height: 60vh; overflow-y: auto;">
+
             <!-- Content will be dynamically loaded -->
+
         </div>
-        <div class="modal-footer">
-            <button class="btn" onclick="closeModal('clauseDetailModal')">Close</button>
-            <button class="btn" onclick="editClauseFromDetail()">
-                <i class="ti ti-edit"></i>
-                Edit
+
+        <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+
+            <!-- Left side - Delete button -->
+
+            <button class="btn btn-danger" onclick="deleteClauseFromDetail()" style="background: #dc3545; color: white; border: none;">
+
+                <i class="ti ti-trash"></i>
+
+                Delete
+
             </button>
-            <button class="btn btn-primary" onclick="useClause()">
-                <i class="ti ti-plus"></i>
-                Use in Contract
-            </button>
+
+            
+
+            <!-- Right side - Other actions -->
+
+            <div style="display: flex; gap: 0.75rem;">
+
+                <button class="btn" onclick="closeModal('clauseDetailModal')">
+
+                    Close
+
+                </button>
+
+                <button class="btn" onclick="editClauseFromDetail()">
+
+                    <i class="ti ti-edit"></i>
+
+                    Edit
+
+                </button>
+
+
+            </div>
+
         </div>
+
     </div>
+
 </div>
 
-<script src="/static/js/screens/drafting/SCR_017_clause_library.js"></script>
+
+<script src="/static/js/screens/drafting/SCR_017_clause_library.js?v=3"></script>
 {% endblock %}

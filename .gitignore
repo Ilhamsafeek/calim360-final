@@ -4,3 +4,4 @@ fabric-network
 kubernetes
 .vscode
 .env
+app/uploads

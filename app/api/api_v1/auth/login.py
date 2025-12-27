@@ -174,7 +174,7 @@ async def login(
                 "company_id": user.company_id
             },
             access_token=access_token,
-            redirect_url="/dashboard"  # Changed to dashboard
+            redirect_url="/hub"  # Changed to dashboard
         )
         
     except HTTPException:
