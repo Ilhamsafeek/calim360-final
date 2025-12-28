@@ -6,7 +6,6 @@
 // Global variables (keep existing)
 let trackChangesEnabled = false;
 let draggedElement = null;
-let contractId = window.location.pathname.split('/').pop(); // Extract from URL
 
 // =====================================================
 // EXISTING FUNCTIONS - UPDATED WITH BACKEND CALLS
@@ -724,3 +723,4 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+

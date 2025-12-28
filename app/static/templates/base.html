@@ -1579,25 +1579,6 @@
         }
     </style>
 
-
-    <!-- Global User Data - Available across all pages -->
-    <script>
-        // Make current user globally available
-        window.currentUser = {
-            id: {{ user.id if user else 'null' }},
-        full_name: "{{ user.full_name if user else '' }}",
-            email: "{{ user.email if user else '' }}",
-                user_type: "{{ user.user_type if user else '' }}",
-                    avatar_initial: "{{ user.avatar_initial if user else 'U' }}",
-                        company_id: { { user.company_id if user else 'null' } }
-        };
-
-        // Quick access properties
-        window.currentUserId = window.currentUser.id;
-        window.currentUserName = window.currentUser.full_name;
-        window.currentUserType = window.currentUser.user_type;
-    </script>
-    <!-- Block for additional CSS from child templates -->
     {% block head %}{% endblock %}
 </head>
 
@@ -1960,10 +1941,24 @@
         <div class="spinner"></div>
     </div>
 
-    <!-- UPDATED: Removed mock chatbot responses, ready for API integration -->
-    <!-- File: app/static/templates/base.html -->
 
-    <!-- In the <script> section, replace the chatbot functions with: -->
+    <script>
+        // Make current user globally available
+        window.currentUser = {
+            id: {{ user.id if user else 'null' }},
+        full_name: "{{ user.full_name if user else '' }}",
+            email: "{{ user.email if user else '' }}",
+                user_type: "{{ user.user_type if user else '' }}",
+                    avatar_initial: "{{ user.avatar_initial if user else 'U' }}",
+                        company_id: { { user.company_id if user else 'null' } }
+    };
+
+        // Quick access properties
+        window.currentUserId = window.currentUser.id;
+        window.currentUserName = window.currentUser.full_name;
+        window.currentUserType = window.currentUser.user_type;
+    </script>
+
 
     <script>
         // ============================================

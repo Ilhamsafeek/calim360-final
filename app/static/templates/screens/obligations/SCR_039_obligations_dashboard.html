@@ -903,6 +903,201 @@
         }
     }
 </style>
+
+<style>
+    /* Contract search suggestions */
+    .user-suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+        margin-top: 4px;
+    }
+
+    .suggestion-item {
+        padding: 12px;
+        cursor: pointer;
+        border-bottom: 1px solid var(--border-light);
+        transition: background-color 0.2s;
+    }
+
+    .suggestion-item:last-child {
+        border-bottom: none;
+    }
+
+    .suggestion-item:hover {
+        background-color: var(--bg-light);
+    }
+
+    .suggestion-item.no-results {
+        color: var(--text-muted);
+        text-align: center;
+        cursor: default;
+    }
+
+    .suggestion-item.no-results:hover {
+        background-color: transparent;
+    }
+
+    .suggestion-main {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .suggestion-name {
+        font-weight: 600;
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .suggestion-name i {
+        color: var(--primary-color);
+        font-size: 16px;
+    }
+
+    .suggestion-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .meta-item {
+        font-size: 12px;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .meta-item i {
+        font-size: 14px;
+    }
+
+    /* Selected contract display */
+    .selected-user {
+        margin-top: 8px;
+        padding: 12px;
+        background: var(--bg-light);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+    }
+
+    .selected-user-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .selected-user-details {
+        flex: 1;
+    }
+
+    .selected-user-name {
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .selected-user-name i {
+        color: var(--primary-color);
+    }
+
+    .selected-user-meta {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .btn-remove-user {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-remove-user:hover {
+        background: var(--danger-color);
+        color: white;
+    }
+
+    /* Status badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .status-badge i {
+        font-size: 12px;
+    }
+
+    .status-draft {
+        background: #e3f2fd;
+        color: #1976d2;
+    }
+
+    .status-review {
+        background: #fff3e0;
+        color: #f57c00;
+    }
+
+    .status-negotiation {
+        background: #fce4ec;
+        color: #c2185b;
+    }
+
+    .status-approved {
+        background: #e8f5e9;
+        color: #388e3c;
+    }
+
+    .status-active {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .status-executed {
+        background: #e0f2f1;
+        color: #00796b;
+    }
+
+    .status-completed {
+        background: #f3e5f5;
+        color: #7b1fa2;
+    }
+
+    .status-terminated {
+        background: #ffebee;
+        color: #c62828;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -914,10 +1109,10 @@
                 <i class="ti ti-checklist"></i>
                 Obligations Dashboard
             </h1>
-            <!-- <button class="btn btn-success" onclick="openNewObligationModal()">
+            <button class="btn btn-success" onclick="openNewObligationModal()">
                 <i class="ti ti-plus"></i>
                 New Obligation
-            </button> -->
+            </button>
         </div>
     </div>
 
@@ -1094,18 +1289,22 @@
             <form id="obligationForm">
                 <input type="hidden" id="editObligationId">
 
-                <!-- <div class="form-group">
-                    <label class="form-label">Contract <span class="required">*</span></label>
-                    <select class="form-control" id="obligationContractId" required>
-                        <option value="">Select Contract</option>
-                    </select>
-                </div> -->
-
                 <div class="form-group">
+                    <label class="form-label">Contract <span class="required">*</span></label>
+                    <div class="user-search-container">
+                        <input type="text" class="form-control" id="contractSearch" placeholder="Search contracts..."
+                            autocomplete="off">
+                        <input type="hidden" id="selectedContractId">
+                        <div class="user-suggestions" id="contractSuggestions"></div>
+                    </div>
+                    <div class="selected-user" id="selectedContract" style="display: none;"></div>
+                </div>
+
+                <!-- <div class="form-group">
                     <label class="form-label">Contract</label>
                     <input type="text" class="form-control" id="obligationContractId" disabled
                         placeholder="Enter obligation title">
-                </div>
+                </div> -->
 
                 <div class="form-group">
                     <label class="form-label">Obligation Title <span class="required">*</span></label>
@@ -1278,49 +1477,268 @@
         }
     }
 
+    // =============================================
+    // LOAD CONTRACTS
+    // =============================================
+    let contractsList = [];
 
-    // async function loadContracts() {
-    //     try {
-    //         const response = await fetch('/api/contracts/');
-    //         if (!response.ok) throw new Error('Failed to load contracts');
-    //         const data = await response.json();
-    //         contracts = data.contracts || data || [];
 
-    //         const filterSelect = document.getElementById('contractFilter');
-    //         const formSelect = document.getElementById('obligationContractId');
+    let contractSearchTimeout = null;
 
-    //         // Clear existing
-    //         if (filterSelect) filterSelect.innerHTML = '<option value="all">All Contracts</option>';
-    //         if (formSelect) formSelect.innerHTML = '<option value="">Select Contract</option>';
+    // =============================================
+    // LOAD CONTRACTS
+    // =============================================
+    async function loadContracts() {
+        try {
+            console.log('🔄 Loading contracts...');
 
-    //         const contractsList = contracts.items || contracts;
+            const response = await fetch('/api/contracts/my-contracts', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
 
-    //         if (Array.isArray(contractsList) && contractsList.length > 0) {
-    //             contractsList.forEach(contract => {
-    //                 const text = `${contract.contract_number} - ${contract.contract_title}`;
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: Failed to load contracts`);
+            }
 
-    //                 if (filterSelect) {
-    //                     const opt = document.createElement('option');
-    //                     opt.value = contract.id;
-    //                     opt.textContent = text;
-    //                     filterSelect.appendChild(opt);
-    //                 }
+            const data = await response.json();
+            contractsList = data.contracts || [];
 
-    //                 if (formSelect) {
-    //                     const opt = document.createElement('option');
-    //                     opt.value = contract.id;
-    //                     opt.textContent = text;
-    //                     formSelect.appendChild(opt);
-    //                 }
-    //             });
-    //         }
+            console.log('📋 Loaded contracts:', contractsList.length);
+            return contractsList;
 
-    //         return true;
-    //     } catch (error) {
-    //         console.error('Error loading contracts:', error);
-    //         return false;
-    //     }
-    // }
+        } catch (error) {
+            console.error('❌ Error loading contracts:', error);
+            showToast('Failed to load contracts: ' + error.message, 'error');
+            return [];
+        }
+    }
+
+
+
+    // =============================================
+    // SEARCH CONTRACTS (with debounce)
+    // =============================================
+    function searchContracts(searchTerm) {
+        console.log('🔍 Searching contracts:', searchTerm);
+
+        const suggestionsDiv = document.getElementById('contractSuggestions');
+
+        if (!searchTerm || searchTerm.trim().length < 2) {
+            suggestionsDiv.innerHTML = '';
+            suggestionsDiv.style.display = 'none';
+            return;
+        }
+
+        const term = searchTerm.toLowerCase().trim();
+
+        // Filter contracts by number, title, or counterparty
+        const matches = contractsList.filter(contract => {
+            const number = (contract.contract_number || '').toLowerCase();
+            const title = (contract.contract_title || '').toLowerCase();
+            const counterparty = (contract.counterparty_name || '').toLowerCase();
+            const status = (contract.status || '').toLowerCase();
+
+            return number.includes(term) ||
+                title.includes(term) ||
+                counterparty.includes(term) ||
+                status.includes(term);
+        });
+
+        console.log('📊 Found matches:', matches.length);
+
+        if (matches.length === 0) {
+            suggestionsDiv.innerHTML = '<div class="suggestion-item no-results">No contracts found</div>';
+            suggestionsDiv.style.display = 'block';
+            return;
+        }
+
+        // Display top 10 matches
+        const html = matches.slice(0, 10).map(contract => {
+            const statusBadge = getStatusBadge(contract.status);
+            return `
+            <div class="suggestion-item" onclick="selectContract(${contract.id}, '${escapeHtml(contract.contract_number)}', '${escapeHtml(contract.contract_title)}', '${escapeHtml(contract.status)}')">
+                <div class="suggestion-main">
+                    <div class="suggestion-name">
+                        <i class="ti ti-file-text"></i>
+                        ${contract.contract_number} - ${contract.contract_title}
+                    </div>
+                    <div class="suggestion-meta">
+                        ${statusBadge}
+                        ${contract.counterparty_name ? `<span class="meta-item"><i class="ti ti-building"></i> ${contract.counterparty_name}</span>` : ''}
+                        ${contract.contract_value ? `<span class="meta-item"><i class="ti ti-currency-dollar"></i> ${formatCurrency(contract.contract_value, contract.currency)}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+        }).join('');
+
+        suggestionsDiv.innerHTML = html;
+        suggestionsDiv.style.display = 'block';
+    }
+
+
+    // =============================================
+    // SELECT CONTRACT
+    // =============================================
+    function selectContract(contractId, contractNumber, contractTitle, status) {
+        console.log('✅ Selected contract:', contractId, contractNumber);
+
+        // Set hidden input
+        document.getElementById('selectedContractId').value = contractId;
+
+        // Hide search, show selected
+        document.getElementById('contractSearch').style.display = 'none';
+        document.getElementById('contractSuggestions').style.display = 'none';
+
+        // Show selected contract
+        const selectedDiv = document.getElementById('selectedContract');
+        const statusBadge = getStatusBadge(status);
+
+        selectedDiv.innerHTML = `
+        <div class="selected-user-info">
+            <div class="selected-user-details">
+                <div class="selected-user-name">
+                    <i class="ti ti-file-text"></i>
+                    ${contractNumber} - ${contractTitle}
+                </div>
+                <div class="selected-user-meta">
+                    ${statusBadge}
+                </div>
+            </div>
+            <button type="button" class="btn-remove-user" onclick="clearContractSelection()">
+                <i class="ti ti-x"></i>
+            </button>
+        </div>
+    `;
+        selectedDiv.style.display = 'block';
+    }
+
+
+    function clearContractSelection() {
+        console.log('🗑️ Clearing contract selection');
+
+        document.getElementById('selectedContractId').value = '';
+        document.getElementById('contractSearch').value = '';
+        document.getElementById('contractSearch').style.display = 'block';
+        document.getElementById('selectedContract').style.display = 'none';
+        document.getElementById('contractSuggestions').style.display = 'none';
+
+        // Focus on search field
+        document.getElementById('contractSearch').focus();
+    }
+
+
+    function getStatusBadge(status) {
+        const statusConfig = {
+            'draft': { class: 'status-draft', icon: 'ti-file', text: 'Draft' },
+            'internal_review': { class: 'status-review', icon: 'ti-eye', text: 'Review' },
+            'negotiation': { class: 'status-negotiation', icon: 'ti-message-circle', text: 'Negotiation' },
+            'approved': { class: 'status-approved', icon: 'ti-check', text: 'Approved' },
+            'active': { class: 'status-active', icon: 'ti-circle-check', text: 'Active' },
+            'executed': { class: 'status-executed', icon: 'ti-file-check', text: 'Executed' },
+            'completed': { class: 'status-completed', icon: 'ti-circle-check-filled', text: 'Completed' },
+            'terminated': { class: 'status-terminated', icon: 'ti-x', text: 'Terminated' }
+        };
+
+        const config = statusConfig[status] || { class: 'status-draft', icon: 'ti-file', text: status };
+        return `<span class="status-badge ${config.class}"><i class="ti ${config.icon}"></i> ${config.text}</span>`;
+    }
+
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function formatCurrency(amount, currency = 'QAR') {
+        if (!amount) return '';
+        const formatted = new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount);
+        return `${formatted} ${currency}`;
+    }
+
+
+
+
+    // =============================================
+    // POPULATE CONTRACT DROPDOWN
+    // =============================================
+
+
+    function populateContractDropdown(selectedContractId = null) {
+        console.log('🔄 populateContractDropdown() called');
+        console.log('📊 contractsList:', contractsList.length, 'contracts');
+        console.log('🎯 selectedContractId:', selectedContractId);
+
+        const select = document.getElementById('obligationContractId');
+
+        if (!select) {
+            console.error('❌ SELECT ELEMENT NOT FOUND!');
+            console.log('🔍 Searching for select elements...');
+            const allSelects = document.querySelectorAll('select');
+            console.log('📋 Found selects:', allSelects.length);
+            allSelects.forEach((s, i) => {
+                console.log(`  ${i + 1}. id="${s.id}" name="${s.name}"`);
+            });
+            return;
+        }
+
+        console.log('✅ Found select element:', select.id);
+        console.log('📏 Current options:', select.options.length);
+
+        // Clear and add default option
+        select.innerHTML = '';
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Select Contract';
+        select.appendChild(defaultOption);
+
+        console.log('🔄 After reset, options:', select.options.length);
+
+        // Show all contracts (remove status filter for debugging)
+        let addedCount = 0;
+
+        contractsList.forEach((contract, index) => {
+            try {
+                const option = document.createElement('option');
+                option.value = contract.id;
+                option.textContent = `${contract.contract_number || 'N/A'} - ${contract.contract_title || 'Untitled'}`;
+
+                if (selectedContractId && contract.id == selectedContractId) {
+                    option.selected = true;
+                    console.log('✅ Pre-selected:', contract.contract_number);
+                }
+
+                select.appendChild(option);
+                addedCount++;
+
+                // Log first 3 contracts
+                if (index < 3) {
+                    console.log(`  ${index + 1}. Added: ${option.value} - ${option.textContent}`);
+                }
+            } catch (err) {
+                console.error(`❌ Error adding contract ${index}:`, err);
+            }
+        });
+
+        console.log(`✅ Total added: ${addedCount} contracts`);
+        console.log(`📊 Final dropdown options: ${select.options.length}`);
+
+        // Verify dropdown is visible
+        const isVisible = select.offsetParent !== null;
+        console.log('👁️ Dropdown visible:', isVisible);
+        console.log('📐 Dropdown dimensions:', {
+            width: select.offsetWidth,
+            height: select.offsetHeight
+        });
+    }
 
 
 
@@ -1594,39 +2012,180 @@
         document.getElementById(modalId).classList.remove('active');
     }
 
-    function openNewObligationModal() {
+
+
+
+    async function openNewObligationModal() {
+        console.log('🚀 Opening New Obligation Modal');
+
         document.getElementById('modalTitle').textContent = 'New Obligation';
         document.getElementById('obligationForm').reset();
         document.getElementById('editObligationId').value = '';
 
+        // Reset contract selection
+        document.getElementById('selectedContractId').value = '';
+        document.getElementById('contractSearch').value = '';
+        document.getElementById('contractSearch').style.display = 'block';
+        document.getElementById('selectedContract').style.display = 'none';
+        document.getElementById('contractSuggestions').style.display = 'none';
 
+        // Reset user selections
         document.getElementById('ownerUserId').value = '';
         document.getElementById('escalationUserId').value = '';
         document.getElementById('selectedOwner').style.display = 'none';
         document.getElementById('selectedEscalation').style.display = 'none';
         document.getElementById('ownerSearch').style.display = 'block';
         document.getElementById('escalationSearch').style.display = 'block';
+
+        // Ensure contracts are loaded
+        if (contractsList.length === 0) {
+            showLoading(true, 'Loading contracts...');
+            try {
+                await loadContracts();
+            } catch (error) {
+                console.error('Error loading contracts:', error);
+                showToast('Failed to load contracts', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
         openModal('obligationModal');
     }
 
+    // =============================================
+// EDIT OBLIGATION - COMPLETE FIXED VERSION
+// =============================================
+async function editObligation(id) {
+    console.log('');
+    console.log('========================================');
+    console.log('✏️ EDITING OBLIGATION:', id);
+    console.log('========================================');
+    
+    const obl = allObligations.find(o => o.id === id);
+    if (!obl) {
+        console.error('❌ Obligation not found in allObligations array');
+        showToast('Obligation not found', 'error');
+        return;
+    }
 
+    console.log('📋 Obligation data:', {
+        id: obl.id,
+        contract_id: obl.contract_id,
+        contract_title: obl.contract_title,
+        contract_number: obl.contract_number,
+        title: obl.obligation_title
+    });
 
-    function editObligation(id) {
-        const obl = allObligations.find(o => o.id === id);
-        if (!obl) return;
+    // Show loading
+    showLoading(true, 'Loading obligation details...');
 
+    try {
+        // Set modal title and form values
         document.getElementById('modalTitle').textContent = 'Edit Obligation';
         document.getElementById('editObligationId').value = id;
         document.getElementById('obligationTitle').value = obl.obligation_title || '';
         document.getElementById('obligationDescription').value = obl.description || '';
-        document.getElementById('obligationContractId').value = obl.contract_title || '';
-        
         document.getElementById('obligationType').value = obl.obligation_type || '';
         document.getElementById('obligationStatus').value = obl.status || 'initiated';
         document.getElementById('thresholdDate').value = obl.threshold_date ? obl.threshold_date.split('T')[0] : '';
         document.getElementById('dueDate').value = obl.due_date ? obl.due_date.split('T')[0] : '';
 
+        // ==========================================
+        // CONTRACT SELECTION HANDLING
+        // ==========================================
+        console.log('🔄 Processing contract selection...');
+        
+        if (obl.contract_id) {
+            console.log('📝 Contract ID exists:', obl.contract_id);
+            
+            // Ensure contracts are loaded
+            if (contractsList.length === 0) {
+                console.log('📥 Contracts not loaded yet, loading now...');
+                await loadContracts();
+                console.log('✅ Contracts loaded:', contractsList.length);
+            } else {
+                console.log('✅ Contracts already loaded:', contractsList.length);
+            }
+            
+            // Find contract in the list
+            const contract = contractsList.find(c => {
+                // Try both strict and loose equality
+                return c.id == obl.contract_id || c.id === obl.contract_id || 
+                       parseInt(c.id) === parseInt(obl.contract_id);
+            });
+            
+            if (contract) {
+                console.log('✅ Found contract in list:', {
+                    id: contract.id,
+                    number: contract.contract_number,
+                    title: contract.contract_title
+                });
+                
+                // Select the contract
+                selectContract(
+                    contract.id, 
+                    contract.contract_number, 
+                    contract.contract_title,
+                    contract.status || 'active'
+                );
+                
+                console.log('✅ Contract selected successfully');
+            } else {
+                // Contract not in list - use obligation data as fallback
+                console.warn('⚠️ Contract not found in contractsList');
+                console.log('🔍 Searching for contract_id:', obl.contract_id);
+                console.log('📊 Available contract IDs:', contractsList.map(c => c.id).slice(0, 5));
+                
+                if (obl.contract_title || obl.contract_number) {
+                    console.log('📝 Using contract data from obligation');
+                    
+                    // Manually set the contract selection
+                    document.getElementById('selectedContractId').value = obl.contract_id;
+                    document.getElementById('contractSearch').style.display = 'none';
+                    document.getElementById('contractSuggestions').style.display = 'none';
+                    
+                    const selectedDiv = document.getElementById('selectedContract');
+                    const displayText = obl.contract_number 
+                        ? `${obl.contract_number} - ${obl.contract_title || 'Contract'}`
+                        : (obl.contract_title || `Contract ID: ${obl.contract_id}`);
+                    
+                    selectedDiv.innerHTML = `
+                        <div class="selected-user-info">
+                            <div class="selected-user-details">
+                                <div class="selected-user-name">
+                                    <i class="ti ti-file-text"></i>
+                                    ${displayText}
+                                </div>
+                                <div class="selected-user-meta">
+                                    <span class="status-badge status-active">
+                                        <i class="ti ti-file"></i> Contract
+                                    </span>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-remove-user" onclick="clearContractSelection()">
+                                <i class="ti ti-x"></i>
+                            </button>
+                        </div>
+                    `;
+                    selectedDiv.style.display = 'block';
+                    
+                    console.log('✅ Contract display set from obligation data');
+                } else {
+                    console.error('❌ No contract information available');
+                    clearContractSelection();
+                }
+            }
+        } else {
+            console.log('ℹ️ No contract associated with this obligation');
+            clearContractSelection();
+        }
+
+        // ==========================================
+        // OWNER USER SELECTION
+        // ==========================================
         if (obl.owner_user_id) {
+            console.log('👤 Setting owner:', obl.owner_user_id, obl.owner_name);
             document.getElementById('ownerUserId').value = obl.owner_user_id;
             setSelectedUser('owner', obl.owner_user_id, obl.owner_name);
         } else {
@@ -1635,7 +2194,11 @@
             document.getElementById('ownerSearch').style.display = 'block';
         }
 
+        // ==========================================
+        // ESCALATION USER SELECTION
+        // ==========================================
         if (obl.escalation_user_id) {
+            console.log('📢 Setting escalation:', obl.escalation_user_id, obl.escalation_name);
             document.getElementById('escalationUserId').value = obl.escalation_user_id;
             setSelectedUser('escalation', obl.escalation_user_id, obl.escalation_name);
         } else {
@@ -1644,16 +2207,38 @@
             document.getElementById('escalationSearch').style.display = 'block';
         }
 
-        // THEN open modal
+        // Hide loading and open modal
+        showLoading(false);
         openModal('obligationModal');
-
-        //  Double-check after modal opens
+        
+        // Final verification after modal opens
         setTimeout(() => {
-            if (contractSelect && obl.contract_id && !contractSelect.value) {
-                contractSelect.value = String(obl.contract_id);
+            const selectedContractId = document.getElementById('selectedContractId').value;
+            const selectedContractDiv = document.getElementById('selectedContract');
+            const isVisible = selectedContractDiv.style.display !== 'none';
+            
+            console.log('');
+            console.log('🔍 FINAL VERIFICATION:');
+            console.log('  ✓ Selected Contract ID:', selectedContractId);
+            console.log('  ✓ Contract Display Visible:', isVisible);
+            console.log('  ✓ Modal Open:', document.getElementById('obligationModal').classList.contains('active'));
+            console.log('========================================');
+            console.log('');
+            
+            if (!selectedContractId && obl.contract_id) {
+                console.error('⚠️ WARNING: Contract should be selected but isn\'t!');
+                showToast('Warning: Contract selection may need manual verification', 'warning');
             }
-        }, 100);
+        }, 200);
+        
+    } catch (error) {
+        console.error('❌ ERROR in editObligation:', error);
+        console.error('Stack:', error.stack);
+        showToast('Error loading obligation details: ' + error.message, 'error');
+        showLoading(false);
     }
+}
+
 
 
     // function setContractValue(contractId) {
@@ -1704,8 +2289,7 @@
     //         console.error('Error loading contracts for edit:', error);
     //     }
     // }
-   
-   
+
     async function saveObligation() {
         const form = document.getElementById('obligationForm');
         if (!form.checkValidity()) {
@@ -1716,8 +2300,16 @@
         const editId = document.getElementById('editObligationId').value;
         const isEdit = !!editId;
 
+        // Get contract_id from hidden input
+        const contractId = document.getElementById('selectedContractId').value;
+
+        if (!contractId) {
+            showToast('Please select a contract', 'error');
+            return;
+        }
+
         const payload = {
-            // contract_id: parseInt(document.getElementById('obligationContractId').value),
+            contract_id: parseInt(contractId),
             obligation_title: document.getElementById('obligationTitle').value.trim(),
             description: document.getElementById('obligationDescription').value.trim(),
             obligation_type: document.getElementById('obligationType').value,
@@ -1727,6 +2319,8 @@
             threshold_date: document.getElementById('thresholdDate').value || null,
             due_date: document.getElementById('dueDate').value || null
         };
+
+        console.log('💾 Saving obligation:', payload);
 
         showLoading(true, isEdit ? 'Updating obligation...' : 'Creating obligation...');
 
@@ -1745,7 +2339,10 @@
                 throw new Error(error.detail || 'Failed to save obligation');
             }
 
-            showToast(isEdit ? 'Obligation updated successfully' : 'Obligation created successfully', 'success');
+            showToast(
+                isEdit ? 'Obligation updated successfully' : 'Obligation created successfully',
+                'success'
+            );
             closeModal('obligationModal');
             loadObligations();
         } catch (error) {
@@ -1755,6 +2352,7 @@
             showLoading(false);
         }
     }
+
 
     async function deleteObligation(id) {
         if (!confirm('Are you sure you want to delete this obligation?')) return;
@@ -1931,5 +2529,35 @@
 
         return `<span class="date-display">${formattedDate}</span>`;
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('📱 Initializing contract search...');
+
+        // Pre-load contracts
+        loadContracts().then(() => {
+            console.log('✅ Contracts pre-loaded');
+        });
+
+        // Contract search input with debounce
+        const contractSearchInput = document.getElementById('contractSearch');
+        if (contractSearchInput) {
+            contractSearchInput.addEventListener('input', function (e) {
+                clearTimeout(contractSearchTimeout);
+                contractSearchTimeout = setTimeout(() => {
+                    searchContracts(e.target.value);
+                }, 300); // 300ms debounce
+            });
+
+            // Close suggestions on outside click
+            document.addEventListener('click', function (e) {
+                const suggestionsDiv = document.getElementById('contractSuggestions');
+                if (suggestionsDiv &&
+                    !contractSearchInput.contains(e.target) &&
+                    !suggestionsDiv.contains(e.target)) {
+                    suggestionsDiv.style.display = 'none';
+                }
+            });
+        }
+    });
 </script>
 {% endblock %}

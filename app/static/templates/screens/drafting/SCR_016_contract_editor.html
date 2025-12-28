@@ -4314,7 +4314,26 @@
     // =====================================================
     // GLOBAL VARIABLES
     // =====================================================
-    let contractId = window.location.pathname.split('/').pop();
+    // ✅ CORRECTED URL PARSING
+    let contractId = (() => {
+        // First check query params (?id=123)
+        const urlParams = new URLSearchParams(window.location.search);
+        const idFromQuery = urlParams.get('id');
+        if (idFromQuery) return idFromQuery;
+
+        // Fallback to path parsing (/contract/edit/123)
+        const pathParts = window.location.pathname.split('/');
+        const editIndex = pathParts.indexOf('edit');
+        if (editIndex !== -1 && pathParts[editIndex + 1]) {
+            return pathParts[editIndex + 1];
+        }
+
+        // Last resort - check for any number in path
+        const lastPart = pathParts[pathParts.length - 1];
+        if (lastPart && !isNaN(lastPart)) return lastPart;
+
+        return null;
+    })();
     let contractData = null;
     let selectedContractWorkflow = null;
     let contractWorkflowStepCount = 1;
@@ -4348,85 +4367,85 @@
 
     async function ensureWorkflowInstance() {
 
-       
-    try {
-       
-        if (!contractId) {
-            console.warn('No contract ID found');
-            return;
-        }
-        
-        const response = await fetch(`/api/contracts/workflow/ensure-instance/${contractId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getAuthToken()}`
-            }
-        });
-        
-        if (!response.ok) {
-            console.error('Failed to ensure workflow instance');
-            return;
-        }
 
-        const data = await response.json();
-         
-        
-        if (data.instance_created) {
-            console.log(' Workflow instance auto-created:', data.workflow_name);
-        } else if (data.instance_exists) {
-            console.log(' Workflow instance already exists:', data.workflow_name);
-        } else {
-            console.log('ℹ️ No master workflow configured for company');
+        try {
+
+            if (!contractId) {
+                console.warn('No contract ID found');
+                return;
+            }
+
+            const response = await fetch(`/api/contracts/workflow/ensure-instance/${contractId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getAuthToken()}`
+                }
+            });
+
+            if (!response.ok) {
+                console.error('Failed to ensure workflow instance');
+                return;
+            }
+
+            const data = await response.json();
+
+
+            if (data.instance_created) {
+                console.log(' Workflow instance auto-created:', data.workflow_name);
+            } else if (data.instance_exists) {
+                console.log(' Workflow instance already exists:', data.workflow_name);
+            } else {
+                console.log('ℹ️ No master workflow configured for company');
+            }
+
+            // Store workflow info globally for later use
+            window.contractWorkflowInfo = {
+                hasInstance: data.instance_exists || data.instance_created,
+                workflowId: data.workflow_id,
+                workflowName: data.workflow_name,
+                isMaster: data.is_master,
+                status: data.status
+            };
+
+        } catch (error) {
+            console.error(' Error ensuring workflow instance:', error);
         }
-        
-        // Store workflow info globally for later use
-        window.contractWorkflowInfo = {
-            hasInstance: data.instance_exists || data.instance_created,
-            workflowId: data.workflow_id,
-            workflowName: data.workflow_name,
-            isMaster: data.is_master,
-            status: data.status
-        };
-        
-    } catch (error) {
-        console.error(' Error ensuring workflow instance:', error);
     }
-}
 
 
     // =====================================================
     // DATA LOADING FUNCTIONS
     // =====================================================
-    async function loadContractData() {
-        try {
-            const response = await fetch(`/api/contracts/edit/${contractId}`);
-            const data = await response.json();
+   async function loadContractData() {
+    try {
+        const response = await fetch(`/api/contracts/edit/${contractId}`);
+        const data = await response.json();
 
-            console.log('Contract data received:', data);
+        console.log('Contract data received:', data);
 
-            if (data.success) {
-                contractData = data;
-                renderContractEditor(data);
+        if (data.success) {
+            contractData = data;
+            renderContractEditor(data);
 
-                // Show editor, hide loader
-                document.getElementById('contractEditor').classList.add('loaded');
-                document.getElementById('contractEditor').style.display = 'block';
-                hideLoader();
-
-                // Start auto-save
-                startAutoSave();
-            } else {
-                hideLoader();
-                showError('Failed to load contract data: ' + (data.message || 'Unknown error'));
-            }
-        } catch (error) {
-            console.error('Error loading contract:', error);
+            document.getElementById('contractEditor').classList.add('loaded');
+            document.getElementById('contractEditor').style.display = 'block';
             hideLoader();
-            showError('Failed to load contract data: ' + error.message);
-        }
-    }
 
+            startAutoSave();
+            
+            // ✅ ADD THIS - Initialize AI AFTER contract is rendered
+            await initializeAIGeneration();
+        } else {
+            hideLoader();
+            showError('Failed to load contract data: ' + (data.message || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error loading contract:', error);
+        hideLoader();
+        showError('Failed to load contract data: ' + error.message);
+    }
+}
 
 
     // =====================================================
@@ -4521,7 +4540,7 @@
 
                 if ((workflow && workflow.is_my_workflow_turn === true) && (workflow && workflow.status != 'completed')) {
 
-                  actionButtons = `
+                    actionButtons = `
     <button class="btn signature-btn" onclick="approveWorkflow(${contract.id},'internal_review')">
         <i class="ti ti-check"></i> Approve
     </button>
@@ -4558,39 +4577,39 @@
 
             if (contract.is_counterparty === true) {
 
-              
 
-                    if ((workflow && workflow.status != 'active')) {
 
-                        actionButtons = `
+                if ((workflow && workflow.status != 'active')) {
+
+                    actionButtons = `
         <button class="btn btn-success" onclick="markCounterpartyReviewComplete()">
             <i class="ti ti-check"></i> Quick Review
         </button>
         <button class="btn btn-primary" onclick="submitForReview('${workflow.status}')">
                 <i class="ti ti-send"></i> Submit for Internal Review
             </button>`;
-                    } else if ((workflow && workflow.status == 'active')) {
+                } else if ((workflow && workflow.status == 'active')) {
 
-                        if ((workflow && workflow.is_my_workflow_turn === true) && (workflow && workflow.status != 'completed')) {
+                    if ((workflow && workflow.is_my_workflow_turn === true) && (workflow && workflow.status != 'completed')) {
 
-                            actionButtons = `
+                        actionButtons = `
         <button class="btn signature-btn" onclick="approveWorkflow(${contract.id},'counterparty_review')">
             <i class="ti ti-check"></i> Approve
         </button>
         <button class="btn btn-danger" onclick="rejectWorkflow(${contract.id})">
             <i class="ti ti-x"></i> Reject
         </button>`;
-                        } else {
-                            //if I am not the current approver
-                            actionButtons = getApprovalBadge(current_approver, workflow, 'review');
-                        }
-                        actionButtons += `<button class="workflow-setup-btn" onclick="openWorkflowHistoryModal()" style="display: flex; align-items: center; gap: 0.5rem;">
+                    } else {
+                        //if I am not the current approver
+                        actionButtons = getApprovalBadge(current_approver, workflow, 'review');
+                    }
+                    actionButtons += `<button class="workflow-setup-btn" onclick="openWorkflowHistoryModal()" style="display: flex; align-items: center; gap: 0.5rem;">
                                         <i class="ti ti-history"></i> Approval History
                                       </button>`;
 
-                    }
+                }
 
-             
+
             }
 
         } else if (contract.status === 'negotiation') {
@@ -9254,58 +9273,6 @@ ${(riskAnalysisData.risk_items || []).map(item => `
     }
 
 
-    async function saveContract() {
-        try {
-            console.log(' Saving contract...');
-
-            // Show loading
-            document.getElementById('loadingOverlay')?.classList.add('show');
-
-            // Get all contract data
-            const contractData = {
-                content: getContractContent(),
-                // ... other fields
-            };
-
-            // Save contract
-            const response = await fetch(`/api/contracts/save-draft/${contractId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                },
-                body: JSON.stringify(contractData)
-            });
-
-            const result = await response.json();
-
-            // Hide loading
-            document.getElementById('loadingOverlay')?.classList.remove('show');
-
-            console.log('📦 Save result:', result);
-
-            if (result.success) {
-                //  ADD THIS: Display blockchain activities
-                if (result.blockchain_activities && result.blockchain_activities.length > 0) {
-                    console.log('🔗 Displaying', result.blockchain_activities.length, 'blockchain activities');
-                    displayBlockchainActivities(result.blockchain_activities);
-                } else {
-                    console.warn(' No blockchain activities returned');
-                    console.log('Full response:', result);
-                }
-
-                showNotification('Contract saved and secured on blockchain', 'success');
-            } else {
-                showNotification(' Failed to save contract', 'error');
-            }
-
-        } catch (error) {
-            console.error(' Error:', error);
-            document.getElementById('loadingOverlay')?.classList.remove('show');
-            showNotification(' Error: ' + error.message, 'error');
-        }
-    }
-
     async function markCounterpartyReviewComplete() {
         if (!confirm('Do you want to confirm review?')) {
             return;
@@ -10782,10 +10749,10 @@ Generated by CALIM 360 Smart CLM
     }
 
 
-async function openInternalReviewModal() {
-    await checkWorkflowAvailability();
-    openModal('internalReviewModal');
-}
+    async function openInternalReviewModal() {
+        await checkWorkflowAvailability();
+        openModal('internalReviewModal');
+    }
 
 
 
@@ -11179,7 +11146,7 @@ async function openInternalReviewModal() {
 
 
     // Function to approve workflow
-    async function approveWorkflow(contractId, type=null) {
+    async function approveWorkflow(contractId, type = null) {
         if (!confirm("Are you sure you want to approve this contract?")) {
             return;
         }
@@ -11384,7 +11351,7 @@ async function openInternalReviewModal() {
                 body: JSON.stringify({
                     contract_id: contractId,
                     action: 'reject',
-                    request_type:'',
+                    request_type: '',
                     comments: comment
                 })
             });
@@ -11675,133 +11642,501 @@ async function openInternalReviewModal() {
 
 
 
-// =====================================================
-// WORKFLOW AVAILABILITY CHECK
-// =====================================================
+    // =====================================================
+    // WORKFLOW AVAILABILITY CHECK
+    // =====================================================
 
-let workflowAvailability = {
-    master: { available: false, id: null, name: null },
-    custom: { available: false, id: null, name: null }
-};
+    let workflowAvailability = {
+        master: { available: false, id: null, name: null },
+        custom: { available: false, id: null, name: null }
+    };
 
-/**
- * Check and update workflow options availability
- */
-async function checkWorkflowAvailability() {
-    try {
-        
-        const response = await fetch(`/api/contracts/workflow/availability/${contractId}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getAuthToken()}`
+    /**
+     * Check and update workflow options availability
+     */
+    async function checkWorkflowAvailability() {
+        try {
+
+            const response = await fetch(`/api/contracts/workflow/availability/${contractId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getAuthToken()}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to check workflow availability');
             }
-        });
 
-        if (!response.ok) {
-            throw new Error('Failed to check workflow availability');
+            const data = await response.json();
+            workflowAvailability = {
+                master: data.master_workflow,
+                custom: data.custom_workflow
+            };
+
+            console.log(' Workflow availability checked:', workflowAvailability);
+            updateWorkflowOptions();
+
+        } catch (error) {
+            console.error(' Error checking workflow availability:', error);
+            showNotification('Failed to check workflow availability', 'error');
+        }
+    }
+
+
+
+    /**
+     * Update workflow option UI based on availability
+     */
+    function updateWorkflowOptions() {
+        const masterRadio = document.getElementById('masterWorkflow');
+        const masterLabel = document.getElementById('masterWorkflowLabel');
+        const masterDesc = document.getElementById('masterWorkflowDesc');
+        const masterSetupBtn = document.getElementById('masterWorkflowSetupBtn');
+
+        const customRadio = document.getElementById('customWorkflow');
+        const customLabel = document.getElementById('customWorkflowLabel');
+        const customDesc = document.getElementById('customWorkflowDesc');
+        const customSetupBtn = document.getElementById('customWorkflowSetupBtn');
+
+        // Handle Master Workflow
+        if (workflowAvailability.master.available) {
+            // Master workflow is available
+            masterRadio.disabled = false;
+            masterLabel.classList.remove('disabled');
+            masterLabel.style.opacity = '1';
+            masterLabel.style.cursor = 'pointer';
+            masterLabel.style.background = 'white';
+            masterDesc.textContent = `Using: ${workflowAvailability.master.name}`;
+            masterSetupBtn.style.display = 'none';
+        } else {
+            // Master workflow NOT available - show setup option
+            masterRadio.disabled = true;
+            masterRadio.checked = false;
+            masterLabel.classList.add('disabled');
+            masterLabel.style.opacity = '0.5';
+            masterLabel.style.cursor = 'not-allowed';
+            masterLabel.style.background = '#f5f5f5';
+            masterDesc.textContent = 'Master workflow not configured for your company';
+            masterSetupBtn.style.display = 'block';
         }
 
+        // Handle Custom Workflow
+        if (workflowAvailability.custom.available) {
+            // Custom workflow is available
+            customRadio.disabled = false;
+            customLabel.classList.remove('disabled');
+            customLabel.style.opacity = '1';
+            customLabel.style.cursor = 'pointer';
+            customLabel.style.background = 'white';
+            customDesc.textContent = `Using: ${workflowAvailability.custom.name}`;
+            customSetupBtn.style.display = 'none';
+        } else {
+            // Custom workflow NOT available - show setup option
+            customRadio.disabled = true;
+            customRadio.checked = false;
+            customLabel.classList.add('disabled');
+            customLabel.style.opacity = '0.5';
+            customLabel.style.cursor = 'not-allowed';
+            customLabel.style.background = '#f5f5f5';
+            customDesc.textContent = 'No custom workflow configured for this contract';
+            customSetupBtn.style.display = 'block';
+        }
+    }
+
+    /**
+     * Redirect to master workflow setup page
+     */
+    function redirectToMasterWorkflowSetup() {
+        if (confirm('You will be redirected to the Master Workflow Setup page. Any unsaved changes will be lost. Continue?')) {
+            window.location.href = '/workflow-setup';  // Update with your actual workflow setup page URL
+        }
+    }
+
+    /**
+     * Open custom workflow setup modal (using existing contractWorkflowModal)
+     */
+    function openCustomWorkflowSetup() {
+        // Close the internal review modal
+        closeModal('internalReviewModal');
+
+        // Open your existing contract workflow modal
+        openModal('contractWorkflowModal');
+
+        // If your existing modal has any initialization function, call it here
+        // For example: initializeContractWorkflow();
+    }
+
+// =====================================================
+// AI STREAMING FUNCTIONALITY (CORRECTED VERSION)
+// =====================================================
+
+let isAIGenerated = false;
+let generationParams = null;
+
+// Wait for contract to fully load before checking AI generation
+async function initializeAIGeneration() {
+    console.log('🔍 Checking if contract is AI-generated...');
+    
+    if (!contractId) {
+        console.log('⏭️ No contract ID available');
+        return;
+    }
+    
+    try {
+        // ✅ FETCH CONTRACT DATA FROM ENDPOINT
+        console.log(`📡 Fetching contract data from /api/contracts/edit/${contractId}`);
+        
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`/api/contracts/edit/${contractId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const data = await response.json();
-        workflowAvailability = {
-            master: data.master_workflow,
-            custom: data.custom_workflow
-        };
-
-        console.log(' Workflow availability checked:', workflowAvailability);
-        updateWorkflowOptions();
-
+        
+        if (!data.success || !data.contract) {
+            console.log('⏭️ Invalid contract data received');
+            return;
+        }
+        
+        const contract = data.contract;
+        
+        console.log('=== AI GENERATION CHECK ===');
+        console.log('Contract ID:', contract.id);
+        console.log('Contract Number:', contract.contract_number);
+        console.log('Is AI Generated:', contract.is_ai_generated);
+        console.log('Has Params:', !!contract.ai_generation_params);
+        console.log('==========================');
+        
+        // ✅ CHECK IF AI-GENERATED FROM ENDPOINT DATA
+        if (contract.is_ai_generated) {
+            isAIGenerated = true;
+            
+            // ✅ LOAD PARAMS FROM ENDPOINT RESPONSE
+            if (contract.ai_generation_params) {
+                try {
+                    if (typeof contract.ai_generation_params === 'string') {
+                        generationParams = JSON.parse(contract.ai_generation_params);
+                    } else {
+                        generationParams = contract.ai_generation_params;
+                    }
+                    console.log('✅ Loaded generation params from database:', generationParams);
+                } catch (error) {
+                    console.error('❌ Failed to parse generation params:', error);
+                    generationParams = {};
+                }
+            } else {
+                console.warn('⚠️ Contract is AI-generated but has no params');
+                generationParams = {};
+            }
+            
+            // Wait for editor to be ready
+            await waitForEditor();
+            
+            // Show regenerate button
+            showRegenerateButton();
+            
+            // ✅ CHECK IF CONTRACT HAS CONTENT
+            const hasContent = contract.content && contract.content.trim().length > 100;
+            
+            if (!hasContent) {
+                console.log('🤖 No content yet, starting AI generation...');
+                await startAIStreaming();
+            } else {
+                console.log('✅ Contract already has content, regenerate available');
+            }
+            
+        } else {
+            console.log('ℹ️ Contract is not AI-generated');
+        }
+        
     } catch (error) {
-        console.error(' Error checking workflow availability:', error);
-        showNotification('Failed to check workflow availability', 'error');
+        console.error('❌ Error fetching contract data for AI check:', error);
     }
 }
 
-
-
-/**
- * Update workflow option UI based on availability
- */
-function updateWorkflowOptions() {
-    const masterRadio = document.getElementById('masterWorkflow');
-    const masterLabel = document.getElementById('masterWorkflowLabel');
-    const masterDesc = document.getElementById('masterWorkflowDesc');
-    const masterSetupBtn = document.getElementById('masterWorkflowSetupBtn');
-
-    const customRadio = document.getElementById('customWorkflow');
-    const customLabel = document.getElementById('customWorkflowLabel');
-    const customDesc = document.getElementById('customWorkflowDesc');
-    const customSetupBtn = document.getElementById('customWorkflowSetupBtn');
-
-    // Handle Master Workflow
-    if (workflowAvailability.master.available) {
-        // Master workflow is available
-        masterRadio.disabled = false;
-        masterLabel.classList.remove('disabled');
-        masterLabel.style.opacity = '1';
-        masterLabel.style.cursor = 'pointer';
-        masterLabel.style.background = 'white';
-        masterDesc.textContent = `Using: ${workflowAvailability.master.name}`;
-        masterSetupBtn.style.display = 'none';
-    } else {
-        // Master workflow NOT available - show setup option
-        masterRadio.disabled = true;
-        masterRadio.checked = false;
-        masterLabel.classList.add('disabled');
-        masterLabel.style.opacity = '0.5';
-        masterLabel.style.cursor = 'not-allowed';
-        masterLabel.style.background = '#f5f5f5';
-        masterDesc.textContent = 'Master workflow not configured for your company';
-        masterSetupBtn.style.display = 'block';
-    }
-
-    // Handle Custom Workflow
-    if (workflowAvailability.custom.available) {
-        // Custom workflow is available
-        customRadio.disabled = false;
-        customLabel.classList.remove('disabled');
-        customLabel.style.opacity = '1';
-        customLabel.style.cursor = 'pointer';
-        customLabel.style.background = 'white';
-        customDesc.textContent = `Using: ${workflowAvailability.custom.name}`;
-        customSetupBtn.style.display = 'none';
-    } else {
-        // Custom workflow NOT available - show setup option
-        customRadio.disabled = true;
-        customRadio.checked = false;
-        customLabel.classList.add('disabled');
-        customLabel.style.opacity = '0.5';
-        customLabel.style.cursor = 'not-allowed';
-        customLabel.style.background = '#f5f5f5';
-        customDesc.textContent = 'No custom workflow configured for this contract';
-        customSetupBtn.style.display = 'block';
-    }
+// Wait for editor element to exist
+function waitForEditor() {
+    return new Promise((resolve) => {
+        const checkEditor = setInterval(() => {
+            const editor = document.getElementById('contractContent');
+            if (editor) {
+                console.log('✅ Editor element found');
+                clearInterval(checkEditor);
+                resolve();
+            } else {
+                console.log('⏳ Waiting for editor element...');
+            }
+        }, 100);
+        
+        // Timeout after 10 seconds
+        setTimeout(() => {
+            clearInterval(checkEditor);
+            resolve();
+        }, 10000);
+    });
 }
 
-/**
- * Redirect to master workflow setup page
- */
-function redirectToMasterWorkflowSetup() {
-    if (confirm('You will be redirected to the Master Workflow Setup page. Any unsaved changes will be lost. Continue?')) {
-        window.location.href = '/workflow-setup';  // Update with your actual workflow setup page URL
-    }
-}
-
-/**
- * Open custom workflow setup modal (using existing contractWorkflowModal)
- */
-function openCustomWorkflowSetup() {
-    // Close the internal review modal
-    closeModal('internalReviewModal');
+async function checkIfAIGenerated() {
+    if (!contractId || !contractData) return;
     
-    // Open your existing contract workflow modal
-    openModal('contractWorkflowModal');
+    try {
+        const contract = contractData.contract;
+        if (contract && contract.is_ai_generated) {
+            isAIGenerated = true;
+            await waitForEditor();
+            showRegenerateButton();
+            console.log('✅ Contract is AI-generated, regenerate button shown');
+        }
+    } catch (error) {
+        console.error('Error checking AI status:', error);
+    }
+}
+
+function showRegenerateButton() {
+    console.log('🔍 Looking for toolbar to add regenerate button...');
     
-    // If your existing modal has any initialization function, call it here
-    // For example: initializeContractWorkflow();
+    // Wait for toolbar to exist
+    const checkToolbar = setInterval(() => {
+        let toolbar = document.querySelector('.document-actions');
+        
+        if (!toolbar) {
+            toolbar = document.querySelector('.ai-toolbar-group');
+        }
+        
+        if (!toolbar) {
+            // Create toolbar above editor
+            const editorContainer = document.querySelector('.editor-container');
+            if (editorContainer) {
+                toolbar = document.createElement('div');
+                toolbar.className = 'document-actions';
+                toolbar.style.cssText = 'display: flex; gap: 0.5rem; padding: 1rem; border-bottom: 1px solid #dee2e6; background: white;';
+                editorContainer.insertBefore(toolbar, editorContainer.firstChild);
+            }
+        }
+        
+        if (toolbar && !document.getElementById('regenerateBtn')) {
+            clearInterval(checkToolbar);
+            
+            const regenerateBtn = document.createElement('button');
+            regenerateBtn.id = 'regenerateBtn';
+            regenerateBtn.className = 'btn btn-secondary';
+            regenerateBtn.style.cssText = `
+                display: flex; 
+                align-items: center; 
+                gap: 0.5rem; 
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                color: white; 
+                border: none;
+                padding: 0.5rem 1rem;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 500;
+                transition: all 0.3s ease;
+            `;
+            regenerateBtn.innerHTML = '<i class="ti ti-refresh"></i> Regenerate Contract';
+            regenerateBtn.onclick = regenerateContract;
+            
+            regenerateBtn.onmouseover = function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+            };
+            regenerateBtn.onmouseout = function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = 'none';
+            };
+            
+            toolbar.insertBefore(regenerateBtn, toolbar.firstChild);
+            console.log('✅ Regenerate button added successfully');
+        }
+    }, 200);
+    
+    // Stop checking after 5 seconds
+    setTimeout(() => clearInterval(checkToolbar), 5000);
 }
 
 
+async function startAIStreaming() {
+    console.log('🚀 Starting AI streaming...');
+    
+    const editor = document.getElementById('contractContent');
+    
+    if (!editor) {
+        console.error('❌ Contract editor element not found');
+        showNotification('Contract editor not found. Please refresh the page.', 'error');
+        return;
+    }
+    
+    console.log('✅ Editor found, starting stream...');
+    
+    // Show loading state
+    editor.innerHTML = `
+        <div style="text-align: center; padding: 4rem 2rem; color: #666;">
+            <div style="width: 3rem; height: 3rem; border: 4px solid #f3f3f3; border-top: 4px solid #2762CB; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1.5rem;"></div>
+            <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">🤖 AI is Generating Your Contract</h3>
+            <p style="font-size: 1rem; max-width: 500px; margin: 0 auto;">
+                This may take 30-90 seconds. The contract will appear here as it's being written...
+            </p>
+            <div id="streamProgress" style="margin-top: 1.5rem; font-size: 0.875rem; color: #888;">
+                <i class="ti ti-dots"></i> Preparing...
+            </div>
+        </div>
+    `;
+    
+    try {
+        const token = localStorage.getItem('access_token');
+        
+        // ✅ SEND PARAMS FROM DATABASE, NOT URL
+        const response = await fetch(`/api/contracts/ai-generate-stream/${contractId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(generationParams || {})
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let accumulatedContent = '';
+        
+        // Prepare for streaming
+        editor.innerHTML = '<div class="contract-document" id="streamingContent" style="min-height: 500px;"></div>';
+        const contentDiv = document.getElementById('streamingContent');
+        
+        while (true) {
+            const { done, value } = await reader.read();
+            
+            if (done) {
+                console.log('✅ Streaming complete');
+                break;
+            }
+            
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
+            
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    try {
+                        const jsonData = JSON.parse(line.substring(6));
+                        
+                        if (jsonData.type === 'start') {
+                            updateProgress('📝 Generating contract content...');
+                            
+                        } else if (jsonData.type === 'content') {
+                            accumulatedContent += jsonData.text;
+                            
+                            // Update content in real-time
+                            if (contentDiv) {
+                                contentDiv.innerHTML = accumulatedContent;
+                            }
+                            
+                            const wordCount = accumulatedContent.split(/\s+/).filter(w => w.length > 0).length;
+                            if (wordCount % 50 === 0) {
+                                updateProgress(`✍️ Writing contract... (${wordCount} words)`);
+                            }
+                            
+                            editor.scrollTop = editor.scrollHeight;
+                            
+                        } else if (jsonData.type === 'done') {
+                            updateProgress(`✅ Complete! (${jsonData.word_count} words)`);
+                            
+                            setTimeout(() => {
+                                const progress = document.getElementById('streamProgress');
+                                if (progress) progress.remove();
+                            }, 2000);
+                            
+                            showNotification(`Contract generated successfully! (${jsonData.word_count} words)`, 'success');
+                            
+                            // Reload contract data to get updated content
+                            setTimeout(() => {
+                                location.reload();
+                            }, 2000);
+                            
+                        } else if (jsonData.type === 'error') {
+                            throw new Error(jsonData.message);
+                        }
+                    } catch (parseError) {
+                        console.warn('JSON parse error:', parseError);
+                    }
+                }
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ Streaming error:', error);
+        editor.innerHTML = `
+            <div style="text-align: center; padding: 3rem; color: #dc3545;">
+                <i class="ti ti-alert-circle" style="font-size: 3rem;"></i>
+                <h3>Generation Failed</h3>
+                <p>${error.message}</p>
+                <button class="btn btn-primary mt-3" onclick="location.reload()">
+                    <i class="ti ti-refresh"></i> Try Again
+                </button>
+            </div>
+        `;
+        showNotification('Failed to generate contract: ' + error.message, 'error');
+    }
+}
+
+
+
+
+
+function updateProgress(message) {
+    const progressDiv = document.getElementById('streamProgress');
+    if (progressDiv) {
+        progressDiv.textContent = message;
+    }
+}
+
+async function regenerateContract() {
+    if (!confirm('Are you sure you want to regenerate this contract? Current content will be replaced.')) {
+        return;
+    }
+    
+    const regenerateBtn = document.getElementById('regenerateBtn');
+    if (regenerateBtn) {
+        regenerateBtn.disabled = true;
+        regenerateBtn.innerHTML = '<i class="ti ti-loader" style="animation: spin 1s linear infinite;"></i> Regenerating...';
+    }
+    
+    await startAIStreaming();
+    
+    if (regenerateBtn) {
+        regenerateBtn.disabled = false;
+        regenerateBtn.innerHTML = '<i class="ti ti-refresh"></i> Regenerate Contract';
+    }
+}
+
+// Add spinner animation CSS
+if (!document.getElementById('ai-streaming-styles')) {
+    const style = document.createElement('style');
+    style.id = 'ai-streaming-styles';
+    style.textContent = `
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+console.log('✅ AI Streaming module loaded');
 
 </script>
 
