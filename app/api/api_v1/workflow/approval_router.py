@@ -230,6 +230,27 @@ async def approve_reject_workflow(
                     "workflow_step": workflow.current_step
                 })
             })
+
+            if request.request_type=="internal_review":
+
+                update_contract = text("""
+                    UPDATE contracts
+                    SET status = 'draft'
+                    WHERE id = :contract_id
+                """)    
+                db.execute(update_contract, {"contract_id": request.contract_id})
+
+
+                update_workflow = text("""
+                    UPDATE workflow_instances
+                    SET status = 'active',
+                        current_step = 1
+                    WHERE id = :workflow_id
+                """)
+                db.execute(update_workflow, {
+                    "next_step": workflow.current_step + 1,
+                    "workflow_id": workflow.id
+                })
             
             # Note: We do NOT insert into approval_requests because it has broken foreign keys
             # The audit_logs table is the authoritative record

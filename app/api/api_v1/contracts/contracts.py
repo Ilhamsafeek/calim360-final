@@ -1052,21 +1052,22 @@ async def get_contract_editor_data(
         
         # ===== INITIATOR WORKFLOW (Party A) =====
         workflow_query = text("""
-            SELECT 
-                wi.id as workflow_instance_id,
-                wi.workflow_id,
-                wi.status as workflow_status,
-                wi.current_step,
-                w.workflow_name as template_name,
-                w.company_id
-            FROM workflow_instances wi
-            LEFT JOIN workflows w ON wi.workflow_id = w.id
-            WHERE wi.contract_id = :contract_id
-            AND w.company_id = :company_id
-            AND w.is_active =1
-            AND wi.status IN ('pending', 'active', 'in_progress', 'completed')
-            ORDER BY wi.started_at DESC
-            LIMIT 1
+          SELECT 
+            wi.id as workflow_instance_id,
+            wi.workflow_id,
+            wi.status as workflow_status,
+            wi.current_step,
+            w.workflow_name as template_name,
+            w.company_id,
+            w.is_master
+        FROM workflow_instances wi
+        LEFT JOIN workflows w ON wi.workflow_id = w.id
+        WHERE wi.contract_id = :contract_id
+        AND w.company_id = :company_id
+        AND w.is_active = 1
+        AND wi.status IN ('pending', 'active', 'in_progress', 'completed')
+        ORDER BY w.is_master ASC
+        LIMIT 1
         """)
         
         workflow = db.execute(workflow_query, {
@@ -1151,16 +1152,24 @@ async def get_contract_editor_data(
         
         # Get current approver (for initiator workflow)
         current_approver_query = text("""
-            SELECT u.first_name, u.last_name, u.email, u.department, ws.step_type
-            FROM workflow_instances wi
-            JOIN workflows w ON wi.workflow_id = w.id
-            JOIN workflow_steps ws ON wi.workflow_id = ws.workflow_id 
-                AND wi.current_step = ws.step_number
-            LEFT JOIN users u ON ws.assignee_user_id = u.id
-            WHERE wi.contract_id = :contract_id 
-            AND wi.status IN ('active', 'in_progress')
-            AND w.company_id = :company_id
-            LIMIT 1
+            SELECT 
+            u.first_name, 
+            u.last_name, 
+            u.email, 
+            u.department, 
+            ws.step_type,
+            w.is_master
+        FROM workflow_instances wi
+        JOIN workflows w ON wi.workflow_id = w.id
+        JOIN workflow_steps ws ON wi.workflow_id = ws.workflow_id 
+            AND wi.current_step = ws.step_number
+        LEFT JOIN users u ON ws.assignee_user_id = u.id
+        WHERE wi.contract_id = :contract_id 
+        AND wi.status IN ('active', 'in_progress')
+        AND w.company_id = :company_id
+        AND w.is_active = 1
+        ORDER BY w.is_master ASC
+        LIMIT 1
         """)
         current_approver = db.execute(current_approver_query, {
             "contract_id": contract_id,
@@ -4495,7 +4504,7 @@ async def check_workflow_availability(
             WHERE wi.contract_id = :contract_id
             AND w.company_id = :company_id
             AND w.is_master = 0
-            AND w.is_active = 1
+           
             LIMIT 1
         """)
         

@@ -338,27 +338,24 @@ async def get_standalone_documents(
             ORDER BY d.uploaded_at DESC
         """)
         
-        result = db.execute(query, {"company_id": company_id}).fetchall()
-        
+        result = db.execute(query, {"company_id": company_id})
         documents = []
+        
         for row in result:
             documents.append({
-                "id": str(row.id),
+                "id": row.id,
                 "document_name": row.document_name,
                 "document_type": row.document_type,
+                "file_path": row.file_path,
                 "file_size": row.file_size,
                 "mime_type": row.mime_type,
                 "uploaded_at": row.uploaded_at.isoformat() if row.uploaded_at else None,
                 "uploaded_by": row.uploaded_by,
-                "uploader_name": row.uploader_name or "Unknown",
-                "contract_number": None,
-                "contract_title": None,
-                "project_id": None,
-                "project_name": "Standalone",
-                "project_code": "N/A"
+                "uploader_name": row.uploader_name,
+                "metadata": json.loads(row.metadata) if row.metadata else {}
             })
         
-        logger.info(f" Found {len(documents)} standalone documents")
+        logger.info(f"✅ Loaded {len(documents)} standalone documents")
         
         return {
             "success": True,
@@ -367,10 +364,10 @@ async def get_standalone_documents(
         }
         
     except Exception as e:
-        logger.error(f" Error fetching standalone documents: {str(e)}")
+        logger.error(f"❌ Error loading standalone documents: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch standalone documents: {str(e)}"
+            detail=f"Failed to list correspondence: {str(e)}"
         )
 
 

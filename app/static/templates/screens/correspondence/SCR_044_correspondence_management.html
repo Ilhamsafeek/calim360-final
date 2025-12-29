@@ -1481,34 +1481,39 @@
     }
 
     .doc-delete-btn {
-    padding: 0.25rem 0.5rem;
-    background: #fee2e2;
-    border: 1px solid #fca5a5;
-    color: #dc2626;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    transition: all 0.2s;
-    opacity: 0;
-    flex-shrink: 0;
-}
+        padding: 0.25rem 0.5rem;
+        background: #fee2e2;
+        border: 1px solid #fca5a5;
+        color: #dc2626;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        transition: all 0.2s;
+        opacity: 0;
+        flex-shrink: 0;
+    }
 
-.doc-item:hover .doc-delete-btn {
-    opacity: 1;
-}
+    .doc-item:hover .doc-delete-btn {
+        opacity: 1;
+    }
 
-.doc-delete-btn:hover {
-    background: #dc2626;
-    color: white;
-}
+    .doc-delete-btn:hover {
+        background: #dc2626;
+        color: white;
+    }
 
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
 </style>
 {% endblock %}
 
@@ -1532,14 +1537,16 @@
         <div class="mode-selection">
             <!-- <label class="mode-label">Analysis Mode</label> -->
             <div class="mode-cards">
-                <div class="mode-card active" data-mode="project" onclick="setAnalysisMode('project')">
+                <div class="mode-card" data-mode="project" onclick="setAnalysisMode('project')">
+                    <!-- ⭐ REMOVED 'active' -->
                     <div class="mode-card-icon">
                         <i class="ti ti-folders"></i>
                     </div>
                     <div class="mode-card-title">Project Level</div>
                     <div class="mode-card-desc">Multiple documents</div>
                 </div>
-                <div class="mode-card" data-mode="document" onclick="setAnalysisMode('document')">
+                <div class="mode-card active" data-mode="document" onclick="setAnalysisMode('document')">
+                    <!-- ⭐ ADDED 'active' -->
                     <div class="mode-card-icon">
                         <i class="ti ti-file-analytics"></i>
                     </div>
@@ -1789,7 +1796,7 @@
         // PRIVATE STATE - Avoid global conflicts
         // =====================================================
         const state = {
-            analysisMode: 'project',
+            analysisMode: 'document',
             selectedProject: null,
             selectedContract: null,
             allDocuments: [],
@@ -1808,48 +1815,19 @@
         // =====================================================
         // INITIALIZATION
         // =====================================================
+
+
         document.addEventListener('DOMContentLoaded', () => {
-            // Add page-specific class to body
-            document.body.classList.add('correspondence-page');
-
-            // Auto-collapse main sidebar for this page
-            const sidebar = document.getElementById('sidebar');
-            if (sidebar) {
-                // Check if sidebar is NOT already collapsed (check both classes for safety)
-                const isCollapsed = sidebar.classList.contains('collapsed') ||
-                    sidebar.classList.contains('sidebar-collapsed');
-
-                if (!isCollapsed) {
-                    // Try using the global toggleSidebar function first
-                    if (typeof toggleSidebar === 'function') {
-                        toggleSidebar();
-                    } else {
-                        // Fallback: manually collapse - ADD BOTH CLASSES!
-                        sidebar.classList.add('collapsed');           // <-- This was missing!
-                        sidebar.classList.add('sidebar-collapsed');
-
-                        const mainContent = document.querySelector('.main-content');
-                        if (mainContent) {
-                            mainContent.classList.add('sidebar-collapsed');
-                        }
-
-                        // Also update body class that some templates use
-                        document.body.classList.add('sidebar-collapsed');
-
-                        // Save to localStorage so toggleSidebar() stays in sync
-                        localStorage.setItem('sidebarCollapsed', 'true');
-                    }
-                }
-            }
-
-            // Hide chatbot button
-            const chatbotBtn = document.getElementById('chatbotButton');
-            if (chatbotBtn) {
-                chatbotBtn.style.setProperty('display', 'none', 'important');
-            }
+            // ... your existing code ...
 
             loadProjects();
             setupDragDrop();
+
+            // ⭐ ADD THESE LINES:
+            const projectSelection = document.getElementById('projectSelection');
+            if (projectSelection) {
+                projectSelection.style.display = 'none';  // Hide in document mode
+            }
 
             document.getElementById('queryInput').addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -1858,6 +1836,8 @@
                 }
             });
         });
+
+
         // Cleanup when leaving the page
         window.addEventListener('beforeunload', () => {
             document.body.classList.remove('correspondence-page');
@@ -1866,16 +1846,14 @@
         // =====================================================
         // API & DATA LOADING
         // =====================================================
+
+        // File: app/static/templates/screens/correspondence/SCR_044_correspondence_management.html
+        // REPLACE your entire loadProjects function with this DEBUG VERSION:
+
         async function loadProjects() {
             try {
-                // Load projects with their documents
-                const response = await fetch('/api/v1/correspondence/projects', {
-                    headers: { 'Authorization': `Bearer ${getAuthToken()}` }
-                });
+                console.log('🔍 === LOADING PROJECTS - DEBUG MODE ===');
 
-                if (!response.ok) throw new Error('Failed to load projects');
-
-                const data = await response.json();
                 const projectSelect = document.getElementById('projectSelect');
 
                 if (projectSelect) {
@@ -1887,47 +1865,84 @@
                 state.projectsList = [];
                 const contractsSet = new Set();
 
-                // Load project documents
-                (data.data || []).forEach(project => {
-                    state.projectsList.push({
-                        id: project.id,
-                        name: project.project_name,
-                        code: project.project_code
+                // =====================================================
+                // 1. LOAD PROJECTS
+                // =====================================================
+                try {
+                    console.log('📡 Fetching projects from API...');
+                    const response = await fetch('/api/v1/correspondence/projects', {
+                        headers: { 'Authorization': `Bearer ${getAuthToken()}` }
                     });
 
-                    if (projectSelect) {
-                        projectSelect.innerHTML += `<option value="${project.id}" data-docs='${JSON.stringify(project.documents || [])}'>${escapeHtml(project.project_name)} (${project.project_code})</option>`;
-                    }
+                    console.log('📊 Projects API Response Status:', response.status);
 
-                    (project.documents || []).forEach(doc => {
-                        state.allDocumentsGlobal.push({
-                            ...doc,
-                            project_id: project.id,
-                            project_name: project.project_name,
-                            project_code: project.project_code
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('📦 Projects API Data:', data);
+                        console.log('📋 Number of projects:', (data.data || []).length);
+
+                        // Populate projects dropdown and collect project documents
+                        (data.data || []).forEach((project, idx) => {
+                            console.log(`  Project ${idx + 1}:`, project.project_name, '- Docs:', (project.documents || []).length);
+
+                            state.projectsList.push({
+                                id: project.id,
+                                name: project.project_name,
+                                code: project.project_code
+                            });
+
+                            if (projectSelect) {
+                                projectSelect.innerHTML += `<option value="${project.id}" data-docs='${JSON.stringify(project.documents || [])}'>${escapeHtml(project.project_name)} (${project.project_code})</option>`;
+                            }
+
+                            // Add project documents to global list
+                            (project.documents || []).forEach(doc => {
+                                state.allDocumentsGlobal.push({
+                                    ...doc,
+                                    project_id: project.id,
+                                    project_name: project.project_name,
+                                    project_code: project.project_code,
+                                    is_standalone: false
+                                });
+
+                                if (doc.contract_number && !contractsSet.has(doc.contract_number)) {
+                                    contractsSet.add(doc.contract_number);
+                                    state.allContracts.push({
+                                        number: doc.contract_number,
+                                        title: doc.contract_title || doc.contract_number
+                                    });
+                                }
+                            });
                         });
 
-                        if (doc.contract_number && !contractsSet.has(doc.contract_number)) {
-                            contractsSet.add(doc.contract_number);
-                            state.allContracts.push({
-                                number: doc.contract_number,
-                                title: doc.contract_title || doc.contract_number
-                            });
-                        }
-                    });
-                });
+                        console.log('✅ Loaded', state.projectsList.length, 'projects');
+                        console.log('📄 Total project documents:', state.allDocumentsGlobal.length);
+                    } else {
+                        console.error('❌ Projects API failed:', response.status);
+                    }
+                } catch (projectError) {
+                    console.error('❌ Could not load projects:', projectError);
+                }
 
-                //  NEW: Load standalone documents
+                // =====================================================
+                // 2. LOAD STANDALONE DOCUMENTS
+                // =====================================================
                 try {
+                    console.log('📡 Fetching standalone documents from API...');
                     const standaloneResponse = await fetch('/api/v1/correspondence/documents/standalone', {
                         headers: { 'Authorization': `Bearer ${getAuthToken()}` }
                     });
 
+                    console.log('📊 Standalone API Response Status:', standaloneResponse.status);
+
                     if (standaloneResponse.ok) {
                         const standaloneData = await standaloneResponse.json();
-                        console.log(` Loaded ${standaloneData.documents?.length || 0} standalone documents`);
+                        console.log('📦 Standalone API Data:', standaloneData);
+                        console.log('📋 Number of standalone docs:', (standaloneData.documents || []).length);
 
-                        (standaloneData.documents || []).forEach(doc => {
+                        // Add standalone documents to global list
+                        (standaloneData.documents || []).forEach((doc, idx) => {
+                            console.log(`  Standalone ${idx + 1}:`, doc.document_name);
                             state.allDocumentsGlobal.push({
                                 ...doc,
                                 project_id: null,
@@ -1936,12 +1951,18 @@
                                 is_standalone: true
                             });
                         });
+
+                        console.log('✅ Loaded', (standaloneData.documents || []).length, 'standalone documents');
+                    } else {
+                        console.error('❌ Standalone API failed:', standaloneResponse.status);
                     }
                 } catch (standaloneError) {
-                    console.warn('Could not load standalone documents:', standaloneError);
+                    console.error('❌ Could not load standalone documents:', standaloneError);
                 }
 
-                // Populate contract filter
+                // =====================================================
+                // 3. POPULATE CONTRACT FILTER
+                // =====================================================
                 const contractFilter = document.getElementById('contractSelect');
                 if (contractFilter) {
                     contractFilter.innerHTML = '<option value="">All Contracts</option>';
@@ -1950,23 +1971,101 @@
                     });
                 }
 
-                // Update document list if in document mode
+                // =====================================================
+                // 4. SET INITIAL DOCUMENT LIST BASED ON MODE
+                // =====================================================
+                console.log('🎯 Current mode:', state.analysisMode);
+                console.log('📊 Total documents in global:', state.allDocumentsGlobal.length);
+
                 if (state.analysisMode === 'document') {
+                    // Document mode: Show ALL documents immediately
                     state.allDocuments = [...state.allDocumentsGlobal];
                     state.filteredDocs = [...state.allDocuments];
+                    console.log('📄 Document mode: Set', state.allDocuments.length, 'documents to display');
+                    renderDocs();
+                } else {
+                    // Project mode: Wait for project selection
+                    state.allDocuments = [];
+                    state.filteredDocs = [];
+                    console.log('📁 Project mode: Waiting for project selection');
                     renderDocs();
                 }
 
-                console.log(` Loaded ${state.projectsList.length} projects, ${state.allDocumentsGlobal.length} total documents`);
+                console.log('✅ === LOADING COMPLETE ===');
+                console.log('📊 Final State:');
+                console.log('  - Projects:', state.projectsList.length);
+                console.log('  - Total Documents (Global):', state.allDocumentsGlobal.length);
+                console.log('  - Current Documents:', state.allDocuments.length);
+                console.log('  - Filtered Documents:', state.filteredDocs.length);
 
                 return state.projectsList;
 
             } catch (error) {
-                console.error('Error loading projects:', error);
-                showToast('Failed to load projects', 'error');
+                console.error('❌ FATAL ERROR loading data:', error);
+                showToast('Failed to load data', 'error');
                 return [];
             }
         }
+
+
+        // File: app/static/templates/screens/correspondence/SCR_044_correspondence_management.html
+        // FIND and REPLACE window.onModeChange:
+
+        window.onModeChange = function (mode) {
+            console.log(`🔄 Switching to ${mode} mode`);
+
+            state.analysisMode = mode;
+            state.selectedDocs.clear();
+            state.currentPage = 1;
+
+            // Update mode cards UI
+            document.querySelectorAll('.mode-card').forEach(card => {
+                card.classList.remove('active');
+                if (card.dataset.mode === mode) {
+                    card.classList.add('active');
+                }
+            });
+
+            const projectSelection = document.getElementById('projectSelection');
+            const contractSelection = document.getElementById('contractSelection');
+
+            if (mode === 'project') {
+                // PROJECT MODE: Show project selector, hide contract filter
+                if (projectSelection) projectSelection.style.display = 'block';
+                if (contractSelection) contractSelection.style.display = 'none';
+
+                // Reset selections
+                state.selectedProject = null;
+                state.allDocuments = [];
+                state.filteredDocs = [];
+
+                const projectSelect = document.getElementById('projectSelect');
+                if (projectSelect) {
+                    projectSelect.value = '';
+                }
+
+                document.getElementById('chatHeaderSubtitle').textContent = 'Select a project to begin';
+
+            } else {
+                // DOCUMENT MODE: Hide project selector, show contract filter, display ALL documents
+                if (projectSelection) projectSelection.style.display = 'none';
+                if (contractSelection) contractSelection.style.display = 'block';
+
+                // Show ALL documents (both project and standalone)
+                state.allDocuments = [...state.allDocumentsGlobal];
+                state.filteredDocs = [...state.allDocuments];
+
+                document.getElementById('chatHeaderSubtitle').textContent = `${state.allDocuments.length} documents available`;
+            }
+
+            renderDocs();
+            updateSelectionUI();
+
+            console.log(`✅ ${mode} mode active. Documents: ${state.allDocuments.length}`);
+        };
+
+
+
         window.onProjectChange = function () {
             const select = document.getElementById('projectSelect');
             const selectedOption = select.options[select.selectedIndex];
@@ -2091,8 +2190,11 @@
         // =====================================================
         // DOCUMENT RENDERING
         // =====================================================
+
+
+
         function renderDocs() {
-            const container = document.getElementById('docsList');
+            const container = document.getElementById('docsList');  // Match HTML!
             const totalDocs = state.filteredDocs.length;
             document.getElementById('docsCount').textContent = totalDocs;
 
@@ -2142,7 +2244,6 @@
                 const projectInfo = state.analysisMode === 'document' && doc.project_name && !doc.is_standalone ?
                     `<span style="color: var(--primary-color);">${escapeHtml(doc.project_code || doc.project_name)}</span> • ` : '';
 
-                //  NEW: Standalone badge
                 const standaloneBadge = doc.is_standalone
                     ? '<span class="standalone-badge"><i class="ti ti-file-plus"></i> Standalone</span> • '
                     : '';
@@ -2150,6 +2251,7 @@
                 return `
             <div class="doc-item ${isSelected ? 'selected' : ''} ${doc.is_standalone ? 'standalone-doc' : ''}" onclick="toggleDoc('${doc.id}')">
                 <input type="${inputType}" class="doc-${inputType}" name="${inputName}" 
+                    data-doc-id="${doc.id}"
                     ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleDoc('${doc.id}')">
                 <div class="doc-icon ${type}">
                     <i class="ti ti-file-text"></i>
@@ -2159,12 +2261,15 @@
                     <div class="doc-meta">${standaloneBadge}${projectInfo}${formatDate(doc.uploaded_at)} • ${formatFileSize(doc.file_size)}</div>
                 </div>
                 <button class="doc-delete-btn" onclick="event.stopPropagation(); deleteDocument('${doc.id}')" title="Delete document">
-                <i class="ti ti-trash"></i>
+                    <i class="ti ti-trash"></i>
                 </button>
             </div>
         `;
             }).join('');
         }
+
+
+
         function renderPagination(totalPages) {
             const container = document.getElementById('paginationControls');
             const current = state.currentPage;
@@ -2479,6 +2584,10 @@
             renderUploadList();
         };
 
+
+        // File: app/static/templates/screens/correspondence/SCR_044_correspondence_management.html
+        // Replace your existing window.uploadFiles function with this:
+
         window.uploadFiles = async function () {
             console.log('=== UPLOAD STARTED ===');
 
@@ -2509,7 +2618,7 @@
                     formData.append('files', file);
                 });
 
-                //  ALWAYS send project_id field (empty string for standalone)
+                // ALWAYS send project_id field (empty string for standalone)
                 formData.append('project_id', projectId ? String(projectId) : '');
                 formData.append('document_type', 'correspondence');
 
@@ -2519,6 +2628,9 @@
 
                 const response = await fetch('/api/v1/correspondence/upload', {
                     method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    },
                     body: formData
                 });
 
@@ -2535,23 +2647,25 @@
 
                 showToast(`${result.uploaded} file(s) uploaded successfully (${result.upload_mode})`, 'success');
 
+                // Clear upload list
                 state.filesToUpload = [];
                 uploadBtn.innerHTML = originalContent;
                 uploadBtn.disabled = false;
 
                 closeUploadModal();
 
-                // Reload data
+                // ⭐ RELOAD ONLY DOCUMENT LIST (NO FULL PAGE REFRESH)
+                await loadProjects();
+
+                // Maintain current selections
                 if (state.analysisMode === 'project' && state.selectedProject) {
-                    await loadProjects();
                     const projectSelect = document.getElementById('projectSelect');
                     if (projectSelect) {
                         projectSelect.value = state.selectedProject;
                         onProjectChange();
                     }
                 } else {
-                    // Document mode reload - reload all documents globally
-                    await loadProjects();  // This reloads allDocumentsGlobal
+                    // Document mode - just re-render the documents
                     state.allDocuments = [...state.allDocumentsGlobal];
                     state.filteredDocs = [...state.allDocuments];
                     renderDocs();
@@ -2566,6 +2680,9 @@
 
             console.log('=== UPLOAD COMPLETED ===');
         };
+
+
+
         // =====================================================
         // QUERY SUBMISSION
         // =====================================================
@@ -2865,55 +2982,92 @@
     })();
 
 
-window.deleteDocument = async function(docId) {
-    if (!confirm('Are you sure you want to delete this document? This action cannot be undone.')) {
-        return;
-    }
 
-    const deleteBtn = event.target.closest('.doc-delete-btn');
-    const originalContent = deleteBtn.innerHTML;
-    
-    try {
-        // Show loading state
-        deleteBtn.disabled = true;
-        deleteBtn.innerHTML = '<i class="ti ti-loader-2" style="animation: spin 1s linear infinite;"></i> Deleting...';
-        
-        const response = await fetch(`/api/v1/correspondence/documents/${docId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${getAuthToken()}` }
-        });
+    // File: app/static/templates/screens/correspondence/SCR_044_correspondence_management.html
+    // Replace your existing window.deleteDocument function with this:
 
-        if (!response.ok) throw new Error('Failed to delete document');
-
-        const result = await response.json();
-        showToast(result.message || 'Document deleted successfully', 'success');
-
-    } catch (error) {
-        console.error('Delete error:', error);
-        showToast('Failed to delete document', 'error');
-        deleteBtn.disabled = false;
-        deleteBtn.innerHTML = originalContent;
-        return; // Exit if delete failed
-    }
-
-    // Reload documents (separate try-catch)
-    try {
-        await loadProjects();
-        if (state.analysisMode === 'project' && state.selectedProject) {
-            const projectSelect = document.getElementById('projectSelect');
-            projectSelect.value = state.selectedProject;
-            onProjectChange();
-        } else {
-            state.allDocuments = [...state.allDocumentsGlobal];
-            state.filteredDocs = [...state.allDocuments];
-            renderDocs();
+    window.deleteDocument = async function (docId) {
+        if (!confirm('Are you sure you want to delete this document? This action cannot be undone.')) {
+            return;
         }
-    } catch (reloadError) {
-        console.error('Reload error:', reloadError);
-        // Document deleted but reload failed - just refresh manually
-        location.reload();
-    }
-};
+
+        const deleteBtn = event.target.closest('.doc-delete-btn');
+        const originalContent = deleteBtn ? deleteBtn.innerHTML : '';
+
+        try {
+            // Show loading state
+            if (deleteBtn) {
+                deleteBtn.disabled = true;
+                deleteBtn.innerHTML = '<i class="ti ti-loader-2" style="animation: spin 1s linear infinite;"></i>';
+            }
+
+            const response = await fetch(`/api/v1/correspondence/documents/${docId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${getAuthToken()}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to delete document');
+
+            const result = await response.json();
+            showToast(result.message || 'Document deleted successfully', 'success');
+
+            // ⭐ REMOVE FROM DOM WITH ANIMATION (NO PAGE REFRESH)
+            const docItem = document.querySelector(`[data-doc-id="${docId}"]`)?.closest('.doc-item');
+
+            if (docItem) {
+                docItem.style.transition = 'all 0.3s ease';
+                docItem.style.opacity = '0';
+                docItem.style.transform = 'translateX(20px)';
+
+                setTimeout(() => {
+                    docItem.remove();
+
+                    // Update state arrays
+                    state.allDocumentsGlobal = state.allDocumentsGlobal.filter(d => d.id !== docId);
+                    state.allDocuments = state.allDocuments.filter(d => d.id !== docId);
+                    state.filteredDocs = state.filteredDocs.filter(d => d.id !== docId);
+                    state.selectedDocs.delete(docId);
+
+                    // Update counts
+                    updateSelectionUI();
+
+                    // Update pagination if needed
+                    const totalPages = Math.ceil(state.filteredDocs.length / state.perPage);
+                    if (state.currentPage > totalPages && totalPages > 0) {
+                        state.currentPage = totalPages;
+                    }
+                    renderDocs();
+
+                }, 300);
+            } else {
+                // Fallback: if element not found, just reload
+                await loadProjects();
+                if (state.analysisMode === 'project' && state.selectedProject) {
+                    const projectSelect = document.getElementById('projectSelect');
+                    if (projectSelect) {
+                        projectSelect.value = state.selectedProject;
+                        onProjectChange();
+                    }
+                } else {
+                    state.allDocuments = [...state.allDocumentsGlobal];
+                    state.filteredDocs = [...state.allDocuments];
+                    renderDocs();
+                }
+            }
+
+        } catch (error) {
+            console.error('Delete error:', error);
+            showToast('Failed to delete document', 'error');
+            if (deleteBtn) {
+                deleteBtn.disabled = false;
+                deleteBtn.innerHTML = originalContent;
+            }
+        }
+    };
+
 
 </script>
 {% endblock %}
