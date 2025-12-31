@@ -42,13 +42,14 @@ async def approve_reject_workflow(
         
         # Get workflow instance FILTERED BY COMPANY
         workflow_query = text("""
-            SELECT wi.id, wi.current_step, wi.workflow_id
+            SELECT wi.id, wi.current_step, wi.workflow_id, w.is_master
             FROM workflow_instances wi
             INNER JOIN workflows w ON wi.workflow_id = w.id
             WHERE wi.contract_id = :contract_id
             AND w.company_id = :company_id
-            AND w.is_active=1
-            AND wi.status IN ('active', 'in_progress','pending')
+            AND w.is_active = 1
+            AND wi.status IN ('active', 'in_progress', 'pending')
+            ORDER BY w.is_master ASC, w.id DESC
             LIMIT 1
         """)
         workflow = db.execute(workflow_query, {
@@ -235,7 +236,8 @@ async def approve_reject_workflow(
 
                 update_contract = text("""
                     UPDATE contracts
-                    SET status = 'draft'
+                    SET status = 'draft',
+                    approval_status='initiator_team_rejected'
                     WHERE id = :contract_id
                 """)    
                 db.execute(update_contract, {"contract_id": request.contract_id})

@@ -34,7 +34,7 @@ from pydantic import BaseModel, Field
 
 from app.models.contract import Contract, ContractVersion
 
-from app.services.claude_service import ClaudeService
+from app.services.claude_service import ClaudeService, claude_service
 from app.services.blockchain_service import blockchain_service
 
 
@@ -1018,6 +1018,7 @@ async def get_contract_editor_data(
                 c.contract_title,
                 c.contract_type,
                 c.status,
+                c.approval_status,
                 c.created_at,
                 c.created_by as created_by_id,
                 c.updated_at,
@@ -1259,6 +1260,7 @@ async def get_contract_editor_data(
                 "title": result.contract_title,
                 "type": result.contract_type,
                 "status": result.status,
+                "approval_status": result.approval_status,
                 "content": result.content if result.content else "",
                 "company_name": result.company_name,
                 "company_id": result.company_id,
@@ -2007,7 +2009,7 @@ async def setup_contract_workflow(
             
             result = db.execute(workflow_insert, {
                 "company_id": current_user.company_id,
-                "workflow_name": f"Custom Workflow - Contract {contract_id}"
+                "workflow_name": f"Custom Workflow"
             })
             
             workflow_id = result.lastrowid
@@ -4642,14 +4644,14 @@ async def ensure_workflow_instance(
 @router.post("/ai-generate-stream/{contract_id}")
 async def stream_ai_contract_generation(
     contract_id: int,
-    request_data: Dict[str, Any] = Body(...),  # ✅ Accept any dict
+    request_data: Dict[str, Any] = Body(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Stream AI-generated contract content directly to the editor"""
     try:
-        logger.info(f" Streaming AI generation for contract {contract_id}")
-        logger.info(f"📦 Received data: {json.dumps(request_data, indent=2)}")  # Debug log
+        logger.info(f"🎯 Streaming AI generation for contract {contract_id}")
+        logger.info(f"📦 Received data: {json.dumps(request_data, indent=2)}")
         
         # Verify contract exists
         contract = db.query(Contract).filter(
@@ -4660,137 +4662,40 @@ async def stream_ai_contract_generation(
         if not contract:
             raise HTTPException(status_code=404, detail="Contract not found")
         
-        # ✅ EXTRACT VALUES WITH SAFE DEFAULTS
+        # Extract values with safe defaults
         contract_type = request_data.get("contract_type", "Service Agreement")
         profile_type = request_data.get("profile_type", "client")
         parties = request_data.get("parties", {})
-        selected_clauses = request_data.get("selected_clauses", [])
-        jurisdiction = request_data.get("jurisdiction", "Qatar")
-        contract_title = request_data.get("contract_title", f"{contract_type} Agreement")
-        
-        # Handle parties - can be dict or nested dict
-        if isinstance(parties, dict):
-            party_a_data = parties.get("party_a", {})
-            party_b_data = parties.get("party_b", {})
-            
-            if isinstance(party_a_data, dict):
-                party_a_name = party_a_data.get("name", "Party A")
-            else:
-                party_a_name = str(party_a_data) if party_a_data else "Party A"
-            
-            if isinstance(party_b_data, dict):
-                party_b_name = party_b_data.get("name", "Party B")
-            else:
-                party_b_name = str(party_b_data) if party_b_data else "Party B"
-        else:
-            party_a_name = "Party A"
-            party_b_name = "Party B"
-        
-        # Handle contract value
-        contract_value = request_data.get("contract_value")
-        if contract_value:
-            contract_value = str(contract_value)
-        else:
-            contract_value = "To be determined"
-        
+        party_a = parties.get("party_a", {})
+        party_b = parties.get("party_b", {})
+        contract_value = request_data.get("contract_value", "100,000")
         currency = request_data.get("currency", "QAR")
-        start_date = request_data.get("start_date") or "To be determined"
-        end_date = request_data.get("end_date") or "To be determined"
-        payment_terms = request_data.get("payment_terms", "As per agreed milestones")
-        prompt = request_data.get("prompt", "")
+        start_date = request_data.get("start_date", "")
+        end_date = request_data.get("end_date", "")
+        selected_clause_descriptions = request_data.get("selected_clauses", [])
+        jurisdiction = request_data.get("jurisdiction", "Qatar")
         
-        logger.info(f"📋 Contract: {contract_title}")
-        logger.info(f"👥 Parties: {party_a_name} <-> {party_b_name}")
-        logger.info(f"💰 Value: {contract_value} {currency}")
-        logger.info(f"📅 Period: {start_date} to {end_date}")
+        party_a_name = party_a.get("name", "Party A")
+        party_b_name = party_b.get("name", "Party B")
         
-        # Build clause descriptions
-        clause_details = {
-            "performance_bond": "Performance Bond - Contractor shall provide a performance bond as security for faithful performance",
-            "retention_amount": "Retention Amount - A percentage of payment shall be retained until completion",
-            "back_to_back": "Back-to-Back Terms - Terms and conditions shall flow down from main contract",
-            "insurance": "Insurance Requirements - Comprehensive insurance coverage including liability and professional indemnity",
-            "intellectual_property": "Intellectual Property Rights - Clear ownership and licensing terms for all IP",
-            "kpi": "Key Performance Indicators - Measurable performance metrics and standards",
-            "arbitration": f"Arbitration Clause - Disputes shall be resolved through arbitration in accordance with {jurisdiction} law",
-            "mediation": "Mediation Clause - Parties shall attempt mediation before arbitration",
-            "liquidated_damages": "Liquidated Damages - Pre-determined compensation for delays or breach"
-        }
-        
-        # Handle different clause formats
-        selected_clause_descriptions = []
-        
-        # If it's an array of objects: [{"key": "performance_bond", "enabled": true}]
-        if isinstance(selected_clauses, list):
-            for clause in selected_clauses:
-                if isinstance(clause, dict):
-                    clause_key = clause.get('key', '')
-                    clause_enabled = clause.get('enabled', False)
-                    if clause_enabled and clause_key in clause_details:
-                        selected_clause_descriptions.append(clause_details[clause_key])
-        
-        # If it's a dict: {"performance_bond": true, "insurance": false}
-        elif isinstance(selected_clauses, dict):
-            for clause_key, is_enabled in selected_clauses.items():
-                if is_enabled and clause_key in clause_details:
-                    selected_clause_descriptions.append(clause_details[clause_key])
-        
-        logger.info(f"📑 Selected {len(selected_clause_descriptions)} clauses: {[c.split('-')[0].strip() for c in selected_clause_descriptions]}")
-        
-        # ✅ BUILD STREAMING RESPONSE
-        async def generate_stream():
-            try:
-                from app.services.claude_service import claude_service
-                from datetime import datetime
-                
-                # Get today's date
-                today = datetime.now().strftime("%B %d, %Y")
-                
-                # Use actual dates or today as default
-                actual_start_date = start_date if start_date != 'To be determined' else today
-                actual_end_date = end_date if end_date != 'To be determined' else 'One year from start date'
-                
-                prompt_text = f"""Generate a comprehensive, legally binding {contract_type} contract.
+        # Build prompt
+        prompt_text = f"""Generate a complete, production-ready {contract_type} contract between:
+- Party A ({profile_type}): {party_a_name}
+- Party B: {party_b_name}
 
-**CRITICAL: Use the EXACT values provided below. NO placeholders like [DATE], [NAME], [AMOUNT] are allowed.**
+Contract Value: {contract_value} {currency}
+Duration: {start_date} to {end_date}
+Jurisdiction: {jurisdiction}
 
-**CONTRACT DETAILS:**
-- Contract Title: {contract_title}
-- Contract Type: {contract_type}
-- Contract Date: {actual_start_date}
-- Jurisdiction: {jurisdiction}
+Selected Clauses: {', '.join(selected_clause_descriptions) if selected_clause_descriptions else 'Standard clauses'}
 
-**PARTIES:**
-- Party A ({profile_type.upper()}): {party_a_name}
-  (Use this EXACT name everywhere, not [CLIENT NAME] or any placeholder)
-- Party B (SERVICE PROVIDER): {party_b_name}
-  (Use this EXACT name everywhere, not [PROVIDER NAME] or any placeholder)
-
-**FINANCIAL TERMS:**
-- Total Contract Value: {contract_value} {currency}
-  (Use this EXACT amount, not [AMOUNT] or any placeholder)
-- Payment Terms: {payment_terms}
-- Currency: {currency}
-
-**CONTRACT PERIOD:**
-- Start Date: {actual_start_date}
-  (Use this EXACT date, not [START DATE] or any placeholder)
-- End Date: {actual_end_date}
-  (Use this EXACT date, not [END DATE] or any placeholder)
-
-**REQUIRED CLAUSES (Must include all with full legal detail):**
-{chr(10).join([f"- {desc}" for desc in selected_clause_descriptions]) if selected_clause_descriptions else "- Standard contract clauses appropriate for a " + contract_type}
-
-**ADDITIONAL REQUIREMENTS:**
-{prompt if prompt else "None specified - use standard industry best practices"}
-
-**MANDATORY INSTRUCTIONS:**
-1. Replace ALL placeholders with actual values provided above
+**CRITICAL REQUIREMENTS:**
+1. NO placeholders, NO brackets, NO [CLIENT NAME] or similar
 2. Use "{party_a_name}" everywhere, NEVER "[CLIENT NAME]", "Client", or placeholder
 3. Use "{party_b_name}" everywhere, NEVER "[PROVIDER NAME]", "Service Provider", or placeholder  
 4. Use "{contract_value} {currency}" for amounts, NEVER "[AMOUNT]" or placeholder
-5. Use "{actual_start_date}" for start date, NEVER "[START DATE]" or placeholder
-6. Use "{actual_end_date}" for end date, NEVER "[END DATE]" or placeholder
+5. Use "{start_date}" for start date, NEVER "[START DATE]" or placeholder
+6. Use "{end_date}" for end date, NEVER "[END DATE]" or placeholder
 7. Production-ready, legally enforceable (minimum 3,500 words)
 8. Professional legal language for {jurisdiction}
 9. Detailed obligations, timelines, deliverables, remedies
@@ -4804,12 +4709,18 @@ async def stream_ai_contract_generation(
 
 Generate the complete contract now:"""
 
-                logger.info("🚀 Starting Claude streaming...")
-                
+        logger.info("🚀 Starting Claude streaming...")
+        
+        # Define the generator function
+        async def generate_stream():
+            # Import text function here to ensure it's in scope
+            from sqlalchemy import text as sql_text
+            
+            try:
                 # Call Claude API with streaming
                 with claude_service.client.messages.stream(
                     model=claude_service.model,
-                    max_tokens=8000,
+                    max_tokens=16000,
                     temperature=0.3,
                     messages=[{"role": "user", "content": prompt_text}]
                 ) as stream:
@@ -4819,9 +4730,9 @@ Generate the complete contract now:"""
                     yield f"data: {json.dumps({'type': 'start', 'contract_id': contract_id})}\n\n"
                     
                     # Stream content chunks
-                    for text in stream.text_stream:
-                        accumulated_text += text
-                        yield f"data: {json.dumps({'type': 'content', 'text': text})}\n\n"
+                    for text_chunk in stream.text_stream:
+                        accumulated_text += text_chunk
+                        yield f"data: {json.dumps({'type': 'content', 'text': text_chunk})}\n\n"
                     
                     # Get final metadata
                     final_message = stream.get_final_message()
@@ -4841,13 +4752,13 @@ Generate the complete contract now:"""
                     clause_summary = ", ".join([c.split('-')[0].strip() for c in selected_clause_descriptions]) if selected_clause_descriptions else "Standard"
                     
                     # Check if version exists
-                    existing_version = db.execute(text("""
+                    existing_version = db.execute(sql_text("""
                         SELECT id FROM contract_versions 
                         WHERE contract_id = :contract_id AND version_number = 1
                     """), {"contract_id": contract_id}).fetchone()
                     
                     if existing_version:
-                        db.execute(text("""
+                        db.execute(sql_text("""
                             UPDATE contract_versions 
                             SET contract_content = :contract_content,
                                 change_summary = :change_summary,
@@ -4860,7 +4771,7 @@ Generate the complete contract now:"""
                             "created_at": datetime.utcnow()
                         })
                     else:
-                        db.execute(text("""
+                        db.execute(sql_text("""
                             INSERT INTO contract_versions (contract_id, version_number, version_type,
                                                          contract_content, change_summary,
                                                          created_by, created_at)

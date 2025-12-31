@@ -1217,7 +1217,7 @@ async function saveContract() {
             closeModal('saveContractModal');
 
             // Show success message
-            showNotification('Contract created! Preparing AI generation...', 'success');
+            showNotification('AI is creating your contract in real time and it will take a while. You may continue to work on the contract as it is getting generated...', 'success');
 
             // Redirect to editor - AI will auto-generate from database params
             setTimeout(() => {

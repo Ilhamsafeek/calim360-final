@@ -310,25 +310,7 @@ const ProjectManager = {
                         </div>
                     </div>
                 </div>
-                <div class="project-body">
-                    <div class="progress-section">
-                        <div class="progress-header">
-                            <span>Progress</span>
-                            <span>${project.progress || 0}%</span>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${project.progress || 0}%"></div>
-                        </div>
-                    </div>
-                    <div class="project-actions">
-                        <button class="action-btn primary" onclick="event.stopPropagation(); ProjectManager.viewProject('${project.id}')">
-                            <i class="ti ti-eye"></i> View
-                        </button>
-                        <button class="action-btn" onclick="event.stopPropagation(); ProjectManager.openEditModal('${project.id}')">
-                            <i class="ti ti-edit"></i> Edit
-                        </button>
-                    </div>
-                </div>
+               
             </div>
         `).join('');
     },

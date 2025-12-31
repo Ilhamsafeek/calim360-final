@@ -474,44 +474,135 @@
     }
 
     /* Loading Overlay */
-    .loading-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.95);
-        display: none;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-    }
+    /* Loading Overlay with Logo */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7); /* Grey overlay */
+    backdrop-filter: blur(5px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.3s ease;
+}
 
-    .loading-overlay.show {
-        display: flex;
-    }
+.loading-overlay.show {
+    display: flex;
+}
 
-    .loader {
-        width: 60px;
-        height: 60px;
-        border: 6px solid var(--border-color);
-        border-top-color: var(--primary-color);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-bottom: 1rem;
-    }
+/* Logo Container */
+.logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px; /* Space between logo and text */
+    animation: fadeIn 0.5s ease;
+}
 
-    .loading-text {
-        color: var(--text-color);
-        font-size: 1.1rem;
-        font-weight: 500;
-    }
+/* Logo Row */
+.logo-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
+/* Animated Logo */
+.loading-logo {
+    width: 50px;
+    height: auto;
+    animation: pulse 2s ease-in-out infinite;
+    filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.3));
+}
+
+/* Text Row */
+.text-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Loading Text */
+.loading-overlay .loading-text {
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    animation: fadeInOut 2s ease-in-out infinite;
+    margin: 0;
+}
+
+/* Pulse Animation for Logo */
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+}
+
+/* Fade In Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Fade In/Out Animation for Text */
+@keyframes fadeInOut {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Remove old loader styles if they exist */
+.loader {
+    display: none;
+}
+
+    /* Fade In Animation */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
         }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Fade In/Out Animation for Text */
+    @keyframes fadeInOut {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    /* Remove old loader styles if they exist */
+    .loader {
+        display: none;
     }
 
     /* Hide editor until loaded */
@@ -2469,8 +2560,14 @@
 {% block content %}
 <!-- Loading Overlay - Show by default -->
 <div class="loading-overlay show" id="loadingOverlay">
-    <div class="loader"></div>
-    <div class="loading-text">Loading Contract...</div>
+    <div class="logo-container">
+        <div class="logo-row">
+            <img src="/static/img/logo/contriq-icon.png" alt="Contriq" class="loading-logo">
+        </div>
+        <div class="text-row">
+            <div class="loading-text">Loading Contract...</div>
+        </div>
+    </div>
 </div>
 
 <!-- Contract Editor - Hidden until data loads -->
@@ -4417,35 +4514,35 @@
     // =====================================================
     // DATA LOADING FUNCTIONS
     // =====================================================
-   async function loadContractData() {
-    try {
-        const response = await fetch(`/api/contracts/edit/${contractId}`);
-        const data = await response.json();
+    async function loadContractData() {
+        try {
+            const response = await fetch(`/api/contracts/edit/${contractId}`);
+            const data = await response.json();
 
-        console.log('Contract data received:', data);
+            console.log('Contract data received:', data);
 
-        if (data.success) {
-            contractData = data;
-            renderContractEditor(data);
+            if (data.success) {
+                contractData = data;
+                renderContractEditor(data);
 
-            document.getElementById('contractEditor').classList.add('loaded');
-            document.getElementById('contractEditor').style.display = 'block';
+                document.getElementById('contractEditor').classList.add('loaded');
+                document.getElementById('contractEditor').style.display = 'block';
+                hideLoader();
+
+                startAutoSave();
+
+                // ✅ ADD THIS - Initialize AI AFTER contract is rendered
+                await initializeAIGeneration();
+            } else {
+                hideLoader();
+                showError('Failed to load contract data: ' + (data.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error loading contract:', error);
             hideLoader();
-
-            startAutoSave();
-            
-            // ✅ ADD THIS - Initialize AI AFTER contract is rendered
-            await initializeAIGeneration();
-        } else {
-            hideLoader();
-            showError('Failed to load contract data: ' + (data.message || 'Unknown error'));
+            showError('Failed to load contract data: ' + error.message);
         }
-    } catch (error) {
-        console.error('Error loading contract:', error);
-        hideLoader();
-        showError('Failed to load contract data: ' + error.message);
     }
-}
 
 
     // =====================================================
@@ -4523,15 +4620,23 @@
 
         if (contract.status === 'draft') {
             if (contract.is_initiator === true) {
-            // Draft stage
-            actionButtons = `
+                // Draft stage
+                actionButtons = `
             <button id="saveDraftBtn" class="btn signature-btn" onclick="saveAsDraft()">
     <i class="ti ti-device-floppy"></i> Save Draft
 </button>
           <button class="btn btn-primary" onclick="submitForReview('${workflow ? workflow.status : 'nothing'}')">
     <i class="ti ti-send"></i> Submit for Internal Review
-</button>`
+</button>`;
+
+               
+
             }
+             if (contract.approval_status === 'initiator_team_rejected') {
+                    actionButtons += `<button class="workflow-setup-btn" onclick="openWorkflowHistoryModal()" style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <i class="ti ti-history"></i> Approval History
+                                    </button>`;
+                }
         } else if ((contract.status === 'review')) {
             // Review stage
 
@@ -4542,12 +4647,12 @@
                 if ((workflow && workflow.is_my_workflow_turn === true) && (workflow && workflow.status != 'completed')) {
 
                     actionButtons = `
-    <button class="btn signature-btn" onclick="approveWorkflow(${contract.id},'internal_review')">
-        <i class="ti ti-check"></i> Approve
-    </button>
-    <button class="btn btn-danger" onclick="rejectWorkflow(${contract.id},'internal_review')">
-        <i class="ti ti-x"></i> Reject
-    </button>`;
+                    <button class="btn signature-btn" onclick="approveWorkflow(${contract.id},'internal_review')">
+                        <i class="ti ti-check"></i> Approve
+                    </button>
+                    <button class="btn btn-danger" onclick="rejectWorkflow(${contract.id},'internal_review')">
+                        <i class="ti ti-x"></i> Reject
+                    </button>`;
                 } else {
                     actionButtons = getApprovalBadge(current_approver, workflow, 'review');
 
@@ -4889,7 +4994,7 @@ ${contract.content && contract.content.trim() !== '' ?
                     <div class="stepper-progress" id="stepperProgress" style="width: ${getProgressWidth(status)}%;"></div>
                 </div>
                 ${steps.map(step => `
-                    <div class="stepper-step ${step.status}" onclick="navigateToStep('${step.key}')">
+                    <div class="stepper-step ${step.status}" >
                         <div class="step-icon-wrapper">
                             <i class="ti ti-${step.icon}"></i>
                         </div>
@@ -7754,6 +7859,7 @@ ${contract.content && contract.content.trim() !== '' ?
 
             // For each comment, find or create marker and attach bubble
             data.comments.forEach(comment => {
+                 console.log(comment.comment_text);
                 let marker = document.querySelector(`[data-comment-db-id="${comment.id}"]`);
 
                 if (!marker) {
@@ -11186,12 +11292,12 @@ Generated by CALIM 360 Smart CLM
 
 
     // Function to reject workflow
-    function rejectWorkflow(contractId,requestType='internal_review') {
+    function rejectWorkflow(contractId, requestType = 'internal_review') {
         openRejectionModal(contractId, requestType);
     }
 
     // Function to open rejection modal
-    function openRejectionModal(contractId, requestType=null) {
+    function openRejectionModal(contractId, requestType = null) {
         const modalHtml = `
     <div class="modal-overlay" id="rejectionModal" style="display: flex;">
         <div class="modal-content" style="max-width: 500px; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
@@ -11710,170 +11816,170 @@ Generated by CALIM 360 Smart CLM
         // For example: initializeContractWorkflow();
     }
 
-// =====================================================
-// AI STREAMING FUNCTIONALITY (CORRECTED VERSION)
-// =====================================================
+    // =====================================================
+    // AI STREAMING FUNCTIONALITY (CORRECTED VERSION)
+    // =====================================================
 
-let isAIGenerated = false;
-let generationParams = null;
+    let isAIGenerated = false;
+    let generationParams = null;
 
-// Wait for contract to fully load before checking AI generation
-async function initializeAIGeneration() {
-    console.log('🔍 Checking if contract is AI-generated...');
-    
-    if (!contractId) {
-        console.log('⏭️ No contract ID available');
-        return;
-    }
-    
-    try {
-        // ✅ FETCH CONTRACT DATA FROM ENDPOINT
-        console.log(`📡 Fetching contract data from /api/contracts/edit/${contractId}`);
-        
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`/api/contracts/edit/${contractId}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include'
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        
-        if (!data.success || !data.contract) {
-            console.log('⏭️ Invalid contract data received');
+    // Wait for contract to fully load before checking AI generation
+    async function initializeAIGeneration() {
+        console.log('🔍 Checking if contract is AI-generated...');
+
+        if (!contractId) {
+            console.log('⏭️ No contract ID available');
             return;
         }
-        
-        const contract = data.contract;
-        
-        console.log('=== AI GENERATION CHECK ===');
-        console.log('Contract ID:', contract.id);
-        console.log('Contract Number:', contract.contract_number);
-        console.log('Is AI Generated:', contract.is_ai_generated);
-        console.log('Has Params:', !!contract.ai_generation_params);
-        console.log('==========================');
-        
-        // ✅ CHECK IF AI-GENERATED FROM ENDPOINT DATA
-        if (contract.is_ai_generated) {
-            isAIGenerated = true;
-            
-            // ✅ LOAD PARAMS FROM ENDPOINT RESPONSE
-            if (contract.ai_generation_params) {
-                try {
-                    if (typeof contract.ai_generation_params === 'string') {
-                        generationParams = JSON.parse(contract.ai_generation_params);
-                    } else {
-                        generationParams = contract.ai_generation_params;
+
+        try {
+            // ✅ FETCH CONTRACT DATA FROM ENDPOINT
+            console.log(`📡 Fetching contract data from /api/contracts/edit/${contractId}`);
+
+            const token = localStorage.getItem('access_token');
+            const response = await fetch(`/api/contracts/edit/${contractId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+
+            if (!data.success || !data.contract) {
+                console.log('⏭️ Invalid contract data received');
+                return;
+            }
+
+            const contract = data.contract;
+
+            console.log('=== AI GENERATION CHECK ===');
+            console.log('Contract ID:', contract.id);
+            console.log('Contract Number:', contract.contract_number);
+            console.log('Is AI Generated:', contract.is_ai_generated);
+            console.log('Has Params:', !!contract.ai_generation_params);
+            console.log('==========================');
+
+            // ✅ CHECK IF AI-GENERATED FROM ENDPOINT DATA
+            if (contract.is_ai_generated) {
+                isAIGenerated = true;
+
+                // ✅ LOAD PARAMS FROM ENDPOINT RESPONSE
+                if (contract.ai_generation_params) {
+                    try {
+                        if (typeof contract.ai_generation_params === 'string') {
+                            generationParams = JSON.parse(contract.ai_generation_params);
+                        } else {
+                            generationParams = contract.ai_generation_params;
+                        }
+                        console.log('✅ Loaded generation params from database:', generationParams);
+                    } catch (error) {
+                        console.error('❌ Failed to parse generation params:', error);
+                        generationParams = {};
                     }
-                    console.log('✅ Loaded generation params from database:', generationParams);
-                } catch (error) {
-                    console.error('❌ Failed to parse generation params:', error);
+                } else {
+                    console.warn('⚠️ Contract is AI-generated but has no params');
                     generationParams = {};
                 }
-            } else {
-                console.warn('⚠️ Contract is AI-generated but has no params');
-                generationParams = {};
-            }
-            
-            // Wait for editor to be ready
-            await waitForEditor();
-            
-            // Show regenerate button
-            showRegenerateButton();
-            
-            // ✅ CHECK IF CONTRACT HAS CONTENT
-            const hasContent = contract.content && contract.content.trim().length > 100;
-            
-            if (!hasContent) {
-                console.log(' No content yet, starting AI generation...');
-                await startAIStreaming();
-            } else {
-                console.log('✅ Contract already has content, regenerate available');
-            }
-            
-        } else {
-            console.log('ℹ️ Contract is not AI-generated');
-        }
-        
-    } catch (error) {
-        console.error('❌ Error fetching contract data for AI check:', error);
-    }
-}
 
-// Wait for editor element to exist
-function waitForEditor() {
-    return new Promise((resolve) => {
-        const checkEditor = setInterval(() => {
-            const editor = document.getElementById('contractContent');
-            if (editor) {
-                console.log('✅ Editor element found');
+                // Wait for editor to be ready
+                await waitForEditor();
+
+                // Show regenerate button
+                showRegenerateButton();
+
+                // ✅ CHECK IF CONTRACT HAS CONTENT
+                const hasContent = contract.content && contract.content.trim().length > 100;
+
+                if (!hasContent) {
+                    console.log(' No content yet, starting AI generation...');
+                    await startAIStreaming();
+                } else {
+                    console.log('✅ Contract already has content, regenerate available');
+                }
+
+            } else {
+                console.log('ℹ️ Contract is not AI-generated');
+            }
+
+        } catch (error) {
+            console.error('❌ Error fetching contract data for AI check:', error);
+        }
+    }
+
+    // Wait for editor element to exist
+    function waitForEditor() {
+        return new Promise((resolve) => {
+            const checkEditor = setInterval(() => {
+                const editor = document.getElementById('contractContent');
+                if (editor) {
+                    console.log('✅ Editor element found');
+                    clearInterval(checkEditor);
+                    resolve();
+                } else {
+                    console.log('⏳ Waiting for editor element...');
+                }
+            }, 100);
+
+            // Timeout after 10 seconds
+            setTimeout(() => {
                 clearInterval(checkEditor);
                 resolve();
-            } else {
-                console.log('⏳ Waiting for editor element...');
-            }
-        }, 100);
-        
-        // Timeout after 10 seconds
-        setTimeout(() => {
-            clearInterval(checkEditor);
-            resolve();
-        }, 10000);
-    });
-}
-
-async function checkIfAIGenerated() {
-    if (!contractId || !contractData) return;
-    
-    try {
-        const contract = contractData.contract;
-        if (contract && contract.is_ai_generated) {
-            isAIGenerated = true;
-            await waitForEditor();
-            showRegenerateButton();
-            console.log('✅ Contract is AI-generated, regenerate button shown');
-        }
-    } catch (error) {
-        console.error('Error checking AI status:', error);
+            }, 10000);
+        });
     }
-}
 
-function showRegenerateButton() {
-    console.log('🔍 Looking for toolbar to add regenerate button...');
-    
-    // Wait for toolbar to exist
-    const checkToolbar = setInterval(() => {
-        let toolbar = document.querySelector('.document-actions');
-        
-        if (!toolbar) {
-            toolbar = document.querySelector('.ai-toolbar-group');
-        }
-        
-        if (!toolbar) {
-            // Create toolbar above editor
-            const editorContainer = document.querySelector('.editor-container');
-            if (editorContainer) {
-                toolbar = document.createElement('div');
-                toolbar.className = 'document-actions';
-                toolbar.style.cssText = 'display: flex; gap: 0.5rem; padding: 1rem; border-bottom: 1px solid #dee2e6; background: white;';
-                editorContainer.insertBefore(toolbar, editorContainer.firstChild);
+    async function checkIfAIGenerated() {
+        if (!contractId || !contractData) return;
+
+        try {
+            const contract = contractData.contract;
+            if (contract && contract.is_ai_generated) {
+                isAIGenerated = true;
+                await waitForEditor();
+                showRegenerateButton();
+                console.log('✅ Contract is AI-generated, regenerate button shown');
             }
+        } catch (error) {
+            console.error('Error checking AI status:', error);
         }
-        
-        if (toolbar && !document.getElementById('regenerateBtn')) {
-            clearInterval(checkToolbar);
-            
-            const regenerateBtn = document.createElement('button');
-            regenerateBtn.id = 'regenerateBtn';
-            regenerateBtn.className = 'btn btn-secondary';
-            regenerateBtn.style.cssText = `
+    }
+
+    function showRegenerateButton() {
+        console.log('🔍 Looking for toolbar to add regenerate button...');
+
+        // Wait for toolbar to exist
+        const checkToolbar = setInterval(() => {
+            let toolbar = document.querySelector('.document-actions');
+
+            if (!toolbar) {
+                toolbar = document.querySelector('.ai-toolbar-group');
+            }
+
+            if (!toolbar) {
+                // Create toolbar above editor
+                const editorContainer = document.querySelector('.editor-container');
+                if (editorContainer) {
+                    toolbar = document.createElement('div');
+                    toolbar.className = 'document-actions';
+                    toolbar.style.cssText = 'display: flex; gap: 0.5rem; padding: 1rem; border-bottom: 1px solid #dee2e6; background: white;';
+                    editorContainer.insertBefore(toolbar, editorContainer.firstChild);
+                }
+            }
+
+            if (toolbar && !document.getElementById('regenerateBtn')) {
+                clearInterval(checkToolbar);
+
+                const regenerateBtn = document.createElement('button');
+                regenerateBtn.id = 'regenerateBtn';
+                regenerateBtn.className = 'btn btn-secondary';
+                regenerateBtn.style.cssText = `
                 display: flex; 
                 align-items: center; 
                 gap: 0.5rem; 
@@ -11886,43 +11992,43 @@ function showRegenerateButton() {
                 font-weight: 500;
                 transition: all 0.3s ease;
             `;
-            regenerateBtn.innerHTML = '<i class="ti ti-refresh"></i> Regenerate Contract';
-            regenerateBtn.onclick = regenerateContract;
-            
-            regenerateBtn.onmouseover = function() {
-                this.style.transform = 'translateY(-2px)';
-                this.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
-            };
-            regenerateBtn.onmouseout = function() {
-                this.style.transform = 'translateY(0)';
-                this.style.boxShadow = 'none';
-            };
-            
-            toolbar.insertBefore(regenerateBtn, toolbar.firstChild);
-            console.log('✅ Regenerate button added successfully');
-        }
-    }, 200);
-    
-    // Stop checking after 5 seconds
-    setTimeout(() => clearInterval(checkToolbar), 5000);
-}
+                regenerateBtn.innerHTML = '<i class="ti ti-refresh"></i> Regenerate Contract';
+                regenerateBtn.onclick = regenerateContract;
 
+                regenerateBtn.onmouseover = function () {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+                };
+                regenerateBtn.onmouseout = function () {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = 'none';
+                };
 
-async function startAIStreaming() {
-    console.log('🚀 Starting AI streaming...');
-    
-    const editor = document.getElementById('contractContent');
-    
-    if (!editor) {
-        console.error('❌ Contract editor element not found');
-        showNotification('Contract editor not found. Please refresh the page.', 'error');
-        return;
+                toolbar.insertBefore(regenerateBtn, toolbar.firstChild);
+                console.log('✅ Regenerate button added successfully');
+            }
+        }, 200);
+
+        // Stop checking after 5 seconds
+        setTimeout(() => clearInterval(checkToolbar), 5000);
     }
-    
-    console.log('✅ Editor found, starting stream...');
-    
-    // Show loading state
-    editor.innerHTML = `
+
+
+    async function startAIStreaming() {
+        console.log('🚀 Starting AI streaming...');
+
+        const editor = document.getElementById('contractContent');
+
+        if (!editor) {
+            console.error('❌ Contract editor element not found');
+            showNotification('Contract editor not found. Please refresh the page.', 'error');
+            return;
+        }
+
+        console.log('✅ Editor found, starting stream...');
+
+        // Show loading state
+        editor.innerHTML = `
         <div style="text-align: center; padding: 4rem 2rem; color: #666;">
             <div style="width: 3rem; height: 3rem; border: 4px solid #f3f3f3; border-top: 4px solid #2762CB; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1.5rem;"></div>
             <h3 style="font-size: 1.5rem; margin-bottom: 1rem;"> AI is Generating Your Contract</h3>
@@ -11934,94 +12040,94 @@ async function startAIStreaming() {
             </div>
         </div>
     `;
-    
-    try {
-        const token = localStorage.getItem('access_token');
-        
-        // ✅ SEND PARAMS FROM DATABASE, NOT URL
-        const response = await fetch(`/api/contracts/ai-generate-stream/${contractId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(generationParams || {})
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let accumulatedContent = '';
-        
-        // Prepare for streaming
-        editor.innerHTML = '<div class="contract-document" id="streamingContent" style="min-height: 500px;"></div>';
-        const contentDiv = document.getElementById('streamingContent');
-        
-        while (true) {
-            const { done, value } = await reader.read();
-            
-            if (done) {
-                console.log('✅ Streaming complete');
-                break;
+
+        try {
+            const token = localStorage.getItem('access_token');
+
+            // ✅ SEND PARAMS FROM DATABASE, NOT URL
+            const response = await fetch(`/api/contracts/ai-generate-stream/${contractId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(generationParams || {})
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
-            
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
-            
-            for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                    try {
-                        const jsonData = JSON.parse(line.substring(6));
-                        
-                        if (jsonData.type === 'start') {
-                            updateProgress('📝 Generating contract content...');
-                            
-                        } else if (jsonData.type === 'content') {
-                            accumulatedContent += jsonData.text;
-                            
-                            // Update content in real-time
-                            if (contentDiv) {
-                                contentDiv.innerHTML = accumulatedContent;
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let accumulatedContent = '';
+
+            // Prepare for streaming
+            editor.innerHTML = '<div class="contract-document" id="streamingContent" style="min-height: 500px;"></div>';
+            const contentDiv = document.getElementById('streamingContent');
+
+            while (true) {
+                const { done, value } = await reader.read();
+
+                if (done) {
+                    console.log('✅ Streaming complete');
+                    break;
+                }
+
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const jsonData = JSON.parse(line.substring(6));
+
+                            if (jsonData.type === 'start') {
+                                updateProgress('📝 Generating contract content...');
+
+                            } else if (jsonData.type === 'content') {
+                                accumulatedContent += jsonData.text;
+
+                                // Update content in real-time
+                                if (contentDiv) {
+                                    contentDiv.innerHTML = accumulatedContent;
+                                }
+
+                                const wordCount = accumulatedContent.split(/\s+/).filter(w => w.length > 0).length;
+                                if (wordCount % 50 === 0) {
+                                    updateProgress(`✍️ Writing contract... (${wordCount} words)`);
+                                }
+
+                                editor.scrollTop = editor.scrollHeight;
+
+                            } else if (jsonData.type === 'done') {
+                                updateProgress(`✅ Complete! (${jsonData.word_count} words)`);
+
+                                setTimeout(() => {
+                                    const progress = document.getElementById('streamProgress');
+                                    if (progress) progress.remove();
+                                }, 2000);
+
+                                showNotification(`Contract generated successfully! (${jsonData.word_count} words)`, 'success');
+
+                                // Reload contract data to get updated content
+                                setTimeout(() => {
+                                    location.reload();
+                                }, 2000);
+
+                            } else if (jsonData.type === 'error') {
+                                throw new Error(jsonData.message);
                             }
-                            
-                            const wordCount = accumulatedContent.split(/\s+/).filter(w => w.length > 0).length;
-                            if (wordCount % 50 === 0) {
-                                updateProgress(`✍️ Writing contract... (${wordCount} words)`);
-                            }
-                            
-                            editor.scrollTop = editor.scrollHeight;
-                            
-                        } else if (jsonData.type === 'done') {
-                            updateProgress(`✅ Complete! (${jsonData.word_count} words)`);
-                            
-                            setTimeout(() => {
-                                const progress = document.getElementById('streamProgress');
-                                if (progress) progress.remove();
-                            }, 2000);
-                            
-                            showNotification(`Contract generated successfully! (${jsonData.word_count} words)`, 'success');
-                            
-                            // Reload contract data to get updated content
-                            setTimeout(() => {
-                                location.reload();
-                            }, 2000);
-                            
-                        } else if (jsonData.type === 'error') {
-                            throw new Error(jsonData.message);
+                        } catch (parseError) {
+                            console.warn('JSON parse error:', parseError);
                         }
-                    } catch (parseError) {
-                        console.warn('JSON parse error:', parseError);
                     }
                 }
             }
-        }
-        
-    } catch (error) {
-        console.error('❌ Streaming error:', error);
-        editor.innerHTML = `
+
+        } catch (error) {
+            console.error('❌ Streaming error:', error);
+            editor.innerHTML = `
             <div style="text-align: center; padding: 3rem; color: #dc3545;">
                 <i class="ti ti-alert-circle" style="font-size: 3rem;"></i>
                 <h3>Generation Failed</h3>
@@ -12031,54 +12137,54 @@ async function startAIStreaming() {
                 </button>
             </div>
         `;
-        showNotification('Failed to generate contract: ' + error.message, 'error');
+            showNotification('Failed to generate contract: ' + error.message, 'error');
+        }
     }
-}
 
 
 
 
 
-function updateProgress(message) {
-    const progressDiv = document.getElementById('streamProgress');
-    if (progressDiv) {
-        progressDiv.textContent = message;
+    function updateProgress(message) {
+        const progressDiv = document.getElementById('streamProgress');
+        if (progressDiv) {
+            progressDiv.textContent = message;
+        }
     }
-}
 
-async function regenerateContract() {
-    if (!confirm('Are you sure you want to regenerate this contract? Current content will be replaced.')) {
-        return;
-    }
-    
-    const regenerateBtn = document.getElementById('regenerateBtn');
-    if (regenerateBtn) {
-        regenerateBtn.disabled = true;
-        regenerateBtn.innerHTML = '<i class="ti ti-loader" style="animation: spin 1s linear infinite;"></i> Regenerating...';
-    }
-    
-    await startAIStreaming();
-    
-    if (regenerateBtn) {
-        regenerateBtn.disabled = false;
-        regenerateBtn.innerHTML = '<i class="ti ti-refresh"></i> Regenerate Contract';
-    }
-}
+    async function regenerateContract() {
+        if (!confirm('Are you sure you want to regenerate this contract? Current content will be replaced.')) {
+            return;
+        }
 
-// Add spinner animation CSS
-if (!document.getElementById('ai-streaming-styles')) {
-    const style = document.createElement('style');
-    style.id = 'ai-streaming-styles';
-    style.textContent = `
+        const regenerateBtn = document.getElementById('regenerateBtn');
+        if (regenerateBtn) {
+            regenerateBtn.disabled = true;
+            regenerateBtn.innerHTML = '<i class="ti ti-loader" style="animation: spin 1s linear infinite;"></i> Regenerating...';
+        }
+
+        await startAIStreaming();
+
+        if (regenerateBtn) {
+            regenerateBtn.disabled = false;
+            regenerateBtn.innerHTML = '<i class="ti ti-refresh"></i> Regenerate Contract';
+        }
+    }
+
+    // Add spinner animation CSS
+    if (!document.getElementById('ai-streaming-styles')) {
+        const style = document.createElement('style');
+        style.id = 'ai-streaming-styles';
+        style.textContent = `
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
     `;
-    document.head.appendChild(style);
-}
+        document.head.appendChild(style);
+    }
 
-console.log('✅ AI Streaming module loaded');
+    console.log('✅ AI Streaming module loaded');
 
 </script>
 
