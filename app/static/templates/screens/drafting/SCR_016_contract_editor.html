@@ -475,104 +475,113 @@
 
     /* Loading Overlay */
     /* Loading Overlay with Logo */
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7); /* Grey overlay */
-    backdrop-filter: blur(5px);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    transition: opacity 0.3s ease;
-}
-
-.loading-overlay.show {
-    display: flex;
-}
-
-/* Logo Container */
-.logo-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px; /* Space between logo and text */
-    animation: fadeIn 0.5s ease;
-}
-
-/* Logo Row */
-.logo-row {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/* Animated Logo */
-.loading-logo {
-    width: 50px;
-    height: auto;
-    animation: pulse 2s ease-in-out infinite;
-    filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.3));
-}
-
-/* Text Row */
-.text-row {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/* Loading Text */
-.loading-overlay .loading-text {
-    color: #ffffff;
-    font-size: 16px;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    animation: fadeInOut 2s ease-in-out infinite;
-    margin: 0;
-}
-
-/* Pulse Animation for Logo */
-@keyframes pulse {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 1;
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        /* Grey overlay */
+        backdrop-filter: blur(5px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        transition: opacity 0.3s ease;
     }
-    50% {
-        transform: scale(1.05);
-        opacity: 0.8;
-    }
-}
 
-/* Fade In Animation */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
+    .loading-overlay.show {
+        display: flex;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
 
-/* Fade In/Out Animation for Text */
-@keyframes fadeInOut {
-    0%, 100% {
-        opacity: 1;
+    /* Logo Container */
+    .logo-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        /* Space between logo and text */
+        animation: fadeIn 0.5s ease;
     }
-    50% {
-        opacity: 0.5;
-    }
-}
 
-/* Remove old loader styles if they exist */
-.loader {
-    display: none;
-}
+    /* Logo Row */
+    .logo-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* Animated Logo */
+    .loading-logo {
+        width: 50px;
+        height: auto;
+        animation: pulse 2s ease-in-out infinite;
+        filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.3));
+    }
+
+    /* Text Row */
+    .text-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* Loading Text */
+    .loading-overlay .loading-text {
+        color: #ffffff;
+        font-size: 16px;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        animation: fadeInOut 2s ease-in-out infinite;
+        margin: 0;
+    }
+
+    /* Pulse Animation for Logo */
+    @keyframes pulse {
+
+        0%,
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        50% {
+            transform: scale(1.05);
+            opacity: 0.8;
+        }
+    }
+
+    /* Fade In Animation */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Fade In/Out Animation for Text */
+    @keyframes fadeInOut {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    /* Remove old loader styles if they exist */
+    .loader {
+        display: none;
+    }
 
     /* Fade In Animation */
     @keyframes fadeIn {
@@ -2552,9 +2561,6 @@
         width: 100%;
         height: calc(100vh - var(--header-height, 60px));
     }
-
-
-    
 </style>
 
 
@@ -4450,21 +4456,21 @@
     // =====================================================
     // PAGE INITIALIZATION
     // =====================================================
- // =====================================================
-// PAGE INITIALIZATION
-// =====================================================
-document.addEventListener('DOMContentLoaded', async function () {
-    console.log('Loading contract ID:', contractId);
+    // =====================================================
+    // PAGE INITIALIZATION
+    // =====================================================
+    document.addEventListener('DOMContentLoaded', async function () {
+        console.log('Loading contract ID:', contractId);
 
-    await ensureWorkflowInstance();
-    await checkWorkflowAvailability();
-    await loadContractData();
-    
-    // ✅ LOAD EXISTING COMMENTS AFTER CONTRACT DATA IS LOADED
-    await loadExistingComments();
-    
-    await saveAsDraft();
-});
+        await ensureWorkflowInstance();
+        await checkWorkflowAvailability();
+        await loadContractData();
+
+        // ✅ LOAD EXISTING COMMENTS AFTER CONTRACT DATA IS LOADED
+        await loadExistingComments();
+
+        await saveAsDraft();
+    });
 
 
 
@@ -4635,14 +4641,14 @@ document.addEventListener('DOMContentLoaded', async function () {
     <i class="ti ti-send"></i> Submit for Internal Review
 </button>`;
 
-               
+
 
             }
-             if (contract.approval_status === 'initiator_team_rejected') {
-                    actionButtons += `<button class="workflow-setup-btn" onclick="openWorkflowHistoryModal()" style="display: flex; align-items: center; gap: 0.5rem;">
+            if (contract.approval_status === 'initiator_team_rejected') {
+                actionButtons += `<button class="workflow-setup-btn" onclick="openWorkflowHistoryModal()" style="display: flex; align-items: center; gap: 0.5rem;">
                                         <i class="ti ti-history"></i> Approval History
                                     </button>`;
-                }
+            }
         } else if ((contract.status === 'review')) {
             // Review stage
 
@@ -4690,22 +4696,22 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (contract.is_counterparty === true) {
 
                 if ((workflow && workflow.status != 'active')) {
-                            console.log("showing counter party lead");
-                            console.log(contract.is_party_b_lead);
-                    if(contract.is_party_b_lead==true){
-                            
-                    actionButtons = `
+                    console.log("showing counter party lead");
+                    console.log(contract.is_party_b_lead);
+                    if (contract.is_party_b_lead == true) {
+
+                        actionButtons = `
         <button class="btn btn-success" onclick="markCounterpartyReviewComplete()">
             <i class="ti ti-check"></i> Quick Review
         </button>
         <button class="btn btn-primary" onclick="submitForReview('${workflow.status}')">
                 <i class="ti ti-send"></i> Submit for Internal Review
             </button>`;
-        }
+                    }
                 } else if ((workflow && workflow.status == 'active')) {
 
                     if ((workflow && workflow.is_my_workflow_turn === true) && (workflow && workflow.status != 'completed')) {
-                        
+
                         actionButtons = `
         <button class="btn signature-btn" onclick="approveWorkflow(${contract.id},'counterparty_review')">
             <i class="ti ti-check"></i> Approve
@@ -4731,9 +4737,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             if (contract.is_counterparty === true) {
 
-                 if(contract.is_party_b_lead==true){
-                // Negotiation stage
-                actionButtons = `
+                if (contract.is_party_b_lead == true) {
+                    // Negotiation stage
+                    actionButtons = `
             <button class="btn btn-success" onclick="quickApprove()">
                 <i class="ti ti-check-circle"></i> Finalize Agreement
             </button>
@@ -4743,13 +4749,13 @@ document.addEventListener('DOMContentLoaded', async function () {
             <button class="btn btn-outline-secondary" onclick="openDocumentsModal()">
                 <i class="ti ti-paperclip"></i> Attach Documents
             </button>`;
-        }else{
-               actionButtons = `
+                } else {
+                    actionButtons = `
            
             <button class="btn btn-primary" id="openNegotiationBtn" onclick="openNegotiationModal()">
                 <i class="ti ti-message-circle"></i> Open Negotiation
             </button>`;
-        }
+                }
             } else {
 
                 if (contract.is_initiator === true) {
@@ -5338,7 +5344,7 @@ ${contract.content && contract.content.trim() !== '' ?
 
         showLoader();
         try {
-            const response = await fetch('/api/contracts/submit-review', {
+            const response = await fetch('/api/contracts/submit-approval', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -5346,6 +5352,7 @@ ${contract.content && contract.content.trim() !== '' ?
                     review_type: reviewType,
                     personnel_emails: personnelEmails,
                     notes: notes,
+                    request_type: 'review',
                 })
             });
 
@@ -6927,7 +6934,7 @@ ${contract.content && contract.content.trim() !== '' ?
 
         showLoader();
         try {
-            const response = await fetch('/api/contracts/initiate-approval-workflow', {
+            const response = await fetch('/api/contracts/submit-approval', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -6935,6 +6942,7 @@ ${contract.content && contract.content.trim() !== '' ?
                     review_type: reviewType,
                     personnel_emails: personnelEmails,
                     notes: notes,
+                    request_type: 'approval',
                 })
             });
 
@@ -8492,7 +8500,6 @@ ${(riskAnalysisData.risk_items || []).map(item => `
             <option value="">Select Role</option>
             <option value="reviewer">Reviewer</option>
             <option value="approver">Approver</option>
-            <option value="e-sign">E-Sign</option>
          
         </select>
     </td>
@@ -8776,9 +8783,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
         <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.875rem;">
             <option value="">Select Role</option>
             <option value="reviewer" ${stepType === 'reviewer' ? 'selected' : ''}>Reviewer</option>
-            <option value="approver" ${stepType === 'approver' ? 'selected' : ''}>Approver</option>
-            <option value="e-sign" ${stepType === 'e-sign' ? 'selected' : ''}>E-Sign</option>
-          
+            <option value="approver" ${stepType === 'approver' ? 'selected' : ''}>Approver</option>          
         </select>
     </td>
     <td style="padding: 0.75rem; position: relative;">
@@ -11269,7 +11274,6 @@ Generated by CALIM 360 Smart CLM
             suggestionsDiv.style.display = 'none';
         }
     });
-
 
 
 

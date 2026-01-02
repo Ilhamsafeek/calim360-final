@@ -1438,8 +1438,6 @@ async def send_for_signature(
         "contract_id": contract_id
     }
 
-
-
 @router.post("/initiate-approval-workflow")
 async def initiate_approval_workflow(
     data: dict,
@@ -2307,7 +2305,7 @@ async def get_contract_workflow(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/submit-review")
+@router.post("/submit-approval")
 async def submit_for_internal_review(
     review_data: dict,
     current_user: User = Depends(get_current_user),
@@ -2320,6 +2318,15 @@ async def submit_for_internal_review(
         personnel_emails = review_data.get("personnel_emails", [])
         notes = review_data.get("notes", "")
         
+        request_type = review_data.get("request_type")
+
+
+        # Get contract
+        contract = db.query(Contract).filter(Contract.id == contract_id).first()
+        if not contract:
+            raise HTTPException(status_code=404, detail="Contract not found")
+            
+
         # Check if current user is Party B (counterparty) for this contract
         contract_query = text("""
             SELECT party_b_id FROM contracts WHERE id = :contract_id LIMIT 1
@@ -2345,6 +2352,21 @@ async def submit_for_internal_review(
             """)
             db.execute(update_query, {"contract_id": contract_id})
             logger.info(f"Contract {contract_id} status updated to 'review' by user {current_user.id}")
+
+            if request_type=='approval':
+                # Update contract status to 'approval'
+                contract.status = 'approval'
+                contract.updated_at = datetime.now()
+                
+                logger.info(f" Contract {contract_id} status updated to 'approval'")
+                
+                # Update workflow instance status from 'active' to 'in_progress'
+                activate_workflow_query = text("""
+                    UPDATE workflow_instances 
+                    SET status = 'in_progress',
+                        started_at = NOW()
+                    WHERE contract_id = :contract_id
+                """)
         else:
             # Log that counterparty submitted review (status not updated)
             logger.info(f"Counterparty (Party B) user {current_user.id} submitted review for contract {contract_id} (contract status not updated)")
