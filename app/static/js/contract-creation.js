@@ -1143,6 +1143,7 @@ async function saveContract() {
             const paymentTerms = document.getElementById('paymentTerms')?.value;
             const partyAName = document.getElementById('partyAName')?.value || 'Party A';
             const partyBName = document.getElementById('partyBName')?.value || 'Party B';
+            const jurisdiction = document.getElementById('jurisdiction')?.value || 'Qatar';
 
             // Build AI prompt from modal if exists
             const aiPromptField = document.getElementById('aiPrompt');
@@ -1171,7 +1172,7 @@ async function saveContract() {
                         }, {})
                         : selectedClauses
                     ) : {},
-                jurisdiction: 'Qatar',
+                jurisdiction: jurisdiction,
                 language: 'en',
                 project_id: projectId && projectId !== 'create_new' && projectId !== ''
                     ? parseInt(projectId)

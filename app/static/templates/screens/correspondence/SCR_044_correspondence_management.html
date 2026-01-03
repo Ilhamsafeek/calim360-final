@@ -2250,7 +2250,7 @@
                     `<span style="color: var(--primary-color);">${escapeHtml(doc.project_code || doc.project_name)}</span> • ` : '';
 
                 const standaloneBadge = doc.is_standalone
-                    ? '<span class="standalone-badge"><i class="ti ti-file-plus"></i> Standalone</span> • '
+                    ? '• '
                     : '';
 
                 return `
@@ -2938,26 +2938,36 @@
         // =====================================================
         // MESSAGE ACTIONS
         // =====================================================
-        window.copyMsgText = function (btn) {
-            const text = btn.closest('.message-content').querySelector('.message-body').innerText;
-            navigator.clipboard.writeText(text).then(() => showToast('Copied!', 'success'));
-        };
 
-        // Replace the existing downloadMsgText function with this:
+
+        // Updated downloadMsgText function for SCR_044_correspondence_management.html
+        // Replace the existing downloadMsgText function with this enhanced version
+
         window.downloadMsgText = async function (btn) {
             try {
-                // Get the message content
+                // Get the message content - USE innerHTML to preserve formatting
                 const messageBody = btn.closest('.message-content').querySelector('.message-body');
-                const content = messageBody.innerText;
+
+                // Extract HTML content (preserves formatting)
+                let htmlContent = messageBody.innerHTML;
+
+                // Remove source section if present (we don't want that in the download)
+                htmlContent = htmlContent.replace(/<div class="sources-section">[\s\S]*?<\/div>/g, '');
+
+                // Clean up any wrapper divs but keep formatting tags
+                htmlContent = htmlContent.trim();
+
+                console.log('📝 Preparing to download formatted content');
 
                 // Show loading state
                 btn.disabled = true;
                 btn.innerHTML = '<i class="ti ti-loader-2 rotating"></i> Generating...';
 
-                // Prepare form data
+                // Prepare form data with HTML content
                 const formData = new FormData();
-                formData.append('content', content);
+                formData.append('content', htmlContent);
                 formData.append('subject', 'AI Generated Correspondence Response');
+                formData.append('is_html', 'true'); // Flag to indicate HTML content
 
                 // Call backend to generate Word document
                 const response = await fetch('/api/v1/correspondence/download-response', {
@@ -2966,38 +2976,73 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to generate Word document');
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.detail || 'Failed to generate Word document');
                 }
 
                 // Get the blob
                 const blob = await response.blob();
 
+                // Verify it's a Word document
+                if (blob.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                    console.warn('⚠️ Unexpected content type:', blob.type);
+                }
+
                 // Create download link
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `response-${new Date().toISOString().slice(0, 10)}.docx`;
+                a.download = `correspondence_${new Date().toISOString().slice(0, 10)}.docx`;
                 document.body.appendChild(a);
                 a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
+
+                // Cleanup
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 100);
 
                 // Reset button
                 btn.disabled = false;
                 btn.innerHTML = '<i class="ti ti-download"></i> Download';
 
-                showToast('Word document downloaded successfully!', 'success');
+                showToast('Word document downloaded successfully with formatting!', 'success');
+
+                console.log('✅ Download completed successfully');
 
             } catch (error) {
-                console.error('Download error:', error);
+                console.error('❌ Download error:', error);
 
                 // Reset button
                 btn.disabled = false;
                 btn.innerHTML = '<i class="ti ti-download"></i> Download';
 
-                showToast('Failed to generate Word document', 'error');
+                showToast(`Failed to generate Word document: ${error.message}`, 'error');
             }
         };
+
+        // Helper function to copy message text (also updated to preserve some formatting)
+        window.copyMsgText = function (btn) {
+            const messageBody = btn.closest('.message-content').querySelector('.message-body');
+
+            // Get plain text for clipboard
+            const text = messageBody.innerText;
+
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Content copied to clipboard!', 'success');
+
+                // Visual feedback
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="ti ti-check"></i> Copied';
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                }, 2000);
+            }).catch(err => {
+                console.error('Copy failed:', err);
+                showToast('Failed to copy content', 'error');
+            });
+        };
+
 
         window.clearChat = function () {
             document.getElementById('chatMessages').innerHTML = `

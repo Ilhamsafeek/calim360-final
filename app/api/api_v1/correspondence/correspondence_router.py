@@ -21,6 +21,9 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
 from app.services.claude_service import claude_service
+from app.services.document_generator import DocumentGenerator
+from fastapi.responses import StreamingResponse, FileResponse
+
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/correspondence", tags=["Correspondence"])
@@ -948,59 +951,64 @@ async def delete_correspondence_document(
 
 
 
-
+# File: app/api/api_v1/correspondence/correspondence_router.py
+# Update the /download-response endpoint with this code
 
 @router.post("/download-response")
 async def download_ai_response(
     content: str = Form(...),
     subject: str = Form(None),
+    is_html: str = Form("false"),
     current_user: User = Depends(get_current_user)
 ):
     """
-    Download AI-generated response as Word document
+    Download AI-generated response as Word document with formatting
     
     **Purpose:**
     - Convert AI response to professional Word document
+    - Preserves HTML formatting (bold, italic, lists, headings)
     - Provides immediate download
     
     **Parameters:**
-    - content: The AI-generated text content
+    - content: The AI-generated text content (HTML or plain text)
     - subject: Optional subject line
+    - is_html: Flag indicating if content is HTML ("true"/"false")
     """
     
     try:
         logger.info(f"📄 Generating Word document for user {current_user.id}")
+        logger.info(f"   Content type: {'HTML' if is_html.lower() == 'true' else 'Plain Text'}")
+        logger.info(f"   Content length: {len(content)} characters")
         
-        # Generate Word document
+        # Generate Word document with formatting support
         docx_buffer = DocumentGenerator.generate_correspondence_docx(
             content=content,
-            subject=subject,
-            sender_name=current_user.full_name,
+            subject=subject or "AI Generated Correspondence Response",
+            sender_name=f"{current_user.first_name} {current_user.last_name}".strip(),
             reference=f"CALIM-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
         )
         
         # Generate filename
         filename = f"correspondence_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
         
-        logger.info(f" Word document generated: {filename}")
+        logger.info(f"✅ Word document generated successfully: {filename}")
         
-        # Return as streaming response
+        # Return as streaming response with proper headers
         return StreamingResponse(
             docx_buffer,
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             headers={
-                "Content-Disposition": f"attachment; filename={filename}"
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "Cache-Control": "no-cache"
             }
         )
         
     except Exception as e:
-        logger.error(f"❌ Error downloading response: {str(e)}")
+        logger.error(f"❌ Error downloading response: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate Word document: {str(e)}"
         )
 
 
-    
-
-    

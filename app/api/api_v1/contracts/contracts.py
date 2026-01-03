@@ -306,7 +306,8 @@ async def create_contract_from_template(
             "created_by": current_user.id,
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
-            "tags": json.dumps(request.get("tags", []))
+            "tags": json.dumps(request.get("tags", [])),
+            
         }
         
         # Insert contract
@@ -486,9 +487,11 @@ async def create_contract_from_template(
 #         )
 
 # =====================================================
-# QUICK FIX: Update ONLY the ai-generate endpoint
+# COMPLETE FIX: Add party_b_lead_id and party_b_id to INSERT
 # File: app/api/api_v1/contracts/contracts.py
+# Function: generate_contract_with_ai()
 # =====================================================
+
 @router.post("/ai-generate")
 async def generate_contract_with_ai(
     request_data: AIContractGenerationRequest,
@@ -497,7 +500,7 @@ async def generate_contract_with_ai(
 ):
     """Create contract metadata for AI generation (content will be streamed separately)"""
     try:
-        logger.info(" Creating contract for AI generation")
+        logger.info("🤖 Creating contract for AI generation")
         
         # Extract metadata
         contract_title = request_data.contract_title
@@ -507,7 +510,7 @@ async def generate_contract_with_ai(
         # Generate contract number
         contract_number = generate_contract_number(db, current_user.company_id)
         
-        #  SAVE GENERATION PARAMS AS JSON
+        # Save generation params as JSON
         generation_params_json = json.dumps({
             "contract_type": request_data.contract_type,
             "profile_type": request_data.profile_type,
@@ -535,44 +538,51 @@ async def generate_contract_with_ai(
             "currency": request_data.currency,
             "status": "draft",
             "current_version": 1,
-            "is_ai_generated": 1,  #  Mark as AI-generated
-            "ai_generation_params": generation_params_json,  #  Save params
+            "is_ai_generated": 1,
+            "ai_generation_params": generation_params_json,
+            "party_b_lead_id": None,  # ✅ ADD THIS - Will be set later when counterparty is added
+            "party_b_id": None,       # ✅ ADD THIS - Will be set later when counterparty is added
             "created_by": str(current_user.id),
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
         }
         
+        # ✅ FIXED: Include party_b_lead_id and party_b_id in INSERT
         result = db.execute(text("""
             INSERT INTO contracts (company_id, project_id, contract_number, contract_title,
                                  contract_type, profile_type, contract_value, currency,
                                  status, current_version, is_ai_generated, ai_generation_params,
+                                 party_b_lead_id, party_b_id,
                                  created_by, created_at, updated_at)
             VALUES (:company_id, :project_id, :contract_number, :contract_title,
                     :contract_type, :profile_type, :contract_value, :currency,
                     :status, :current_version, :is_ai_generated, :ai_generation_params,
+                    :party_b_lead_id, :party_b_id,
                     :created_by, :created_at, :updated_at)
-            RETURNING id
         """), contract_data)
         
-        contract_id = result.fetchone()[0]
+        # Use lastrowid for MySQL compatibility
+        contract_id = result.lastrowid
         db.commit()
         
-        logger.info(f" Contract created: {contract_number} (ID: {contract_id})")
+        logger.info(f"✅ Contract created: {contract_number} (ID: {contract_id})")
         
-        #  RETURN JUST THE CONTRACT ID - NO PARAMS IN URL
         return {
             "id": contract_id,
             "contract_id": contract_id,
             "contract_number": contract_number,
-            "message": "Contract created. Redirecting to editor..."
+            "message": "Contract created. AI generation can now be streamed."
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error creating contract: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
+        logger.error(f"❌ Error creating contract: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create contract: {str(e)}"
+        )
 # =====================================================
 # STATISTICS ENDPOINT - FIXED VERSION
 # =====================================================

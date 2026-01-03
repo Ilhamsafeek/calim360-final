@@ -222,6 +222,24 @@
                                     </select>
                                 </div>
 
+
+                                <!-- Jurisdiction Field -->
+                                <div class="ai-question-item">
+                                    <label>
+                                        Jurisdiction <span style="color: var(--danger-color);">*</span>
+                                    </label>
+                                    <select id="jurisdiction" class="form-control">
+                                        <option value="Qatar" selected>Qatar</option>
+                                        <option value="UAE">United Arab Emirates (UAE)</option>
+                                        <option value="Saudi Arabia">Saudi Arabia</option>
+                                        <option value="Bahrain">Bahrain</option>
+                                        <option value="Oman">Oman</option>
+                                        <option value="Kuwait">Kuwait</option>
+                                    </select>
+                                    
+                                </div>
+
+
                                 <div class="ai-question-item full-width">
                                     <label>Special Requirements</label>
                                     <textarea id="aiSpecialRequirements" class="form-control"
@@ -541,7 +559,7 @@
                     style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;"
                     required>
             </div>
-            
+
             <!-- Project Assignment - NOW OPTIONAL -->
             <div style="margin-bottom: 1rem;">
                 <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
@@ -553,7 +571,7 @@
                     <!-- Projects will be loaded dynamically -->
                 </select>
             </div>
-            
+
             <div>
                 <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Tags (Optional)</label>
                 <input type="text" id="tagsInput" class="form-control" placeholder="Add tags (comma separated)"
@@ -587,20 +605,20 @@
                     <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
                         Project Title <span style="color: var(--danger-color);">*</span>
                     </label>
-                    <input type="text" id="newProjectTitle" class="form-control" 
-                        placeholder="Enter project title" required
+                    <input type="text" id="newProjectTitle" class="form-control" placeholder="Enter project title"
+                        required
                         style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
                 </div>
-                
+
                 <div style="margin-bottom: 1rem;">
                     <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
                         Project Code <span style="color: var(--danger-color);">*</span>
                     </label>
-                    <input type="text" id="newProjectCode" class="form-control" 
-                        placeholder="e.g., PRJ-2025-001" required
+                    <input type="text" id="newProjectCode" class="form-control" placeholder="e.g., PRJ-2025-001"
+                        required
                         style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
                 </div>
-                
+
                 <div style="margin-bottom: 1rem;">
                     <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
                         Description <span style="color: var(--text-muted); font-weight: 400;">(Optional)</span>
