@@ -3599,7 +3599,7 @@ Add this to your <style> section
 
 
 
-   
+
     <!-- PREMIUM MODULES SHOWCASE SECTION -->
     <section class="modules-showcase-section" id="modules">
         <div class="container">
@@ -4123,7 +4123,7 @@ Add this to your <style> section
         </div>
     </section>
 
- <section class="hero" id="spinal-models" style="min-height: 105vh;">
+    <section class="hero" id="spinal-models" style="min-height: 105vh;">
         <div class="hero-bg-pattern"></div>
         <div class="hero-grid"></div>
 
@@ -5347,16 +5347,21 @@ Add this to your <style> section
 
                         // Replace nav actions with user info and dashboard button
                         navActions.innerHTML = `
-                    <div class="user-nav-info">
-                        <div class="user-avatar">
-                            <i class="ti ti-user"></i>
-                        </div>
-                        <span class="user-name">${displayName}</span>
-                    </div>
-                    <a href="/dashboard" class="btn btn-primary">
-                        <i class="ti ti-layout-dashboard"></i> Dashboard
-                    </a>
-                `;
+    <div class="user-nav-info">
+        <div class="user-avatar">
+            <i class="ti ti-user"></i>
+        </div>
+        <span class="user-name">${displayName}</span>
+    </div>
+    <div class="nav-buttons">
+        <a href="/dashboard" class="btn btn-primary">
+            <i class="ti ti-layout-dashboard"></i> Dashboard
+        </a>
+        <button onclick="logout(event)" class="btn btn-outline-danger" style="margin-left: 10px;">
+            <i class="ti ti-logout"></i> Logout
+        </button>
+    </div>
+`;
                     } else {
                         console.log('User not authenticated');
                     }
@@ -5664,6 +5669,54 @@ Add this to your <style> section
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 5000);
         }
+
+
+          async function logout(event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            if (confirm('Are you sure you want to logout?')) {
+                console.log('🔄 Logging out...');
+
+                try {
+                    //  CORRECT ENDPOINT - /api/auth/logout (NOT /api/v1/auth/logout)
+                    const response = await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include' // Important for cookies
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log(' Logout successful:', result);
+                    } else {
+                        console.warn(' Logout API returned error, but continuing with logout');
+                    }
+                } catch (error) {
+                    console.error(' Logout API error:', error);
+                    // Continue with logout even if API fails
+                }
+
+                // Clear all local storage
+                localStorage.clear();
+
+                // Clear session storage
+                sessionStorage.clear();
+
+                console.log(' Local storage cleared');
+
+                // Redirect to login page
+                window.location.href = '/login';
+            }
+        }
+        
+        
+
+        
     </script>
 
 

@@ -20,7 +20,7 @@ from app.core.config import settings
 from fastapi.responses import StreamingResponse
 import hashlib
 import uuid
-
+import traceback
 
 # Add these 4 lines
 import hashlib
@@ -1275,6 +1275,7 @@ async def get_contract_editor_data(
                             "name": signer_name,
                             "email": sig.email or "",
                             "signed_at": sig.signed_at.isoformat() if sig.signed_at else None,
+                            "signature_data": s.signature_data or "",
                             "ip_address": sig.ip_address or ""
                         })
                     
@@ -1461,6 +1462,8 @@ async def send_for_signature(
         "contract_id": contract_id
     }
 
+# File: app/api/api_v1/contracts/contracts.py
+
 @router.post("/initiate-approval-workflow")
 async def initiate_approval_workflow(
     data: dict,
@@ -1480,19 +1483,32 @@ async def initiate_approval_workflow(
         contract.status = 'approval'
         contract.updated_at = datetime.now()
         
-        logger.info(f" Contract {contract_id} status updated to 'approval'")
+        logger.info(f"✅ Contract {contract_id} status updated to 'approval'")
         
-        # Update workflow instance status from 'active' to 'in_progress'
+        # ⚡ PRIORITY CHECK: Look for CUSTOM workflow first, then MASTER
         activate_workflow_query = text("""
-            UPDATE workflow_instances 
-            SET status = 'in_progress',
-                started_at = NOW()
-            WHERE contract_id = :contract_id
+            UPDATE workflow_instances wi
+            INNER JOIN workflows w ON wi.workflow_id = w.id
+            SET wi.status = 'in_progress',
+                wi.started_at = NOW()
+            WHERE wi.contract_id = :contract_id
+            AND w.company_id = :company_id
+            ORDER BY w.is_master ASC
+            LIMIT 1
         """)
         
-        db.execute(activate_workflow_query, {"contract_id": contract_id})
+        result = db.execute(activate_workflow_query, {
+            "contract_id": contract_id,
+            "company_id": current_user.company_id
+        })
         
-        logger.info(f" Workflow initiated for contract {contract_id}")
+        if result.rowcount == 0:
+            raise HTTPException(
+                status_code=404, 
+                detail="No workflow configured for this contract. Please setup a workflow first."
+            )
+        
+        logger.info(f"✅ Workflow initiated for contract {contract_id}")
         
         # Create activity log
         try:
@@ -1511,10 +1527,6 @@ async def initiate_approval_workflow(
         
         db.commit()
         
-        # TODO: Send notification emails to workflow participants
-        # Get first step assignees and notify them
-        # send_workflow_notification(db, contract_id)
-        
         return {
             "success": True,
             "message": "Approval workflow initiated successfully",
@@ -1526,14 +1538,15 @@ async def initiate_approval_workflow(
         raise he
     except Exception as e:
         db.rollback()
-        logger.error(f" Error initiating approval workflow: {str(e)}")
+        logger.error(f"❌ Error initiating approval workflow: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
+        
 
 # app/api/api_v1/contracts/contracts.py
 import json
 from datetime import datetime
 import uuid
+
 
 @router.post("/signature/apply")
 async def apply_signature(
@@ -1543,7 +1556,7 @@ async def apply_signature(
 ):
     """
     Apply signature to contract - FIXED VERSION
-    Fixed: Generate UUID for id column, added contract_id column
+    Fixed: Remove UUID for id column (use auto-increment), added traceback import
     """
     try:
         contract_id = int(signature_data.get("contract_id"))
@@ -1551,7 +1564,7 @@ async def apply_signature(
         signature_method = signature_data.get("signature_method", "draw")
         signature_value = signature_data.get("signature_data")
         
-        logger.info(f" Applying signature: contract_id={contract_id}, signer_type={signer_type}")
+        logger.info(f"✅ Applying signature: contract_id={contract_id}, signer_type={signer_type}")
         
         # STEP 1: Verify contract
         contract_check = text("""
@@ -1565,7 +1578,7 @@ async def apply_signature(
         if not contract:
             raise HTTPException(status_code=404, detail="Contract not found")
         
-        logger.info(f" Contract: {contract.contract_number} - Status: {contract.status}")
+        logger.info(f"✅ Contract: {contract.contract_number} - Status: {contract.status}")
         
         # STEP 2: Check if already signed
         check_existing = text("""
@@ -1608,20 +1621,17 @@ async def apply_signature(
                 "ip_address": client_ip
             })
         else:
-            # INSERT new record - FIXED: Generate UUID for id
-            new_id = str(uuid.uuid4())
-            
+            # INSERT new record - FIXED: Let MySQL auto-increment the id
             insert_signatory = text("""
                 INSERT INTO signatories 
-                (id, contract_id, user_id, signer_type, role, signing_order, 
+                (contract_id, user_id, signer_type, role, signing_order, 
                  has_signed, signed_at, signature_data, ip_address)
                 VALUES 
-                (:id, :contract_id, :user_id, :signer_type, :role, :signing_order, 
+                (:contract_id, :user_id, :signer_type, :role, :signing_order, 
                  1, NOW(), :signature_data, :ip_address)
             """)
             
             db.execute(insert_signatory, {
-                "id": new_id,  # FIXED: Explicitly provide UUID
                 "contract_id": contract_id,
                 "user_id": int(current_user.id),
                 "signer_type": signer_type,
@@ -1652,62 +1662,42 @@ async def apply_signature(
         
         # STEP 5: If both signed, update contract status to executed
         if both_signed:
-            logger.info(f"🎉 Both parties signed! Updating to executed...")
+            logger.info(f"🎉 Both parties signed! Updating status to 'executed'")
             
             update_contract = text("""
-                UPDATE contracts 
-                SET status = 'executed', 
+                UPDATE contracts
+                SET status = 'executed',
                     signed_date = NOW(),
                     updated_at = NOW()
                 WHERE id = :contract_id
             """)
+            
             db.execute(update_contract, {"contract_id": contract_id})
             db.commit()
             
-            # Store blockchain hash
-            try:
-                from app.services.blockchain_service import blockchain_service
-                blockchain_service.store_contract_hash(contract_id, db)
-            except Exception as e:
-                logger.warning(f"Blockchain storage failed: {e}")
-        
-        # Log to audit
-        try:
-            audit_query = text("""
-                INSERT INTO audit_logs (user_id, contract_id, action_type, action_details, ip_address, created_at)
-                VALUES (:user_id, :contract_id, :action_type, :action_details, :ip_address, NOW())
-            """)
-            db.execute(audit_query, {
-                "user_id": current_user.id,
-                "contract_id": contract_id,
-                "action_type": "SIGNATURE_APPLIED",
-                "action_details": json.dumps({
-                    "signer_type": signer_type,
-                    "signature_method": signature_method,
-                    "both_signed": both_signed
-                }),
-                "ip_address": client_ip
-            })
-            db.commit()
-        except Exception as e:
-            logger.warning(f"Audit log failed: {e}")
-        
-        return {
-            "success": True,
-            "message": f"Signature applied successfully",
-            "signer_type": signer_type,
-            "both_signed": both_signed,
-            "contract_status": "executed" if both_signed else "signature"
-        }
+            return {
+                "success": True,
+                "message": "Signature applied successfully. Contract is now fully executed!",
+                "contract_status": "executed",
+                "both_signed": True
+            }
+        else:
+            return {
+                "success": True,
+                "message": f"Signature applied successfully. Waiting for other party to sign.",
+                "contract_status": "signature",
+                "both_signed": False
+            }
         
     except HTTPException:
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f" Error: {str(e)}")
+        logger.error(f"❌ Error: {str(e)}")
         logger.error(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=f"Failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
+        
 @router.post("/execute-contract")
 async def execute_contract(
     execution_data: dict,
@@ -1778,7 +1768,8 @@ async def execute_contract(
         sig_query = text("""
             SELECT 
                 s.signer_type, 
-                s.signed_at, 
+                s.signed_at,
+                s.signature_data,
                 s.ip_address, 
                 u.first_name,
                 u.last_name,
@@ -1804,6 +1795,7 @@ async def execute_contract(
                 "name": signer_name,
                 "email": s.email or "",
                 "signed_at": s.signed_at.isoformat() if s.signed_at else None,
+                "signature_data": s.signature_data or "",
                 "ip_address": s.ip_address or ""
             })
         
@@ -1955,6 +1947,7 @@ async def get_execution_certificate(
                 "name": signer_name,
                 "email": sig.email or "",
                 "signed_at": sig.signed_at.isoformat() if sig.signed_at else None,
+                "signature_data": s.signature_data or "",
                 "ip_address": sig.ip_address or ""
             })
         
@@ -2385,11 +2378,19 @@ async def submit_for_internal_review(
                 
                 # Update workflow instance status from 'active' to 'in_progress'
                 activate_workflow_query = text("""
-                    UPDATE workflow_instances 
-                    SET status = 'in_progress',
-                        started_at = NOW()
-                    WHERE contract_id = :contract_id
+                    UPDATE workflow_instances wi
+                    INNER JOIN workflows w ON wi.workflow_id = w.id
+                    SET wi.status = 'in_progress', wi.current_step=1,
+                        wi.started_at = NOW()
+                    WHERE wi.contract_id = :contract_id
+                    AND w.company_id = :company_id
                 """)
+                db.execute(activate_workflow_query, {
+                    "contract_id": contract_id,
+                    "company_id": current_user.company_id
+                })
+
+                logger.info(f" worflow status updated to 'in_progress'")
         else:
             # Log that counterparty submitted review (status not updated)
             logger.info(f"Counterparty (Party B) user {current_user.id} submitted review for contract {contract_id} (contract status not updated)")
@@ -5435,4 +5436,3 @@ async def view_contract_document(
         logger.error(f"Error viewing document: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-        

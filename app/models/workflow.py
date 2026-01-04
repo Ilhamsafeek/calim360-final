@@ -31,6 +31,7 @@ class WorkflowStep(Base):
     step_type = Column(String(100))
     assignee_role = Column(String(100))
     assignee_user_id = Column(Integer, ForeignKey("users.id"))
+    department = Column(String(255))
     sla_hours = Column(Integer)
     is_mandatory = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)

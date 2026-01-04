@@ -2421,6 +2421,24 @@
             console.log('Opening upload modal...');
             console.log('Current analysis mode:', state.analysisMode);
 
+            // ✅ VALIDATION: Check if project is selected in project mode
+            if (state.analysisMode === 'project' && !state.selectedProject) {
+                showToast('Please select a project first before uploading documents', 'warning');
+
+                // Highlight the project select dropdown
+                const projectSelect = document.getElementById('projectSelect');
+                if (projectSelect) {
+                    projectSelect.focus();
+                    projectSelect.style.border = '2px solid #dc3545';
+                    setTimeout(() => {
+                        projectSelect.style.border = '';
+                    }, 3000);
+                }
+
+                return; // Stop execution - don't open modal
+            }
+
+            // Continue with normal upload modal opening
             state.filesToUpload = [];
             renderUploadList();
 
@@ -2436,10 +2454,10 @@
             if (wrapper) {
                 if (state.analysisMode === 'document') {
                     wrapper.style.display = 'none';
-                    console.log('Document mode - project selector hidden');
+                    console.log('✅ Document mode - project selector hidden');
                 } else if (state.analysisMode === 'project') {
                     wrapper.style.display = 'none';  // Also hide in project mode since project is already selected
-                    console.log('Project mode - using already selected project:', state.selectedProject);
+                    console.log('✅ Project mode - using already selected project:', state.selectedProject);
                 }
             }
 
@@ -2447,7 +2465,7 @@
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
 
-            console.log('Modal opened successfully');
+            console.log('✅ Modal opened successfully');
         };
         window.closeUploadModal = function () {
             const modal = document.getElementById('uploadModal');
@@ -2676,17 +2694,55 @@
 
                 // Maintain current selections
                 if (state.analysisMode === 'project' && state.selectedProject) {
-                    const projectSelect = document.getElementById('projectSelect');
-                    if (projectSelect) {
-                        projectSelect.value = state.selectedProject;
-                        onProjectChange();
-                    }
-                } else {
-                    // Document mode - just re-render the documents
-                    state.allDocuments = [...state.allDocumentsGlobal];
-                    state.filteredDocs = [...state.allDocuments];
-                    renderDocs();
-                }
+    console.log('🔄 Refreshing project mode documents for project:', state.selectedProject);
+    
+    // Wait a tiny bit for DOM to update
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const projectSelect = document.getElementById('projectSelect');
+    if (projectSelect) {
+        projectSelect.value = state.selectedProject;
+        
+        // Manually trigger document refresh
+        const selectedOption = projectSelect.options[projectSelect.selectedIndex];
+        if (selectedOption) {
+            try {
+                const projectDocs = JSON.parse(selectedOption.dataset.docs || '[]');
+                state.allDocuments = projectDocs;
+                state.filteredDocs = [...projectDocs];
+                
+                console.log(`✅ Loaded ${projectDocs.length} documents for project`);
+                
+                // Force re-render
+                renderDocs();
+                updateSelectionUI();
+                
+                document.getElementById('chatHeaderSubtitle').textContent = 
+                    `Project: ${selectedOption.text}`;
+            } catch (e) {
+                console.error('Error parsing project docs:', e);
+                state.allDocuments = [];
+                state.filteredDocs = [];
+                renderDocs();
+            }
+        }
+    }
+} else if (state.analysisMode === 'document') {
+    console.log('🔄 Refreshing document mode - showing standalone docs');
+    
+    // Refresh standalone documents
+    const standaloneOnly = state.allDocumentsGlobal.filter(doc => doc.is_standalone === true);
+    state.allDocuments = [...standaloneOnly];
+    state.filteredDocs = [...standaloneOnly];
+    
+    console.log(`✅ Loaded ${standaloneOnly.length} standalone documents`);
+    
+    // Force re-render
+    renderDocs();
+    updateSelectionUI();
+}
+
+console.log('✅ Document refresh complete');
 
             } catch (error) {
                 console.error('Upload error:', error);

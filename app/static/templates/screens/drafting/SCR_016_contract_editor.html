@@ -2773,83 +2773,101 @@
 
 
 <style>
-/* Drag and drop hover effect */
-#uploadZoneDoc:hover {
-    border-color: var(--primary-color);
-    background: var(--primary-bg);
-}
+    /* Drag and drop hover effect */
+    #uploadZoneDoc:hover {
+        border-color: var(--primary-color);
+        background: var(--primary-bg);
+    }
 
-#uploadZoneDoc.dragging {
-    border-color: var(--primary-color);
-    background: var(--primary-bg);
-    transform: scale(1.02);
-}
+    #uploadZoneDoc.dragging {
+        border-color: var(--primary-color);
+        background: var(--primary-bg);
+        transform: scale(1.02);
+    }
 
-/* File item styling */
-.file-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.75rem;
-    border-bottom: 1px solid var(--border-color);
-    transition: background 0.2s;
-}
+    /* File item styling */
+    .file-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+        transition: background 0.2s;
+    }
 
-.file-item:hover {
-    background: var(--secondary-bg);
-}
+    .file-item:hover {
+        background: var(--secondary-bg);
+    }
 
-.file-item:last-child {
-    border-bottom: none;
-}
+    .file-item:last-child {
+        border-bottom: none;
+    }
 
-.file-icon {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    font-size: 1.5rem;
-    margin-right: 1rem;
-}
+    .file-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        font-size: 1.5rem;
+        margin-right: 1rem;
+    }
 
-.file-info {
-    flex: 1;
-}
+    .file-info {
+        flex: 1;
+    }
 
-.file-name {
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-    color: var(--text-color);
-}
+    .file-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: var(--text-color);
+    }
 
-.file-meta {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-}
+    .file-meta {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
 
-.file-actions {
-    display: flex;
-    gap: 0.5rem;
-}
+    .file-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
 
-/* Document type badges */
-.doc-type-badge {
-    display: inline-block;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-}
+    /* Document type badges */
+    .doc-type-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
 
-.doc-type-exhibit { background: #e3f2fd; color: #1976d2; }
-.doc-type-amendment { background: #fff3e0; color: #f57c00; }
-.doc-type-certificate { background: #e8f5e9; color: #388e3c; }
-.doc-type-draft { background: #f3e5f5; color: #7b1fa2; }
-.doc-type-other { background: #f5f5f5; color: #616161; }
+    .doc-type-exhibit {
+        background: #e3f2fd;
+        color: #1976d2;
+    }
 
+    .doc-type-amendment {
+        background: #fff3e0;
+        color: #f57c00;
+    }
+
+    .doc-type-certificate {
+        background: #e8f5e9;
+        color: #388e3c;
+    }
+
+    .doc-type-draft {
+        background: #f3e5f5;
+        color: #7b1fa2;
+    }
+
+    .doc-type-other {
+        background: #f5f5f5;
+        color: #616161;
+    }
 </style>
 
 
@@ -3210,7 +3228,7 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-outline-secondary" onclick="closeModal('internalReviewModal')">
+            <button class="btn btn-outline-secondary" onclick="closeModal('internalApprovalModal')">
                 Close
             </button>
             <button class="btn btn-primary" onclick="submitInternalApproval()">
@@ -3326,14 +3344,14 @@
             </button>
         </div>
         <div class="modal-body">
-            
+
             <!-- Upload Section -->
             <div style="margin-bottom: 2rem;">
                 <h5 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
                     <i class="ti ti-upload" style="color: var(--primary-color);"></i>
                     Upload New Documents
                 </h5>
-                
+
                 <!-- Document Type Selection -->
                 <div style="margin-bottom: 1rem;">
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
@@ -3358,12 +3376,8 @@
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
                         Notes / Purpose (Optional)
                     </label>
-                    <textarea 
-                        id="documentNotes" 
-                        class="search-input" 
-                        placeholder="Add notes about this document..."
-                        style="width: 100%; min-height: 60px; padding: 0.5rem; resize: vertical;"
-                    ></textarea>
+                    <textarea id="documentNotes" class="search-input" placeholder="Add notes about this document..."
+                        style="width: 100%; min-height: 60px; padding: 0.5rem; resize: vertical;"></textarea>
                 </div>
 
                 <!-- File Upload Zone -->
@@ -3375,14 +3389,9 @@
                     <p style="margin: 0; color: var(--text-muted); font-size: 0.875rem;">
                         Supports: PDF, DOC, DOCX, XLS, XLSX, PPT, JPG, PNG, ZIP and more (Max 50MB each)
                     </p>
-                    <input 
-                        type="file" 
-                        id="fileUploadDoc" 
-                        multiple 
+                    <input type="file" id="fileUploadDoc" multiple
                         accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf,.odt,.jpg,.jpeg,.png,.gif,.tiff,.zip,.msg,.eml"
-                        style="display: none;" 
-                        onchange="handleDocumentFileSelect(event)"
-                    >
+                        style="display: none;" onchange="handleDocumentFileSelect(event)">
                 </div>
 
                 <!-- Selected Files Preview -->
@@ -3401,11 +3410,8 @@
                         <i class="ti ti-files" style="color: var(--primary-color);"></i>
                         Previously Attached Documents
                     </span>
-                    <button 
-                        class="btn btn-sm btn-outline-secondary" 
-                        onclick="refreshDocumentsList()"
-                        title="Refresh list"
-                    >
+                    <button class="btn btn-sm btn-outline-secondary" onclick="refreshDocumentsList()"
+                        title="Refresh list">
                         <i class="ti ti-refresh"></i>
                     </button>
                 </h5>
@@ -3417,19 +3423,20 @@
                 </div>
 
                 <!-- No Documents State -->
-                <div id="noDocumentsMessage" style="text-align: center; padding: 2rem; color: var(--text-muted); display: none;">
+                <div id="noDocumentsMessage"
+                    style="text-align: center; padding: 2rem; color: var(--text-muted); display: none;">
                     <i class="ti ti-folder-open" style="font-size: 3rem; opacity: 0.3; margin-bottom: 1rem;"></i>
                     <p>No documents attached yet</p>
                 </div>
 
                 <!-- Documents List -->
-                <div id="attachedDocumentsList" 
+                <div id="attachedDocumentsList"
                     style="border: 1px solid var(--border-color); border-radius: 8px; max-height: 300px; overflow-y: auto;">
                     <!-- Documents will be loaded here -->
                 </div>
             </div>
         </div>
-        
+
         <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
             <div style="font-size: 0.875rem; color: var(--text-muted);">
                 <i class="ti ti-info-circle"></i>
@@ -5018,8 +5025,22 @@
         console.log('trsting');
 
         // Extract signatory data from certificate
-        let clientSignatory = { name: '[Name]', signer_type: '[Title]', email: '' };
-        let companySignatory = { name: '[Name]', signer_type: '[Title]', email: '' };
+        let clientSignatory = {
+            name: '[Name]',
+            signer_type: '[Title]',
+            email: '',
+            has_signed: false,  // ✅ NEW
+            signed_at: null,    // ✅ NEW
+            signature_data: null // ✅ NEW
+        };
+        let companySignatory = {
+            name: '[Name]',
+            signer_type: '[Title]',
+            email: '',
+            has_signed: false,  // ✅ NEW
+            signed_at: null,    // ✅ NEW
+            signature_data: null // ✅ NEW
+        };
 
         if (certificate && certificate.signatories) {
             // Find client and company signatories
@@ -5027,6 +5048,9 @@
             const companySig = certificate.signatories.find(s => s.signer_type === 'company' || s.signer_type === 'party_b');
 
             if (clientSig) {
+                clientSignatory.has_signed = true;  // ✅ Mark as signed
+                clientSignatory.signed_at = clientSig.signed_at;
+                clientSignatory.signature_data = clientSig.signature_data || clientSig.name;
                 clientSignatory.name = clientSig.name || '[Name]';
                 clientSignatory.email = clientSig.email || '';
                 // Extract title from email domain or use default
@@ -5034,6 +5058,9 @@
             }
 
             if (companySig) {
+                companySignatory.has_signed = true;  // ✅ Mark as signed
+                companySignatory.signed_at = companySig.signed_at;
+                companySignatory.signature_data = companySig.signature_data || companySig.name;
                 companySignatory.name = companySig.name || '[Name]';
                 companySignatory.email = companySig.email || '';
                 companySignatory.signer_type = companySig.signer_type || '[Title]';
@@ -5046,33 +5073,62 @@
             }
         }
 
-        const signature_block = `
-        <div style="margin-top: 3rem;">
-            <p><strong>IN WITNESS WHEREOF</strong>, the parties have executed this Agreement.</p>
-            <div style="display: flex; justify-content: space-between; margin-top: 3rem;">
-                <div style="flex: 1; margin-right: 2rem;">
-<div class="signature-field" id="clientSignature" onclick="${(contract.status === 'signature' && contract.is_counterparty) ? "openSignature('client')" : "void(0)"}">                        <div>
-                            <i class="ti ti-writing-sign" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
-                            <span>Click to Sign (Client)</span>
-                        </div>
-                    </div>
-                    <p style="margin-top: 1rem;"><strong>CLIENT</strong></p>
-                    <p>Name: <span class="editable-field" contenteditable="true">${clientSignatory.name}</span></p>
-                    <p>Title: <span class="editable-field" contenteditable="true">${clientSignatory.signer_type}</span></p>
-                </div>
-                <div style="flex: 1;">
-<div class="signature-field" id="clientSignature" onclick="${(contract.status === 'signature' && !contract.is_counterparty) ? "openSignature('company')" : "void(0)"}">                        
-                        <div>
-                            <i class="ti ti-writing-sign" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
-                            <span>Click to Sign (Company)</span>
-                        </div>
-                    </div>
-                    <p style="margin-top: 1rem;"><strong>COMPANY</strong></p>
-                    <p>Name: <span class="editable-field" contenteditable="true">${companySignatory.name}</span></p>
-                    <p>Title: <span class="editable-field" contenteditable="true">${companySignatory.signer_type}</span></p>
-                </div>
+
+           // ✅ STEP 2: CREATE CONDITIONAL HTML FOR CLIENT SIGNATURE
+    const clientSignatureHTML = clientSignatory.has_signed 
+        ? `<div class="signature-field signed" id="clientSignature">
+               <div style="font-family: 'Brush Script MT', cursive; font-size: 1.5rem; color: var(--success-color);">
+                   ${clientSignatory.signature_data}
+               </div>
+               <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                   <i class="ti ti-check-circle" style="color: var(--success-color);"></i>
+                   Signed on ${clientSignatory.signed_at ? new Date(clientSignatory.signed_at).toLocaleString() : 'N/A'}
+               </div>
+           </div>`
+        : `<div class="signature-field" id="clientSignature" onclick="${(contract.status === 'signature' && contract.is_counterparty) ? "openSignature('client')" : "void(0)"}">
+               <div>
+                   <i class="ti ti-writing-sign" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+                   <span>Click to Sign (Client)</span>
+               </div>
+           </div>`;
+
+    // ✅ STEP 3: CREATE CONDITIONAL HTML FOR COMPANY SIGNATURE
+    const companySignatureHTML = companySignatory.has_signed 
+        ? `<div class="signature-field signed" id="companySignature">
+               <div style="font-family: 'Brush Script MT', cursive; font-size: 1.5rem; color: var(--success-color);">
+                   ${companySignatory.signature_data}
+               </div>
+               <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                   <i class="ti ti-check-circle" style="color: var(--success-color);"></i>
+                   Signed on ${companySignatory.signed_at ? new Date(companySignatory.signed_at).toLocaleString() : 'N/A'}
+               </div>
+           </div>`
+        : `<div class="signature-field" id="companySignature" onclick="${(contract.status === 'signature' && !contract.is_counterparty) ? "openSignature('company')" : "void(0)"}">
+               <div>
+                   <i class="ti ti-writing-sign" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+                   <span>Click to Sign (Company)</span>
+               </div>
+           </div>`;
+
+           
+     const signature_block = `
+    <div style="margin-top: 3rem;">
+        <p><strong>IN WITNESS WHEREOF</strong>, the parties have executed this Agreement.</p>
+        <div style="display: flex; justify-content: space-between; margin-top: 3rem;">
+            <div style="flex: 1; margin-right: 2rem;">
+                ${clientSignatureHTML}
+                <p style="margin-top: 1rem;"><strong>CLIENT</strong></p>
+                <p>Name: <span class="editable-field" contenteditable="true">${clientSignatory.name}</span></p>
+                <p>Title: <span class="editable-field" contenteditable="true">${clientSignatory.signer_type}</span></p>
             </div>
-        </div>`;
+            <div style="flex: 1;">
+                ${companySignatureHTML}
+                <p style="margin-top: 1rem;"><strong>COMPANY</strong></p>
+                <p>Name: <span class="editable-field" contenteditable="true">${companySignatory.name}</span></p>
+                <p>Title: <span class="editable-field" contenteditable="true">${companySignatory.signer_type}</span></p>
+            </div>
+        </div>
+    </div>`;
 
         // Determine the action buttons based on contract status
         let actionButtons = '';
@@ -7586,6 +7642,7 @@ ${contract.content && contract.content.trim() !== '' ?
             if (data.success) {
                 showNotification('Contract sent for approval successfully!', 'success');
 
+                closeModal('internalApprovalModal');
                 // Reload page after delay to show updated status
                 setTimeout(async () => await refreshContractData(), 1000);
             } else {
@@ -13146,109 +13203,109 @@ Generated by CALIM 360 Smart CLM
 
 
 
-/**
- * Contract Documents Upload JavaScript
- * Add to contract-editor.js or include in SCR_016_contract_editor.html
- */
+    /**
+     * Contract Documents Upload JavaScript
+     * Add to contract-editor.js or include in SCR_016_contract_editor.html
+     */
 
-// Global variable to store selected files
-let selectedDocumentFiles = [];
+    // Global variable to store selected files
+    let selectedDocumentFiles = [];
 
-// =====================================================
-// FILE SELECTION AND VALIDATION
-// =====================================================
+    // =====================================================
+    // FILE SELECTION AND VALIDATION
+    // =====================================================
 
-function handleDocumentFileSelect(event) {
-    const files = Array.from(event.target.files);
-    
-    if (files.length === 0) {
-        return;
-    }
-    
-    console.log(`📎 Selected ${files.length} files for upload`);
-    
-    // Validate each file
-    const validFiles = [];
-    const errors = [];
-    
-    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
-    const ALLOWED_EXTENSIONS = [
-        'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
-        'txt', 'rtf', 'odt', 'jpg', 'jpeg', 'png', 'gif',
-        'tiff', 'zip', 'msg', 'eml'
-    ];
-    
-    files.forEach(file => {
-        const fileName = file.name.toLowerCase();
-        const fileExt = fileName.split('.').pop();
-        
-        // Check file extension
-        if (!ALLOWED_EXTENSIONS.includes(fileExt)) {
-            errors.push(`${file.name}: File type not allowed`);
+    function handleDocumentFileSelect(event) {
+        const files = Array.from(event.target.files);
+
+        if (files.length === 0) {
             return;
         }
-        
-        // Check file size
-        if (file.size > MAX_FILE_SIZE) {
-            errors.push(`${file.name}: File exceeds 50MB limit`);
+
+        console.log(`📎 Selected ${files.length} files for upload`);
+
+        // Validate each file
+        const validFiles = [];
+        const errors = [];
+
+        const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+        const ALLOWED_EXTENSIONS = [
+            'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
+            'txt', 'rtf', 'odt', 'jpg', 'jpeg', 'png', 'gif',
+            'tiff', 'zip', 'msg', 'eml'
+        ];
+
+        files.forEach(file => {
+            const fileName = file.name.toLowerCase();
+            const fileExt = fileName.split('.').pop();
+
+            // Check file extension
+            if (!ALLOWED_EXTENSIONS.includes(fileExt)) {
+                errors.push(`${file.name}: File type not allowed`);
+                return;
+            }
+
+            // Check file size
+            if (file.size > MAX_FILE_SIZE) {
+                errors.push(`${file.name}: File exceeds 50MB limit`);
+                return;
+            }
+
+            validFiles.push(file);
+        });
+
+        // Show errors if any
+        if (errors.length > 0) {
+            showNotification(
+                `Some files were rejected:\n${errors.join('\n')}`,
+                'warning'
+            );
+        }
+
+        // Store valid files
+        selectedDocumentFiles = validFiles;
+
+        // Update UI
+        displaySelectedFiles(validFiles);
+
+        // Enable/disable upload button
+        const uploadBtn = document.getElementById('uploadDocBtn');
+        if (uploadBtn) {
+            uploadBtn.disabled = validFiles.length === 0;
+        }
+
+        // Update status text
+        const statusText = document.getElementById('uploadStatusText');
+        if (statusText) {
+            statusText.textContent = validFiles.length > 0
+                ? `${validFiles.length} file(s) ready to upload`
+                : 'Select files to upload';
+        }
+    }
+
+    function displaySelectedFiles(files) {
+        const previewContainer = document.getElementById('selectedFilesPreview');
+        const filesList = document.getElementById('selectedFilesList');
+
+        if (!previewContainer || !filesList) {
             return;
         }
-        
-        validFiles.push(file);
-    });
-    
-    // Show errors if any
-    if (errors.length > 0) {
-        showNotification(
-            `Some files were rejected:\n${errors.join('\n')}`,
-            'warning'
-        );
-    }
-    
-    // Store valid files
-    selectedDocumentFiles = validFiles;
-    
-    // Update UI
-    displaySelectedFiles(validFiles);
-    
-    // Enable/disable upload button
-    const uploadBtn = document.getElementById('uploadDocBtn');
-    if (uploadBtn) {
-        uploadBtn.disabled = validFiles.length === 0;
-    }
-    
-    // Update status text
-    const statusText = document.getElementById('uploadStatusText');
-    if (statusText) {
-        statusText.textContent = validFiles.length > 0 
-            ? `${validFiles.length} file(s) ready to upload`
-            : 'Select files to upload';
-    }
-}
 
-function displaySelectedFiles(files) {
-    const previewContainer = document.getElementById('selectedFilesPreview');
-    const filesList = document.getElementById('selectedFilesList');
-    
-    if (!previewContainer || !filesList) {
-        return;
-    }
-    
-    if (files.length === 0) {
-        previewContainer.style.display = 'none';
-        return;
-    }
-    
-    previewContainer.style.display = 'block';
-    filesList.innerHTML = '';
-    
-    files.forEach((file, index) => {
-        const fileExt = file.name.split('.').pop().toLowerCase();
-        const fileSize = formatFileSize(file.size);
-        
-        const fileItem = document.createElement('div');
-        fileItem.className = 'file-item';
-        fileItem.innerHTML = `
+        if (files.length === 0) {
+            previewContainer.style.display = 'none';
+            return;
+        }
+
+        previewContainer.style.display = 'block';
+        filesList.innerHTML = '';
+
+        files.forEach((file, index) => {
+            const fileExt = file.name.split('.').pop().toLowerCase();
+            const fileSize = formatFileSize(file.size);
+
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.innerHTML = `
             <div style="display: flex; align-items: center; flex: 1;">
                 <div class="file-icon" style="background: ${getFileIconColor(fileExt)};">
                     <i class="ti ti-${getFileIcon(fileExt)}" style="color: white;"></i>
@@ -13266,191 +13323,191 @@ function displaySelectedFiles(files) {
                 <i class="ti ti-x"></i>
             </button>
         `;
-        
-        filesList.appendChild(fileItem);
-    });
-}
 
-function removeSelectedFile(index) {
-    selectedDocumentFiles.splice(index, 1);
-    displaySelectedFiles(selectedDocumentFiles);
-    
-    // Update upload button state
-    const uploadBtn = document.getElementById('uploadDocBtn');
-    if (uploadBtn) {
-        uploadBtn.disabled = selectedDocumentFiles.length === 0;
-    }
-    
-    // Update status text
-    const statusText = document.getElementById('uploadStatusText');
-    if (statusText) {
-        statusText.textContent = selectedDocumentFiles.length > 0 
-            ? `${selectedDocumentFiles.length} file(s) ready to upload`
-            : 'Select files to upload';
-    }
-}
-
-// =====================================================
-// UPLOAD DOCUMENTS TO CONTRACT
-// =====================================================
-
-async function uploadContractDocuments() {
-    if (selectedDocumentFiles.length === 0) {
-        showNotification('Please select files to upload', 'warning');
-        return;
-    }
-    
-    const uploadBtn = document.getElementById('uploadDocBtn');
-    const originalBtnContent = uploadBtn.innerHTML;
-    
-    try {
-        // Get contract ID using helper function
-        const contractId = getContractId();
-        
-        if (!contractId) {
-            showNotification('Contract ID not found. Please refresh the page.', 'error');
-            return;
-        }
-        
-        // Get document type and notes
-        const documentType = document.getElementById('documentTypeSelect')?.value || 'exhibit';
-        const notes = document.getElementById('documentNotes')?.value || '';
-        
-        // Show loading state
-        uploadBtn.disabled = true;
-        uploadBtn.innerHTML = '<i class="ti ti-loader" style="animation: spin 1s linear infinite;"></i> Uploading...';
-        
-        // Create FormData
-        const formData = new FormData();
-        selectedDocumentFiles.forEach(file => {
-            formData.append('files', file);
+            filesList.appendChild(fileItem);
         });
-        formData.append('document_type', documentType);
-        formData.append('notes', notes);
-        
-        console.log(`📤 Uploading ${selectedDocumentFiles.length} documents to contract ${contractId}`);
-        
-        // Upload files
-        const response = await fetch(`/api/contracts/documents/upload/${contractId}`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`
-            },
-            credentials: 'include',
-            body: formData
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Upload failed');
+    }
+
+    function removeSelectedFile(index) {
+        selectedDocumentFiles.splice(index, 1);
+        displaySelectedFiles(selectedDocumentFiles);
+
+        // Update upload button state
+        const uploadBtn = document.getElementById('uploadDocBtn');
+        if (uploadBtn) {
+            uploadBtn.disabled = selectedDocumentFiles.length === 0;
         }
-        
-        const result = await response.json();
-        console.log('✅ Upload result:', result);
-        
-        // Show success message
-        showNotification(
-            `Successfully uploaded ${result.successful_uploads} of ${result.total_files} files`,
-            result.successful_uploads === result.total_files ? 'success' : 'warning'
-        );
-        
-        // Show errors if any
-        if (result.errors && result.errors.length > 0) {
-            console.error('Upload errors:', result.errors);
-        }
-        
-        // Reset form
-        selectedDocumentFiles = [];
-        document.getElementById('fileUploadDoc').value = '';
-        document.getElementById('documentNotes').value = '';
-        displaySelectedFiles([]);
-        
-        // Refresh documents list
-        await loadContractDocuments();
-        
-        // Reset button
-        uploadBtn.disabled = true;
-        uploadBtn.innerHTML = originalBtnContent;
-        
+
         // Update status text
         const statusText = document.getElementById('uploadStatusText');
         if (statusText) {
-            statusText.textContent = 'Select files to upload';
+            statusText.textContent = selectedDocumentFiles.length > 0
+                ? `${selectedDocumentFiles.length} file(s) ready to upload`
+                : 'Select files to upload';
         }
-        
-    } catch (error) {
-        console.error('❌ Upload error:', error);
-        showNotification(error.message || 'Failed to upload documents', 'error');
-        
-        // Reset button
-        uploadBtn.disabled = false;
-        uploadBtn.innerHTML = originalBtnContent;
     }
-}
 
-// =====================================================
-// LOAD AND DISPLAY EXISTING DOCUMENTS
-// =====================================================
+    // =====================================================
+    // UPLOAD DOCUMENTS TO CONTRACT
+    // =====================================================
 
-async function loadContractDocuments() {
-    // Get contract ID using helper function
-    const contractId = getContractId();
-    
-    if (!contractId) {
-        console.warn('⚠️ Contract ID not found for loading documents');
-        return;
-    }
-    
-    const listContainer = document.getElementById('attachedDocumentsList');
-    const loadingDiv = document.getElementById('documentsLoading');
-    const noDocsDiv = document.getElementById('noDocumentsMessage');
-    
-    if (!listContainer) {
-        return;
-    }
-    
-    try {
-        // Show loading state
-        if (loadingDiv) loadingDiv.style.display = 'block';
-        if (noDocsDiv) noDocsDiv.style.display = 'none';
-        listContainer.style.display = 'none';
-        
-        const response = await fetch(`/api/contracts/documents/list/${contractId}`, {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`
-            },
-            credentials: 'include'
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to load documents');
-        }
-        
-        const result = await response.json();
-        console.log(`📄 Loaded ${result.total_documents} documents`);
-        
-        // Hide loading
-        if (loadingDiv) loadingDiv.style.display = 'none';
-        
-        // Show no documents message if empty
-        if (result.total_documents === 0) {
-            if (noDocsDiv) noDocsDiv.style.display = 'block';
-            listContainer.style.display = 'none';
+    async function uploadContractDocuments() {
+        if (selectedDocumentFiles.length === 0) {
+            showNotification('Please select files to upload', 'warning');
             return;
         }
-        
-        // Display documents
-        listContainer.style.display = 'block';
-        listContainer.innerHTML = '';
-        
-        result.documents.forEach(doc => {
-            const fileExt = doc.name.split('.').pop().toLowerCase();
-            const fileSize = formatFileSize(doc.size);
-            const uploadDate = new Date(doc.uploaded_at).toLocaleDateString();
-            
-            const docItem = document.createElement('div');
-            docItem.className = 'file-item';
-            docItem.innerHTML = `
+
+        const uploadBtn = document.getElementById('uploadDocBtn');
+        const originalBtnContent = uploadBtn.innerHTML;
+
+        try {
+            // Get contract ID using helper function
+            const contractId = getContractId();
+
+            if (!contractId) {
+                showNotification('Contract ID not found. Please refresh the page.', 'error');
+                return;
+            }
+
+            // Get document type and notes
+            const documentType = document.getElementById('documentTypeSelect')?.value || 'exhibit';
+            const notes = document.getElementById('documentNotes')?.value || '';
+
+            // Show loading state
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="ti ti-loader" style="animation: spin 1s linear infinite;"></i> Uploading...';
+
+            // Create FormData
+            const formData = new FormData();
+            selectedDocumentFiles.forEach(file => {
+                formData.append('files', file);
+            });
+            formData.append('document_type', documentType);
+            formData.append('notes', notes);
+
+            console.log(`📤 Uploading ${selectedDocumentFiles.length} documents to contract ${contractId}`);
+
+            // Upload files
+            const response = await fetch(`/api/contracts/documents/upload/${contractId}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`
+                },
+                credentials: 'include',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Upload failed');
+            }
+
+            const result = await response.json();
+            console.log('✅ Upload result:', result);
+
+            // Show success message
+            showNotification(
+                `Successfully uploaded ${result.successful_uploads} of ${result.total_files} files`,
+                result.successful_uploads === result.total_files ? 'success' : 'warning'
+            );
+
+            // Show errors if any
+            if (result.errors && result.errors.length > 0) {
+                console.error('Upload errors:', result.errors);
+            }
+
+            // Reset form
+            selectedDocumentFiles = [];
+            document.getElementById('fileUploadDoc').value = '';
+            document.getElementById('documentNotes').value = '';
+            displaySelectedFiles([]);
+
+            // Refresh documents list
+            await loadContractDocuments();
+
+            // Reset button
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = originalBtnContent;
+
+            // Update status text
+            const statusText = document.getElementById('uploadStatusText');
+            if (statusText) {
+                statusText.textContent = 'Select files to upload';
+            }
+
+        } catch (error) {
+            console.error('❌ Upload error:', error);
+            showNotification(error.message || 'Failed to upload documents', 'error');
+
+            // Reset button
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = originalBtnContent;
+        }
+    }
+
+    // =====================================================
+    // LOAD AND DISPLAY EXISTING DOCUMENTS
+    // =====================================================
+
+    async function loadContractDocuments() {
+        // Get contract ID using helper function
+        const contractId = getContractId();
+
+        if (!contractId) {
+            console.warn('⚠️ Contract ID not found for loading documents');
+            return;
+        }
+
+        const listContainer = document.getElementById('attachedDocumentsList');
+        const loadingDiv = document.getElementById('documentsLoading');
+        const noDocsDiv = document.getElementById('noDocumentsMessage');
+
+        if (!listContainer) {
+            return;
+        }
+
+        try {
+            // Show loading state
+            if (loadingDiv) loadingDiv.style.display = 'block';
+            if (noDocsDiv) noDocsDiv.style.display = 'none';
+            listContainer.style.display = 'none';
+
+            const response = await fetch(`/api/contracts/documents/list/${contractId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load documents');
+            }
+
+            const result = await response.json();
+            console.log(`📄 Loaded ${result.total_documents} documents`);
+
+            // Hide loading
+            if (loadingDiv) loadingDiv.style.display = 'none';
+
+            // Show no documents message if empty
+            if (result.total_documents === 0) {
+                if (noDocsDiv) noDocsDiv.style.display = 'block';
+                listContainer.style.display = 'none';
+                return;
+            }
+
+            // Display documents
+            listContainer.style.display = 'block';
+            listContainer.innerHTML = '';
+
+            result.documents.forEach(doc => {
+                const fileExt = doc.name.split('.').pop().toLowerCase();
+                const fileSize = formatFileSize(doc.size);
+                const uploadDate = new Date(doc.uploaded_at).toLocaleDateString();
+
+                const docItem = document.createElement('div');
+                docItem.className = 'file-item';
+                docItem.innerHTML = `
                 <div style="display: flex; align-items: center; flex: 1; gap: 1rem;">
                     <div class="file-icon" style="background: ${getFileIconColor(fileExt)};">
                         <i class="ti ti-${getFileIcon(fileExt)}" style="color: white;"></i>
@@ -13482,318 +13539,318 @@ async function loadContractDocuments() {
                     </button>
                 </div>
             `;
-            
-            listContainer.appendChild(docItem);
-        });
-        
-    } catch (error) {
-        console.error('❌ Error loading documents:', error);
-        if (loadingDiv) loadingDiv.style.display = 'none';
-        showNotification('Failed to load documents', 'error');
-    }
-}
 
-async function refreshDocumentsList() {
-    console.log('🔄 Refreshing documents list...');
-    await loadContractDocuments();
-}
+                listContainer.appendChild(docItem);
+            });
 
-// =====================================================
-// DOCUMENT ACTIONS
-// =====================================================
-async function downloadDocument(documentId, fileName) {
-    try {
-        console.log(`⬇️ Downloading document: ${fileName} (ID: ${documentId})`);
-        
-        // Show loading notification
-        showNotification(`Preparing download: ${fileName}...`, 'info');
-        
-        // Create download URL with authentication
-        const token = localStorage.getItem('access_token') || '';
-        const downloadUrl = `/api/contracts/documents/download/${documentId}`;
-        
-        // Fetch the file
-        const response = await fetch(downloadUrl, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            credentials: 'include'
-        });
-        
-        if (!response.ok) {
-            const error = await response.json().catch(() => ({ detail: 'Download failed' }));
-            throw new Error(error.detail || 'Failed to download document');
+        } catch (error) {
+            console.error('❌ Error loading documents:', error);
+            if (loadingDiv) loadingDiv.style.display = 'none';
+            showNotification('Failed to load documents', 'error');
         }
-        
-        // Get the blob
-        const blob = await response.blob();
-        
-        // Create a temporary URL for the blob
-        const url = window.URL.createObjectURL(blob);
-        
-        // Create a temporary anchor element to trigger download
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = fileName;
-        
-        // Append to body, click, and remove
-        document.body.appendChild(a);
-        a.click();
-        
-        // Clean up
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        
-        console.log(`✅ Download started: ${fileName}`);
-        showNotification(`Download started: ${fileName}`, 'success');
-        
-    } catch (error) {
-        console.error('❌ Download error:', error);
-        showNotification(`Failed to download: ${error.message}`, 'error');
     }
-}
 
-async function viewDocument(documentId, fileName) {
-    try {
-        console.log(`👁️ Viewing document: ${fileName} (ID: ${documentId})`);
-        
-        const token = localStorage.getItem('access_token') || '';
-        const viewUrl = `/api/contracts/documents/view/${documentId}?inline=true`;
-        
-        // Open in new tab with authentication
-        const response = await fetch(viewUrl, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            credentials: 'include'
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to load document');
-        }
-        
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        
-        // Open in new tab
-        const newWindow = window.open(url, '_blank');
-        
-        if (!newWindow) {
-            // Popup blocked, fallback to download
-            showNotification('Popup blocked. Downloading instead...', 'warning');
-            await downloadDocument(documentId, fileName);
-        } else {
-            showNotification(`Opening: ${fileName}`, 'success');
-            
-            // Clean up after a delay
-            setTimeout(() => {
-                window.URL.revokeObjectURL(url);
-            }, 60000); // Clean up after 1 minute
-        }
-        
-    } catch (error) {
-        console.error('❌ View error:', error);
-        showNotification(`Failed to view document: ${error.message}`, 'error');
-    }
-}
-
-
-async function deleteDocument(documentId, fileName) {
-    if (!confirm(`Are you sure you want to delete "${fileName}"?`)) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/api/contracts/documents/delete/${documentId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`
-            },
-            credentials: 'include'
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to delete document');
-        }
-        
-        const result = await response.json();
-        console.log('✅ Document deleted:', result);
-        
-        showNotification(`Document "${fileName}" deleted successfully`, 'success');
-        
-        // Refresh documents list
+    async function refreshDocumentsList() {
+        console.log('🔄 Refreshing documents list...');
         await loadContractDocuments();
-        
-    } catch (error) {
-        console.error('❌ Delete error:', error);
-        showNotification('Failed to delete document', 'error');
     }
-}
 
-// =====================================================
-// MODAL MANAGEMENT
-// =====================================================
+    // =====================================================
+    // DOCUMENT ACTIONS
+    // =====================================================
+    async function downloadDocument(documentId, fileName) {
+        try {
+            console.log(`⬇️ Downloading document: ${fileName} (ID: ${documentId})`);
 
-function closeDocumentsModal() {
-    // Reset form
-    selectedDocumentFiles = [];
-    document.getElementById('fileUploadDoc').value = '';
-    document.getElementById('documentNotes').value = '';
-    displaySelectedFiles([]);
-    
-    // Close modal
-    closeModal('documentsModal');
-}
+            // Show loading notification
+            showNotification(`Preparing download: ${fileName}...`, 'info');
 
-// Load documents when modal is opened
-function openDocumentsModal() {
-    openModal('documentsModal');
-    loadContractDocuments();
-}
+            // Create download URL with authentication
+            const token = localStorage.getItem('access_token') || '';
+            const downloadUrl = `/api/contracts/documents/download/${documentId}`;
 
-// =====================================================
-// UTILITY FUNCTIONS
-// =====================================================
+            // Fetch the file
+            const response = await fetch(downloadUrl, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                credentials: 'include'
+            });
 
-/**
- * Get contract ID from multiple possible sources
- * Supports various URL patterns and global variables
- */
-function getContractId() {
-    let contractId = null;
-    
-    // Method 1: Check for global contractId variable (most reliable)
-    if (typeof window.contractId !== 'undefined' && window.contractId) {
-        contractId = window.contractId;
-        console.log('📋 Contract ID from global variable:', contractId);
-        return contractId;
-    }
-    
-    // Method 2: Check URL query parameter (?id=123)
-    const urlParams = new URLSearchParams(window.location.search);
-    contractId = urlParams.get('id');
-    if (contractId) {
-        console.log('📋 Contract ID from URL query:', contractId);
-        return contractId;
-    }
-    
-    // Method 3: Check URL path (/contract/edit/123 or /contract/editor/123)
-    const pathParts = window.location.pathname.split('/');
-    const editIndex = pathParts.findIndex(part => part === 'edit' || part === 'editor');
-    if (editIndex !== -1 && pathParts[editIndex + 1]) {
-        contractId = pathParts[editIndex + 1];
-        console.log('📋 Contract ID from URL path:', contractId);
-        return contractId;
-    }
-    
-    // Method 4: Check for contract ID in page data attributes
-    const editorElement = document.getElementById('contractContent');
-    if (editorElement && editorElement.dataset.contractId) {
-        contractId = editorElement.dataset.contractId;
-        console.log('📋 Contract ID from data attribute:', contractId);
-        return contractId;
-    }
-    
-    // Method 5: Check for hidden input field
-    const hiddenInput = document.getElementById('contract_id') || document.querySelector('input[name="contract_id"]');
-    if (hiddenInput && hiddenInput.value) {
-        contractId = hiddenInput.value;
-        console.log('📋 Contract ID from hidden input:', contractId);
-        return contractId;
-    }
-    
-    console.error('❌ Contract ID not found. URL:', window.location.href);
-    return null;
-}
-
-function formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-}
-
-function getFileIcon(extension) {
-    const iconMap = {
-        pdf: 'file-text',
-        doc: 'file-text',
-        docx: 'file-text',
-        xls: 'table',
-        xlsx: 'table',
-        ppt: 'presentation',
-        pptx: 'presentation',
-        txt: 'file-text',
-        rtf: 'file-text',
-        jpg: 'photo',
-        jpeg: 'photo',
-        png: 'photo',
-        gif: 'photo',
-        zip: 'file-zip',
-        msg: 'mail',
-        eml: 'mail'
-    };
-    return iconMap[extension] || 'file';
-}
-
-function getFileIconColor(extension) {
-    const colorMap = {
-        pdf: '#d32f2f',
-        doc: '#1976d2',
-        docx: '#1976d2',
-        xls: '#388e3c',
-        xlsx: '#388e3c',
-        ppt: '#f57c00',
-        pptx: '#f57c00',
-        jpg: '#7b1fa2',
-        jpeg: '#7b1fa2',
-        png: '#7b1fa2',
-        gif: '#7b1fa2',
-        zip: '#616161',
-        msg: '#0288d1',
-        eml: '#0288d1'
-    };
-    return colorMap[extension] || '#757575';
-}
-
-// =====================================================
-// DRAG AND DROP SUPPORT
-// =====================================================
-
-document.addEventListener('DOMContentLoaded', function() {
-    const uploadZone = document.getElementById('uploadZoneDoc');
-    
-    if (uploadZone) {
-        uploadZone.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            this.classList.add('dragging');
-        });
-        
-        uploadZone.addEventListener('dragleave', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            this.classList.remove('dragging');
-        });
-        
-        uploadZone.addEventListener('drop', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            this.classList.remove('dragging');
-            
-            const files = e.dataTransfer.files;
-            const fileInput = document.getElementById('fileUploadDoc');
-            
-            if (fileInput && files.length > 0) {
-                fileInput.files = files;
-                handleDocumentFileSelect({ target: fileInput });
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({ detail: 'Download failed' }));
+                throw new Error(error.detail || 'Failed to download document');
             }
-        });
+
+            // Get the blob
+            const blob = await response.blob();
+
+            // Create a temporary URL for the blob
+            const url = window.URL.createObjectURL(blob);
+
+            // Create a temporary anchor element to trigger download
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = fileName;
+
+            // Append to body, click, and remove
+            document.body.appendChild(a);
+            a.click();
+
+            // Clean up
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            console.log(`✅ Download started: ${fileName}`);
+            showNotification(`Download started: ${fileName}`, 'success');
+
+        } catch (error) {
+            console.error('❌ Download error:', error);
+            showNotification(`Failed to download: ${error.message}`, 'error');
+        }
     }
-});
+
+    async function viewDocument(documentId, fileName) {
+        try {
+            console.log(`👁️ Viewing document: ${fileName} (ID: ${documentId})`);
+
+            const token = localStorage.getItem('access_token') || '';
+            const viewUrl = `/api/contracts/documents/view/${documentId}?inline=true`;
+
+            // Open in new tab with authentication
+            const response = await fetch(viewUrl, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load document');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+
+            // Open in new tab
+            const newWindow = window.open(url, '_blank');
+
+            if (!newWindow) {
+                // Popup blocked, fallback to download
+                showNotification('Popup blocked. Downloading instead...', 'warning');
+                await downloadDocument(documentId, fileName);
+            } else {
+                showNotification(`Opening: ${fileName}`, 'success');
+
+                // Clean up after a delay
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                }, 60000); // Clean up after 1 minute
+            }
+
+        } catch (error) {
+            console.error('❌ View error:', error);
+            showNotification(`Failed to view document: ${error.message}`, 'error');
+        }
+    }
+
+
+    async function deleteDocument(documentId, fileName) {
+        if (!confirm(`Are you sure you want to delete "${fileName}"?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/contracts/documents/delete/${documentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete document');
+            }
+
+            const result = await response.json();
+            console.log('✅ Document deleted:', result);
+
+            showNotification(`Document "${fileName}" deleted successfully`, 'success');
+
+            // Refresh documents list
+            await loadContractDocuments();
+
+        } catch (error) {
+            console.error('❌ Delete error:', error);
+            showNotification('Failed to delete document', 'error');
+        }
+    }
+
+    // =====================================================
+    // MODAL MANAGEMENT
+    // =====================================================
+
+    function closeDocumentsModal() {
+        // Reset form
+        selectedDocumentFiles = [];
+        document.getElementById('fileUploadDoc').value = '';
+        document.getElementById('documentNotes').value = '';
+        displaySelectedFiles([]);
+
+        // Close modal
+        closeModal('documentsModal');
+    }
+
+    // Load documents when modal is opened
+    function openDocumentsModal() {
+        openModal('documentsModal');
+        loadContractDocuments();
+    }
+
+    // =====================================================
+    // UTILITY FUNCTIONS
+    // =====================================================
+
+    /**
+     * Get contract ID from multiple possible sources
+     * Supports various URL patterns and global variables
+     */
+    function getContractId() {
+        let contractId = null;
+
+        // Method 1: Check for global contractId variable (most reliable)
+        if (typeof window.contractId !== 'undefined' && window.contractId) {
+            contractId = window.contractId;
+            console.log('📋 Contract ID from global variable:', contractId);
+            return contractId;
+        }
+
+        // Method 2: Check URL query parameter (?id=123)
+        const urlParams = new URLSearchParams(window.location.search);
+        contractId = urlParams.get('id');
+        if (contractId) {
+            console.log('📋 Contract ID from URL query:', contractId);
+            return contractId;
+        }
+
+        // Method 3: Check URL path (/contract/edit/123 or /contract/editor/123)
+        const pathParts = window.location.pathname.split('/');
+        const editIndex = pathParts.findIndex(part => part === 'edit' || part === 'editor');
+        if (editIndex !== -1 && pathParts[editIndex + 1]) {
+            contractId = pathParts[editIndex + 1];
+            console.log('📋 Contract ID from URL path:', contractId);
+            return contractId;
+        }
+
+        // Method 4: Check for contract ID in page data attributes
+        const editorElement = document.getElementById('contractContent');
+        if (editorElement && editorElement.dataset.contractId) {
+            contractId = editorElement.dataset.contractId;
+            console.log('📋 Contract ID from data attribute:', contractId);
+            return contractId;
+        }
+
+        // Method 5: Check for hidden input field
+        const hiddenInput = document.getElementById('contract_id') || document.querySelector('input[name="contract_id"]');
+        if (hiddenInput && hiddenInput.value) {
+            contractId = hiddenInput.value;
+            console.log('📋 Contract ID from hidden input:', contractId);
+            return contractId;
+        }
+
+        console.error('❌ Contract ID not found. URL:', window.location.href);
+        return null;
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    function getFileIcon(extension) {
+        const iconMap = {
+            pdf: 'file-text',
+            doc: 'file-text',
+            docx: 'file-text',
+            xls: 'table',
+            xlsx: 'table',
+            ppt: 'presentation',
+            pptx: 'presentation',
+            txt: 'file-text',
+            rtf: 'file-text',
+            jpg: 'photo',
+            jpeg: 'photo',
+            png: 'photo',
+            gif: 'photo',
+            zip: 'file-zip',
+            msg: 'mail',
+            eml: 'mail'
+        };
+        return iconMap[extension] || 'file';
+    }
+
+    function getFileIconColor(extension) {
+        const colorMap = {
+            pdf: '#d32f2f',
+            doc: '#1976d2',
+            docx: '#1976d2',
+            xls: '#388e3c',
+            xlsx: '#388e3c',
+            ppt: '#f57c00',
+            pptx: '#f57c00',
+            jpg: '#7b1fa2',
+            jpeg: '#7b1fa2',
+            png: '#7b1fa2',
+            gif: '#7b1fa2',
+            zip: '#616161',
+            msg: '#0288d1',
+            eml: '#0288d1'
+        };
+        return colorMap[extension] || '#757575';
+    }
+
+    // =====================================================
+    // DRAG AND DROP SUPPORT
+    // =====================================================
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const uploadZone = document.getElementById('uploadZoneDoc');
+
+        if (uploadZone) {
+            uploadZone.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.classList.add('dragging');
+            });
+
+            uploadZone.addEventListener('dragleave', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.classList.remove('dragging');
+            });
+
+            uploadZone.addEventListener('drop', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.classList.remove('dragging');
+
+                const files = e.dataTransfer.files;
+                const fileInput = document.getElementById('fileUploadDoc');
+
+                if (fileInput && files.length > 0) {
+                    fileInput.files = files;
+                    handleDocumentFileSelect({ target: fileInput });
+                }
+            });
+        }
+    });
 
 </script>
 

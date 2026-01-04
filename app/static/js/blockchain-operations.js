@@ -147,7 +147,11 @@ function displayBlockchainRecords(terminalId, data) {
 // =====================================================
 
 async function runQueryCommand() {
-    const contractId = document.getElementById('queryContractId').value.trim();
+
+    
+   let contractId= getContractIdFromPage();
+
+    // const contractId = document.getElementById('queryContractId').value.trim();
 
     if (!contractId) {
         showNotification('Please enter a Contract ID', 'warning');
@@ -603,7 +607,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const queryInput = document.getElementById('queryContractId');
     if (queryInput) {
         queryInput.addEventListener('input', function () {
-            // document.getElementById('queryIdPreview').textContent = this.value || 'CONTRACT_ID';
+            document.getElementById('queryIdPreview').textContent = this.value || 'CONTRACT_ID';
         });
     }
 

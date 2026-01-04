@@ -139,7 +139,7 @@ async def approve_reject_workflow(
                     update_contract = text("""
                         UPDATE contracts
                         SET approval_status = 'counterparty_review_completed',
-                            workflow_status = 'completed'
+                            status = 'counterparty_review_completed'
                         WHERE id = :contract_id
                     """)
                     db.execute(update_contract, {"contract_id": request.contract_id})
@@ -150,7 +150,7 @@ async def approve_reject_workflow(
                     update_contract = text("""
                         UPDATE contracts
                         SET approval_status = 'approved',
-                            workflow_status = 'completed'
+                            status = 'approved'
                         WHERE id = :contract_id
                     """)
                     db.execute(update_contract, {"contract_id": request.contract_id})
@@ -383,7 +383,34 @@ async def approve_reject_workflow(
                     "workflow_id": workflow.id
                 })
                 logger.info(" Counterparty workflow reset to step 1 with status 'pending'")
+
+            elif request.request_type == "approval":
+                logger.info("🔄 Counterparty Internal Review rejected - resetting contract to counterparty review...")
                 
+                update_contract = text("""
+                    UPDATE contracts
+                    SET status = 'negotiation_completed',
+                        approval_status = 'approval_team_rejected',
+                        workflow_status = 'pending'
+                    WHERE id = :contract_id
+                """)    
+                db.execute(update_contract, {"contract_id": request.contract_id})
+                logger.info(" Contract status updated to 'approval' with approval_status 'approval_team_rejected'")
+                logger.info(" Workflow status set to 'pending'")
+
+                logger.info("🔄 Resetting approval workflow to step 1...")
+                update_workflow = text("""
+                    UPDATE workflow_instances
+                    SET status = 'pending',
+                        current_step = 1
+                    WHERE id = :workflow_id
+                """)
+                db.execute(update_workflow, {
+                    "next_step": workflow.current_step + 1,
+                    "workflow_id": workflow.id
+                })
+                logger.info(" Approval workflow reset to step 1 with status 'pending'")
+
             else:
                 logger.info(f"ℹ️ Request type '{request.request_type}' - no additional contract updates")
             
@@ -426,7 +453,6 @@ async def approve_reject_workflow(
         raise HTTPException(status_code=500, detail=str(e))
 
         
-
 
 @router.get("/workflow-history/{contract_id}")
 async def get_workflow_history(
