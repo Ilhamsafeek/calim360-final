@@ -4730,6 +4730,50 @@
 </div>
 
 
+
+
+
+<!-- Negotiation Options Modal -->
+<div class="modal" id="negotiationConfirmationModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="ti ti-message-circle"></i>
+                Negotiation Confirmation
+            </h3>
+            <button class="modal-close" onclick="closeModal('negotiationConfirmationModal')">
+                <i class="ti ti-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+          
+
+            <div style="display: grid; gap: 1.5rem;">
+               
+                <div style="text-align: center; margin: 1rem 0; position: relative;">
+               
+                    <span style="background: white; padding: 0 1rem; position: relative; color: var(--text-muted); font-weight: 500;">Do you want to initiate Negotiation by sending notification to Master Workflow? </span>
+                </div>
+
+             
+                
+            </div>
+        </div>
+
+
+        <div class="modal-footer">
+
+             <button class="btn btn-primary" onclick="submitInitiateNegotiation()">
+                <i class="ti ti-send"></i>
+                Initiate Negotiation
+            </button>
+            <button class="btn btn-outline-secondary" onclick="closeModal('negotiationConfirmationModal')">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Execute Contract Confirmation Modal -->
 <div class="modal" id="executeContractModal">
     <div class="modal-content" style="max-width: 700px;">
@@ -5182,7 +5226,7 @@
 
             if (contract.is_initiator === true) {
                 actionButtons = `
-            <button class="btn signature-btn" onclick="saveAsDraft()">
+            <button id="saveDraftBtn" class="btn signature-btn" onclick="saveAsDraft()">
                 <i class="ti ti-device-floppy"></i> Save Contract
             </button>
             <button class="btn btn-primary" onclick="openSendToCounterPartyModal()">
@@ -5204,6 +5248,9 @@
                     if (contract.is_party_b_lead == true) {
 
                         actionButtons = `
+                         <button id="saveDraftBtn" class="btn signature-btn" onclick="saveAsDraft()">
+                <i class="ti ti-device-floppy"></i> Save Contract
+            </button>
         <button class="btn btn-success" onclick="markCounterpartyReviewComplete()">
             <i class="ti ti-check"></i> Quick Review
         </button>
@@ -5216,6 +5263,7 @@
                     if ((workflow && workflow.is_my_workflow_turn === true) && (workflow && workflow.status != 'completed')) {
 
                         actionButtons = `
+                       
         <button class="btn signature-btn" onclick="approveWorkflow(${contract.id},'counterparty_review')">
             <i class="ti ti-check"></i> Approve
         </button>
@@ -5227,7 +5275,12 @@
                         //if I am not the current approver
                         actionButtons = getApprovalBadge(current_approver, workflow, 'review');
                     }
-                    actionButtons += `<button class="workflow-setup-btn" onclick="openWorkflowHistoryModal()" style="display: flex; align-items: center; gap: 0.5rem;">
+                    actionButtons += `
+                    
+                       <button id="saveDraftBtn" class="btn signature-btn" onclick="saveAsDraft()">
+                <i class="ti ti-device-floppy"></i> Save Contract
+            </button>
+                    <button class="workflow-setup-btn" onclick="openWorkflowHistoryModal()" style="display: flex; align-items: center; gap: 0.5rem;">
                                         <i class="ti ti-history"></i> Approval History
                                       </button>`;
 
@@ -5235,26 +5288,41 @@
 
 
             }
+        } else if ((contract.status === 'counterparty_review_completed')) {
 
-        } else if (contract.status === 'negotiation') {
+if (contract.is_party_b_lead == true) {
+         actionButtons = `
+            <button id="saveDraftBtn" class="btn signature-btn" onclick="saveAsDraft()">
+                <i class="ti ti-device-floppy"></i> Save Contract
+            </button>
+            <button class="btn btn-primary" id="openNegotiationBtn" onclick="openNegotiationConfirmationModal()">
+                <i class="ti ti-message-circle"></i> Initiate Negotiation
+            </button>`;
+}
+        } else if ((contract.status === 'negotiation')) {
 
             if (contract.is_counterparty === true) {
 
                 if (contract.is_party_b_lead == true) {
                     // Negotiation stage
                     actionButtons = `
+                     <button id="saveDraftBtn" class="btn signature-btn" onclick="saveAsDraft()">
+                <i class="ti ti-device-floppy"></i> Save Contract
+            </button>
             <button class="btn btn-success" onclick="quickApprove()">
                 <i class="ti ti-check-circle"></i> Finalize Agreement
             </button>
             <button class="btn btn-primary" id="openNegotiationBtn" onclick="openNegotiationModal()">
-                <i class="ti ti-message-circle"></i> Initiate Negotiation
+                <i class="ti ti-message-circle"></i> Open Negotiation
             </button>
             <button class="btn btn-outline-secondary" onclick="openDocumentsModal()">
                 <i class="ti ti-paperclip"></i> Attach Documents
             </button>`;
                 } else {
                     actionButtons = `
-           
+            <button id="saveDraftBtn" class="btn signature-btn" onclick="saveAsDraft()">
+                <i class="ti ti-device-floppy"></i> Save Contract
+            </button>
             <button class="btn btn-primary" id="openNegotiationBtn" onclick="openNegotiationModal()">
                 <i class="ti ti-message-circle"></i> Open Negotiation
             </button>`;
@@ -5263,6 +5331,9 @@
 
                 if (contract.is_initiator === true) {
                     actionButtons = `
+                     <button id="saveDraftBtn" class="btn signature-btn" onclick="saveAsDraft()">
+                <i class="ti ti-device-floppy"></i> Save Contract
+            </button>
             <button class="btn btn-primary" id="openNegotiationBtn" onclick="startExternalNegotiation()">
                 <i class="ti ti-message-circle"></i> Open Negotiation
             </button>`;
@@ -5271,6 +5342,9 @@
         } else if (contract.status === 'negotiation_completed') {
             if ((contract.is_initiator === true)) {
                 actionButtons = `
+                 <button id="saveDraftBtn" class="btn signature-btn" onclick="saveAsDraft()">
+                <i class="ti ti-device-floppy"></i> Save Contract
+            </button>
             <button class="btn btn-primary" onclick="initiateApprovalWorkflow()">
                 <i class="ti ti-send"></i> Initiate Approval Workflow
             </button>`;
@@ -5284,6 +5358,7 @@
                 if ((workflow && workflow.is_my_workflow_turn === true) && (workflow && workflow.status != 'completed')) {
 
                     actionButtons = `
+                    
         <button class="btn signature-btn" onclick="approveWorkflow(${contract.id},'approval')">
             <i class="ti ti-check"></i> Approve
         </button>
@@ -10056,6 +10131,14 @@ ${(riskAnalysisData.risk_items || []).map(item => `
 
 
 
+    
+
+
+     function openNegotiationConfirmationModal() {
+        openModal('negotiationConfirmationModal');
+    }
+
+
     // =====================================================
     // EXECUTE CONTRACT FUNCTIONS
     // =====================================================
@@ -11954,6 +12037,46 @@ Generated by CALIM 360 Smart CLM
             suggestionsDiv.style.display = 'none';
         }
     });
+
+
+
+        // Function to approve workflow
+    async function submitInitiateNegotiation() {
+       
+         if (!contractId) {
+            showNotification('Contract ID not found', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/v1/workflow/initiate-negotiation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contract_id: contractId,
+                    comments: null
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                showNotification(result.message || 'Negotiation Initiated successfully!', 'success');
+                closeModal('negotiationConfirmationModal');
+                await refreshContractData();
+            } else {
+                showNotification('Error: ' + (result.detail || 'Failed to initiate Negotiation'), 'error');
+
+            }
+        } catch (error) {
+            console.error('Error initiating negotiation:', error);
+
+            showNotification('Error initiating negotiation. Please try again.', 'error');
+
+        }
+    }
 
 
 

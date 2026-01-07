@@ -20,6 +20,11 @@ class ApprovalRequest(BaseModel):
     comments: Optional[str] = None
 
 
+class NegotiationInitiationRequest(BaseModel):
+    contract_id: int
+    comments: Optional[str] = None
+
+
 @router.post("/approve-reject")
 async def approve_reject_workflow(
     request: ApprovalRequest,
@@ -453,6 +458,74 @@ async def approve_reject_workflow(
         raise HTTPException(status_code=500, detail=str(e))
 
         
+
+@router.post("/initiate-negotiation")
+async def initiate_negotiation(
+    request: NegotiationInitiationRequest,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    try:
+        user_id = current_user.id
+        company_id = current_user.company_id
+        
+        # Verify contract exists and belongs to user's company
+        verify_contract = text("""
+            SELECT id, contract_number, approval_status 
+            FROM contracts 
+            WHERE id = :contract_id
+        """)
+        contract = db.execute(verify_contract, {
+            "contract_id": request.contract_id
+        }).fetchone()
+        
+        if not contract:
+            raise HTTPException(
+                status_code=404, 
+                detail="Contract not found or access denied"
+            )
+        
+        # Update contract status to negotiation
+        update_contract = text("""
+            UPDATE contracts
+            SET approval_status = 'negotiation',
+                status = 'negotiation',
+                updated_at = NOW()
+            WHERE id = :contract_id 
+        """)
+        db.execute(update_contract, {
+            "contract_id": request.contract_id
+        })
+        # CRITICAL: Commit the transaction
+        db.commit()
+        
+        logger.info(f"✅ Negotiation initiated for contract {request.contract_id} by user {user_id}")
+        
+        return {
+            "success": True, 
+            "message": "Negotiation Initiated Successfully!",
+            "contract_id": request.contract_id
+        }
+        
+    except HTTPException as he:
+        logger.error(f"❌ HTTP Exception: {he.status_code} - {he.detail}")
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error("="*80)
+        logger.error(f"❌ CRITICAL ERROR IN NEGOTIATION INITIATION")
+        logger.error("="*80)
+        logger.error(f"Error Type: {type(e).__name__}")
+        logger.error(f"Error Message: {str(e)}")
+        logger.error(f"Contract ID: {request.contract_id}")
+        logger.error(f"User ID: {user_id}")
+        logger.error(f"Company ID: {company_id}")
+        logger.error("="*80)
+        logger.error("Full Traceback:", exc_info=True)
+        logger.error("="*80)
+        logger.info("🔄 Transaction rolled back")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/workflow-history/{contract_id}")
 async def get_workflow_history(

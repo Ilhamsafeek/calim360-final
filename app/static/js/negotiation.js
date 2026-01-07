@@ -107,7 +107,7 @@ async function startInternalNegotiation() {
 
             // Open live negotiation modal
             setTimeout(() => {
-                openLiveNegotiationModal('Internal Team Negotiation', 'internal');
+                openLiveNegotiationModal('Internal Team Negotiation (Master Workflow)', 'internal');
             }, 300);
 
         } else {
