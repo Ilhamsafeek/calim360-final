@@ -549,14 +549,14 @@ async def generate_contract_with_ai(
             "current_version": 1,
             "is_ai_generated": 1,
             "ai_generation_params": generation_params_json,
-            "party_b_lead_id": None,  # ✅ ADD THIS - Will be set later when counterparty is added
-            "party_b_id": None,       # ✅ ADD THIS - Will be set later when counterparty is added
+            "party_b_lead_id": None,  #  ADD THIS - Will be set later when counterparty is added
+            "party_b_id": None,       #  ADD THIS - Will be set later when counterparty is added
             "created_by": str(current_user.id),
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
         }
         
-        # ✅ FIXED: Include party_b_lead_id and party_b_id in INSERT
+        #  FIXED: Include party_b_lead_id and party_b_id in INSERT
         result = db.execute(text("""
             INSERT INTO contracts (company_id, project_id, contract_number, contract_title,
                                  contract_type, profile_type, contract_value, currency,
@@ -574,7 +574,7 @@ async def generate_contract_with_ai(
         contract_id = result.lastrowid
         db.commit()
         
-        logger.info(f"✅ Contract created: {contract_number} (ID: {contract_id})")
+        logger.info(f" Contract created: {contract_number} (ID: {contract_id})")
         
         return {
             "id": contract_id,
@@ -1483,7 +1483,7 @@ async def initiate_approval_workflow(
         contract.status = 'approval'
         contract.updated_at = datetime.now()
         
-        logger.info(f"✅ Contract {contract_id} status updated to 'approval'")
+        logger.info(f" Contract {contract_id} status updated to 'approval'")
         
         # ⚡ PRIORITY CHECK: Look for CUSTOM workflow first, then MASTER
         activate_workflow_query = text("""
@@ -1508,7 +1508,7 @@ async def initiate_approval_workflow(
                 detail="No workflow configured for this contract. Please setup a workflow first."
             )
         
-        logger.info(f"✅ Workflow initiated for contract {contract_id}")
+        logger.info(f" Workflow initiated for contract {contract_id}")
         
         # Create activity log
         try:
@@ -1564,7 +1564,7 @@ async def apply_signature(
         signature_method = signature_data.get("signature_method", "draw")
         signature_value = signature_data.get("signature_data")
         
-        logger.info(f"✅ Applying signature: contract_id={contract_id}, signer_type={signer_type}")
+        logger.info(f" Applying signature: contract_id={contract_id}, signer_type={signer_type}")
         
         # STEP 1: Verify contract
         contract_check = text("""
@@ -1578,7 +1578,7 @@ async def apply_signature(
         if not contract:
             raise HTTPException(status_code=404, detail="Contract not found")
         
-        logger.info(f"✅ Contract: {contract.contract_number} - Status: {contract.status}")
+        logger.info(f" Contract: {contract.contract_number} - Status: {contract.status}")
         
         # STEP 2: Check if already signed
         check_existing = text("""
@@ -1710,7 +1710,7 @@ async def execute_contract(
     try:
         contract_id = int(execution_data.get("contract_id"))
         
-        logger.info(f"🎯 Executing contract {contract_id}")
+        logger.info(f" Executing contract {contract_id}")
         
         # Verify contract
         contract_check = text("""
@@ -4707,7 +4707,7 @@ async def stream_ai_contract_generation(
 ):
     """Stream AI-generated contract content directly to the editor"""
     try:
-        logger.info(f"🎯 Streaming AI generation for contract {contract_id}")
+        logger.info(f" Streaming AI generation for contract {contract_id}")
         logger.info(f"📦 Received data: {json.dumps(request_data, indent=2)}")
         
         # Verify contract exists
@@ -4933,7 +4933,7 @@ async def update_contract_metadata(
 
         db.commit()
 
-        logger.info(f"✅ Metadata updated for contract {contract_check.contract_number}")
+        logger.info(f" Metadata updated for contract {contract_check.contract_number}")
 
         return {
             "success": True,
@@ -4988,7 +4988,7 @@ async def upload_contract_documents(
                 detail=f"Contract {contract_id} not found in database"
             )
         
-        logger.info(f"✅ Contract {contract_id} exists with company_id: {contract_check.company_id}")
+        logger.info(f" Contract {contract_id} exists with company_id: {contract_check.company_id}")
         
         # Now verify user has access to this contract
         if str(contract_check.company_id) != str(current_user.company_id):
@@ -5120,7 +5120,7 @@ async def upload_contract_documents(
                     "uploaded_at": datetime.utcnow().isoformat()
                 })
                 
-                logger.info(f"✅ Uploaded: {file.filename} ({file_size} bytes)")
+                logger.info(f" Uploaded: {file.filename} ({file_size} bytes)")
                 
             except Exception as e:
                 logger.error(f"❌ Failed to upload {file.filename}: {str(e)}", exc_info=True)
@@ -5343,7 +5343,7 @@ async def download_contract_document(
         db.execute(update_query, {"document_id": document_id})
         db.commit()
         
-        logger.info(f"✅ Serving file: {file_path} ({doc.file_size} bytes)")
+        logger.info(f" Serving file: {file_path} ({doc.file_size} bytes)")
         
         # Return file as download
         from fastapi.responses import FileResponse

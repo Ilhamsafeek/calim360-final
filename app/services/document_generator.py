@@ -315,7 +315,7 @@ class DocumentGenerator:
             doc.save(docx_buffer)
             docx_buffer.seek(0)
             
-            logger.info("✅ Word document generated successfully with formatting")
+            logger.info(" Word document generated successfully with formatting")
             return docx_buffer
             
         except Exception as e:

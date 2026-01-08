@@ -372,7 +372,7 @@ async function loadExperts() {
         const data = await response.json();
         
         allExperts = data.experts || [];
-        console.log(`✅ Loaded ${allExperts.length} experts`);
+        console.log(` Loaded ${allExperts.length} experts`);
         
         renderExperts(allExperts);
         
@@ -442,7 +442,7 @@ function renderExperts(experts) {
         grid.appendChild(card);
     });
     
-    console.log('✅ Expert cards rendered successfully');
+    console.log(' Expert cards rendered successfully');
 }
 
 // =====================================================
@@ -484,7 +484,7 @@ function createExpertCard(expert) {
     div.onclick = function(e) {
         e.preventDefault();
         e.stopPropagation();
-        console.log('🎯 Expert card clicked! ID:', expert.expert_id, 'Name:', fullName);
+        console.log(' Expert card clicked! ID:', expert.expert_id, 'Name:', fullName);
         startConsultation(expert.expert_id);
     };
     
@@ -547,7 +547,7 @@ async function startConsultation(expertId) {
         }
         
         const data = await response.json();
-        console.log('✅ Consultation created:', data);
+        console.log(' Consultation created:', data);
         
         // Close modal
         closeExpertSelector();
@@ -557,7 +557,7 @@ async function startConsultation(expertId) {
         await loadChatHistory();
         
         // Open the new chat
-        console.log('💬 Opening new chat...');
+        console.log(' Opening new chat...');
         await openChat(data.session_id);
         
         showSuccess('Consultation created successfully!');
@@ -686,7 +686,7 @@ function showError(message) {
 }
 
 function showSuccess(message) {
-    alert('✅ ' + message);
+    alert(' ' + message);
 }
 
 function showInfo(message) {

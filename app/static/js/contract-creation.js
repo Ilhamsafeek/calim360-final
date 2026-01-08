@@ -430,7 +430,7 @@ function createTemplateCard(template) {
 }
 
 function selectTemplate(element) {
-    console.log('🎯 Template selected');
+    console.log(' Template selected');
 
     const templateId = element.getAttribute('data-template');
 

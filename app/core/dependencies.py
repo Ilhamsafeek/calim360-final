@@ -27,7 +27,7 @@ async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ) -> User:
     """
-    🎯 FIXED Universal authentication dependency with invalid session handling
+     FIXED Universal authentication dependency with invalid session handling
     - For web routes: Uses session token from cookie
     - For API routes: Uses Bearer token from Authorization header
     - Clears invalid cookies and redirects/returns error appropriately

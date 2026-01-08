@@ -9,7 +9,6 @@ import logging
 import json
 from datetime import datetime, timedelta
 
-
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
@@ -49,7 +48,7 @@ async def approve_reject_workflow(
         logger.info(f"📄 Contract ID: {request.contract_id}")
         logger.info(f"⚡ Action: {request.action.upper()}")
         logger.info(f"📝 Request Type: {request.request_type}")
-        logger.info(f"💬 Comments: {request.comments or 'No comments provided'}")
+        logger.info(f" Comments: {request.comments or 'No comments provided'}")
         
         # Get user ID and company ID from User object
         user_id = current_user.id
@@ -457,8 +456,6 @@ async def approve_reject_workflow(
         logger.info("🔄 Transaction rolled back")
         raise HTTPException(status_code=500, detail=str(e))
 
-        
-
 @router.post("/initiate-negotiation")
 async def initiate_negotiation(
     request: NegotiationInitiationRequest,
@@ -469,9 +466,9 @@ async def initiate_negotiation(
         user_id = current_user.id
         company_id = current_user.company_id
         
-        # Verify contract exists and belongs to user's company
+        # Verify contract exists
         verify_contract = text("""
-            SELECT id, contract_number, approval_status 
+            SELECT id, contract_number, contract_title, approval_status 
             FROM contracts 
             WHERE id = :contract_id
         """)
@@ -496,14 +493,156 @@ async def initiate_negotiation(
         db.execute(update_contract, {
             "contract_id": request.contract_id
         })
+        
+        # OPTIONAL: Create audit trail entry (only if table exists)
+        try:
+            audit_entry = text("""
+                INSERT INTO audit_logs 
+                (user_id, contract_id, action_type, action_details, created_at)
+                VALUES (:user_id, :contract_id, 'negotiation_initiated', :details, NOW())
+            """)
+            db.execute(audit_entry, {
+                "user_id": user_id,
+                "contract_id": request.contract_id,
+                "details": json.dumps({"action": "negotiation_initiated", "initiated_by": user_id})
+            })
+        except Exception as audit_error:
+            logger.warning(f"⚠️ Audit trail logging failed: {str(audit_error)}")
+            # Continue anyway
+        
         # CRITICAL: Commit the transaction
         db.commit()
         
-        logger.info(f"✅ Negotiation initiated for contract {request.contract_id} by user {user_id}")
+        logger.info(f" Negotiation initiated for contract {request.contract_id} by user {user_id}")
+        
+        # =====================================================
+        # SEND EMAIL NOTIFICATIONS TO MASTER WORKFLOW USERS
+        # =====================================================
+        try:
+            from app.core.email import send_email_smtp
+            
+            # Get current user details
+            user_query = text("""
+                SELECT CONCAT(first_name, ' ', last_name) as full_name, email
+                FROM users
+                WHERE id = :user_id
+            """)
+            current_user_data = db.execute(user_query, {"user_id": user_id}).fetchone()
+            
+            # Get master workflow for this company
+            workflow_query = text("""
+                SELECT id, workflow_name
+                FROM workflows
+                WHERE company_id = :company_id
+                AND is_master = 1
+                AND is_active = 1
+                LIMIT 1
+            """)
+            workflow = db.execute(workflow_query, {"company_id": company_id}).fetchone()
+            
+            if workflow:
+                # Get all users from master workflow
+                users_query = text("""
+                    SELECT DISTINCT
+                        u.id as user_id,
+                        CONCAT(u.first_name, ' ', u.last_name) as full_name,
+                        u.email,
+                        u.user_role
+                    FROM workflow_steps ws
+                    INNER JOIN users u ON ws.assignee_user_id = u.id
+                    WHERE ws.workflow_id = :workflow_id
+                    AND u.company_id = :company_id
+                    AND ws.assignee_user_id IS NOT NULL
+                    AND u.is_active = 1
+                    AND u.email IS NOT NULL
+                """)
+                workflow_users = db.execute(users_query, {
+                    "workflow_id": workflow.id,
+                    "company_id": company_id
+                }).fetchall()
+                
+                # Contract URL
+                contract_url = f"https://calim360.com/contract/edit/{request.contract_id}?action=view"
+                
+                email_count = 0
+                for user in workflow_users:
+                    # Don't send email to the user who initiated
+                    if user.user_id == user_id:
+                        continue
+                    
+                    email_subject = f"Internal Team Negotiation Started - {contract.contract_number}"
+                    
+                    email_body = f"""
+                    <html>
+                    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                        <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                            <div style="background: linear-gradient(135deg, #2762cb 0%, #73B4E0 100%); padding: 20px; border-radius: 8px 8px 0 0; margin: -20px -20px 20px -20px;">
+                                <h2 style="color: white; margin: 0;"> Internal Team Negotiation Started</h2>
+                            </div>
+                            
+                            <p>Hi <strong>{user.full_name}</strong>,</p>
+                            
+                            <p><strong>{current_user_data.full_name}</strong> has initiated an internal team negotiation for contract review.</p>
+                            
+                            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                                <h3 style="margin-top: 0; color: #2762cb;">Contract Details:</h3>
+                                <p style="margin: 5px 0;"><strong>Contract Number:</strong> {contract.contract_number}</p>
+                                <p style="margin: 5px 0;"><strong>Contract Title:</strong> {contract.contract_title}</p>
+                                <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #ff9800; font-weight: bold;">Negotiation</span></p>
+                            </div>
+                            
+                            <p>As a member of the master workflow team, your input and participation in this negotiation is requested.</p>
+                            
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="{contract_url}" 
+                                   style="background: linear-gradient(135deg, #2762cb 0%, #73B4E0 100%); 
+                                          color: white; 
+                                          padding: 12px 30px; 
+                                          text-decoration: none; 
+                                          border-radius: 6px; 
+                                          font-weight: bold;
+                                          display: inline-block;">
+                                    View Contract & Join Negotiation
+                                </a>
+                            </div>
+                            
+                            <p style="color: #666; font-size: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                                This is an automated notification from CALIM 360 - Smart Contract Lifecycle Management System.<br>
+                                Please do not reply to this email.
+                            </p>
+                        </div>
+                    </body>
+                    </html>
+                    """
+                    
+                    # Send email using existing service
+                    try:
+                        send_email_smtp(
+                            to_email=user.email,
+                            subject=email_subject,
+                            html_body=email_body
+                        )
+                        email_count += 1
+                        logger.info(f"✉️ Notification email sent to {user.email} ({user.full_name})")
+                    except Exception as email_error:
+                        logger.error(f"❌ Failed to send email to {user.email}: {str(email_error)}")
+                        continue
+                
+                if email_count > 0:
+                    logger.info(f"📧 Successfully sent {email_count} negotiation notification emails")
+                else:
+                    logger.warning("⚠️ No emails were sent (all users may have been the initiator)")
+            else:
+                logger.warning("⚠️ No master workflow found, skipping email notifications")
+                
+        except Exception as email_exception:
+            logger.error(f"❌ Error in email notification process: {str(email_exception)}")
+            # Don't fail the request if email service fails
+            pass
         
         return {
             "success": True, 
-            "message": "Negotiation Initiated Successfully!",
+            "message": "Negotiation Initiated Successfully! Team members have been notified.",
             "contract_id": request.contract_id
         }
         

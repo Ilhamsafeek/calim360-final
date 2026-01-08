@@ -4916,7 +4916,7 @@
     // =====================================================
     // GLOBAL VARIABLES
     // =====================================================
-    // ✅ CORRECTED URL PARSING
+    //  CORRECTED URL PARSING
     let contractId = (() => {
         // First check query params (?id=123)
         const urlParams = new URLSearchParams(window.location.search);
@@ -4964,7 +4964,7 @@
         await checkWorkflowAvailability();
         await loadContractData();
 
-        // ✅ LOAD EXISTING COMMENTS AFTER CONTRACT DATA IS LOADED
+        //  LOAD EXISTING COMMENTS AFTER CONTRACT DATA IS LOADED
         await loadExistingComments();
 
         await saveAsDraft();
@@ -5041,7 +5041,7 @@
 
                 startAutoSave();
 
-                // ✅ ADD THIS - Initialize AI AFTER contract is rendered
+                //  ADD THIS - Initialize AI AFTER contract is rendered
                 await initializeAIGeneration();
             } else {
                 hideLoader();
@@ -5073,17 +5073,17 @@
             name: '[Name]',
             signer_type: '[Title]',
             email: '',
-            has_signed: false,  // ✅ NEW
-            signed_at: null,    // ✅ NEW
-            signature_data: null // ✅ NEW
+            has_signed: false,  //  NEW
+            signed_at: null,    //  NEW
+            signature_data: null //  NEW
         };
         let companySignatory = {
             name: '[Name]',
             signer_type: '[Title]',
             email: '',
-            has_signed: false,  // ✅ NEW
-            signed_at: null,    // ✅ NEW
-            signature_data: null // ✅ NEW
+            has_signed: false,  //  NEW
+            signed_at: null,    //  NEW
+            signature_data: null //  NEW
         };
 
         if (certificate && certificate.signatories) {
@@ -5092,7 +5092,7 @@
             const companySig = certificate.signatories.find(s => s.signer_type === 'company' || s.signer_type === 'party_b');
 
             if (clientSig) {
-                clientSignatory.has_signed = true;  // ✅ Mark as signed
+                clientSignatory.has_signed = true;  //  Mark as signed
                 clientSignatory.signed_at = clientSig.signed_at;
                 clientSignatory.signature_data = clientSig.signature_data || clientSig.name;
                 clientSignatory.name = clientSig.name || '[Name]';
@@ -5102,7 +5102,7 @@
             }
 
             if (companySig) {
-                companySignatory.has_signed = true;  // ✅ Mark as signed
+                companySignatory.has_signed = true;  //  Mark as signed
                 companySignatory.signed_at = companySig.signed_at;
                 companySignatory.signature_data = companySig.signature_data || companySig.name;
                 companySignatory.name = companySig.name || '[Name]';
@@ -5118,7 +5118,7 @@
         }
 
 
-           // ✅ STEP 2: CREATE CONDITIONAL HTML FOR CLIENT SIGNATURE
+           //  STEP 2: CREATE CONDITIONAL HTML FOR CLIENT SIGNATURE
     const clientSignatureHTML = clientSignatory.has_signed 
         ? `<div class="signature-field signed" id="clientSignature">
                <div style="font-family: 'Brush Script MT', cursive; font-size: 1.5rem; color: var(--success-color);">
@@ -5136,7 +5136,7 @@
                </div>
            </div>`;
 
-    // ✅ STEP 3: CREATE CONDITIONAL HTML FOR COMPANY SIGNATURE
+    //  STEP 3: CREATE CONDITIONAL HTML FOR COMPANY SIGNATURE
     const companySignatureHTML = companySignatory.has_signed 
         ? `<div class="signature-field signed" id="companySignature">
                <div style="font-family: 'Brush Script MT', cursive; font-size: 1.5rem; color: var(--success-color);">
@@ -5181,9 +5181,6 @@
             if (contract.is_initiator === true) {
                 // Draft stage
                 actionButtons = `
-            <button id="saveDraftBtn" class="btn signature-btn" onclick="saveAsDraft()">
-    <i class="ti ti-device-floppy"></i> Save Draft
-</button>
           <button class="btn btn-primary" onclick="submitForReview('${workflow ? workflow.status : 'nothing'}')">
     <i class="ti ti-send"></i> Submit for Internal Review
 </button>`;
@@ -5226,9 +5223,6 @@
 
             if (contract.is_initiator === true) {
                 actionButtons = `
-            <button id="saveDraftBtn" class="btn signature-btn" onclick="saveAsDraft()">
-                <i class="ti ti-device-floppy"></i> Save Contract
-            </button>
             <button class="btn btn-primary" onclick="openSendToCounterPartyModal()">
                 <i class="ti ti-send"></i> Send to Counter-Party
             </button>`;
@@ -5248,9 +5242,7 @@
                     if (contract.is_party_b_lead == true) {
 
                         actionButtons = `
-                         <button id="saveDraftBtn" class="btn signature-btn" onclick="saveAsDraft()">
-                <i class="ti ti-device-floppy"></i> Save Contract
-            </button>
+                    
         <button class="btn btn-success" onclick="markCounterpartyReviewComplete()">
             <i class="ti ti-check"></i> Quick Review
         </button>
@@ -5277,9 +5269,6 @@
                     }
                     actionButtons += `
                     
-                       <button id="saveDraftBtn" class="btn signature-btn" onclick="saveAsDraft()">
-                <i class="ti ti-device-floppy"></i> Save Contract
-            </button>
                     <button class="workflow-setup-btn" onclick="openWorkflowHistoryModal()" style="display: flex; align-items: center; gap: 0.5rem;">
                                         <i class="ti ti-history"></i> Approval History
                                       </button>`;
@@ -5292,9 +5281,7 @@
 
 if (contract.is_party_b_lead == true) {
          actionButtons = `
-            <button id="saveDraftBtn" class="btn signature-btn" onclick="saveAsDraft()">
-                <i class="ti ti-device-floppy"></i> Save Contract
-            </button>
+          
             <button class="btn btn-primary" id="openNegotiationBtn" onclick="openNegotiationConfirmationModal()">
                 <i class="ti ti-message-circle"></i> Initiate Negotiation
             </button>`;
@@ -5306,9 +5293,7 @@ if (contract.is_party_b_lead == true) {
                 if (contract.is_party_b_lead == true) {
                     // Negotiation stage
                     actionButtons = `
-                     <button id="saveDraftBtn" class="btn signature-btn" onclick="saveAsDraft()">
-                <i class="ti ti-device-floppy"></i> Save Contract
-            </button>
+                 
             <button class="btn btn-success" onclick="quickApprove()">
                 <i class="ti ti-check-circle"></i> Finalize Agreement
             </button>
@@ -5320,9 +5305,7 @@ if (contract.is_party_b_lead == true) {
             </button>`;
                 } else {
                     actionButtons = `
-            <button id="saveDraftBtn" class="btn signature-btn" onclick="saveAsDraft()">
-                <i class="ti ti-device-floppy"></i> Save Contract
-            </button>
+           
             <button class="btn btn-primary" id="openNegotiationBtn" onclick="openNegotiationModal()">
                 <i class="ti ti-message-circle"></i> Open Negotiation
             </button>`;
@@ -5331,9 +5314,7 @@ if (contract.is_party_b_lead == true) {
 
                 if (contract.is_initiator === true) {
                     actionButtons = `
-                     <button id="saveDraftBtn" class="btn signature-btn" onclick="saveAsDraft()">
-                <i class="ti ti-device-floppy"></i> Save Contract
-            </button>
+                  
             <button class="btn btn-primary" id="openNegotiationBtn" onclick="startExternalNegotiation()">
                 <i class="ti ti-message-circle"></i> Open Negotiation
             </button>`;
@@ -5342,9 +5323,7 @@ if (contract.is_party_b_lead == true) {
         } else if (contract.status === 'negotiation_completed') {
             if ((contract.is_initiator === true)) {
                 actionButtons = `
-                 <button id="saveDraftBtn" class="btn signature-btn" onclick="saveAsDraft()">
-                <i class="ti ti-device-floppy"></i> Save Contract
-            </button>
+              
             <button class="btn btn-primary" onclick="initiateApprovalWorkflow()">
                 <i class="ti ti-send"></i> Initiate Approval Workflow
             </button>`;
@@ -5378,46 +5357,24 @@ if (contract.is_party_b_lead == true) {
 
         } else if (contract.status === 'approved') {
 
-            if ((contract.is_counterparty === false)) {
-                if ((workflow && workflow.is_my_workflow_turn === false) && (workflow && workflow.status != 'completed')) {
-
-                    actionButtons = `
-        <button class="btn signature-btn" onclick="approveWorkflow(${contract.id})">
-            <i class="ti ti-check"></i> Approve
-        </button>
-        <button class="btn btn-danger" onclick="rejectWorkflow(${contract.id},'approved')">
-            <i class="ti ti-x"></i> Reject
-        </button>`;
-                } else {
-
                     if ((contract.is_initiator === true)) {
 
-                        if ((workflow && workflow.status === 'completed')) {
+                        // if ((workflow && workflow.status === 'completed')) {
                             // Approved stage
                             actionButtons = `
             <button class="btn btn-primary" onclick="sendForSignature()">
                 <i class="ti ti-writing-sign"></i> Send for Signature
             </button>`;
-                        } else if ((workflow && workflow.status === 'active')) {
-                            // Approved stage
-                            actionButtons = `
-            <button class="btn btn-primary" onclick="initiateApprovalWorkflow()">
-                <i class="ti ti-writing-sign"></i> Initiate Approval Workflow
-            </button>`;
-                        } else {
-                            actionButtons = getApprovalBadge(current_approver, workflow);
-
-                        }
-
-                        actionButtons += `<button class="workflow-setup-btn" onclick="openWorkflowHistoryModal()" style="display: flex; align-items: center; gap: 0.5rem;">
-                                        <i class="ti ti-history"></i> Approval History
-                                        </button>`;
-                    }
-                }
+                        // } 
+                    
+              
             }
 
 
         } else if (contract.status === 'signature') {
+
+        const isInitiator = contract.is_initiator || true;
+        const party = isInitiator ? 'company' : 'client';
             // Signature stage
             actionButtons = `
             <button class="btn btn-success" onclick="openSignatureModal()">
@@ -5686,10 +5643,15 @@ ${contract.content && contract.content.trim() !== '' ?
                     <i class="ti ti-search"></i>
                 </button>
             </div>
-            
+
+
+             <button id="saveDraftBtn" class="btn signature-btn" onclick="saveAsDraft()">
+                <i class="ti ti-device-floppy"></i> Save Contract
+            </button>
 
             <!-- MAXIMIZE BUTTON - ADD THIS -->
         <div class="toolbar-group" style="margin-left: auto; border-right: none;">
+
             <button class="toolbar-btn" id="maximizeToggleBtn" onclick="toggleMaximizeEditor()" title="Fullscreen">
                 <i class="ti ti-arrows-maximize"></i>
             </button>
@@ -7604,29 +7566,6 @@ ${contract.content && contract.content.trim() !== '' ?
         }
     }
 
-    // Signature - CONNECTED TO BACKEND
-    function openSignature(party) {
-        currentSignatureField = party;
-        const modal = document.getElementById('signatureModal');
-
-        // Set signer info based on party
-        if (party === 'client') {
-            document.getElementById('signerName').textContent = 'Qatar Energy Representative';
-            document.getElementById('signerRole').textContent = 'Client';
-            document.getElementById('partyIndicator').textContent = 'Client';
-            document.getElementById('partyIndicator').style.background = 'var(--primary-color)';
-        } else {
-            document.getElementById('signerName').textContent = 'Service Provider Representative';
-            document.getElementById('signerRole').textContent = 'Service Provider';
-            document.getElementById('partyIndicator').textContent = 'Counter Party';
-            document.getElementById('partyIndicator').style.background = 'var(--secondary-color)';
-        }
-
-        openModal('signatureModal');
-        setTimeout(() => initCanvas(), 100);
-    }
-
-
 
     // =====================================================
     // SIGNATURE FUNCTIONS - CONNECTED TO BACKEND
@@ -7803,11 +7742,6 @@ ${contract.content && contract.content.trim() !== '' ?
     // Alternative: Open signature for specific party (used when clicking signature fields)
     function openSignature(party) {
         //  PREVENT MODAL IF NOT IN SIGNATURE STATUS
-        if (contractData?.contract?.status !== 'signature') {
-            showNotification('Contract must be in Signature stage before signing. Current status: ' +
-                (contractData?.contract?.status || 'unknown').toUpperCase(), 'warning');
-            return;
-        }
 
         currentSignatureField = party;
         const modal = document.getElementById('signatureModal');
@@ -9208,7 +9142,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
     // Workflow Functions
     function selectContractWorkflow(type) {
         // Only custom workflow is available now
-        console.log('🎯 Setting up custom workflow');
+        console.log(' Setting up custom workflow');
 
         selectedContractWorkflow = 'custom';
 
@@ -12263,7 +12197,7 @@ Generated by CALIM 360 Smart CLM
         console.log(current_approver);
         const approver = current_approver;
         const approverName = approver?.name || 'Approver';
-        const approverDepartment = approver?.department || 'Department';
+        const approverDepartment = approver?.department || 'No Department';
         const approvalType = step_type?.includes('review') ? 'Review' : 'Approval';
 
         return `<span class="comment-count-badge" style="background: rgb(255, 243, 205); color: rgb(133, 100, 4); padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-left: 8px; display: inline-flex; gap: 6px;">
@@ -12661,7 +12595,7 @@ Generated by CALIM 360 Smart CLM
         }
 
         try {
-            // ✅ FETCH CONTRACT DATA FROM ENDPOINT
+            //  FETCH CONTRACT DATA FROM ENDPOINT
             console.log(`📡 Fetching contract data from /api/contracts/edit/${contractId}`);
 
             const token = localStorage.getItem('access_token');
@@ -12694,11 +12628,11 @@ Generated by CALIM 360 Smart CLM
             console.log('Has Params:', !!contract.ai_generation_params);
             console.log('==========================');
 
-            // ✅ CHECK IF AI-GENERATED FROM ENDPOINT DATA
+            //  CHECK IF AI-GENERATED FROM ENDPOINT DATA
             if (contract.is_ai_generated) {
                 isAIGenerated = true;
 
-                // ✅ LOAD PARAMS FROM ENDPOINT RESPONSE
+                //  LOAD PARAMS FROM ENDPOINT RESPONSE
                 if (contract.ai_generation_params) {
                     try {
                         if (typeof contract.ai_generation_params === 'string') {
@@ -12706,7 +12640,7 @@ Generated by CALIM 360 Smart CLM
                         } else {
                             generationParams = contract.ai_generation_params;
                         }
-                        console.log('✅ Loaded generation params from database:', generationParams);
+                        console.log(' Loaded generation params from database:', generationParams);
                     } catch (error) {
                         console.error('❌ Failed to parse generation params:', error);
                         generationParams = {};
@@ -12722,14 +12656,14 @@ Generated by CALIM 360 Smart CLM
                 // Show regenerate button
                 showRegenerateButton();
 
-                // ✅ CHECK IF CONTRACT HAS CONTENT
+                //  CHECK IF CONTRACT HAS CONTENT
                 const hasContent = contract.content && contract.content.trim().length > 100;
 
                 if (!hasContent) {
                     console.log(' No content yet, starting AI generation...');
                     await startAIStreaming();
                 } else {
-                    console.log('✅ Contract already has content, regenerate available');
+                    console.log(' Contract already has content, regenerate available');
                 }
 
             } else {
@@ -12747,7 +12681,7 @@ Generated by CALIM 360 Smart CLM
             const checkEditor = setInterval(() => {
                 const editor = document.getElementById('contractContent');
                 if (editor) {
-                    console.log('✅ Editor element found');
+                    console.log(' Editor element found');
                     clearInterval(checkEditor);
                     resolve();
                 } else {
@@ -12772,7 +12706,7 @@ Generated by CALIM 360 Smart CLM
                 isAIGenerated = true;
                 await waitForEditor();
                 showRegenerateButton();
-                console.log('✅ Contract is AI-generated, regenerate button shown');
+                console.log(' Contract is AI-generated, regenerate button shown');
             }
         } catch (error) {
             console.error('Error checking AI status:', error);
@@ -12833,7 +12767,7 @@ Generated by CALIM 360 Smart CLM
                 };
 
                 toolbar.insertBefore(regenerateBtn, toolbar.firstChild);
-                console.log('✅ Regenerate button added successfully');
+                console.log(' Regenerate button added successfully');
             }
         }, 200);
 
@@ -12852,9 +12786,9 @@ Generated by CALIM 360 Smart CLM
             return;
         }
 
-        console.log('✅ Editor found, starting stream...');
+        console.log(' Editor found, starting stream...');
 
-        // ✅ SHOW BANNER - ADD THIS LINE
+        //  SHOW BANNER - ADD THIS LINE
         showAIBanner();
 
         // Show loading state in editor
@@ -12898,7 +12832,7 @@ Generated by CALIM 360 Smart CLM
                 const { done, value } = await reader.read();
 
                 if (done) {
-                    console.log('✅ Streaming complete');
+                    console.log(' Streaming complete');
                     break;
                 }
 
@@ -12928,7 +12862,7 @@ Generated by CALIM 360 Smart CLM
                                 editor.scrollTop = editor.scrollHeight;
 
                             } else if (jsonData.type === 'done') {
-                                updateProgress(`✅ Complete! (${jsonData.word_count} words)`);
+                                updateProgress(` Complete! (${jsonData.word_count} words)`);
 
                                 setTimeout(() => {
                                     const progress = document.getElementById('streamProgress');
@@ -12937,7 +12871,7 @@ Generated by CALIM 360 Smart CLM
 
                                 showNotification(`Contract generated successfully! (${jsonData.word_count} words)`, 'success');
 
-                                // ✅ HIDE BANNER WHEN COMPLETE - ADD THIS LINE
+                                //  HIDE BANNER WHEN COMPLETE - ADD THIS LINE
                                 hideAIBanner();
 
                                 setTimeout(async () => await refreshContractData(), 1500);
@@ -12955,7 +12889,7 @@ Generated by CALIM 360 Smart CLM
         } catch (error) {
             console.error('❌ Streaming error:', error);
 
-            // ✅ HIDE BANNER ON ERROR - ADD THIS LINE
+            //  HIDE BANNER ON ERROR - ADD THIS LINE
             hideAIBanner();
 
             editor.innerHTML = `
@@ -13002,14 +12936,14 @@ Generated by CALIM 360 Smart CLM
             // Set contract type
             const contractType = generationParams.contract_type || '';
             document.getElementById('regenContractType').value = contractType;
-            console.log('✅ Contract Type:', contractType);
+            console.log(' Contract Type:', contractType);
 
-            // ✅ Extract duration with detailed logging
+            //  Extract duration with detailed logging
             let duration = '';
 
             if (generationParams.metadata?.duration) {
                 duration = generationParams.metadata.duration;
-                console.log('✅ Duration from metadata.duration:', duration);
+                console.log(' Duration from metadata.duration:', duration);
             }
             else if (generationParams.metadata?.prompt) {
                 const prompt = generationParams.metadata.prompt;
@@ -13019,12 +12953,12 @@ Generated by CALIM 360 Smart CLM
                 let match = prompt.match(/with\s+duration:\s*([^,]+)/i);
                 if (match) {
                     duration = match[1].trim();
-                    console.log('✅ Duration match pattern 1:', duration);
+                    console.log(' Duration match pattern 1:', duration);
                 } else {
                     match = prompt.match(/duration:\s*([^,]+)/i);
                     if (match) {
                         duration = match[1].trim();
-                        console.log('✅ Duration match pattern 2:', duration);
+                        console.log(' Duration match pattern 2:', duration);
                     }
                 }
             }
@@ -13040,12 +12974,12 @@ Generated by CALIM 360 Smart CLM
             document.getElementById('regenDuration').value = duration;
             console.log('📅 FINAL duration value set:', duration);
 
-            // ✅ Extract payment structure with detailed logging
+            //  Extract payment structure with detailed logging
             let paymentStructure = '';
 
             if (generationParams.metadata?.payment_terms) {
                 paymentStructure = String(generationParams.metadata.payment_terms).toLowerCase().trim();
-                console.log('✅ Payment from metadata.payment_terms:', paymentStructure);
+                console.log(' Payment from metadata.payment_terms:', paymentStructure);
             }
             else if (generationParams.metadata?.prompt) {
                 const prompt = generationParams.metadata.prompt;
@@ -13054,7 +12988,7 @@ Generated by CALIM 360 Smart CLM
                 const match = prompt.match(/payment\s+structure:\s*([^,\.]+)/i);
                 if (match) {
                     paymentStructure = match[1].trim().toLowerCase();
-                    console.log('✅ Payment extracted from prompt:', paymentStructure);
+                    console.log(' Payment extracted from prompt:', paymentStructure);
                 }
             }
 
@@ -13084,12 +13018,12 @@ Generated by CALIM 360 Smart CLM
             document.getElementById('regenJurisdiction').value = jurisdiction;
             console.log('🌍 Jurisdiction:', jurisdiction);
 
-            // ✅ Extract special requirements
+            //  Extract special requirements
             let specialRequirements = '';
 
             if (generationParams.metadata?.additional_requirements) {
                 specialRequirements = generationParams.metadata.additional_requirements;
-                console.log('✅ Special requirements from additional_requirements:', specialRequirements);
+                console.log(' Special requirements from additional_requirements:', specialRequirements);
             }
             else if (generationParams.metadata?.prompt) {
                 const prompt = generationParams.metadata.prompt;
@@ -13098,7 +13032,7 @@ Generated by CALIM 360 Smart CLM
                 const match = prompt.match(/Special\s+requirements:\s*(.+?)$/is);
                 if (match) {
                     specialRequirements = match[1].trim();
-                    console.log('✅ Special requirements extracted:', specialRequirements);
+                    console.log(' Special requirements extracted:', specialRequirements);
                 } else {
                     // If no special requirements section, leave it empty
                     console.log('⚠️ No special requirements found in prompt');
@@ -13173,7 +13107,7 @@ Generated by CALIM 360 Smart CLM
                     prompt: specialRequirements  // Use as prompt too
                 }
             };
-            // ✅ FIXED: Use standard fetch with auth token
+            //  FIXED: Use standard fetch with auth token
             const token = getAuthToken();
             const updateResponse = await fetch(`/api/contracts/${contractId}/update-metadata`, {
                 method: 'PUT',
@@ -13190,7 +13124,7 @@ Generated by CALIM 360 Smart CLM
                 throw new Error('Failed to update metadata');
             }
 
-            console.log('✅ Metadata updated successfully');
+            console.log(' Metadata updated successfully');
 
             // Update local generationParams
             generationParams = updatedParams;
@@ -13250,14 +13184,14 @@ Generated by CALIM 360 Smart CLM
         document.head.appendChild(style);
     }
 
-    console.log('✅ AI Streaming module loaded');
+    console.log(' AI Streaming module loaded');
 
 
     function showAIBanner() {
         const banner = document.getElementById('aiGenerationBanner');
         if (banner) {
             banner.classList.add('active');
-            console.log('✅ AI banner shown');
+            console.log(' AI banner shown');
         }
     }
 
@@ -13265,7 +13199,7 @@ Generated by CALIM 360 Smart CLM
         const banner = document.getElementById('aiGenerationBanner');
         if (banner) {
             banner.classList.remove('active');
-            console.log('✅ AI banner hidden');
+            console.log(' AI banner hidden');
         }
     }
 
@@ -13535,7 +13469,7 @@ Generated by CALIM 360 Smart CLM
             }
 
             const result = await response.json();
-            console.log('✅ Upload result:', result);
+            console.log(' Upload result:', result);
 
             // Show success message
             showNotification(
@@ -13735,7 +13669,7 @@ Generated by CALIM 360 Smart CLM
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
 
-            console.log(`✅ Download started: ${fileName}`);
+            console.log(` Download started: ${fileName}`);
             showNotification(`Download started: ${fileName}`, 'success');
 
         } catch (error) {
@@ -13809,7 +13743,7 @@ Generated by CALIM 360 Smart CLM
             }
 
             const result = await response.json();
-            console.log('✅ Document deleted:', result);
+            console.log(' Document deleted:', result);
 
             showNotification(`Document "${fileName}" deleted successfully`, 'success');
 

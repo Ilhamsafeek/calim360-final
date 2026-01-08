@@ -73,7 +73,7 @@ async def verify_email(
         
         db.commit()
         
-        logger.info(f"✅ Email verified successfully for: {user.email}")
+        logger.info(f" Email verified successfully for: {user.email}")
         
         # Send welcome email (optional)
         try:
@@ -127,7 +127,7 @@ async def resend_verification(
             user_name = f"{user.first_name} {user.last_name}" if user.first_name else "User"
             send_verification_email(user.email, user_name, new_token)
             
-            logger.info(f"✅ Verification email resent to: {email}")
+            logger.info(f" Verification email resent to: {email}")
         
         return {
             "success": True,

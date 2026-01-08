@@ -622,7 +622,7 @@ async def create_session(
         
         db.commit()
         
-        logger.info(f"✅ Session created: {session_code}")
+        logger.info(f" Session created: {session_code}")
         
         return {
             "success": True,

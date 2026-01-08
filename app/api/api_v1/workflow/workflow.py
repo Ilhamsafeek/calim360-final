@@ -160,6 +160,7 @@ async def create_master_workflow(
                 step_name=step_data.role,
                 step_type=step_data.role.lower().replace(" ", "_"),
                 assignee_role=step_data.department,
+                department=step_data.department or "General",
                 sla_hours=workflow_data.settings.auto_escalation_hours
             )
             db.add(workflow_step)

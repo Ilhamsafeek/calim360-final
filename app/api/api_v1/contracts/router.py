@@ -52,6 +52,7 @@ class CommentResponse(BaseModel):
     comment: dict
 
 
+
 @router.post("/comments/add", response_model=CommentResponse)
 async def add_comment_to_contract(
     request: CommentCreateRequest,
@@ -60,9 +61,9 @@ async def add_comment_to_contract(
 ):
     """Add a comment to a contract - Full permissions by default"""
     try:
-        logger.info(f"💬 Adding comment to contract {request.contract_id} by user {current_user.id}")
+        logger.info(f" Adding comment to contract {request.contract_id} by user {current_user.id}")
         
-        #  SIMPLIFIED: Just verify contract exists
+        # Verify contract exists
         contract = db.query(Contract).filter(
             Contract.id == request.contract_id
         ).first()
@@ -70,9 +71,7 @@ async def add_comment_to_contract(
         if not contract:
             raise HTTPException(status_code=404, detail="Contract not found")
         
-        #  NO PERMISSION CHECKS - All authenticated users can comment
-        
-        #  Insert comment
+        # Insert comment
         query = text("""
             INSERT INTO contract_comments 
             (contract_id, user_id, comment_text, selected_text, created_at)
@@ -92,6 +91,131 @@ async def add_comment_to_contract(
         comment_id = result.lastrowid
         
         logger.info(f" Comment {comment_id} added successfully")
+        
+        # =====================================================
+        # SEND EMAIL NOTIFICATION TO CONTRACT INITIATOR
+        # =====================================================
+        try:
+            from app.core.email import send_email_smtp
+            
+            # Check if current user is NOT the contract creator (i.e., is counterparty)
+            is_counterparty = (current_user.id != contract.created_by)
+            
+            if is_counterparty and contract.created_by:
+                # Get contract creator details
+                creator_query = text("""
+                    SELECT 
+                        id,
+                        CONCAT(first_name, ' ', last_name) as full_name,
+                        email
+                    FROM users
+                    WHERE id = :creator_id
+                    AND is_active = 1
+                    AND email IS NOT NULL
+                """)
+                creator = db.execute(creator_query, {
+                    "creator_id": contract.created_by
+                }).fetchone()
+                
+                if creator and creator.email:
+                    # Get commenter name
+                    commenter_name = f"{current_user.first_name} {current_user.last_name}"
+                    
+                    # Contract URL
+                    contract_url = f"https://calim360.com/contract/edit/{request.contract_id}?action=view"
+                    
+                    # Truncate comment for email preview (first 200 chars)
+                    comment_preview = request.comment_text[:200]
+                    if len(request.comment_text) > 200:
+                        comment_preview += "..."
+                    
+                    # Truncate selected text for context (first 100 chars)
+                    selected_preview = ""
+                    if request.selected_text:
+                        selected_preview = request.selected_text[:100]
+                        if len(request.selected_text) > 100:
+                            selected_preview += "..."
+                    
+                    email_subject = f"New Comment on Contract {contract.contract_number} - Action Required"
+                    
+                    email_body = f"""
+                    <html>
+                    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                        <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                            <div style="background: linear-gradient(135deg, #ff9800 0%, #ff5722 100%); padding: 20px; border-radius: 8px 8px 0 0; margin: -20px -20px 20px -20px;">
+                                <h2 style="color: white; margin: 0;"> New Comment on Contract</h2>
+                            </div>
+                            
+                            <p>Hi <strong>{creator.full_name}</strong>,</p>
+                            
+                            <p><strong>{commenter_name}</strong> has added a comment to your contract and requires your attention.</p>
+                            
+                            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                                <h3 style="margin-top: 0; color: #2762cb;">Contract Details:</h3>
+                                <p style="margin: 5px 0;"><strong>Contract Number:</strong> {contract.contract_number}</p>
+                                <p style="margin: 5px 0;"><strong>Contract Title:</strong> {contract.contract_title}</p>
+                            </div>
+                    """
+                    
+                    # Add selected text context if available
+                    if selected_preview:
+                        email_body += f"""
+                            <div style="background-color: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin: 20px 0; border-radius: 6px;">
+                                <p style="margin: 0; color: #1976d2;"><strong>📝 Commented on:</strong></p>
+                                <p style="margin: 10px 0 0 0; font-style: italic; color: #424242;">"{selected_preview}"</p>
+                            </div>
+                        """
+                    
+                    email_body += f"""
+                            <div style="background-color: #fff3cd; border-left: 4px solid #ff9800; padding: 15px; margin: 20px 0; border-radius: 6px;">
+                                <p style="margin: 0; color: #856404;"><strong> Comment:</strong></p>
+                                <p style="margin: 10px 0 0 0;">{comment_preview}</p>
+                            </div>
+                            
+                            <p>Please review and respond to this comment to keep the contract review process moving forward.</p>
+                            
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="{contract_url}" 
+                                   style="background: linear-gradient(135deg, #ff9800 0%, #ff5722 100%); 
+                                          color: white; 
+                                          padding: 12px 30px; 
+                                          text-decoration: none; 
+                                          border-radius: 6px; 
+                                          font-weight: bold;
+                                          display: inline-block;">
+                                    View Comment & Respond
+                                </a>
+                            </div>
+                            
+                            <p style="color: #666; font-size: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                                This is an automated notification from CALIM 360 - Smart Contract Lifecycle Management System.<br>
+                                Please do not reply to this email.
+                            </p>
+                        </div>
+                    </body>
+                    </html>
+                    """
+                    
+                    # Send email
+                    try:
+                        send_email_smtp(
+                            to_email=creator.email,
+                            subject=email_subject,
+                            html_body=email_body
+                        )
+                        logger.info(f"✉️ Comment notification email sent to contract creator {creator.email}")
+                    except Exception as email_error:
+                        logger.error(f"❌ Failed to send email to creator: {str(email_error)}")
+                        # Don't fail the comment if email fails
+                else:
+                    logger.warning(f"⚠️ Contract creator {contract.created_by} not found or has no email")
+            else:
+                logger.info("ℹ️ Comment from contract creator, no notification sent")
+                
+        except Exception as email_exception:
+            logger.error(f"❌ Error in email notification process: {str(email_exception)}")
+            # Don't fail the comment if email service fails
+            pass
         
         return {
             "success": True,
@@ -117,7 +241,6 @@ async def add_comment_to_contract(
             status_code=500,
             detail=f"Failed to add comment: {str(e)}"
         )
-
 
 
 

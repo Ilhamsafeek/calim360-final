@@ -991,7 +991,7 @@ async def download_ai_response(
         # Generate filename
         filename = f"correspondence_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
         
-        logger.info(f"✅ Word document generated successfully: {filename}")
+        logger.info(f" Word document generated successfully: {filename}")
         
         # Return as streaming response with proper headers
         return StreamingResponse(

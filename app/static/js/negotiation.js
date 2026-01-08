@@ -624,20 +624,14 @@ async function loadNegotiationParticipants(type) {
 }
 
 // =====================================================
-// UPDATE PARTICIPANTS DISPLAY
+// UPDATE PARTICIPANTS DISPLAY (FETCH FROM MASTER WORKFLOW BY COMPANY)
 // =====================================================
 async function updateParticipantsDisplay(participants, type) {
     const participantsContainer = document.querySelector('.participants');
     if (!participantsContainer) return;
 
     // Clear existing participants
-    participantsContainer.innerHTML = '';
-
-    if (!participants || participants.length === 0) {
-        participantsContainer.innerHTML = '<div class="participant"><span>No participants</span></div>';
-        return;
-    }
-
+    participantsContainer.innerHTML = '<div class="loading">Loading participants...</div>';
 
     // Get current user ID from global variable
     const currentUserId = String(window.currentUserId || '');
@@ -647,73 +641,88 @@ async function updateParticipantsDisplay(participants, type) {
     const contractId = window.contractId || document.body.dataset.contractId ||
         window.location.pathname.split('/').pop();
 
-    // Fetch contract data to determine initiator
-    let isCurrentUserInitiator = false;
-
     try {
-        const response = await fetch(`/api/contracts/edit/${contractId}`);
-        const data = await response.json();
-
-        console.log('Contract data received:', data);
-
-        if (data.success) {
-            const { contract } = data;
-
-            // Current user is initiator if they belong to the contract's company
-            isCurrentUserInitiator = currentUserCompanyId === contract.company_id;
-
-            console.log('Contract Company ID:', contract.company_id);
-            console.log('Current User Company ID:', currentUserCompanyId);
-            console.log('Is Current User Initiator:', isCurrentUserInitiator);
-        }
-    } catch (error) {
-        console.error('Error fetching contract data:', error);
+        // For INTERNAL type, fetch users from Master Workflow by company
+        // Change the API call for internal type
+if (type === 'internal') {
+    // Fetch participants including party B lead for this specific contract
+    const contractId = window.contractId || document.body.dataset.contractId ||
+        window.location.pathname.split('/').pop();
+    
+    const workflowResponse = await fetch(`/api/workflow/negotiation/internal-participants/${contractId}`);
+    const workflowData = await workflowResponse.json();
+    
+    if (!workflowData.success || !workflowData.users || workflowData.users.length === 0) {
+        participantsContainer.innerHTML = '<div class="participant"><span>No workflow participants found</span></div>';
+        return;
     }
 
-    console.log('Current User ID:', currentUserId);
-    console.log('Contract Type:', type);
-    console.log('Participants:', participants);
+    // Clear loading message
+    participantsContainer.innerHTML = '';
 
-    participants.forEach(participant => {
+    // Display all participants (workflow users + party B lead)
+    workflowData.users.forEach(user => {
         const participantDiv = document.createElement('div');
         participantDiv.className = 'participant online';
 
-        // Determine if this is the current user
-        const isCurrentUser = String(participant.user_id) === currentUserId;
-        console.log('is current User',isCurrentUser);
-
-        // Determine display name and role
-        let displayName = participant.full_name || 'User';
-        let displayRole = '';
-
-        // Set display name to "You" for current user
-        if (isCurrentUser) {
-            displayName = 'You';
-        }
-
-        // Determine role based on type
-        if (type === 'internal') {
-            // For internal type, no role label
-            displayRole = '';
-        } else {
-            // For external/counterparty type
-            if (isCurrentUser) {
-                // Current user's role
-                displayRole = isCurrentUserInitiator ? '(Initiator)' : '(Counter-Party)';
-            } else {
-                // Other participants' role (opposite of current user)
-                displayRole = isCurrentUserInitiator ? '(Counter-Party)' : '(Initiator)';
-            }
-        }
+        const isCurrentUser = String(user.user_id) === currentUserId;
+        let displayName = isCurrentUser ? 'You' : user.full_name;
 
         participantDiv.innerHTML = `
             <div class="status-dot"></div>
-            <span>${displayName} ${displayRole}</span>
+            <span>${displayName}</span>
         `;
-
         participantsContainer.appendChild(participantDiv);
     });
+} else {
+            // For EXTERNAL/COUNTERPARTY type, use existing logic
+            const response = await fetch(`/api/contracts/edit/${contractId}`);
+            const data = await response.json();
+            
+            let isCurrentUserInitiator = false;
+            if (data.success) {
+                const { contract } = data;
+                isCurrentUserInitiator = currentUserCompanyId === contract.company_id;
+            }
+
+            // Clear loading message
+            participantsContainer.innerHTML = '';
+
+            if (!participants || participants.length === 0) {
+                participantsContainer.innerHTML = '<div class="participant"><span>No participants</span></div>';
+                return;
+            }
+
+            participants.forEach(participant => {
+                const participantDiv = document.createElement('div');
+                participantDiv.className = 'participant online';
+
+                const isCurrentUser = String(participant.user_id) === currentUserId;
+                let displayName = isCurrentUser ? 'You' : (participant.full_name || 'User');
+                
+                // Display role for external negotiations
+                let displayRole = '';
+                if (isCurrentUser) {
+                    displayRole = isCurrentUserInitiator ? '(Initiator)' : '(Counter-Party)';
+                } else {
+                    displayRole = isCurrentUserInitiator ? '(Counter-Party)' : '(Initiator)';
+                }
+
+                participantDiv.innerHTML = `
+                    <div class="status-dot"></div>
+                    <span>${displayName} ${displayRole}</span>
+                `;
+                participantsContainer.appendChild(participantDiv);
+            });
+        }
+
+    } catch (error) {
+        console.error('Error loading participants:', error);
+        participantsContainer.innerHTML = '<div class="participant error"><span>Error loading participants</span></div>';
+    }
 }
+
+
 // =====================================================
 // START MESSAGE POLLING
 // =====================================================

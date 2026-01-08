@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const errorDiv = document.querySelector('.alert.error');
     const successDiv = document.querySelector('.alert.success');
 
-    console.log('🎯 Login page initialized');
+    console.log(' Login page initialized');
 
     // Login form submission
     loginForm.addEventListener('submit', async function (e) {

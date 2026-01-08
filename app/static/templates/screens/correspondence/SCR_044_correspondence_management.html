@@ -1529,6 +1529,37 @@
     .rotating {
         animation: rotate 1s linear infinite;
     }
+
+
+    /* ===================================================== 
+   DISABLED DOCUMENT STATE - 10 Limit Reached
+   ===================================================== */
+.doc-item.disabled-doc {
+    opacity: 0.5;
+    cursor: not-allowed !important;
+    background: #f5f5f5;
+    pointer-events: none;
+}
+
+.doc-item.disabled-doc:hover {
+    background: #f5f5f5 !important;
+    border-color: var(--border-color) !important;
+}
+
+.doc-item.disabled-doc input[type="checkbox"],
+.doc-item.disabled-doc input[type="radio"] {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.doc-item.disabled-doc .doc-icon {
+    opacity: 0.6;
+}
+
+.doc-item.disabled-doc .doc-name,
+.doc-item.disabled-doc .doc-meta {
+    color: var(--text-muted) !important;
+}
 </style>
 {% endblock %}
 
@@ -1648,9 +1679,9 @@
                 <p id="chatHeaderSubtitle">Select documents and ask questions</p>
             </div>
             <div class="header-actions">
-                <button class="icon-btn" onclick="exportChat()" title="Export">
+                <!-- <button class="icon-btn" onclick="exportChat()" title="Export">
                     <i class="ti ti-download"></i>
-                </button>
+                </button> -->
                 <button class="icon-btn" onclick="clearChat()" title="New Chat">
                     <i class="ti ti-refresh"></i>
                 </button>
@@ -1992,7 +2023,7 @@
                 // =====================================================
                 // 4. SET INITIAL DOCUMENT LIST BASED ON MODE
                 // =====================================================
-                console.log('🎯 Current mode:', state.analysisMode);
+                console.log(' Current mode:', state.analysisMode);
                 console.log('📊 Total documents in global:', state.allDocumentsGlobal.length);
 
                 if (state.analysisMode === 'document') {
@@ -2245,6 +2276,12 @@
                 const type = getDocType(doc.document_name);
                 const isSelected = state.selectedDocs.has(doc.id);
 
+                // ⭐ CHECK IF LIMIT IS REACHED
+                const isLimitReached = !isDocMode && state.selectedDocs.size >= MAX_DOCUMENTS_FOR_AI && !isSelected;
+                const disabledAttr = isLimitReached ? 'disabled' : '';
+                const disabledClass = isLimitReached ? 'disabled-doc' : '';
+                const cursorStyle = isLimitReached ? 'cursor: not-allowed;' : '';
+
                 // Project info
                 const projectInfo = state.analysisMode === 'document' && doc.project_name && !doc.is_standalone ?
                     `<span style="color: var(--primary-color);">${escapeHtml(doc.project_code || doc.project_name)}</span> • ` : '';
@@ -2254,10 +2291,17 @@
                     : '';
 
                 return `
-            <div class="doc-item ${isSelected ? 'selected' : ''} ${doc.is_standalone ? 'standalone-doc' : ''}" onclick="toggleDoc('${doc.id}')">
-                <input type="${inputType}" class="doc-${inputType}" name="${inputName}" 
-                    data-doc-id="${doc.id}"
-                    ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleDoc('${doc.id}')">
+        <div class="doc-item ${isSelected ? 'selected' : ''} ${disabledClass} ${doc.is_standalone ? 'standalone-doc' : ''}" 
+             onclick="${isLimitReached ? 'return false;' : `toggleDoc('${doc.id}')`}" 
+             style="${cursorStyle}">
+            <input type="${inputType}" 
+                   class="doc-${inputType}" 
+                   name="${inputName}" 
+                   data-doc-id="${doc.id}"
+                   ${isSelected ? 'checked' : ''} 
+                   ${disabledAttr}
+                   onclick="event.stopPropagation(); ${isLimitReached ? 'return false;' : `toggleDoc('${doc.id}')`}">
+
                 <div class="doc-icon ${type}">
                     <i class="ti ti-file-text"></i>
                 </div>
@@ -2421,7 +2465,7 @@
             console.log('Opening upload modal...');
             console.log('Current analysis mode:', state.analysisMode);
 
-            // ✅ VALIDATION: Check if project is selected in project mode
+            //  VALIDATION: Check if project is selected in project mode
             if (state.analysisMode === 'project' && !state.selectedProject) {
                 showToast('Please select a project first before uploading documents', 'warning');
 
@@ -2454,10 +2498,10 @@
             if (wrapper) {
                 if (state.analysisMode === 'document') {
                     wrapper.style.display = 'none';
-                    console.log('✅ Document mode - project selector hidden');
+                    console.log(' Document mode - project selector hidden');
                 } else if (state.analysisMode === 'project') {
                     wrapper.style.display = 'none';  // Also hide in project mode since project is already selected
-                    console.log('✅ Project mode - using already selected project:', state.selectedProject);
+                    console.log(' Project mode - using already selected project:', state.selectedProject);
                 }
             }
 
@@ -2465,7 +2509,7 @@
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
 
-            console.log('✅ Modal opened successfully');
+            console.log(' Modal opened successfully');
         };
         window.closeUploadModal = function () {
             const modal = document.getElementById('uploadModal');
@@ -2694,55 +2738,55 @@
 
                 // Maintain current selections
                 if (state.analysisMode === 'project' && state.selectedProject) {
-    console.log('🔄 Refreshing project mode documents for project:', state.selectedProject);
-    
-    // Wait a tiny bit for DOM to update
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    const projectSelect = document.getElementById('projectSelect');
-    if (projectSelect) {
-        projectSelect.value = state.selectedProject;
-        
-        // Manually trigger document refresh
-        const selectedOption = projectSelect.options[projectSelect.selectedIndex];
-        if (selectedOption) {
-            try {
-                const projectDocs = JSON.parse(selectedOption.dataset.docs || '[]');
-                state.allDocuments = projectDocs;
-                state.filteredDocs = [...projectDocs];
-                
-                console.log(`✅ Loaded ${projectDocs.length} documents for project`);
-                
-                // Force re-render
-                renderDocs();
-                updateSelectionUI();
-                
-                document.getElementById('chatHeaderSubtitle').textContent = 
-                    `Project: ${selectedOption.text}`;
-            } catch (e) {
-                console.error('Error parsing project docs:', e);
-                state.allDocuments = [];
-                state.filteredDocs = [];
-                renderDocs();
-            }
-        }
-    }
-} else if (state.analysisMode === 'document') {
-    console.log('🔄 Refreshing document mode - showing standalone docs');
-    
-    // Refresh standalone documents
-    const standaloneOnly = state.allDocumentsGlobal.filter(doc => doc.is_standalone === true);
-    state.allDocuments = [...standaloneOnly];
-    state.filteredDocs = [...standaloneOnly];
-    
-    console.log(`✅ Loaded ${standaloneOnly.length} standalone documents`);
-    
-    // Force re-render
-    renderDocs();
-    updateSelectionUI();
-}
+                    console.log('🔄 Refreshing project mode documents for project:', state.selectedProject);
 
-console.log('✅ Document refresh complete');
+                    // Wait a tiny bit for DOM to update
+                    await new Promise(resolve => setTimeout(resolve, 100));
+
+                    const projectSelect = document.getElementById('projectSelect');
+                    if (projectSelect) {
+                        projectSelect.value = state.selectedProject;
+
+                        // Manually trigger document refresh
+                        const selectedOption = projectSelect.options[projectSelect.selectedIndex];
+                        if (selectedOption) {
+                            try {
+                                const projectDocs = JSON.parse(selectedOption.dataset.docs || '[]');
+                                state.allDocuments = projectDocs;
+                                state.filteredDocs = [...projectDocs];
+
+                                console.log(` Loaded ${projectDocs.length} documents for project`);
+
+                                // Force re-render
+                                renderDocs();
+                                updateSelectionUI();
+
+                                document.getElementById('chatHeaderSubtitle').textContent =
+                                    `Project: ${selectedOption.text}`;
+                            } catch (e) {
+                                console.error('Error parsing project docs:', e);
+                                state.allDocuments = [];
+                                state.filteredDocs = [];
+                                renderDocs();
+                            }
+                        }
+                    }
+                } else if (state.analysisMode === 'document') {
+                    console.log('🔄 Refreshing document mode - showing standalone docs');
+
+                    // Refresh standalone documents
+                    const standaloneOnly = state.allDocumentsGlobal.filter(doc => doc.is_standalone === true);
+                    state.allDocuments = [...standaloneOnly];
+                    state.filteredDocs = [...standaloneOnly];
+
+                    console.log(` Loaded ${standaloneOnly.length} standalone documents`);
+
+                    // Force re-render
+                    renderDocs();
+                    updateSelectionUI();
+                }
+
+                console.log(' Document refresh complete');
 
             } catch (error) {
                 console.error('Upload error:', error);
@@ -3064,7 +3108,7 @@ console.log('✅ Document refresh complete');
 
                 showToast('Word document downloaded successfully with formatting!', 'success');
 
-                console.log('✅ Download completed successfully');
+                console.log(' Download completed successfully');
 
             } catch (error) {
                 console.error('❌ Download error:', error);
