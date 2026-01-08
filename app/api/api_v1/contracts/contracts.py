@@ -22,6 +22,8 @@ import hashlib
 import uuid
 import traceback
 
+
+
 # Add these 4 lines
 import hashlib
 import uuid
@@ -1542,29 +1544,23 @@ async def initiate_approval_workflow(
         raise HTTPException(status_code=500, detail=str(e))
         
 
-# app/api/api_v1/contracts/contracts.py
-import json
-from datetime import datetime
-import uuid
-
-
 @router.post("/signature/apply")
 async def apply_signature(
-    signature_data: dict,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    data: dict,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    """
-    Apply signature to contract - FIXED VERSION
-    Fixed: Remove UUID for id column (use auto-increment), added traceback import
-    """
+    """Apply signature to contract with e-signature authority validation"""
     try:
-        contract_id = int(signature_data.get("contract_id"))
-        signer_type = signature_data.get("signer_type")
-        signature_method = signature_data.get("signature_method", "draw")
-        signature_value = signature_data.get("signature_data")
+        contract_id = data.get("contract_id")
+        signer_type = data.get("signer_type")  # 'client' or 'company'
+        signature_method = data.get("signature_method")
+        signature_data = data.get("signature_data")
         
-        logger.info(f" Applying signature: contract_id={contract_id}, signer_type={signer_type}")
+        signature_value = signature_data if signature_method == 'type' else 'Digital Signature'
+        
+        logger.info(f"📝 Applying signature: contract_id={contract_id}, signer_type={signer_type}")
         
         # STEP 1: Verify contract
         contract_check = text("""
@@ -1578,9 +1574,36 @@ async def apply_signature(
         if not contract:
             raise HTTPException(status_code=404, detail="Contract not found")
         
-        logger.info(f" Contract: {contract.contract_number} - Status: {contract.status}")
+        logger.info(f"✅ Contract: {contract.contract_number} - Status: {contract.status}")
         
-        # STEP 2: Check if already signed
+        # STEP 2: Check if user is authorized to sign (e-signature authority in workflow)
+        workflow_authority_check = text("""
+            SELECT ws.id, ws.role, wi.status as workflow_status
+            FROM workflow_instances wi
+            INNER JOIN workflow_steps ws ON wi.workflow_id = ws.workflow_id
+            INNER JOIN workflow_step_assignments wsa ON ws.id = wsa.step_id
+            WHERE wi.contract_id = :contract_id
+            AND wi.status = 'in_progress'
+            AND ws.role IN ('e-signature', 'e-sign authority', 'e_sign', 'esign')
+            AND wsa.user_id = :user_id
+            LIMIT 1
+        """)
+        
+        authority = db.execute(workflow_authority_check, {
+            "contract_id": contract_id,
+            "user_id": current_user.id
+        }).fetchone()
+        
+        if not authority:
+            return {
+                "success": False,
+                "detail": "You are not authorized to sign this contract. Only users designated as E-Signature Authority in the workflow can sign.",
+                "not_authorized": True
+            }
+        
+        logger.info(f"✅ User {current_user.id} is authorized as E-Signature Authority")
+        
+        # STEP 3: Check if already signed
         check_existing = text("""
             SELECT id, has_signed, signed_at
             FROM signatories
@@ -1600,8 +1623,12 @@ async def apply_signature(
                 "already_signed": True
             }
         
-        # STEP 3: Insert/Update signature
-        client_ip = "127.0.0.1"
+        # STEP 4: Insert/Update signature
+        client_ip = request.client.host if request.client else "127.0.0.1"
+        
+        # Get user's full name and title
+        user_full_name = f"{current_user.first_name} {current_user.last_name}".strip()
+        user_title = current_user.role or "Authorized Signatory"
         
         if existing:
             # UPDATE existing record
@@ -1610,7 +1637,8 @@ async def apply_signature(
                 SET has_signed = 1, 
                     signed_at = NOW(),
                     signature_data = :signature_data, 
-                    ip_address = :ip_address
+                    ip_address = :ip_address,
+                    user_id = :user_id
                 WHERE contract_id = :contract_id AND signer_type = :signer_type
             """)
             
@@ -1618,10 +1646,11 @@ async def apply_signature(
                 "contract_id": contract_id,
                 "signer_type": signer_type,
                 "signature_data": signature_value,
-                "ip_address": client_ip
+                "ip_address": client_ip,
+                "user_id": current_user.id
             })
         else:
-            # INSERT new record - FIXED: Let MySQL auto-increment the id
+            # INSERT new record
             insert_signatory = text("""
                 INSERT INTO signatories 
                 (contract_id, user_id, signer_type, role, signing_order, 
@@ -1635,15 +1664,16 @@ async def apply_signature(
                 "contract_id": contract_id,
                 "user_id": int(current_user.id),
                 "signer_type": signer_type,
-                "role": signer_type.title(),
+                "role": user_title,
                 "signing_order": 1 if signer_type == 'client' else 2,
                 "signature_data": signature_value,
                 "ip_address": client_ip
             })
         
         db.commit()
+        logger.info(f"✅ Signature recorded for {signer_type}")
         
-        # STEP 4: Check both parties signed
+        # STEP 5: Check both parties signed
         check_both = text("""
             SELECT 
                 SUM(CASE WHEN signer_type = 'client' THEN 1 ELSE 0 END) as client_signed,
@@ -1660,7 +1690,7 @@ async def apply_signature(
         
         logger.info(f"📊 Signatures: client={client_signed}, provider={provider_signed}")
         
-        # STEP 5: If both signed, update contract status to executed
+        # STEP 6: If both signed, update contract status to executed
         if both_signed:
             logger.info(f"🎉 Both parties signed! Updating status to 'executed'")
             
@@ -1679,25 +1709,35 @@ async def apply_signature(
                 "success": True,
                 "message": "Signature applied successfully. Contract is now fully executed!",
                 "contract_status": "executed",
-                "both_signed": True
+                "both_signed": True,
+                "signer_name": user_full_name,
+                "signer_title": user_title,
+                "signature_display": signature_value,
+                "signed_at": datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
             }
         else:
             return {
                 "success": True,
                 "message": f"Signature applied successfully. Waiting for other party to sign.",
                 "contract_status": "signature",
-                "both_signed": False
+                "both_signed": False,
+                "signer_name": user_full_name,
+                "signer_title": user_title,
+                "signature_display": signature_value,
+                "signed_at": datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
             }
         
     except HTTPException:
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error: {str(e)}")
+        logger.error(f"❌ Error applying signature: {str(e)}")
+        import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
-        
+
+
 @router.post("/execute-contract")
 async def execute_contract(
     execution_data: dict,
@@ -2028,7 +2068,7 @@ async def setup_contract_workflow(
             workflow_insert = text("""
                 INSERT INTO workflows
                 (company_id, workflow_name, workflow_type, is_master, is_active, created_at, updated_at)
-                VALUES (:company_id, :workflow_name, 'contract_approval', 0, 0, NOW(), NOW())
+                VALUES (:company_id, :workflow_name, 'contract_approval', 0, 1, NOW(), NOW())
             """)
             
             result = db.execute(workflow_insert, {
