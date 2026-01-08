@@ -21,6 +21,7 @@ from fastapi.responses import StreamingResponse
 import hashlib
 import uuid
 import traceback
+from app.utils.datetime_helpers import format_datetime_to_iso
 
 
 
@@ -122,6 +123,7 @@ async def get_my_contracts(
             c.contract_value,
             c.currency,
             c.created_at,
+            c.updated_at, 
             c.party_b_name as counterparty_name,
             u.first_name,
             u.last_name
@@ -148,8 +150,9 @@ async def get_my_contracts(
                 "contract_value": float(row[7]) if row[7] else 0,
                 "currency": row[8],
                 "created_at": str(row[9]) if row[9] else None,
-                "counterparty_name": row[10],
-                "created_by_name": f"{row[11]} {row[12]}" if row[11] and row[12] else "Unknown"
+                "updated_at": str(row[10]) if row[10] else None,
+                "counterparty_name": row[11],
+                "created_by_name": f"{row[12]} {row[13]}" if row[12] and row[13] else "Unknown"
             })
         
         return {
@@ -315,8 +318,8 @@ async def create_contract_from_template(
             "status": "draft",
             "workflow_status": "drafting",
             "created_by": current_user.id,
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
+            "created_at": row[9].isoformat() + "Z" if row[9] else None,
+            "updated_at": row[10].isoformat() + "Z" if row[10] else None,
             "tags": json.dumps(request.get("tags", [])),
             
         }
@@ -909,8 +912,8 @@ async def get_contracts(
             "module": module,
             "value": float(contract.contract_value) if contract.contract_value else 0,
             "currency": contract.currency or "QAR",
-            "created_at": contract.created_at.isoformat() if contract.created_at else None,
-            "updated_at": contract.updated_at.isoformat() if contract.updated_at else None,
+            "created_at": contract.created_at.isoformat() + "Z" if contract.created_at else None,
+            "updated_at": contract.updated_at.isoformat() + "Z" if contract.updated_at else None,       
             "created_by": f"{creator.first_name} {creator.last_name}" if creator else "Unknown",
             "current_version": latest_version.version_number if latest_version else 1,
             "priority": None,

@@ -607,12 +607,397 @@
         30% { transform: translateY(-10px); }
     }
 
-
-      .chatbot-button,
+    .chatbot-button,
     #chatbotButton {
         display: none !important;
         visibility: hidden !important;
         pointer-events: none !important;
+    }
+
+    /* Consultation Modal Styles */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-container {
+        position: relative;
+        background: white;
+        border-radius: 16px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: slideUp 0.3s ease;
+    }
+
+    .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        background: linear-gradient(135deg, #2762cb, #73B4E0);
+        color: white;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .modal-header h3 i {
+        font-size: 1.5rem;
+    }
+
+    .modal-close {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: white;
+        transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: rotate(90deg);
+    }
+
+    .modal-close i {
+        font-size: 1.25rem;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .modal-footer {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e5e7eb;
+        background: #f9fafb;
+        border-radius: 0 0 16px 16px;
+    }
+
+    /* Form Elements */
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        color: #1f2937;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .form-label i {
+        color: #2762cb;
+        font-size: 1rem;
+    }
+
+    .required {
+        color: #ef4444;
+        margin-left: 0.25rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-family: inherit;
+        transition: all 0.2s;
+        background: white;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #2762cb;
+        box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
+    }
+
+    .form-control::placeholder {
+        color: #9ca3af;
+    }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .form-text {
+        display: block;
+        margin-top: 0.375rem;
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+
+    /* Priority Selector */
+    .priority-selector {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+    }
+
+    .priority-option {
+        cursor: pointer;
+    }
+
+    .priority-option input[type="radio"] {
+        display: none;
+    }
+
+    .priority-card {
+        padding: 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        text-align: center;
+        transition: all 0.2s;
+        background: white;
+    }
+
+    .priority-option input[type="radio"]:checked + .priority-card {
+        border-color: #2762cb;
+        background: rgba(39, 98, 203, 0.05);
+    }
+
+    .priority-card:hover {
+        border-color: #2762cb;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .priority-card i {
+        font-size: 1.5rem;
+        color: #2762cb;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .priority-card strong {
+        display: block;
+        font-size: 0.875rem;
+        color: #1f2937;
+        margin-bottom: 0.25rem;
+    }
+
+    .priority-card small {
+        display: block;
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+
+    /* Buttons */
+    .btn {
+        padding: 0.625rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: inherit;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #2762cb, #73B4E0);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(39, 98, 203, 0.3);
+    }
+
+    .btn-secondary {
+        background: white;
+        color: #6b7280;
+        border: 1px solid #d1d5db;
+    }
+
+    .btn-secondary:hover {
+        background: #f9fafb;
+        border-color: #9ca3af;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Loading Overlay */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+    }
+
+    .loading-content {
+        text-align: center;
+    }
+
+    .spinner {
+        width: 48px;
+        height: 48px;
+        border: 4px solid #e5e7eb;
+        border-top-color: #2762cb;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Toast Notifications */
+    .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        z-index: 100000;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+    }
+
+    .toast.show {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .toast-success {
+        border-left: 4px solid #10b981;
+    }
+
+    .toast-error {
+        border-left: 4px solid #ef4444;
+    }
+
+    .toast-info {
+        border-left: 4px solid #3b82f6;
+    }
+
+    .toast i {
+        font-size: 1.25rem;
+    }
+
+    .toast-success i {
+        color: #10b981;
+    }
+
+    .toast-error i {
+        color: #ef4444;
+    }
+
+    .toast-info i {
+        color: #3b82f6;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .priority-selector {
+            grid-template-columns: 1fr;
+        }
+        
+        .modal-container {
+            width: 95%;
+            max-height: 95vh;
+        }
+        
+        .modal-body {
+            padding: 1rem;
+        }
+
+        .expert-chat-container {
+            flex-direction: column;
+        }
+
+        .chat-sidebar {
+            width: 100%;
+            max-height: 300px;
+        }
     }
 </style>
 
@@ -621,7 +1006,7 @@
     <div class="chat-sidebar">
         <div class="chat-sidebar-header">
             <h3>Consultations</h3>
-            <button class="new-chat-btn" onclick="openExpertSelector()">
+            <button class="new-chat-btn" onclick="openStartConsultationModal()">
                 <i class="ti ti-plus"></i>
                 Start New Consultation
             </button>
@@ -660,10 +1045,6 @@
                 </div>
             </div>
             <div class="chat-actions">
-                <!-- <button class="chat-action-btn" onclick="viewSessionDetails()">
-                    <i class="ti ti-info-circle"></i>
-                    Details
-                </button> -->
                 <button class="chat-action-btn" onclick="endSession()">
                     <i class="ti ti-circle-x"></i>
                     End Session
@@ -724,32 +1105,523 @@
     </div>
 </div>
 
+<!-- Start Consultation Modal -->
+<div id="startConsultationModal" class="modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeStartConsultationModal()"></div>
+    <div class="modal-container" style="max-width: 600px;">
+        <div class="modal-header">
+            <h3>
+                <i class="ti ti-message-circle-2"></i>
+                Start New Consultation
+            </h3>
+            <button class="modal-close" onclick="closeStartConsultationModal()">
+                <i class="ti ti-x"></i>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <form id="consultationRequestForm">
+                <!-- Query Type -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="ti ti-category"></i>
+                        Query Type <span class="required">*</span>
+                    </label>
+                    <select class="form-control" id="consultationQueryType" name="query_type" required>
+                        <option value="">Select query type...</option>
+                        <option value="legal">Legal Advice</option>
+                        <option value="compliance">Compliance Guidance</option>
+                        <option value="technical">Technical Clarification</option>
+                        <option value="risk_assessment">Risk Assessment</option>
+                        <option value="clause_interpretation">Clause Interpretation</option>
+                        <option value="dispute_resolution">Dispute Resolution</option>
+                        <option value="negotiation">Negotiation Support</option>
+                        <option value="general">General Query</option>
+                    </select>
+                </div>
+
+                <!-- Subject -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="ti ti-text"></i>
+                        Consultation Subject <span class="required">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        class="form-control" 
+                        id="consultationSubject" 
+                        name="subject"
+                        placeholder="e.g., Contract termination clause clarification"
+                        maxlength="200"
+                        required
+                    >
+                    <small class="form-text">Brief summary of your consultation topic</small>
+                </div>
+
+                <!-- Question -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="ti ti-message-2"></i>
+                        Question / Details <span class="required">*</span>
+                    </label>
+                    <textarea 
+                        class="form-control" 
+                        id="consultationQuestion" 
+                        name="question"
+                        rows="4"
+                        placeholder="Describe your question or issue in detail..."
+                        required
+                    ></textarea>
+                    <small class="form-text">Provide as much context as possible for better assistance</small>
+                </div>
+
+                <!-- Expertise Area -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="ti ti-certificate"></i>
+                        Required Expertise <span class="required">*</span>
+                    </label>
+                    <select class="form-control" id="consultationExpertise" name="expertise" required>
+                        <option value="">Select expertise area...</option>
+                        <option value="QFCRA">QFCRA Compliance</option>
+                        <option value="Construction">Construction Law</option>
+                        <option value="Oil & Gas">Oil & Gas Contracts</option>
+                        <option value="Arbitration">Arbitration & Disputes</option>
+                        <option value="Corporate">Corporate Law</option>
+                        <option value="Employment">Employment Law</option>
+                        <option value="Real Estate">Real Estate</option>
+                        <option value="Intellectual Property">Intellectual Property</option>
+                        <option value="General">General Legal</option>
+                    </select>
+                </div>
+
+                <!-- Priority Level -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="ti ti-flag"></i>
+                        Priority Level <span class="required">*</span>
+                    </label>
+                    <div class="priority-selector">
+                        <label class="priority-option">
+                            <input type="radio" name="priority" value="normal" checked>
+                            <div class="priority-card">
+                                <i class="ti ti-clock"></i>
+                                <div>
+                                    <strong>Standard</strong>
+                                    <small>Response within 24 hours</small>
+                                </div>
+                            </div>
+                        </label>
+                        <label class="priority-option">
+                            <input type="radio" name="priority" value="urgent">
+                            <div class="priority-card">
+                                <i class="ti ti-alert-circle"></i>
+                                <div>
+                                    <strong>Urgent</strong>
+                                    <small>Response within 4 hours</small>
+                                </div>
+                            </div>
+                        </label>
+                        <label class="priority-option">
+                            <input type="radio" name="priority" value="emergency">
+                            <div class="priority-card">
+                                <i class="ti ti-urgent"></i>
+                                <div>
+                                    <strong>Emergency</strong>
+                                    <small>Immediate response needed</small>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Language Preference -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="ti ti-language"></i>
+                        Preferred Language
+                    </label>
+                    <select class="form-control" id="consultationLanguage" name="language">
+                        <option value="en">English</option>
+                        <option value="ar">Arabic (العربية)</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeStartConsultationModal()">
+                <i class="ti ti-x"></i>
+                Cancel
+            </button>
+            <button type="button" class="btn btn-primary" onclick="proceedToExpertSelection()">
+                <i class="ti ti-arrow-right"></i>
+                Continue to Expert Selection
+            </button>
+        </div>
+    </div>
+</div>
+
 <script src="/static/js/screens/experts/ask_expert_unified.js?v=3"></script>
 
 <script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Sidebar hover toggle
+    const sidebar = document.getElementById('sidebar');
+    const menuBtn = document.querySelector('.header-btn.mobile-menu-btn');
 
-    document.addEventListener('DOMContentLoaded', () => {
-
-        // Sidebar hover toggle
-        const sidebar = document.getElementById('sidebar');
-        const menuBtn = document.querySelector('.header-btn.mobile-menu-btn');
-
-        if (sidebar) {
-
-
-            if (!sidebar.classList.contains('collapsed')) {
-                toggleSidebar();
-
-            }
-
+    if (sidebar) {
+        if (!sidebar.classList.contains('collapsed')) {
+            toggleSidebar();
         }
-
-    });
-</script>
-<style>
-    @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
     }
-</style>
+});
+
+// =====================================================
+// Consultation Request Management
+// =====================================================
+
+// Store consultation request data temporarily
+let consultationRequestData = {};
+
+// =====================================================
+// Open Start Consultation Modal
+// =====================================================
+function openStartConsultationModal() {
+    console.log('📝 Opening consultation request modal...');
+    
+    // Show modal
+    document.getElementById('startConsultationModal').style.display = 'flex';
+    
+    // Reset form
+    document.getElementById('consultationRequestForm').reset();
+}
+
+// =====================================================
+// Close Start Consultation Modal
+// =====================================================
+function closeStartConsultationModal() {
+    document.getElementById('startConsultationModal').style.display = 'none';
+    consultationRequestData = {};
+}
+
+// =====================================================
+// Proceed to Expert Selection
+// =====================================================
+function proceedToExpertSelection() {
+    // Validate form
+    const form = document.getElementById('consultationRequestForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    // Collect form data
+    consultationRequestData = {
+        query_type: document.getElementById('consultationQueryType').value,
+        subject: document.getElementById('consultationSubject').value,
+        question: document.getElementById('consultationQuestion').value,
+        expertise_area: document.getElementById('consultationExpertise').value,
+        priority: document.querySelector('input[name="priority"]:checked').value,
+        preferred_language: document.getElementById('consultationLanguage').value
+    };
+    
+    console.log('✅ Consultation request data collected:', consultationRequestData);
+    
+    // Close consultation form modal
+    closeStartConsultationModal();
+    
+    // Open expert selection modal
+    openExpertSelectionModal();
+}
+
+// =====================================================
+// Open Expert Selection Modal
+// =====================================================
+function openExpertSelectionModal() {
+    console.log('👥 Opening expert selection modal...');
+    
+    // Show expert selection modal
+    const modal = document.getElementById('expertModal');
+    if (modal) {
+        modal.classList.add('show');
+        
+        // Load experts filtered by expertise area
+        loadFilteredExperts(consultationRequestData.expertise_area);
+    } else {
+        console.error('❌ Expert selection modal not found');
+    }
+}
+
+// =====================================================
+// Load Filtered Experts
+// =====================================================
+async function loadFilteredExperts(expertiseArea) {
+    try {
+        showLoading(true, 'Loading experts...');
+        
+        // Build query params
+        let url = '/api/v1/experts/directory?is_available=true';
+        if (expertiseArea && expertiseArea !== 'General') {
+            url += `&specialization=${encodeURIComponent(expertiseArea)}`;
+        }
+        
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load experts');
+        
+        const data = await response.json();
+        console.log('📋 Loaded experts:', data);
+        
+        // Render experts in modal
+        renderExpertsInModal(data.experts || []);
+        
+        showLoading(false);
+        
+    } catch (error) {
+        console.error('❌ Error loading experts:', error);
+        showError('Failed to load experts: ' + error.message);
+        showLoading(false);
+    }
+}
+
+// =====================================================
+// Render Experts in Modal
+// =====================================================
+function renderExpertsInModal(experts) {
+    const container = document.querySelector('#expertModal .experts-grid');
+    
+    if (!container) {
+        console.error('❌ Experts grid container not found');
+        return;
+    }
+    
+    if (experts.length === 0) {
+        container.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: #6b7280;">
+                <i class="ti ti-user-off" style="font-size: 3rem; display: block; margin-bottom: 1rem;"></i>
+                <p>No experts available for the selected expertise area.</p>
+                <p style="font-size: 0.875rem;">Try selecting "General" expertise or contact support.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = '';
+    
+    experts.forEach(expert => {
+        const card = createExpertCardForModal(expert);
+        container.appendChild(card);
+    });
+}
+
+// =====================================================
+// Create Expert Card for Modal
+// =====================================================
+function createExpertCardForModal(expert) {
+    const div = document.createElement('div');
+    div.className = 'expert-card';
+    
+    const fullName = `${expert.first_name} ${expert.last_name}`;
+    const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase();
+    const specialization = expert.specialization || 'General Expert';
+    const consultations = expert.total_consultations || 0;
+    const rating = expert.average_rating || 0;
+    
+    div.innerHTML = `
+        <div class="expert-card-header">
+            <div class="expert-card-avatar">${initials}</div>
+            <div class="expert-card-info">
+                <h4>${fullName}</h4>
+                <p>${expert.job_title || 'Expert'}</p>
+            </div>
+        </div>
+        <div class="expert-card-specialization">
+            ${specialization}
+        </div>
+        <div class="expert-card-stats">
+            <span class="expert-card-stat">
+                <i class="ti ti-star-filled" style="color: #fbbf24;"></i>
+                ${rating.toFixed(1)}
+            </span>
+            <span class="expert-card-stat">
+                <i class="ti ti-message-circle"></i>
+                ${consultations} sessions
+            </span>
+        </div>
+    `;
+    
+    // Click handler for entire card
+    div.onclick = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        selectExpertAndSubmit(expert.expert_id);
+    };
+    
+    return div;
+}
+
+// =====================================================
+// Select Expert and Submit Consultation
+// =====================================================
+async function selectExpertAndSubmit(expertId) {
+    console.log('✅ Expert selected:', expertId);
+    console.log('📤 Submitting consultation request:', consultationRequestData);
+    
+    try {
+        showLoading(true, 'Creating consultation...');
+        
+        // Prepare request payload
+        const payload = {
+            query_type: consultationRequestData.query_type,
+            subject: consultationRequestData.subject,
+            question: consultationRequestData.question,
+            expertise_areas: [consultationRequestData.expertise_area],
+            priority: consultationRequestData.priority,
+            session_type: 'chat', // Default to chat
+            preferred_language: consultationRequestData.preferred_language || 'en'
+        };
+        
+        console.log('📦 Payload:', payload);
+        
+        // Submit query
+        const queryResponse = await fetch('/api/v1/experts/queries', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!queryResponse.ok) {
+            const errorData = await queryResponse.json();
+            throw new Error(errorData.detail || 'Failed to create consultation query');
+        }
+        
+        const queryData = await queryResponse.json();
+        console.log('✅ Query created:', queryData);
+        
+        // Create session with selected expert
+        const sessionPayload = {
+            query_id: queryData.query_id,
+            expert_id: expertId,
+            session_type: 'chat', // Default to chat
+            selected_tone: 'professional'
+        };
+        
+        const sessionResponse = await fetch('/api/v1/experts/sessions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(sessionPayload)
+        });
+        
+        if (!sessionResponse.ok) {
+            const errorData = await sessionResponse.json();
+            throw new Error(errorData.detail || 'Failed to create consultation session');
+        }
+        
+        const sessionData = await sessionResponse.json();
+        console.log('✅ Session created:', sessionData);
+        
+        showLoading(false);
+        
+        // Close modal
+        document.getElementById('expertModal').classList.remove('show');
+        
+        // Show success message
+        showSuccess('Consultation request submitted successfully!');
+        
+        // Reload the page to show new consultation
+        setTimeout(() => {
+            window.location.reload();
+        }, 1500);
+        
+    } catch (error) {
+        console.error('❌ Error submitting consultation:', error);
+        showError('Failed to create consultation: ' + error.message);
+        showLoading(false);
+    }
+}
+
+// =====================================================
+// Loading/Toast Helper Functions
+// =====================================================
+function showLoading(show, message = 'Loading...') {
+    let overlay = document.getElementById('loadingOverlay');
+    
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'loadingOverlay';
+        overlay.className = 'loading-overlay';
+        overlay.innerHTML = `
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p id="loadingMessage">${message}</p>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
+    
+    const messageEl = document.getElementById('loadingMessage');
+    if (messageEl) {
+        messageEl.textContent = message;
+    }
+    
+    overlay.style.display = show ? 'flex' : 'none';
+}
+
+function showSuccess(message) {
+    showToast(message, 'success');
+}
+
+function showError(message) {
+    showToast(message, 'error');
+}
+
+function showInfo(message) {
+    showToast(message, 'info');
+}
+
+function showToast(message, type = 'info') {
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <i class="ti ti-${type === 'success' ? 'check' : type === 'error' ? 'alert-circle' : 'info-circle'}"></i>
+        <span>${message}</span>
+    `;
+    
+    // Add to body
+    document.body.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Close modal when clicking close button
+document.getElementById('closeModalBtn').addEventListener('click', function() {
+    document.getElementById('expertModal').classList.remove('show');
+});
+
+// Close modal when clicking overlay
+document.querySelector('#expertModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        this.classList.remove('show');
+    }
+});
+</script>
 {% endblock %}
