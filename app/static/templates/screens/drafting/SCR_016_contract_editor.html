@@ -1754,8 +1754,6 @@
     }
 </style>
 
-
-
 <style>
     /* Blockchain Activity Panel Styles */
     .blockchain-evidence-panel {
@@ -5356,89 +5354,114 @@ async function loadContractData() {
         // =================================================================
 
         // Extract signatory data from certificate with proper handling
-        let clientSignatory = {
-            name: '[Name]',
-            signer_type: '[Title]',
-            email: '',
-            has_signed: false,
-            signed_at: null,
-            signature_data: null
-        };
+ let clientSignatory = {
+    name: '[Name]',
+    signer_type: '[Title]',
+    email: '',
+    has_signed: false,
+    signed_at: null,
+    signature_data: null,
+    signature_method: 'draw'  // ✅ ADD THIS
+};
 
-        let companySignatory = {
-            name: '[Name]',
-            signer_type: '[Title]',
-            email: '',
-            has_signed: false,
-            signed_at: null,
-            signature_data: null
-        };
+let companySignatory = {
+    name: '[Name]',
+    signer_type: '[Title]',
+    email: '',
+    has_signed: false,
+    signed_at: null,
+    signature_data: null,
+    signature_method: 'draw'  // ✅ ADD THIS
+};
 
-        if (certificate && certificate.signatories) {
-            // Find client and company signatories
-            const clientSig = certificate.signatories.find(s =>
-                s.signer_type === 'client' || s.signer_type === 'party_a'
-            );
-            const companySig = certificate.signatories.find(s =>
-                s.signer_type === 'company' || s.signer_type === 'party_b' || s.signer_type === 'provider'
-            );
+if (certificate && certificate.signatories) {
+    const clientSig = certificate.signatories.find(s =>
+        s.signer_type === 'client' || s.signer_type === 'party_a'
+    );
+    const companySig = certificate.signatories.find(s =>
+        s.signer_type === 'company' || s.signer_type === 'party_b' || s.signer_type === 'provider'
+    );
 
-            if (clientSig) {
-                clientSignatory.has_signed = true;
-                clientSignatory.signed_at = clientSig.signed_at;
-                clientSignatory.signature_data = clientSig.signature_data || clientSig.name;
-                clientSignatory.name = clientSig.name || '[Name]';
-                clientSignatory.email = clientSig.email || '';
-                clientSignatory.signer_type = clientSig.role || 'Client Signatory';
-            }
+    if (clientSig && clientSig.has_signed) {
+        clientSignatory.has_signed = true;
+        clientSignatory.signed_at = clientSig.signed_at;
+        clientSignatory.signature_data = clientSig.signature_data;  // ✅ ACTUAL DATA
+        clientSignatory.signature_method = clientSig.signature_method || 'draw';  // ✅ METHOD
+        clientSignatory.name = clientSig.name || '[Name]';
+        clientSignatory.email = clientSig.email || '';
+        clientSignatory.signer_type = clientSig.role || 'Client Signatory';
+    }
 
-            if (companySig) {
-                companySignatory.has_signed = true;
-                companySignatory.signed_at = companySig.signed_at;
-                companySignatory.signature_data = companySig.signature_data || companySig.name;
-                companySignatory.name = companySig.name || '[Name]';
-                companySignatory.email = companySig.email || '';
-                companySignatory.signer_type = companySig.role || 'Company Signatory';
-            }
+    if (companySig && companySig.has_signed) {
+        companySignatory.has_signed = true;
+        companySignatory.signed_at = companySig.signed_at;
+        companySignatory.signature_data = companySig.signature_data;  // ✅ ACTUAL DATA
+        companySignatory.signature_method = companySig.signature_method || 'draw';  // ✅ METHOD
+        companySignatory.name = companySig.name || '[Name]';
+        companySignatory.email = companySig.email || '';
+        companySignatory.signer_type = companySig.role || 'Company Signatory';
+    }
+}
 
-            // If no specific signatories found, try to use executed_by for company
-            if (!companySig && certificate.executed_by) {
-                companySignatory.name = certificate.executed_by;
-                companySignatory.email = certificate.executed_by_email || '';
-            }
-        }
+// ✅ ADD HELPER FUNCTION to render actual signature
+function renderSignature(signatory) {
+    if (!signatory.signature_data) {
+        return '<div style="font-family: \'Brush Script MT\', cursive; font-size: 1.5rem; color: #000;">Digitally Signed</div>';
+    }
 
-        // CREATE SIGNATURE HTML WITH ACTUAL SIGNATURE DISPLAY
-        const clientSignatureHTML = clientSignatory.has_signed
-            ? `<div class="signature-field signed" id="clientSignature" style="border: 2px solid #28a745; border-radius: 8px; padding: 1.5rem; background: #f0fff4; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-           <div style="font-family: 'Brush Script MT', cursive; font-size: 2rem; color: #000; margin-bottom: 0.5rem;">
-               ${clientSignatory.signature_data}
+    // If it's a base64 image (drawn signature)
+    if (signatory.signature_data.startsWith('data:image')) {
+        return `<img src="${signatory.signature_data}" 
+                     alt="Signature" 
+                     style="max-width: 200px; max-height: 80px; object-fit: contain;">`;
+    }
+    
+    // If it's typed text
+    return `<div style="font-family: 'Brush Script MT', cursive; font-size: 2rem; color: #000; padding: 0.5rem;">
+                ${signatory.signature_data}
+            </div>`;
+}
+
+// CLIENT SIGNATURE HTML
+const clientSignatureHTML = clientSignatory.has_signed
+    ? `<div class="signature-field signed" id="clientSignature" 
+            style="border: 2px solid #28a745; border-radius: 8px; padding: 1.5rem; background: #f0fff4; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+           <!-- ✅ ACTUAL SIGNATURE DISPLAY -->
+           <div style="margin-bottom: 0.75rem;">
+               ${renderSignature(clientSignatory)}
            </div>
-           <div style="font-size: 0.875rem; color: #28a745; font-weight: 600;">
+           <div style="font-size: 0.875rem; color: #28a745; font-weight: 600; text-align: center;">
                <strong>✓ Signed</strong><br>
-               Signed on ${clientSignatory.signed_at ? new Date(clientSignatory.signed_at).toLocaleString() : 'N/A'}
+               <span style="font-size: 0.75rem;">
+                   ${clientSignatory.signed_at ? new Date(clientSignatory.signed_at).toLocaleString() : 'N/A'}
+               </span>
            </div>
        </div>`
-            : `<div class="signature-field" id="clientSignature" 
+    : `<div class="signature-field" id="clientSignature" 
             onclick="${(contract.status === 'signature' && contract.is_counterparty) ? "openSignature('client')" : "void(0)"}"
-            style="border: 3px dashed #cbd5e0; border-radius: 8px; padding: 2rem; background: #f8fafc; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: ${(contract.status === 'signature' && contract.is_counterparty) ? 'pointer' : 'default'}; transition: all 0.3s ease;">
+            style="border: 3px dashed #cbd5e0; border-radius: 8px; padding: 2rem; background: #f8fafc; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: ${(contract.status === 'signature' && contract.is_counterparty) ? 'pointer' : 'default'};">
            <i class="ti ti-writing-sign" style="font-size: 2.5rem; color: #94a3b8; margin-bottom: 0.75rem;"></i>
            <span style="color: #64748b; font-weight: 500;">Click to Sign (Client)</span>
        </div>`;
 
-        const companySignatureHTML = companySignatory.has_signed
-            ? `<div class="signature-field signed" id="companySignature" style="border: 2px solid #28a745; border-radius: 8px; padding: 1.5rem; background: #f0fff4; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-           <div style="font-family: 'Brush Script MT', cursive; font-size: 2rem; color: #000; margin-bottom: 0.5rem;">
-               ${companySignatory.signature_data}
+// COMPANY SIGNATURE HTML  
+const companySignatureHTML = companySignatory.has_signed
+    ? `<div class="signature-field signed" id="companySignature" 
+            style="border: 2px solid #28a745; border-radius: 8px; padding: 1.5rem; background: #f0fff4; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+           <!-- ✅ ACTUAL SIGNATURE DISPLAY -->
+           <div style="margin-bottom: 0.75rem;">
+               ${renderSignature(companySignatory)}
            </div>
-           <div style="font-size: 0.875rem; color: #28a745; font-weight: 600;">
+           <div style="font-size: 0.875rem; color: #28a745; font-weight: 600; text-align: center;">
                <strong>✓ Signed</strong><br>
-               Signed on ${companySignatory.signed_at ? new Date(companySignatory.signed_at).toLocaleString() : 'N/A'}
+               <span style="font-size: 0.75rem;">
+                   ${companySignatory.signed_at ? new Date(companySignatory.signed_at).toLocaleString() : 'N/A'}
+               </span>
            </div>
        </div>`
-            : `<div class="signature-field" id="companySignature" 
+    : `<div class="signature-field" id="companySignature" 
             onclick="${(contract.status === 'signature' && !contract.is_counterparty) ? "openSignature('company')" : "void(0)"}"
-            style="border: 3px dashed #cbd5e0; border-radius: 8px; padding: 2rem; background: #f8fafc; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: ${(contract.status === 'signature' && !contract.is_counterparty) ? 'pointer' : 'default'}; transition: all 0.3s ease;">
+            style="border: 3px dashed #cbd5e0; border-radius: 8px; padding: 2rem; background: #f8fafc; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: ${(contract.status === 'signature' && !contract.is_counterparty) ? 'pointer' : 'default'};">
            <i class="ti ti-writing-sign" style="font-size: 2.5rem; color: #94a3b8; margin-bottom: 0.75rem;"></i>
            <span style="color: #64748b; font-weight: 500;">Click to Sign (Company)</span>
        </div>`;
@@ -8230,103 +8253,114 @@ ${contract.content && contract.content.trim() !== '' ?
     }
 
     // Apply signature with enhanced response handling
-    async function applySignature() {
-        const signatureData = document.getElementById('typedSig')?.value ||
-            (canvas ? canvas.toDataURL() : 'Digitally Signed');
-        const signatureMethod = document.querySelector('.signature-tab.active')?.textContent.includes('Type') ? 'type' : 'draw';
+async function applySignature() {
+    const signatureData = document.getElementById('typedSig')?.value ||
+        (canvas ? canvas.toDataURL() : 'Digitally Signed');
+    const signatureMethod = document.querySelector('.signature-tab.active')?.textContent.includes('Type') ? 'type' : 'draw';
 
-        showLoader();
-        try {
-            const response = await fetch('/api/contracts/signature/apply', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contract_id: parseInt(contractId),
-                    signer_type: currentSignatureField,
-                    signature_method: signatureMethod,
-                    signature_data: signatureData
-                })
-            });
+    showLoader();
+    try {
+        console.log('📝 Sending signature request...');
+        
+        const response = await fetch('/api/contracts/signature/apply', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`  // Ensure auth token is sent
+            },
+            credentials: 'include',  // Include cookies
+            body: JSON.stringify({
+                contract_id: parseInt(contractId),
+                signer_type: currentSignatureField,
+                signature_method: signatureMethod,
+                signature_data: signatureData
+            })
+        });
 
-            const data = await response.json();
+        console.log('📡 Response status:', response.status, response.statusText);
 
-            if (data.success) {
-                // Close modal first
-                closeModal('signatureModal');
+        // ✅ FIX: Check response.ok FIRST before parsing JSON
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || errorData.message || 'Failed to apply signature');
+        }
 
-                // Update UI to show signature with actual signature data
-                const fieldId = currentSignatureField === 'client' ? 'clientSignature' : 'companySignature';
-                const fieldElement = document.getElementById(fieldId);
+        const data = await response.json();
+        console.log('✅ Response data:', data);
 
-                if (fieldElement) {
-                    // Create signature display with actual signature
-                    const signatureDisplay = signatureMethod === 'type'
-                        ? `<div style="font-family: 'Brush Script MT', cursive; font-size: 2rem; color: #000;">${data.signature_display}</div>`
-                        : `<div style="font-family: 'Brush Script MT', cursive; font-size: 1.5rem; color: #000;">✓ Digitally Signed</div>`;
+        // ✅ FIX: Now check data.success
+        if (data.success) {
+            // Close modal first
+            closeModal('signatureModal');
 
-                    fieldElement.innerHTML = `
-                    <div style="border: 2px solid #28a745; border-radius: 8px; padding: 1rem; background: #f0fff4;">
+            // Update UI to show signature with actual signature data
+            const fieldId = currentSignatureField === 'client' ? 'clientSignature' : 'companySignature';
+            const fieldElement = document.getElementById(fieldId);
+
+            if (fieldElement) {
+                // Create signature display with actual signature
+                const signatureDisplay = signatureMethod === 'type'
+                    ? `<div class="typed-signature">${signatureData}</div>`
+                    : `<img src="${signatureData}" alt="Signature" style="max-width: 100%; height: auto;">`;
+
+                fieldElement.innerHTML = `
+                    <div class="signature-applied">
                         ${signatureDisplay}
-                        <div style="font-size: 0.875rem; color: #28a745; margin-top: 0.5rem;">
-                            <strong>Signed</strong><br>
-                            Signed on ${data.signed_at || new Date().toLocaleString()}
-                        </div>
+                        <p class="signature-info">
+                            <small>Signed by ${data.signer_name || 'Current User'}</small><br>
+                            <small>${new Date(data.signed_at).toLocaleString()}</small>
+                        </p>
                     </div>
                 `;
-
-                    // Remove onclick event
-                    fieldElement.onclick = null;
-                    fieldElement.style.cursor = 'default';
-                }
-
-                // Update Name and Title fields in contract
-                const partyPrefix = currentSignatureField === 'client' ? 'CLIENT' : 'COMPANY';
-                const nameFields = document.querySelectorAll(`p:has(strong:contains("${partyPrefix}")) + p`);
-
-                if (nameFields.length > 0) {
-                    // Find the name and title paragraphs
-                    const nameP = nameFields[0];
-                    const titleP = nameFields.length > 1 ? nameFields[1] : null;
-
-                    if (nameP) {
-                        const nameSpan = nameP.querySelector('.editable-field');
-                        if (nameSpan) {
-                            nameSpan.textContent = data.signer_name || '[Name]';
-                            nameSpan.contentEditable = 'false';
-                        }
-                    }
-
-                    if (titleP) {
-                        const titleSpan = titleP.querySelector('.editable-field');
-                        if (titleSpan) {
-                            titleSpan.textContent = data.signer_title || '[Title]';
-                            titleSpan.contentEditable = 'false';
-                        }
-                    }
-                }
-
-                showNotification(data.message, 'success');
-
-                // Reload page after short delay
-                setTimeout(async () => await refreshContractData(), 1500);
-            } else {
-                if (data.not_authorized) {
-                    showNotification('You are not authorized to sign this contract. Only E-Signature Authority can sign.', 'error');
-                } else if (data.already_signed) {
-                    showNotification(data.detail || 'This party has already signed', 'warning');
-                } else {
-                    showNotification(data.detail || 'Failed to apply signature', 'error');
-                }
-                closeModal('signatureModal');
+                fieldElement.classList.add('signed');
             }
-        } catch (error) {
-            console.error('Error applying signature:', error);
-            showNotification('Failed to apply signature', 'error');
+
+            // Show success notification with signer name
+            showNotification(
+                data.message || `Signature applied successfully by ${data.signer_name}`, 
+                'success'
+            );
+
+            // Update contract status if all parties signed
+            if (data.all_signed) {
+                showNotification('All parties have signed! Contract is now executed.', 'success');
+                
+                // Update status badge
+                const statusBadge = document.querySelector('.status-badge');
+                if (statusBadge) {
+                    statusBadge.textContent = 'Executed';
+                    statusBadge.className = 'status-badge status-executed';
+                }
+            }
+
+            // Reload contract data to reflect changes
+            setTimeout(async () => {
+                await refreshContractData();
+            }, 1500);
+
+        } else {
+            // Handle specific error cases
+            if (data.not_authorized) {
+                showNotification(data.detail || 'Only E-Signature Authority can sign.', 'error');
+            } else if (data.already_signed) {
+                showNotification(data.detail || 'You have already signed this contract', 'warning');
+            } else {
+                showNotification(data.detail || data.message || 'Failed to apply signature', 'error');
+            }
             closeModal('signatureModal');
-        } finally {
-            hideLoader();
         }
+
+    } catch (error) {
+        console.error('❌ Error applying signature:', error);
+        hideLoader();
+        showNotification(error.message || 'Failed to apply signature. Please try again.', 'error');
+        closeModal('signatureModal');
+    } finally {
+        hideLoader();
     }
+}
+
+
 
     // Helper function to find elements containing specific text
     HTMLElement.prototype.contains = function (text) {

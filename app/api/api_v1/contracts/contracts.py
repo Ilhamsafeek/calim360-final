@@ -318,8 +318,8 @@ async def create_contract_from_template(
             "status": "draft",
             "workflow_status": "drafting",
             "created_by": current_user.id,
-            "created_at": row[9].isoformat() + "Z" if row[9] else None,
-            "updated_at": row[10].isoformat() + "Z" if row[10] else None,
+            "created_at": datetime.utcnow(),  # ✅ FIXED
+            "updated_at": datetime.utcnow(),  # ✅ FIXED
             "tags": json.dumps(request.get("tags", [])),
             
         }
@@ -1217,78 +1217,77 @@ async def get_contract_editor_data(
         }).fetchone()
         
         # ===== EXECUTION CERTIFICATE DATA =====
+
+        # ===== EXECUTION CERTIFICATE DATA =====
         certificate_data = None
         
-        # Check if contract is executed or signed
-        if result.status in ('executed', 'signed'):
+        # ✅ FIXED: Check for signature, signed, and executed status
+        if result.status in ('signature', 'signed', 'executed'):  # Added 'signature' status
             try:
-                # Try to get from metadata table first
-                certificate_query = text("""
-                    SELECT metadata_value, created_at
-                    FROM contract_metadata
-                    WHERE contract_id = :contract_id
-                    AND metadata_key = 'execution_certificate'
-                    ORDER BY created_at DESC LIMIT 1
+                # ✅ REMOVED: contract_metadata table query (doesn't exist)
+                # ✅ NEW: Always generate from signatories table
+                
+                executed_by_name = f"{current_user.first_name} {current_user.last_name}"
+                
+                # ✅ FIXED: Get signatories with signature_data and signature_method
+                signatories_query = text("""
+                    SELECT 
+                        s.signer_type,
+                        s.has_signed,
+                        s.signed_at,
+                        s.signature_data,
+                        s.signature_method,
+                        s.ip_address,
+                        s.signing_order,
+                        u.first_name,
+                        u.last_name,
+                        u.email
+                    FROM signatories s
+                    LEFT JOIN users u ON s.user_id = u.id
+                    WHERE s.contract_id = :contract_id
+                    ORDER BY s.signing_order
                 """)
                 
-                cert_result = db.execute(certificate_query, {"contract_id": contract_id}).fetchone()
+                signatories = db.execute(signatories_query, {"contract_id": contract_id}).fetchall()
                 
-                if cert_result:
-                    import json
-                    certificate_data = json.loads(cert_result.metadata_value)
-                    certificate_data["generated_at"] = cert_result.created_at.isoformat() if cert_result.created_at else None
-                else:
-                    # Fallback: Generate from current data
-                    executed_by_name = f"{current_user.first_name} {current_user.last_name}"
+                certificate_data = {
+                    "contract_id": contract_id,
+                    "contract_number": result.contract_number,
+                    "contract_title": result.contract_title,
+                    "execution_date": result.effective_date.isoformat() if result.effective_date else None,
+                    "signed_date": result.signed_date.isoformat() if result.signed_date else None,
+                    "executed_by": executed_by_name,
+                    "executed_by_email": current_user.email,
+                    "signatories": []
+                }
+                
+                for sig in signatories:
+                    # Construct full name
+                    signer_name = "Pending"
+                    if sig.has_signed and sig.first_name and sig.last_name:
+                        signer_name = f"{sig.first_name} {sig.last_name}"
+                    elif sig.first_name:
+                        signer_name = sig.first_name
                     
-                    # Get signatories
-                    signatories_query = text("""
-                        SELECT 
-                            s.signer_type,
-                            s.signed_at,
-                            s.ip_address,
-                            u.first_name,
-                            u.last_name,
-                            u.email
-                        FROM signatories s
-                        LEFT JOIN users u ON s.user_id = u.id
-                        WHERE s.contract_id = :contract_id AND s.has_signed = 1
-                        ORDER BY s.signing_order
-                    """)
-                    
-                    signatories = db.execute(signatories_query, {"contract_id": contract_id}).fetchall()
-                    
-                    certificate_data = {
-                        "contract_id": contract_id,
-                        "contract_number": result.contract_number,
-                        "contract_title": result.contract_title,
-                        "execution_date": result.effective_date.isoformat() if result.effective_date else None,
-                        "signed_date": result.signed_date.isoformat() if result.signed_date else None,
-                        "executed_by": executed_by_name,
-                        "executed_by_email": current_user.email,
-                        "signatories": []
-                    }
-                    
-                    for sig in signatories:
-                        # Construct full name
-                        signer_name = "External Signer"
-                        if sig.first_name and sig.last_name:
-                            signer_name = f"{sig.first_name} {sig.last_name}"
-                        elif sig.first_name:
-                            signer_name = sig.first_name
-                        
-                        certificate_data["signatories"].append({
-                            "signer_type": sig.signer_type,
-                            "name": signer_name,
-                            "email": sig.email or "",
-                            "signed_at": sig.signed_at.isoformat() if sig.signed_at else None,
-                            "signature_data": sig.signature_data or "",
-                            "ip_address": sig.ip_address or ""
-                        })
+                    certificate_data["signatories"].append({
+                        "signer_type": sig.signer_type,
+                        "name": signer_name,
+                        "email": sig.email or "",
+                        "has_signed": bool(sig.has_signed),
+                        "signed_at": sig.signed_at.isoformat() if sig.signed_at else None,
+                        "signature_data": sig.signature_data or "",  # ✅ ADDED
+                        "signature_method": sig.signature_method or "draw",  # ✅ ADDED
+                        "ip_address": sig.ip_address or "",
+                        "signing_order": sig.signing_order
+                    })
+                
+                logger.info(f"✅ Certificate data loaded with {len(certificate_data['signatories'])} signatories")
                     
             except Exception as cert_error:
-                logger.warning(f" Could not retrieve certificate data: {str(cert_error)}")
+                logger.warning(f"⚠️ Could not retrieve certificate data: {str(cert_error)}")
                 certificate_data = None
+        
+        # ===== RETURN RESPONSE ===== (keep your existing return statement below)
         
         # ===== RETURN RESPONSE =====
         return {
@@ -1443,78 +1442,48 @@ async def save_contract_draft(
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
-  
 @router.post("/send-for-signature")
-async def send_for_signature(
+async def send_contract_for_signature(
     data: dict,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """
-    Send contract for signature
-    FIXED: Properly updates workflow current_step to e_sign_authority step
+    Send contract for signature - Creates signatory records for BOTH parties
+    FIXED: Ensures 2 signatories are created (client + company)
     """
     try:
         contract_id = data.get("contract_id")
         
-        logger.info(f"📤 Sending contract {contract_id} for signature")
+        logger.info(f"📝 Sending contract {contract_id} for signature")
         
-        # STEP 1: Verify contract exists and is in approved status
+        # STEP 1: Verify contract exists and is in approval status
         contract_query = text("""
-            SELECT c.id, c.contract_number, c.status, c.company_id
+            SELECT 
+                c.id, c.contract_number, c.status, c.company_id,
+                c.party_b_id, c.party_b_lead_id
             FROM contracts c
-            WHERE c.id = :contract_id AND c.company_id = :company_id
+            WHERE c.id = :contract_id
         """)
         
-        contract = db.execute(contract_query, {
-            "contract_id": contract_id,
-            "company_id": current_user.company_id
-        }).fetchone()
+        contract = db.execute(contract_query, {"contract_id": contract_id}).fetchone()
         
         if not contract:
             raise HTTPException(status_code=404, detail="Contract not found")
         
-        if contract.status != 'approved':
-            return {
-                "success": False, 
-                "message": f"Contract must be in 'approved' status. Current status: {contract.status}"
-            }
-        
-        # STEP 2: Find the E-SIGN step number in the workflow
-        esign_step_query = text("""
-            SELECT 
-                ws.step_number,
-                ws.id as step_id,
-                ws.step_name,
-                ws.step_type,
-                w.id as workflow_id,
-                w.workflow_name,
-                wi.id as instance_id
-            FROM workflow_instances wi
-            INNER JOIN workflows w ON wi.workflow_id = w.id
-            INNER JOIN workflow_steps ws ON w.id = ws.workflow_id
-            WHERE wi.contract_id = :contract_id
-            AND ws.step_type = 'e_sign_authority'
-            ORDER BY ws.step_number ASC
-            LIMIT 1
-        """)
-        
-        esign_step = db.execute(esign_step_query, {
-            "contract_id": contract_id
-        }).fetchone()
-        
-        if not esign_step:
+        if contract.status not in ['approval', 'negotiation']:
             return {
                 "success": False,
-                "message": "No E-SIGN step found in workflow. Please configure workflow with E-SIGN authority step."
+                "detail": f"Contract must be in approval or negotiation status. Current: {contract.status}"
             }
         
-        logger.info(f"✅ Found E-SIGN step: {esign_step.step_name} at position {esign_step.step_number}")
+        logger.info(f"✅ Contract verified: {contract.contract_number}")
         
-        # STEP 3: Update contract status to 'signature'
+        # STEP 2: Update contract status to 'signature'
         update_contract = text("""
             UPDATE contracts
             SET status = 'signature',
+                workflow_status = 'signature',
                 updated_at = NOW()
             WHERE id = :contract_id
         """)
@@ -1522,112 +1491,188 @@ async def send_for_signature(
         db.execute(update_contract, {"contract_id": contract_id})
         logger.info(f"✅ Contract status updated to 'signature'")
         
-        # STEP 4: Update workflow instance to set current_step to E-SIGN step
-        update_workflow = text("""
-            UPDATE workflow_instances
-            SET current_step = :esign_step_number,
-                status = 'signature_pending'
-            WHERE contract_id = :contract_id
-        """)
-        
-        db.execute(update_workflow, {
-            "esign_step_number": esign_step.step_number,
-            "contract_id": contract_id
-        })
-        
-        logger.info(f"✅ Workflow current_step updated to {esign_step.step_number} (E-SIGN)")
-        
-        # STEP 5: Create/Update signatories records
-        # Get party information
-        parties_query = text("""
-            SELECT 
-                c.party_a_id as client_company_id,
-                c.party_b_id as provider_company_id,
-                ca.company_name as client_name,
-                cb.company_name as provider_name
-            FROM contracts c
-            LEFT JOIN companies ca ON c.party_a_id = ca.id
-            LEFT JOIN companies cb ON c.party_b_id = cb.id
-            WHERE c.id = :contract_id
-        """)
-        
-        parties = db.execute(parties_query, {"contract_id": contract_id}).fetchone()
-        
-        # Create signatory records for both parties
-        create_signatories = text("""
-            INSERT INTO signatories 
-            (contract_id, user_id, signer_type, 
-             signing_order, email, has_signed, created_at)
-            VALUES 
-            (:contract_id, :user_id, :signer_type, :company_id,
-             :signing_order, :email, 0, NOW())
-            ON DUPLICATE KEY UPDATE
-                signing_order = VALUES(signing_order),
-                updated_at = NOW()
-        """)
-        
-        # Get E-SIGN authority users from workflow
-        esign_users_query = text("""
+        # STEP 3: Get E-SIGN authority users from workflow (if exists)
+        workflow_query = text("""
             SELECT 
                 ws.assignee_user_id,
+                ws.step_name,
                 u.email,
-                u.company_id
-            FROM workflow_steps ws
+                u.company_id,
+                u.first_name,
+                u.last_name
+            FROM workflow_instances wi
+            INNER JOIN workflow_steps ws ON wi.workflow_id = ws.workflow_id
             INNER JOIN users u ON ws.assignee_user_id = u.id
-            WHERE ws.workflow_id = :workflow_id
+            WHERE wi.contract_id = :contract_id
             AND ws.step_type = 'e_sign_authority'
+            ORDER BY ws.step_number
         """)
         
-        esign_users = db.execute(esign_users_query, {
-            "workflow_id": esign_step.workflow_id
-        }).fetchall()
+        workflow_signers = db.execute(workflow_query, {"contract_id": contract_id}).fetchall()
         
-        signing_order = 1
-        for user in esign_users:
-            # Determine signer_type based on company
-            signer_type = 'client' if user.company_id == parties.client_company_id else 'company'
-            
-            db.execute(create_signatories, {
-                "contract_id": contract_id,
-                "user_id": user.assignee_user_id,
-                "signer_type": signer_type,
-                "company_id": user.company_id,
-                "signing_order": signing_order,
-                "email": user.email
-            })
-            
-            logger.info(f"✅ Created signatory record for user {user.assignee_user_id} as {signer_type}")
-            signing_order += 1
+        # STEP 4: Clear existing signatory records (in case of re-sending)
+        delete_existing = text("""
+            DELETE FROM signatories 
+            WHERE contract_id = :contract_id
+        """)
+        db.execute(delete_existing, {"contract_id": contract_id})
+        logger.info(f"🗑️ Cleared existing signatory records")
         
-        # STEP 6: Create audit log
+        # STEP 5: Create signatory records for BOTH parties
+        signatories_created = 0
+        
+        if workflow_signers and len(workflow_signers) >= 2:
+            # Use workflow to determine signatories
+            logger.info(f"✅ Found {len(workflow_signers)} workflow E-SIGN authorities")
+            
+            for idx, signer in enumerate(workflow_signers):
+                # Determine signer_type based on company
+                if signer.company_id == contract.company_id:
+                    signer_type = 'company'
+                else:
+                    signer_type = 'client'
+                
+                insert_signatory = text("""
+                    INSERT INTO signatories
+                    (contract_id, user_id, signer_type, company_id,
+                     signing_order, email, has_signed, created_at)
+                    VALUES
+                    (:contract_id, :user_id, :signer_type, :company_id,
+                     :signing_order, :email, 0, NOW())
+                """)
+                
+                db.execute(insert_signatory, {
+                    "contract_id": contract_id,
+                    "user_id": signer.assignee_user_id,
+                    "signer_type": signer_type,
+                    "company_id": signer.company_id,
+                    "signing_order": idx + 1,
+                    "email": signer.email
+                })
+                
+                logger.info(f"✅ Created signatory: {signer.first_name} {signer.last_name} ({signer_type})")
+                signatories_created += 1
+        
+        else:
+            # NO WORKFLOW - Create default signatories for initiator company and counterparty
+            logger.info(f"⚠️ No workflow found - creating default signatories")
+            
+            # Get initiator (current user's company representative)
+            company_rep_query = text("""
+                SELECT id, email, first_name, last_name, company_id
+                FROM users
+                WHERE company_id = :company_id
+                AND id = :user_id
+                LIMIT 1
+            """)
+            
+            company_rep = db.execute(company_rep_query, {
+                "company_id": contract.company_id,
+                "user_id": current_user.id
+            }).fetchone()
+            
+            # Get counterparty lead
+            if contract.party_b_lead_id:
+                counterparty_query = text("""
+                    SELECT id, email, first_name, last_name, company_id
+                    FROM users
+                    WHERE id = :party_b_lead_id
+                    LIMIT 1
+                """)
+                
+                counterparty = db.execute(counterparty_query, {
+                    "party_b_lead_id": contract.party_b_lead_id
+                }).fetchone()
+            else:
+                # Get any user from counterparty company
+                counterparty_query = text("""
+                    SELECT id, email, first_name, last_name, company_id
+                    FROM users
+                    WHERE company_id = :party_b_id
+                    LIMIT 1
+                """)
+                
+                counterparty = db.execute(counterparty_query, {
+                    "party_b_id": contract.party_b_id
+                }).fetchone()
+            
+            # Create COMPANY signatory
+            if company_rep:
+                insert_company_sig = text("""
+                    INSERT INTO signatories
+                    (contract_id, user_id, signer_type, company_id,
+                     signing_order, email, has_signed, created_at)
+                    VALUES
+                    (:contract_id, :user_id, 'company', :company_id,
+                     1, :email, 0, NOW())
+                """)
+                
+                db.execute(insert_company_sig, {
+                    "contract_id": contract_id,
+                    "user_id": company_rep.id,
+                    "company_id": company_rep.company_id,
+                    "email": company_rep.email
+                })
+                
+                logger.info(f"✅ Created COMPANY signatory: {company_rep.first_name} {company_rep.last_name}")
+                signatories_created += 1
+            
+            # Create CLIENT signatory
+            if counterparty:
+                insert_client_sig = text("""
+                    INSERT INTO signatories
+                    (contract_id, user_id, signer_type, company_id,
+                     signing_order, email, has_signed, created_at)
+                    VALUES
+                    (:contract_id, :user_id, 'client', :company_id,
+                     2, :email, 0, NOW())
+                """)
+                
+                db.execute(insert_client_sig, {
+                    "contract_id": contract_id,
+                    "user_id": counterparty.id,
+                    "company_id": counterparty.company_id,
+                    "email": counterparty.email
+                })
+                
+                logger.info(f"✅ Created CLIENT signatory: {counterparty.first_name} {counterparty.last_name}")
+                signatories_created += 1
+        
+        # STEP 6: Verify we have 2 signatories
+        if signatories_created < 2:
+            db.rollback()
+            logger.error(f"❌ Only {signatories_created} signatories created - need 2!")
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Failed to create both signatories. Only {signatories_created} created. Please ensure counterparty is assigned."
+            )
+        
+        # STEP 7: Create audit log
         audit_log = text("""
             INSERT INTO audit_logs
             (user_id, contract_id, action_type, action_details, ip_address, created_at)
             VALUES (:user_id, :contract_id, 'sent_for_signature', 
-                    :action_details, :ip_address, NOW())
+                    :action_details, '127.0.0.1', NOW())
         """)
         
         db.execute(audit_log, {
             "user_id": current_user.id,
             "contract_id": contract_id,
             "action_details": json.dumps({
-                "workflow_name": esign_step.workflow_name,
-                "esign_step": esign_step.step_number,
-                "signatories_count": len(esign_users)
-            }),
-            "ip_address": "127.0.0.1"
+                "signatories_created": signatories_created,
+                "contract_number": contract.contract_number
+            })
         })
         
         db.commit()
         
-        logger.info(f"✅ Contract {contract_id} successfully sent for signature")
+        logger.info(f"✅ Contract {contract_id} sent for signature with {signatories_created} signatories")
         
         return {
             "success": True,
-            "message": "Contract sent for signature successfully",
+            "message": f"Contract sent for signature successfully. {signatories_created} signatories notified.",
             "contract_id": contract_id,
-            "esign_step": esign_step.step_number,
-            "signatories_count": len(esign_users)
+            "signatories_count": signatories_created
         }
         
     except HTTPException:
@@ -1638,6 +1683,7 @@ async def send_for_signature(
         import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @router.post("/initiate-approval-workflow")
