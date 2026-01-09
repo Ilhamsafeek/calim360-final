@@ -3,7 +3,7 @@
 # Ask an Expert - Unified Chat API (FIXED for actual DB)
 # =====================================================
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Body, status
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import text, or_
 from typing import List, Optional
@@ -561,26 +561,19 @@ async def send_message(
 # =====================================================
 # CREATE SESSION (Start New Consultation)
 # =====================================================
-
 @router.post("/sessions")
 async def create_session(
-    session_data: dict = Body(...),
+    session_data: SessionCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Create a new consultation session"""
     try:
-        # Generate IDs
+        # Generate IDs and codes
         query_id = str(uuid.uuid4())
         session_id = str(uuid.uuid4())
         query_code = f"QRY-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
         session_code = f"SES-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
-        
-        # Extract with defaults
-        subject = session_data.get("subject", "Consultation Request")
-        question = session_data.get("question", "")
-        session_type = session_data.get("session_type", "text_chat")
-        priority = session_data.get("priority", "normal")
         
         # Create query
         insert_query_sql = text("""
@@ -590,7 +583,7 @@ async def create_session(
                 session_type, asked_at, created_at
             ) VALUES (
                 :id, :query_code, :user_id, 'general',
-                :subject, :question, :priority, 'open',
+                :subject, :question, 'normal', 'open',
                 :session_type, NOW(), NOW()
             )
         """)
@@ -599,20 +592,21 @@ async def create_session(
             "id": query_id,
             "query_code": query_code,
             "user_id": current_user.id,
-            "subject": subject,
-            "question": question,
-            "priority": priority,
-            "session_type": session_type
+            "subject": session_data.subject,
+            "question": session_data.question,
+            "session_type": session_data.session_type
         })
         
-        # Create session - FIXED: start_time instead of started_at
+        # Create session
         insert_session_sql = text("""
             INSERT INTO expert_sessions (
                 id, session_code, query_id, user_id,
-                session_type, status, start_time, created_at
+                expert_id, session_type, status,
+                query_text, created_at, updated_at
             ) VALUES (
                 :id, :session_code, :query_id, :user_id,
-                :session_type, 'active', NOW(), NOW()
+                :expert_id, :session_type, 'scheduled',
+                :query_text, NOW(), NOW()
             )
         """)
         
@@ -621,30 +615,30 @@ async def create_session(
             "session_code": session_code,
             "query_id": query_id,
             "user_id": current_user.id,
-            "session_type": session_type
+            "expert_id": int(session_data.expert_id),
+            "session_type": session_data.session_type,
+            "query_text": session_data.question
         })
         
         db.commit()
         
-        logger.info(f"✅ Session created: {session_code}")
+        logger.info(f" Session created: {session_code}")
         
         return {
             "success": True,
-            "message": "Session created successfully",
             "session_id": session_id,
             "session_code": session_code,
             "query_id": query_id,
             "query_code": query_code,
-            "status": "active"
+            "status": "scheduled"
         }
         
     except Exception as e:
         logger.error(f"❌ Error creating session: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
         db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create session: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=str(e))
 
 # =====================================================
 # END SESSION

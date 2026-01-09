@@ -1255,6 +1255,45 @@
 
 
 <style>
+    .clause-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: white;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+    }
+
+    .clause-item:hover {
+        background: #f8f9fa;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        border-color: var(--primary-color);
+    }
+
+    .clause-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: var(--primary-color);
+    }
+
+    .clause-item span {
+        flex: 1;
+        font-size: 0.9rem;
+        color: var(--text-color);
+    }
+
+    .clause-item input[type="checkbox"]:checked + span {
+        font-weight: 500;
+    }
+</style>
+
+
+
+<style>
     /* AI Loader Animation */
     .ai-loader {
         width: 60px;
@@ -3583,95 +3622,216 @@
 <!-- Regenerate Contract Modal -->
 <div id="regenerateContractModal" class="modal" style="display: none;">
     <div class="modal-overlay" onclick="closeRegenerateModal()"></div>
-    <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+    <div class="modal-content" style="max-width: 1000px; max-height: 90vh; overflow-y: auto;">
         <div class="modal-header">
-            <h3 class="modal-title" style="color:white"><i class="ti ti-refresh"></i> Regenerate Contract</h3>
+            <h3 class="modal-title" style="color:white">
+                <i class="ti ti-refresh"></i> Regenerate Contract
+            </h3>
             <button class="modal-close" onclick="closeRegenerateModal()">
                 <i class="ti ti-x"></i>
             </button>
         </div>
 
         <div class="modal-body">
-            <div class="alert alert-info" style="margin-bottom: 1.5rem;">
+          
 
-                <div>
-                    <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem;">
-                        Modify the details below and regenerate the contract.
-                        <strong>Note:</strong> To change clauses, you'll need to create a new contract from scratch.
-                    </p>
-                </div>
-            </div>
-
-            <!-- Type of Contract -->
-            <div class="form-group">
-                <label>
-                    Type of Contract <span style="color: var(--danger-color);">*</span>
+            <!-- Contract Type -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                    Contract Type <span style="color: var(--danger-color);">*</span>
                 </label>
-                <select id="regenContractType" class="form-control" required>
+                <select id="regenContractType" class="form-control" required
+                    style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
                     <option value="">Select Contract Type</option>
-                    <option value="employment">Employment Contract</option>
-                    <option value="service">Service Agreement</option>
-                    <option value="purchase">Purchase Agreement</option>
-                    <option value="lease">Lease Agreement</option>
-                    <option value="nda">Non-Disclosure Agreement</option>
-                    <option value="consulting">Consulting Agreement</option>
                     <option value="construction">Construction Contract</option>
+                    <option value="service">Service Agreement</option>
                     <option value="supply">Supply Agreement</option>
-                    <option value="other">Other</option>
+                    <option value="consultancy">Consultancy Agreement</option>
+                    <option value="nda">Non-Disclosure Agreement</option>
+                    <option value="mou">Memorandum of Understanding</option>
+                    <option value="loi">Letter of Intent</option>
+                    <option value="purchase_order">Purchase Order</option>
+                    <option value="subcontract">Subcontract Agreement</option>
                 </select>
             </div>
 
-            <!-- AI Assistant Section -->
-            <div class="ai-assistant-container"
-                style="background: #f8f9fa; border-radius: 8px; padding: 1.5rem; margin-top: 1.5rem;">
+            <!-- Profile Type -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                    Profile Type <span style="color: var(--danger-color);">*</span>
+                </label>
+                <select id="regenProfileType" class="form-control" required
+                    style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                    <option value="">Select Profile Type</option>
+                    <option value="client">Client</option>
+                    <option value="consultant">Consultant</option>
+                    <option value="contractor">Contractor</option>
+                    <option value="subcontractor">Sub-Contractor</option>
+                </select>
+            </div>
 
-
-                <p style="color: #666; font-size: 0.875rem; margin-bottom: 1.5rem;">
-                    Answer these questions to help AI generate a better contract
-                </p>
-
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
-                    <!-- Duration -->
-                    <div class="form-group">
-                        <label>Duration</label>
-                        <input type="text" id="regenDuration" class="form-control" placeholder="e.g., 6 months, 1 year">
-                    </div>
-
-                    <!-- Payment Structure -->
-                    <div class="form-group">
-                        <label>Payment Structure</label>
-                        <select id="regenPaymentStructure" class="form-control">
-                            <option value="">Select payment type</option>
-                            <option value="fixed">Fixed Price</option>
-                            <option value="hourly">Hourly Rate</option>
-                            <option value="milestone">Milestone Based</option>
-                            <option value="subscription">Subscription</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-
-                    <!-- Jurisdiction -->
-                    <div class="form-group">
-                        <label>
-                            Jurisdiction <span style="color: var(--danger-color);">*</span>
-                        </label>
-                        <select id="regenJurisdiction" class="form-control" required>
-                            <option value="Qatar" selected>Qatar</option>
-                            <option value="UAE">United Arab Emirates (UAE)</option>
-                            <option value="Saudi Arabia">Saudi Arabia</option>
-                            <option value="Bahrain">Bahrain</option>
-                            <option value="Oman">Oman</option>
-                            <option value="Kuwait">Kuwait</option>
-                        </select>
-                    </div>
+            <!-- Add/Remove Clauses Section -->
+            <div style="margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <label style="font-weight: 600; margin: 0;">Contract Clauses</label>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleClauseSection()">
+                        <i class="ti ti-list-check"></i>
+                        <span id="clauseToggleText">Show Clause Selection</span>
+                    </button>
                 </div>
 
-                <!-- Special Requirements -->
-                <div class="form-group" style="margin-top: 1.5rem;">
-                    <label>Special Requirements</label>
-                    <textarea id="regenSpecialRequirements" class="form-control" rows="4"
-                        placeholder="Any specific clauses or requirements..."></textarea>
+                <!-- Clause Selection Section (Hidden by default) -->
+                <div id="regenClauseSection" style="display: none; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; background: var(--background-light);">
+                    
+                    <!-- Essential Clauses -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                            Essential Clauses
+                        </h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem;">
+                            <label class="clause-item">
+                                <input type="checkbox" name="regen_clause_performance_bond" checked>
+                                <span>Performance Bond</span>
+                            </label>
+                            <label class="clause-item">
+                                <input type="checkbox" name="regen_clause_retention_amount" checked>
+                                <span>Retention Amount</span>
+                            </label>
+                            <label class="clause-item">
+                                <input type="checkbox" name="regen_clause_payment_terms" checked>
+                                <span>Payment Terms</span>
+                            </label>
+                            <label class="clause-item">
+                                <input type="checkbox" name="regen_clause_timeline" checked>
+                                <span>Timeline & Milestones</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Legal & Compliance -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                            Legal & Compliance
+                        </h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem;">
+                            <label class="clause-item">
+                                <input type="checkbox" name="regen_clause_back_to_back" checked>
+                                <span>Back-to-Back Terms</span>
+                            </label>
+                            <label class="clause-item">
+                                <input type="checkbox" name="regen_clause_intellectual_property" checked>
+                                <span>Intellectual Property</span>
+                            </label>
+                            <label class="clause-item">
+                                <input type="checkbox" name="regen_clause_non_compete">
+                                <span>Non-Compete</span>
+                            </label>
+                            <label class="clause-item">
+                                <input type="checkbox" name="regen_clause_data_protection">
+                                <span>Data Protection (GDPR)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Risk Management -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                            Risk Management
+                        </h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem;">
+                            <label class="clause-item">
+                                <input type="checkbox" name="regen_clause_insurance" checked>
+                                <span>Insurance Requirements</span>
+                            </label>
+                            <label class="clause-item">
+                                <input type="checkbox" name="regen_clause_liability">
+                                <span>Liability Limitation</span>
+                            </label>
+                            <label class="clause-item">
+                                <input type="checkbox" name="regen_clause_indemnification">
+                                <span>Indemnification</span>
+                            </label>
+                            <label class="clause-item">
+                                <input type="checkbox" name="regen_clause_force_majeure">
+                                <span>Force Majeure</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Contract Management -->
+                    <div style="margin-bottom: 0;">
+                        <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                            Contract Management
+                        </h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem;">
+                            <label class="clause-item">
+                                <input type="checkbox" name="regen_clause_termination" checked>
+                                <span>Termination Conditions</span>
+                            </label>
+                            <label class="clause-item">
+                                <input type="checkbox" name="regen_clause_arbitration" checked>
+                                <span>Arbitration Clause</span>
+                            </label>
+                            <label class="clause-item">
+                                <input type="checkbox" name="regen_clause_mediation">
+                                <span>Mediation Clause</span>
+                            </label>
+                            <label class="clause-item">
+                                <input type="checkbox" name="regen_clause_liquidated_damages">
+                                <span>Liquidated Damages</span>
+                            </label>
+                            <label class="clause-item">
+                                <input type="checkbox" name="regen_clause_kpi">
+                                <span>Key Performance Indicators</span>
+                            </label>
+                            <label class="clause-item">
+                                <input type="checkbox" name="regen_clause_governing_law">
+                                <span>Governing Law</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info" style="margin-top: 1rem; margin-bottom: 0;">
+                        <i class="ti ti-info-circle"></i>
+                        <span style="font-size: 0.875rem;">
+                            Selected clauses will be included in the regenerated contract. 
+                            Uncheck any clause you don't want to include.
+                        </span>
+                    </div>
                 </div>
+            </div>
+
+            <!-- Additional Requirements -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                    Additional Requirements / Modifications
+                </label>
+                <textarea id="regenAdditionalRequirements" class="form-control" 
+                    placeholder="Enter any specific requirements, modifications, or special clauses..."
+                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; min-height: 100px; resize: vertical;"></textarea>
+                <small style="color: var(--text-muted); font-size: 0.875rem;">
+                    Example: "Include a clause about remote work conditions" or "Modify payment terms to 45 days"
+                </small>
+            </div>
+
+            <!-- Payment Terms (Optional) -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                    Payment Terms <span style="color: var(--text-muted); font-weight: 400;">(Optional)</span>
+                </label>
+                <input type="text" id="regenPaymentTerms" class="form-control" 
+                    placeholder="e.g., 30 days net, milestone-based, monthly"
+                    style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
+            </div>
+
+            <!-- Duration (Optional) -->
+            <div style="margin-bottom: 0;">
+                <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                    Contract Duration <span style="color: var(--text-muted); font-weight: 400;">(Optional)</span>
+                </label>
+                <input type="text" id="regenDuration" class="form-control" 
+                    placeholder="e.g., 6 months, 1 year, 2 years"
+                    style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
             </div>
         </div>
 
@@ -3685,7 +3845,6 @@
         </div>
     </div>
 </div>
-
 
 <!-- =====================================================
      IMPROVED EXPORT MODAL
@@ -5034,6 +5193,7 @@
     let currentClauseText = '';
     let riskAnalysisData = null;
     let uploadedFiles = [];
+    let regenSelectedClauses = [];
 
 
 
@@ -5055,6 +5215,22 @@
 
         await saveAsDraft();
     });
+
+
+
+function toggleClauseSection() {
+    const section = document.getElementById('regenClauseSection');
+    const toggleText = document.getElementById('clauseToggleText');
+    
+    if (section.style.display === 'none') {
+        section.style.display = 'block';
+        toggleText.textContent = 'Hide Clause Selection';
+    } else {
+        section.style.display = 'none';
+        toggleText.textContent = 'Show Clause Selection';
+    }
+}
+
 
 
 
@@ -5110,35 +5286,53 @@
     // =====================================================
     // DATA LOADING FUNCTIONS
     // =====================================================
-    async function loadContractData() {
-        try {
-            const response = await fetch(`/api/contracts/edit/${contractId}`);
-            const data = await response.json();
+async function loadContractData() {
+    try {
+        console.log('📡 Loading contract data for ID:', contractId);
+        
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`/api/contracts/edit/${contractId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
 
-            console.log('Contract data received:', data);
+        console.log('Contract data received:', data);
 
-            if (data.success) {
-                contractData = data;
-                renderContractEditor(data);
-
-                document.getElementById('contractEditor').classList.add('loaded');
-                document.getElementById('contractEditor').style.display = 'block';
-                hideLoader();
-
-                startAutoSave();
-
-                //  ADD THIS - Initialize AI AFTER contract is rendered
-                await initializeAIGeneration();
-            } else {
-                hideLoader();
-                showError('Failed to load contract data: ' + (data.message || 'Unknown error'));
+        if (data.success) {
+            contractData = data;
+            
+            // ✅ CRITICAL FIX: Ensure currentContractId is set from loaded data
+            if (data.contract && data.contract.id) {
+                currentContractId = data.contract.id;
+                console.log('✅ currentContractId set to:', currentContractId);
             }
-        } catch (error) {
-            console.error('Error loading contract:', error);
+            
+            renderContractEditor(data);
+
+            document.getElementById('contractEditor').classList.add('loaded');
+            document.getElementById('contractEditor').style.display = 'block';
             hideLoader();
-            showError('Failed to load contract data: ' + error.message);
+
+            startAutoSave();
+
+            // Initialize AI AFTER contract is rendered
+            await initializeAIGeneration();
+        } else {
+            hideLoader();
+            showError('Failed to load contract data: ' + (data.message || 'Unknown error'));
         }
+    } catch (error) {
+        console.error('Error loading contract:', error);
+        hideLoader();
+        showError('Failed to load contract data: ' + error.message);
     }
+}
 
 
     // =====================================================
@@ -12854,6 +13048,14 @@ Generated by CALIM 360 Smart CLM
     // AI STREAMING FUNCTIONALITY (CORRECTED VERSION)
     // =====================================================
 
+
+
+// Set  as a global variable (used in regenerate function)
+
+console.log('🆔 Contract ID from URL:', contractId);
+console.log('🆔 Current Contract ID set to:', currentContractId);
+
+
     let isAIGenerated = false;
     let generationParams = null;
 
@@ -13193,138 +13395,61 @@ Generated by CALIM 360 Smart CLM
     // =====================================================
     // REGENERATE CONTRACT FUNCTIONS
     // =====================================================
-    function regenerateContract() {
-        console.log('🔄 Opening regenerate modal...');
-        console.log('📦 Full generationParams:', generationParams);
+function regenerateContract() {
+    console.log('🔄 Opening regenerate modal...');
+    console.log('📦 Full generationParams:', generationParams);
 
-        // Pre-fill modal with existing metadata
-        if (generationParams) {
-            // Log the metadata structure
-            console.log('🔍 DEBUGGING - metadata.prompt:', generationParams.metadata?.prompt);
-            console.log('🔍 DEBUGGING - metadata.additional_requirements:', generationParams.metadata?.additional_requirements);
-            console.log('🔍 DEBUGGING - metadata.payment_terms:', generationParams.metadata?.payment_terms);
-            console.log('🔍 DEBUGGING - metadata.duration:', generationParams.metadata?.duration);
+    // Pre-fill modal with existing metadata
+    if (generationParams) {
+        // Set contract type
+        const contractType = generationParams.contract_type || '';
+        document.getElementById('regenContractType').value = contractType;
 
-            // Set contract type
-            const contractType = generationParams.contract_type || '';
-            document.getElementById('regenContractType').value = contractType;
-            console.log(' Contract Type:', contractType);
+        // Set profile type
+        const profileType = generationParams.profile_type || '';
+        document.getElementById('regenProfileType').value = profileType;
 
-            //  Extract duration with detailed logging
-            let duration = '';
+        // Set additional requirements
+        const additionalReqs = generationParams.metadata?.additional_requirements || 
+                               generationParams.metadata?.prompt || '';
+        document.getElementById('regenAdditionalRequirements').value = additionalReqs;
 
-            if (generationParams.metadata?.duration) {
-                duration = generationParams.metadata.duration;
-                console.log(' Duration from metadata.duration:', duration);
-            }
-            else if (generationParams.metadata?.prompt) {
-                const prompt = generationParams.metadata.prompt;
-                console.log('🔍 Analyzing prompt for duration:', prompt);
+        // Set payment terms
+        const paymentTerms = generationParams.metadata?.payment_terms || '';
+        document.getElementById('regenPaymentTerms').value = paymentTerms;
 
-                // Try different patterns
-                let match = prompt.match(/with\s+duration:\s*([^,]+)/i);
-                if (match) {
-                    duration = match[1].trim();
-                    console.log(' Duration match pattern 1:', duration);
-                } else {
-                    match = prompt.match(/duration:\s*([^,]+)/i);
-                    if (match) {
-                        duration = match[1].trim();
-                        console.log(' Duration match pattern 2:', duration);
-                    }
+        // Set duration
+        const duration = generationParams.metadata?.duration || '';
+        document.getElementById('regenDuration').value = duration;
+
+        // Restore clause selections if they exist
+        const existingClauses = generationParams.selected_clauses || [];
+        console.log('📋 Existing selected clauses:', existingClauses);
+
+        if (existingClauses.length > 0) {
+            // Show clause section if clauses were previously selected
+            const section = document.getElementById('regenClauseSection');
+            const toggleText = document.getElementById('clauseToggleText');
+            section.style.display = 'block';
+            toggleText.textContent = 'Hide Clause Selection';
+
+            // Check the boxes for previously selected clauses
+            existingClauses.forEach(clauseKey => {
+                const checkbox = document.querySelector(`input[name="regen_clause_${clauseKey}"]`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                    console.log(`  ✓ Restored clause: ${clauseKey}`);
                 }
-            }
-
-            // Clean up duration - remove any trailing text
-            if (duration) {
-                // Remove anything after " -" or ", " or "."
-                duration = duration.split('-')[0].trim();
-                duration = duration.split(',')[0].trim();
-                duration = duration.split('.')[0].trim();
-            }
-
-            document.getElementById('regenDuration').value = duration;
-            console.log('📅 FINAL duration value set:', duration);
-
-            //  Extract payment structure with detailed logging
-            let paymentStructure = '';
-
-            if (generationParams.metadata?.payment_terms) {
-                paymentStructure = String(generationParams.metadata.payment_terms).toLowerCase().trim();
-                console.log(' Payment from metadata.payment_terms:', paymentStructure);
-            }
-            else if (generationParams.metadata?.prompt) {
-                const prompt = generationParams.metadata.prompt;
-                console.log('🔍 Analyzing prompt for payment:', prompt);
-
-                const match = prompt.match(/payment\s+structure:\s*([^,\.]+)/i);
-                if (match) {
-                    paymentStructure = match[1].trim().toLowerCase();
-                    console.log(' Payment extracted from prompt:', paymentStructure);
-                }
-            }
-
-            // Map to dropdown values
-            const paymentMapping = {
-                'fixed price': 'fixed',
-                'fixed': 'fixed',
-                'hourly rate': 'hourly',
-                'hourly': 'hourly',
-                'milestone based': 'milestone',
-                'milestone-based': 'milestone',
-                'milestone': 'milestone',
-                'subscription': 'subscription',
-                'lump sum': 'fixed',
-                'lump_sum': 'fixed',
-                'monthly': 'subscription'
-            };
-
-            const mappedPayment = paymentMapping[paymentStructure] || '';
-            console.log('💰 Mapped payment value:', mappedPayment);
-
-            document.getElementById('regenPaymentStructure').value = mappedPayment;
-            console.log('💰 FINAL payment value set:', document.getElementById('regenPaymentStructure').value);
-
-            // Set jurisdiction
-            const jurisdiction = generationParams.jurisdiction || 'Qatar';
-            document.getElementById('regenJurisdiction').value = jurisdiction;
-            console.log('🌍 Jurisdiction:', jurisdiction);
-
-            //  Extract special requirements
-            let specialRequirements = '';
-
-            if (generationParams.metadata?.additional_requirements) {
-                specialRequirements = generationParams.metadata.additional_requirements;
-                console.log(' Special requirements from additional_requirements:', specialRequirements);
-            }
-            else if (generationParams.metadata?.prompt) {
-                const prompt = generationParams.metadata.prompt;
-                console.log('🔍 Analyzing prompt for special requirements:', prompt);
-
-                const match = prompt.match(/Special\s+requirements:\s*(.+?)$/is);
-                if (match) {
-                    specialRequirements = match[1].trim();
-                    console.log(' Special requirements extracted:', specialRequirements);
-                } else {
-                    // If no special requirements section, leave it empty
-                    console.log('⚠️ No special requirements found in prompt');
-                }
-            }
-
-            document.getElementById('regenSpecialRequirements').value = specialRequirements;
-            console.log('📝 FINAL special requirements set:', specialRequirements);
-        } else {
-            console.warn('⚠️ No generation params available');
-        }
-
-        // Show modal
-        const modal = document.getElementById('regenerateContractModal');
-        if (modal) {
-            modal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
+            });
         }
     }
 
+    // Show modal
+    const modal = document.getElementById('regenerateContractModal');
+    modal.style.display = 'flex';
+    
+    console.log('✅ Regenerate modal opened');
+}
 
     function closeRegenerateModal() {
         const modal = document.getElementById('regenerateContractModal');
@@ -13336,111 +13461,164 @@ Generated by CALIM 360 Smart CLM
 
 
 
-    async function submitRegeneration() {
-        console.log('🚀 Starting regeneration process...');
+    function getRegenSelectedClauses() {
+    regenSelectedClauses = [];
+    
+    // Get all checked checkboxes in regenerate modal
+    const checkedBoxes = document.querySelectorAll('#regenClauseSection input[type="checkbox"]:checked');
+    
+    console.log(`📊 Found ${checkedBoxes.length} checked clauses in regen modal`);
+    
+    checkedBoxes.forEach(checkbox => {
+        // Extract clause key from name attribute (remove 'regen_clause_' prefix)
+        const clauseKey = checkbox.name.replace('regen_clause_', '');
+        
+        if (clauseKey && clauseKey !== '') {
+            regenSelectedClauses.push(clauseKey);
+            console.log(`  ✓ Selected: ${clauseKey}`);
+        }
+    });
+    
+    console.log(`📋 Total clauses selected for regeneration: ${regenSelectedClauses.length}`);
+    console.log('📋 Selected clauses array:', regenSelectedClauses);
+    
+    return regenSelectedClauses;
+}
 
-        try {
-            // Get updated values from modal
-            const contractType = document.getElementById('regenContractType').value;
-            const duration = document.getElementById('regenDuration').value;
-            const paymentStructure = document.getElementById('regenPaymentStructure').value;
-            const jurisdiction = document.getElementById('regenJurisdiction').value;
-            const specialRequirements = document.getElementById('regenSpecialRequirements').value;
 
-            // Validate required fields
-            if (!contractType) {
-                showNotification('Please select a contract type', 'error');
-                return;
+async function submitRegeneration() {
+    console.log('🚀 Submitting regeneration request...');
+    console.log('🆔 Using Contract ID:', currentContractId);
+
+    try {
+        // Validate contract ID first
+        if (!currentContractId || currentContractId === 'null' || currentContractId === null) {
+            console.error('❌ Invalid contract ID:', currentContractId);
+            showNotification('Error: Contract ID is missing. Please refresh the page.', 'error');
+            return;
+        }
+
+        // Validate required fields
+        const contractType = document.getElementById('regenContractType').value;
+        const profileType = document.getElementById('regenProfileType').value;
+
+        if (!contractType) {
+            showNotification('Please select a contract type', 'warning');
+            return;
+        }
+
+        if (!profileType) {
+            showNotification('Please select a profile type', 'warning');
+            return;
+        }
+
+        // Get clause selections
+        const selectedClauses = getRegenSelectedClauses();
+        
+        // Get additional fields
+        const additionalRequirements = document.getElementById('regenAdditionalRequirements').value.trim();
+        const paymentTerms = document.getElementById('regenPaymentTerms').value.trim();
+        const duration = document.getElementById('regenDuration').value.trim();
+
+        // Prepare updated generation parameters
+        const updatedParams = {
+            contract_type: contractType,
+            profile_type: profileType,
+            selected_clauses: selectedClauses,
+            clause_descriptions: selectedClauses, // Use same array for descriptions
+            jurisdiction: generationParams?.jurisdiction || "Qatar",
+            language: generationParams?.language || "en",
+            parties: generationParams?.parties || {},
+            contract_value: generationParams?.contract_value,
+            currency: generationParams?.currency,
+            start_date: generationParams?.start_date,
+            end_date: generationParams?.end_date,
+            metadata: {
+                prompt: additionalRequirements || generationParams?.metadata?.prompt || '',
+                additional_requirements: additionalRequirements,
+                payment_terms: paymentTerms,
+                duration: duration
             }
+        };
 
-            if (!jurisdiction) {
-                showNotification('Please select a jurisdiction', 'error');
-                return;
-            }
+        console.log('📤 Updated params being sent:', updatedParams);
+        console.log('🔗 API URL:', `/api/contracts/${currentContractId}/update-metadata`);
 
-            // Show loading state
-            const submitBtn = document.querySelector('#regenerateContractModal .btn-primary');
-            const originalHTML = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="ti ti-loader"></i> Updating...';
+        // Show loading indicator
+        showLoader('Updating contract parameters...');
 
-            // Step 1: Update metadata in database
-            console.log('📝 Step 1: Updating metadata...');
+        // Step 1: Update contract metadata
+        const token = getAuthToken();
+        
+        const updateResponse = await fetch(`/api/contracts/${currentContractId}/update-metadata`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                ai_generation_params: updatedParams
+            })
+        });
 
-            const updatedParams = {
-                ...generationParams,
-                contract_type: contractType,
-                jurisdiction: jurisdiction,
-                metadata: {
-                    ...generationParams.metadata,
-                    duration: duration,
-                    payment_terms: paymentStructure,
-                    additional_requirements: specialRequirements,
-                    prompt: specialRequirements  // Use as prompt too
-                }
-            };
-            //  FIXED: Use standard fetch with auth token
-            const token = getAuthToken();
-            const updateResponse = await fetch(`/api/contracts/${contractId}/update-metadata`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    ai_generation_params: updatedParams
-                })
-            });
+        console.log('📡 Update response status:', updateResponse.status);
 
-            if (!updateResponse.ok) {
-                throw new Error('Failed to update metadata');
-            }
+        if (!updateResponse.ok) {
+            const errorData = await updateResponse.json();
+            console.error('❌ Update failed:', errorData);
+            throw new Error(errorData.detail || 'Failed to update metadata');
+        }
 
-            console.log(' Metadata updated successfully');
+        const updateResult = await updateResponse.json();
+        console.log('✅ Metadata updated successfully:', updateResult);
 
-            // Update local generationParams
-            generationParams = updatedParams;
+        // Update local generationParams
+        generationParams = updatedParams;
 
-            // Close modal
-            closeRegenerateModal();
+        // Close modal
+        closeRegenerateModal();
 
-            // Step 2: Regenerate contract content
-            console.log('🤖 Step 2: Regenerating contract with AI...');
+        hideLoader();
 
-            // Show AI banner
-            showAIBanner();
+        // Step 2: Regenerate contract content
+        console.log('🤖 Regenerating contract with AI...');
 
-            // Clear editor and show loading
-            const editor = document.getElementById('contractContent');
-            if (editor) {
-                editor.innerHTML = `
+        // Show AI banner
+        showAIBanner();
+
+        // Clear editor and show loading
+        const editor = document.getElementById('contractContent');
+        if (editor) {
+            editor.innerHTML = `
                 <div style="text-align: center; padding: 4rem 2rem; color: #666;">
                     <div style="width: 3rem; height: 3rem; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1.5rem;"></div>
                     <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">Regenerating Your Contract</h3>
                     <p style="font-size: 1rem; max-width: 500px; margin: 0 auto;">
-                        AI is regenerating your contract with updated parameters. This may take 30-90 seconds.
+                        AI is regenerating your contract with updated parameters and selected clauses. 
+                        This may take 30-90 seconds...
                     </p>
+                    <div id="streamProgress" style="margin-top: 1.5rem; font-size: 0.875rem; color: var(--primary-color);"></div>
                 </div>
             `;
-            }
-
-            // Start streaming regeneration
-            await startAIStreaming();
-
-            showNotification('Contract regeneration started successfully', 'success');
-
-        } catch (error) {
-            console.error('❌ Regeneration error:', error);
-            showNotification('Failed to regenerate contract: ' + error.message, 'error');
-
-            // Reset button
-            const submitBtn = document.querySelector('#regenerateContractModal .btn-primary');
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="ti ti-refresh"></i> Regenerate Contract';
-            }
         }
+
+        // Call streaming endpoint
+        await startAIStreaming();
+
+        console.log('✅ Contract regeneration initiated');
+
+        showNotification(
+            `Contract regeneration started with ${selectedClauses.length} clause(s) selected`,
+            'success'
+        );
+
+    } catch (error) {
+        hideLoader();
+        console.error('❌ Regeneration error:', error);
+        showNotification('Failed to regenerate contract: ' + error.message, 'error');
     }
+}
 
 
     // Add spinner animation CSS
@@ -14189,6 +14367,25 @@ Generated by CALIM 360 Smart CLM
             });
         }
     });
+
+
+
+/**
+ * Toggle the clause selection section visibility
+ */
+function toggleClauseSection() {
+    const section = document.getElementById('regenClauseSection');
+    const toggleText = document.getElementById('clauseToggleText');
+    
+    if (section.style.display === 'none') {
+        section.style.display = 'block';
+        toggleText.textContent = 'Hide Clause Selection';
+    } else {
+        section.style.display = 'none';
+        toggleText.textContent = 'Show Clause Selection';
+    }
+}
+
 
 </script>
 

@@ -134,20 +134,37 @@ function createChatItem(session) {
     div.dataset.sessionId = session.session_id;
     div.onclick = () => openChat(session.session_id);
     
-    const expertName = session.expert_name || 'Unassigned Expert';
+    // ✅ Handle pending assignment
+    const isPending = session.is_pending_assignment || session.status === 'pending_assignment';
+    const expertName = isPending ? 
+        '🔄 Awaiting Expert Assignment' : 
+        (session.expert_name || 'Unassigned Expert');
+    
     const subject = session.subject || 'No subject';
     const lastMessage = session.last_message || 'No messages yet';
     const time = formatTime(session.updated_at || session.created_at);
     const unreadCount = session.unread_count || 0;
     
+    // ✅ Add pending class for styling
+    if (isPending) {
+        div.classList.add('pending-assignment');
+    }
+    
     div.innerHTML = `
         <div class="chat-item-header">
-            <span class="chat-expert-name">${expertName}</span>
+            <span class="chat-expert-name ${isPending ? 'text-warning' : ''}">
+                ${expertName}
+            </span>
             <span class="chat-time">${time}</span>
         </div>
         <div class="chat-subject">${subject}</div>
-        <div class="chat-preview">${lastMessage}</div>
-        ${unreadCount > 0 ? `<span class="unread-badge">${unreadCount}</span>` : ''}
+        <div class="chat-preview ${isPending ? 'text-muted' : ''}">${lastMessage}</div>
+        ${isPending ? 
+            `<div class="pending-badge">
+                <i class="ti ti-clock"></i> Pending Assignment
+            </div>` : 
+            (unreadCount > 0 ? `<span class="unread-badge">${unreadCount}</span>` : '')
+        }
     `;
     
     return div;
@@ -174,20 +191,65 @@ async function openChat(sessionId) {
         const response = await fetch(`/api/v1/experts/sessions/${sessionId}`);
         const data = await response.json();
         
-        // Update header
-        updateChatHeader(data);
-        
-        // Load messages
-        await loadMessages(sessionId);
-        
-        // Start polling for new messages
-        startMessagePolling();
+        // ✅ Check if pending assignment
+        if (data.is_pending_assignment || !data.expert_id) {
+            updateChatHeaderPending(data);
+            showPendingAssignmentMessage();
+        } else {
+            // Normal flow
+            updateChatHeader(data);
+            await loadMessages(sessionId);
+            startMessagePolling();
+        }
         
     } catch (error) {
-        console.error('Error opening chat:', error);
+        console.error('❌ Error opening chat:', error);
         showError('Failed to load chat');
     }
 }
+
+
+
+function updateChatHeaderPending(sessionData) {
+    document.getElementById('expertName').textContent = 'Awaiting Expert Assignment';
+    document.getElementById('expertSpecialization').textContent = 'Pending';
+    document.getElementById('expertStatus').textContent = 'Finding Expert...';
+    
+    const statusDot = document.getElementById('statusDot');
+    statusDot.className = 'status-dot offline';
+    
+    // Set placeholder avatar
+    const avatar = document.getElementById('expertAvatar');
+    avatar.innerHTML = '🔄';
+    avatar.style.fontSize = '24px';
+}
+
+
+function showPendingAssignmentMessage() {
+    const messagesContainer = document.getElementById('chatMessages');
+    messagesContainer.innerHTML = `
+        <div class="empty-state">
+            <i class="ti ti-clock" style="font-size: 48px; color: #f59f00;"></i>
+            <h4>Expert Assignment Pending</h4>
+            <p>Your consultation request has been received.</p>
+            <p>An expert will be assigned shortly.</p>
+            <button class="btn btn-primary mt-3" onclick="assignExpertToSession('${currentSessionId}')">
+                <i class="ti ti-user-plus"></i> Assign Expert Now
+            </button>
+        </div>
+    `;
+    
+    // Disable message input for pending sessions
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.querySelector('#chatInputArea button');
+    if (messageInput && sendButton) {
+        messageInput.disabled = true;
+        messageInput.placeholder = 'Awaiting expert assignment...';
+        sendButton.disabled = true;
+    }
+}
+
+
 
 // =====================================================
 // UPDATE CHAT HEADER
