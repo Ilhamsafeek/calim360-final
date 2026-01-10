@@ -309,8 +309,18 @@ async function openChat(sessionIdOrEvent) {
     // LOAD MESSAGES
     // =====================================================
 async function loadMessages(sessionId) {
+
+
     try {
-        const response = await fetch(`/api/v1/experts/sessions/${sessionId}/messages`);
+
+        const response = await fetch(`/api/v1/experts/sessions/${sessionId}/messages`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
         
         if (response.status === 401) {
             console.warn('⚠️ Unauthorized access to session messages');
@@ -433,12 +443,15 @@ async function loadMessages(sessionId) {
         if (!message) return;
         
         try {
+
+            
             console.log('📤 Sending message to session:', currentSessionId);
             
             const response = await fetch(`/api/v1/experts/sessions/${currentSessionId}/messages`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
                 body: JSON.stringify({
                     message_content: message,
@@ -478,6 +491,9 @@ async function loadMessages(sessionId) {
             sendMessage();
         }
     }
+
+
+
 
     // =====================================================
     // MESSAGE POLLING
