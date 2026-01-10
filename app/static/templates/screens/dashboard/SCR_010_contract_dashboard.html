@@ -1977,7 +1977,7 @@
                 // No analysis available - redirect to contract editor
                 showNotification('Contract uploaded. Opening editor...', 'success');
                 setTimeout(() => {
-                    window.location.href = `/contracts/edit/${contractId}`;
+                    window.location.href = `/contract/edit/${contractId}`;
                 }, 1500);
             }
         } catch (error) {
@@ -2275,7 +2275,7 @@
     }
 
     function goToContractEditor(contractId) {
-        window.location.href = `/contracts/edit/${contractId}`;
+        window.location.href = `/contract/edit/${contractId}`;
     }
 
     function downloadRiskReport(contractId) {

@@ -145,7 +145,7 @@ async def get_current_user(
         else:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication token"
+                detail="Session Expired. Please login again to Continue."
             )
 
 

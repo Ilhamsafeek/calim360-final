@@ -269,6 +269,7 @@ function buildAIPrompt() {
     const duration = document.getElementById('aiDuration')?.value;
     const paymentStructure = document.getElementById('aiPaymentStructure')?.value;
     const specialRequirements = document.getElementById('aiSpecialRequirements')?.value;
+    const language = document.getElementById('contractLanguage')?.value || 'en';
 
     console.log('🔨 Building AI prompt from inputs...');
     console.log('  Contract Type:', contractType);
@@ -278,6 +279,7 @@ function buildAIPrompt() {
     console.log('  Selected Clauses:', selectedClauses);
 
     let fullPrompt = '';
+    
 
     if (contractType) {
         const contractTypeSelect = document.getElementById('contractTypeSelect');
@@ -288,6 +290,7 @@ function buildAIPrompt() {
     if (duration) fullPrompt += ` with duration: ${duration}`;
     if (paymentStructure) fullPrompt += `, payment structure: ${paymentStructure}`;
     if (specialRequirements) fullPrompt += `. Special requirements: ${specialRequirements}`;
+    if (language === 'ar') fullPrompt += ` in Arabic language`;
     if (selectedClauses.length > 0) {
         fullPrompt += `. Include the following clauses: ${selectedClauses.map(c => c.replace(/_/g, ' ')).join(', ')}`;
     }
@@ -1144,6 +1147,7 @@ async function saveContract() {
             const partyAName = document.getElementById('partyAName')?.value || 'Party A';
             const partyBName = document.getElementById('partyBName')?.value || 'Party B';
             const jurisdiction = document.getElementById('jurisdiction')?.value || 'Qatar';
+            const language = document.getElementById('contractLanguage')?.value || 'en';
 
             // Build AI prompt from modal if exists
             const aiPromptField = document.getElementById('aiPrompt');
@@ -1173,7 +1177,7 @@ async function saveContract() {
                         : selectedClauses
                     ) : {},
                 jurisdiction: jurisdiction,
-                language: 'en',
+                language: language,
                 project_id: projectId && projectId !== 'create_new' && projectId !== ''
                     ? parseInt(projectId)
                     : null,

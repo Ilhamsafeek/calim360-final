@@ -19,12 +19,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', path='css/blockchain-operations.css') }}">
+    <!-- Global Search Styles -->
+    <link rel="stylesheet" href="/static/css/global_search.css">
 
     <!-- Modal Center CSS -->
     <link rel="stylesheet" href="/app/static/css/modal-center.css">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="{{ url_for('static', path='js/blockchain-operations.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
+
+
 
     <!-- Base Styles -->
     <style>
@@ -2747,6 +2751,10 @@
     <!-- Page Specific Scripts -->
     {% block extra_js %}
     <script src="/static/js/common/auth.js"></script>
+
+        <!-- Global Search Script -->
+    <script src="/static/js/global_search.js"></script>
+
     {% endblock %}
 </body>
 

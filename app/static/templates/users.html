@@ -4,815 +4,817 @@
 
 {% block head %}
 <style>
-/* =====================================================
+    /* =====================================================
    USER MANAGEMENT - INLINE STYLES
    ===================================================== */
 
-.content-wrapper {
-    padding: 2rem;
-    max-width: 1400px;
-    margin: 0 auto;
-}
-
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 2px solid var(--border-color);
-}
-
-.header-left {
-    flex: 1;
-}
-
-.page-title {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--text-color);
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 0.5rem;
-}
-
-.page-title i {
-    color: var(--primary-color);
-    font-size: 2rem;
-}
-
-.page-subtitle {
-    color: var(--text-muted);
-    font-size: 0.95rem;
-}
-
-.header-right {
-    display: flex;
-    gap: 1rem;
-}
-
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.stat-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-.stat-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.75rem;
-    color: white;
-}
-
-.stat-icon.bg-primary {
-    background: linear-gradient(135deg, #2762cb, #73B4E0);
-}
-
-.stat-icon.bg-success {
-    background: linear-gradient(135deg, #28a745, #20c997);
-}
-
-.stat-icon.bg-warning {
-    background: linear-gradient(135deg, #ffc107, #ff9800);
-}
-
-.stat-icon.bg-secondary {
-    background: linear-gradient(135deg, #73B4E0, #0dcaf0);
-}
-
-.stat-content {
-    flex: 1;
-}
-
-.stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--text-color);
-    line-height: 1;
-    margin-bottom: 0.25rem;
-}
-
-.stat-label {
-    font-size: 0.875rem;
-    color: var(--text-muted);
-    font-weight: 500;
-}
-
-.filter-bar {
-    background: white;
-    padding: 1.25rem;
-    border-radius: 12px;
-    margin-bottom: 1.5rem;
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.search-box {
-    flex: 1;
-    position: relative;
-    max-width: 400px;
-}
-
-.search-box i {
-    position: absolute;
-    left: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-    font-size: 1.125rem;
-}
-
-.search-box input {
-    width: 100%;
-    padding: 0.75rem 1rem 0.75rem 3rem;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    font-size: 0.95rem;
-    transition: all 0.2s;
-}
-
-.search-box input:focus {
-    outline: none;
-    border-color: #2762cb;
-    box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
-}
-
-.filter-controls {
-    display: flex;
-    gap: 0.75rem;
-}
-
-.filter-select {
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    font-size: 0.95rem;
-    background: white;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.filter-select:focus {
-    outline: none;
-    border-color: #2762cb;
-    box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
-}
-
-.card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    overflow: hidden;
-}
-
-.card-body {
-    padding: 0;
-}
-
-.table-container {
-    overflow-x: auto;
-}
-
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.data-table thead {
-    background: #f8f9fa;
-    border-bottom: 2px solid #e9ecef;
-}
-
-.data-table th {
-    padding: 1rem;
-    text-align: left;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #333;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.data-table tbody tr {
-    border-bottom: 1px solid #e9ecef;
-    transition: background 0.2s;
-}
-
-.data-table tbody tr:hover {
-    background: #f8f9fa;
-}
-
-.data-table td {
-    padding: 1rem;
-    font-size: 0.95rem;
-    color: #333;
-}
-
-.user-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #2762cb, #73B4E0);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 600;
-    font-size: 0.95rem;
-    flex-shrink: 0;
-}
-
-.user-details {
-    flex: 1;
-}
-
-.user-name {
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 0.125rem;
-}
-
-.user-role-badge {
-    font-size: 0.75rem;
-    color: #666;
-}
-
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 0.375rem 0.75rem;
-    border-radius: 6px;
-    font-size: 0.8125rem;
-    font-weight: 600;
-}
-
-.status-badge i {
-    font-size: 0.875rem;
-}
-
-.status-badge.active {
-    background: #d4edda;
-    color: #28a745;
-}
-
-.status-badge.inactive {
-    background: #f8d7da;
-    color: #dc3545;
-}
-
-.status-badge.pending {
-    background: #fff3cd;
-    color: #856404;
-}
-
-.action-buttons {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.btn-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    border: 1px solid #e9ecef;
-    background: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 1.125rem;
-}
-
-.btn-icon:hover {
-    background: #2762cb;
-    border-color: #2762cb;
-    color: white;
-}
-
-.btn-icon.btn-danger:hover {
-    background: #dc3545;
-    border-color: #dc3545;
-    color: white;
-}
-
-.btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.btn-primary {
-    background: #2762cb;
-    color: white;
-}
-
-.btn-primary:hover {
-    background: #1e4fa0;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(39, 98, 203, 0.3);
-}
-
-.btn-secondary {
-    background: #f8f9fa;
-    color: #333;
-    border: 1px solid #e9ecef;
-}
-
-.btn-secondary:hover {
-    background: #e9ecef;
-}
-
-.btn-danger {
-    background: #dc3545;
-    color: white;
-}
-
-.btn-danger:hover {
-    background: #c82333;
-}
-
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 9999;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal.active {
-    display: flex;
-}
-
-.modal-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-}
-
-.modal-container {
-    position: relative;
-    background: white;
-    border-radius: 16px;
-    width: 90%;
-    max-width: 900px;
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    animation: modalSlideIn 0.3s ease-out;
-}
-
-.modal-container.modal-sm {
-    max-width: 500px;
-}
-
-@keyframes modalSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.modal-header {
-    padding: 1.5rem;
-    border-bottom: 1px solid #e9ecef;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.modal-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    color: #333;
-}
-
-.modal-title i {
-    color: #2762cb;
-    font-size: 1.75rem;
-}
-
-.modal-close {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    border: none;
-    background: #f8f9fa;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-
-.modal-close:hover {
-    background: #e9ecef;
-    transform: rotate(90deg);
-}
-
-.modal-body {
-    padding: 1.5rem;
-    overflow-y: auto;
-    flex: 1;
-}
-
-.modal-footer {
-    padding: 1.5rem;
-    border-top: 1px solid #e9ecef;
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-}
-
-.form-section {
-    margin-bottom: 2rem;
-}
-
-.form-section.hidden {
-    display: none;
-}
-
-.section-header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 2px solid #e9ecef;
-}
-
-.section-icon {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, #2762cb, #73B4E0);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.25rem;
-}
-
-.section-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #333;
-}
-
-.form-row {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.25rem;
-    margin-bottom: 1.25rem;
-}
-
-.form-row.single {
-    grid-template-columns: 1fr;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-}
-
-.form-label {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 0.5rem;
-}
-
-.required {
-    color: #dc3545;
-}
-
-.form-input {
-    padding: 0.75rem 1rem;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    transition: all 0.2s;
-}
-
-.form-input:focus {
-    outline: none;
-    border-color: #2762cb;
-    box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
-}
-
-.input-group {
-    display: flex;
-}
-
-.input-prefix {
-    padding: 0.75rem 1rem;
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-right: none;
-    border-radius: 8px 0 0 8px;
-    font-size: 0.95rem;
-    color: #666;
-    font-weight: 600;
-}
-
-.input-group .form-input {
-    border-radius: 0 8px 8px 0;
-}
-
-.password-input-wrapper {
-    position: relative;
-}
-
-.password-toggle {
-    position: absolute;
-    right: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #666;
-    font-size: 1.125rem;
-    padding: 0.25rem;
-}
-
-.password-toggle:hover {
-    color: #2762cb;
-}
-
-.form-hint {
-    font-size: 0.8125rem;
-    color: #666;
-    margin-top: 0.375rem;
-}
-
-.checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    cursor: pointer;
-}
-
-.checkbox-label input[type="checkbox"] {
-    display: none;
-}
-
-.checkbox-custom {
-    width: 20px;
-    height: 20px;
-    border: 2px solid #e9ecef;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-
-.checkbox-label input[type="checkbox"]:checked + .checkbox-custom {
-    background: #2762cb;
-    border-color: #2762cb;
-}
-
-.checkbox-label input[type="checkbox"]:checked + .checkbox-custom::after {
-    content: '✓';
-    color: white;
-    font-size: 0.875rem;
-    font-weight: 700;
-}
-
-.checkbox-text {
-    font-size: 0.95rem;
-    color: #333;
-}
-
-.loading-row td {
-    text-align: center;
-    padding: 3rem;
-}
-
-.loading-spinner {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    color: #666;
-    font-size: 1rem;
-}
-
-.loading-spinner i {
-    font-size: 1.5rem;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.empty-state {
-    text-align: center;
-    padding: 3rem;
-}
-
-.empty-state i {
-    font-size: 4rem;
-    color: #666;
-    opacity: 0.5;
-    margin-bottom: 1rem;
-}
-
-.empty-state-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 0.5rem;
-}
-
-.empty-state-text {
-    color: #666;
-    margin-bottom: 1.5rem;
-}
-
-.notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: white;
-    padding: 1rem 1.5rem;
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    min-width: 300px;
-    max-width: 500px;
-    z-index: 10000;
-    opacity: 0;
-    transform: translateX(400px);
-    transition: all 0.3s ease-out;
-}
-
-.notification.show {
-    opacity: 1;
-    transform: translateX(0);
-}
-
-.notification-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    flex-shrink: 0;
-}
-
-.notification-success .notification-icon {
-    background: #d4edda;
-    color: #28a745;
-}
-
-.notification-error .notification-icon {
-    background: #f8d7da;
-    color: #dc3545;
-}
-
-.notification-warning .notification-icon {
-    background: #fff3cd;
-    color: #856404;
-}
-
-.notification-info .notification-icon {
-    background: #d1ecf1;
-    color: #0c5460;
-}
-
-.notification-message {
-    flex: 1;
-    font-size: 0.95rem;
-    color: #333;
-    font-weight: 500;
-}
-
-.badge {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.badge-danger {
-    background: #f8d7da;
-    color: #dc3545;
-}
-
-.badge-warning {
-    background: #fff3cd;
-    color: #856404;
-}
-
-.badge-primary {
-    background: rgba(39, 98, 203, 0.1);
-    color: #2762cb;
-}
-
-.badge-secondary {
-    background: rgba(115, 180, 224, 0.1);
-    color: #73B4E0;
-}
-
-.badge-success {
-    background: #d4edda;
-    color: #28a745;
-}
-
-@media (max-width: 768px) {
     .content-wrapper {
-        padding: 1rem;
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
     }
 
     .page-header {
-        flex-direction: column;
-        align-items: flex-start;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .header-left {
+        flex: 1;
+    }
+
+    .page-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-title i {
+        color: var(--primary-color);
+        font-size: 2rem;
+    }
+
+    .page-subtitle {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+    }
+
+    .header-right {
+        display: flex;
         gap: 1rem;
     }
 
     .stats-grid {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        color: white;
+    }
+
+    .stat-icon.bg-primary {
+        background: linear-gradient(135deg, #2762cb, #73B4E0);
+    }
+
+    .stat-icon.bg-success {
+        background: linear-gradient(135deg, #28a745, #20c997);
+    }
+
+    .stat-icon.bg-warning {
+        background: linear-gradient(135deg, #ffc107, #ff9800);
+    }
+
+    .stat-icon.bg-secondary {
+        background: linear-gradient(135deg, #73B4E0, #0dcaf0);
+    }
+
+    .stat-content {
+        flex: 1;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-color);
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        font-weight: 500;
     }
 
     .filter-bar {
-        flex-direction: column;
-        align-items: stretch;
+        background: white;
+        padding: 1.25rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     }
 
     .search-box {
-        max-width: 100%;
+        flex: 1;
+        position: relative;
+        max-width: 400px;
     }
 
-    .form-row {
-        grid-template-columns: 1fr;
+    .search-box i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-size: 1.125rem;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 3rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+    }
+
+    .search-box input:focus {
+        outline: none;
+        border-color: #2762cb;
+        box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
+    }
+
+    .filter-controls {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .filter-select {
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 0.95rem;
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: #2762cb;
+        box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
+    }
+
+    .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+    }
+
+    .card-body {
+        padding: 0;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .data-table thead {
+        background: #f8f9fa;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .data-table th {
+        padding: 1rem;
+        text-align: left;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #333;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .data-table tbody tr {
+        border-bottom: 1px solid #e9ecef;
+        transition: background 0.2s;
+    }
+
+    .data-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    .data-table td {
+        padding: 1rem;
+        font-size: 0.95rem;
+        color: #333;
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #2762cb, #73B4E0);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.95rem;
+        flex-shrink: 0;
+    }
+
+    .user-details {
+        flex: 1;
+    }
+
+    .user-name {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.125rem;
+    }
+
+    .user-role-badge {
+        font-size: 0.75rem;
+        color: #666;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+    }
+
+    .status-badge i {
+        font-size: 0.875rem;
+    }
+
+    .status-badge.active {
+        background: #d4edda;
+        color: #28a745;
+    }
+
+    .status-badge.inactive {
+        background: #f8d7da;
+        color: #dc3545;
+    }
+
+    .status-badge.pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 1.125rem;
+    }
+
+    .btn-icon:hover {
+        background: #2762cb;
+        border-color: #2762cb;
+        color: white;
+    }
+
+    .btn-icon.btn-danger:hover {
+        background: #dc3545;
+        border-color: #dc3545;
+        color: white;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary {
+        background: #2762cb;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #1e4fa0;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(39, 98, 203, 0.3);
+    }
+
+    .btn-secondary {
+        background: #f8f9fa;
+        color: #333;
+        border: 1px solid #e9ecef;
+    }
+
+    .btn-secondary:hover {
+        background: #e9ecef;
+    }
+
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background: #c82333;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal.active {
+        display: flex;
+    }
+
+    .modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
     }
 
     .modal-container {
-        width: 95%;
-        max-height: 95vh;
+        position: relative;
+        background: white;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 900px;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: modalSlideIn 0.3s ease-out;
     }
-}
+
+    .modal-container.modal-sm {
+        max-width: 500px;
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modal-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .modal-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: #333;
+    }
+
+    .modal-title i {
+        color: #2762cb;
+        font-size: 1.75rem;
+    }
+
+    .modal-close {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: none;
+        background: #f8f9fa;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+        background: #e9ecef;
+        transform: rotate(90deg);
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .modal-footer {
+        padding: 1.5rem;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+    }
+
+    .form-section.hidden {
+        display: none;
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .section-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #2762cb, #73B4E0);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+    }
+
+    .section-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .form-row.single {
+        grid-template-columns: 1fr;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+
+    .required {
+        color: #dc3545;
+    }
+
+    .form-input {
+        padding: 0.75rem 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #2762cb;
+        box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
+    }
+
+    .input-group {
+        display: flex;
+    }
+
+    .input-prefix {
+        padding: 0.75rem 1rem;
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-right: none;
+        border-radius: 8px 0 0 8px;
+        font-size: 0.95rem;
+        color: #666;
+        font-weight: 600;
+    }
+
+    .input-group .form-input {
+        border-radius: 0 8px 8px 0;
+    }
+
+    .password-input-wrapper {
+        position: relative;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #666;
+        font-size: 1.125rem;
+        padding: 0.25rem;
+    }
+
+    .password-toggle:hover {
+        color: #2762cb;
+    }
+
+    .form-hint {
+        font-size: 0.8125rem;
+        color: #666;
+        margin-top: 0.375rem;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        cursor: pointer;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+        display: none;
+    }
+
+    .checkbox-custom {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #e9ecef;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .checkbox-label input[type="checkbox"]:checked+.checkbox-custom {
+        background: #2762cb;
+        border-color: #2762cb;
+    }
+
+    .checkbox-label input[type="checkbox"]:checked+.checkbox-custom::after {
+        content: '✓';
+        color: white;
+        font-size: 0.875rem;
+        font-weight: 700;
+    }
+
+    .checkbox-text {
+        font-size: 0.95rem;
+        color: #333;
+    }
+
+    .loading-row td {
+        text-align: center;
+        padding: 3rem;
+    }
+
+    .loading-spinner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        color: #666;
+        font-size: 1rem;
+    }
+
+    .loading-spinner i {
+        font-size: 1.5rem;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: #666;
+        opacity: 0.5;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state-text {
+        color: #666;
+        margin-bottom: 1.5rem;
+    }
+
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: white;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        min-width: 300px;
+        max-width: 500px;
+        z-index: 10000;
+        opacity: 0;
+        transform: translateX(400px);
+        transition: all 0.3s ease-out;
+    }
+
+    .notification.show {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .notification-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .notification-success .notification-icon {
+        background: #d4edda;
+        color: #28a745;
+    }
+
+    .notification-error .notification-icon {
+        background: #f8d7da;
+        color: #dc3545;
+    }
+
+    .notification-warning .notification-icon {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .notification-info .notification-icon {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .notification-message {
+        flex: 1;
+        font-size: 0.95rem;
+        color: #333;
+        font-weight: 500;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .badge-danger {
+        background: #f8d7da;
+        color: #dc3545;
+    }
+
+    .badge-warning {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .badge-primary {
+        background: rgba(39, 98, 203, 0.1);
+        color: #2762cb;
+    }
+
+    .badge-secondary {
+        background: rgba(115, 180, 224, 0.1);
+        color: #73B4E0;
+    }
+
+    .badge-success {
+        background: #d4edda;
+        color: #28a745;
+    }
+
+    @media (max-width: 768px) {
+        .content-wrapper {
+            padding: 1rem;
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .search-box {
+            max-width: 100%;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+
+        .modal-container {
+            width: 95%;
+            max-height: 95vh;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -903,7 +905,7 @@
                 <option value="sub_contractor">Sub-Contractor</option>
                 <option value="expert">Expert</option>
             </select>
-           
+
         </div>
     </div>
 
@@ -949,7 +951,7 @@
     <div class="modal-container">
         <div class="modal-header">
             <h2 class="modal-title">
-               
+
                 <span id="modalTitle">Add New User</span>
             </h2>
             <button class="modal-close" id="closeModalBtn">
@@ -959,7 +961,7 @@
         <div class="modal-body">
             <form id="userForm">
                 <input type="hidden" id="userId">
-                
+
                 <!-- Personal Information -->
                 <div class="form-section">
                     <div class="section-header">
@@ -968,7 +970,7 @@
                         </div>
                         <div class="section-title">Personal Information</div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">
@@ -1022,7 +1024,7 @@
                         </div>
                         <div class="section-title">Account Information</div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">
@@ -1079,7 +1081,7 @@
                         </div>
                         <div class="section-title">Organizational Information</div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Department</label>
@@ -1094,8 +1096,8 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">User Type</label>
-                            <select id="userType" class="form-input">
+                            <label class="form-label">User Type <span class="required">*</span></label>
+                            <select id="userType" class="form-input" required>
                                 <option value="">Select Type</option>
                                 <option value="client">Client</option>
                                 <option value="consultant">Consultant</option>
@@ -1115,11 +1117,12 @@
                         </div>
                         <div class="section-title">Expert Profile Information</div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Specialization</label>
-                            <input type="text" id="specialization" class="form-input" placeholder="e.g., Construction Law, QFCRA Compliance">
+                            <input type="text" id="specialization" class="form-input"
+                                placeholder="e.g., Construction Law, QFCRA Compliance">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Years of Experience</label>
@@ -1134,7 +1137,8 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">License Authority</label>
-                            <input type="text" id="licenseAuthority" class="form-input" placeholder="e.g., Qatar Bar Association">
+                            <input type="text" id="licenseAuthority" class="form-input"
+                                placeholder="e.g., Qatar Bar Association">
                         </div>
                     </div>
 
@@ -1145,7 +1149,8 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Expertise Areas</label>
-                            <input type="text" id="expertiseAreas" class="form-input" placeholder="QFCRA, Construction, Arbitration">
+                            <input type="text" id="expertiseAreas" class="form-input"
+                                placeholder="QFCRA, Construction, Arbitration">
                             <small class="form-hint">Separate multiple areas with commas</small>
                         </div>
                     </div>
@@ -1153,7 +1158,8 @@
                     <div class="form-row single">
                         <div class="form-group">
                             <label class="form-label">Professional Bio</label>
-                            <textarea id="bio" class="form-input" rows="4" placeholder="Brief description of expertise and experience"></textarea>
+                            <textarea id="bio" class="form-input" rows="4"
+                                placeholder="Brief description of expertise and experience"></textarea>
                         </div>
                     </div>
 
@@ -1193,7 +1199,7 @@
                         </div>
                         <div class="section-title">Preferences</div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Language Preference</label>
@@ -1277,119 +1283,119 @@
 
 {% block extra_js %}
 <script>
-/* =====================================================
-   USER MANAGEMENT - INLINE JAVASCRIPT
-   ===================================================== */
+    /* =====================================================
+       USER MANAGEMENT - INLINE JAVASCRIPT
+       ===================================================== */
 
-let allUsers = [];
-let currentUserId = null;
+    let allUsers = [];
+    let currentUserId = null;
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log(' User Management initialized');
-    initializeUserManagement();
-});
-
-function initializeUserManagement() {
-    loadUsers();
-    setupEventListeners();
-}
-
-function setupEventListeners() {
-    document.getElementById('addUserBtn').addEventListener('click', () => openUserModal());
-    document.getElementById('closeModalBtn').addEventListener('click', closeUserModal);
-    document.getElementById('cancelBtn').addEventListener('click', closeUserModal);
-    document.getElementById('closeDeleteModalBtn').addEventListener('click', closeDeleteModal);
-    document.getElementById('cancelDeleteBtn').addEventListener('click', closeDeleteModal);
-    
-    document.getElementById('saveUserBtn').addEventListener('click', saveUser);
-    document.getElementById('confirmDeleteBtn').addEventListener('click', deleteUser);
-    
-    document.getElementById('searchUsers').addEventListener('input', filterUsers);
-    document.getElementById('filterStatus').addEventListener('change', filterUsers);
-    document.getElementById('filterRole').addEventListener('change', filterUsers);
-    document.getElementById('filterType').addEventListener('change', filterUsers);
-    
-    document.getElementById('togglePassword').addEventListener('click', togglePasswordVisibility);
-    document.getElementById('toggleConfirmPassword').addEventListener('click', toggleConfirmPasswordVisibility);
-    
-    document.getElementById('exportUsersBtn').addEventListener('click', exportUsers);
-    
-    document.getElementById('selectAll').addEventListener('change', toggleSelectAll);
-    
-    // Show/hide expert profile section based on user type
-    document.getElementById('userType').addEventListener('change', function() {
-        const expertSection = document.getElementById('expertProfileSection');
-        if (this.value === 'expert') {
-            expertSection.classList.remove('hidden');
-        } else {
-            expertSection.classList.add('hidden');
-        }
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log(' User Management initialized');
+        initializeUserManagement();
     });
-    
-    // Auto-generate username from email
-    document.getElementById('email').addEventListener('input', function() {
-        if (!document.getElementById('userId').value) {
-            document.getElementById('username').value = this.value.split('@')[0];
-        }
-    });
-    
-    document.querySelector('#userModal .modal-overlay').addEventListener('click', closeUserModal);
-    document.querySelector('#deleteModal .modal-overlay').addEventListener('click', closeDeleteModal);
-}
 
-async function loadUsers() {
-    try {
-        const response = await fetch('/api/users/company', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include'
+    function initializeUserManagement() {
+        loadUsers();
+        setupEventListeners();
+    }
+
+    function setupEventListeners() {
+        document.getElementById('addUserBtn').addEventListener('click', () => openUserModal());
+        document.getElementById('closeModalBtn').addEventListener('click', closeUserModal);
+        document.getElementById('cancelBtn').addEventListener('click', closeUserModal);
+        document.getElementById('closeDeleteModalBtn').addEventListener('click', closeDeleteModal);
+        document.getElementById('cancelDeleteBtn').addEventListener('click', closeDeleteModal);
+
+        document.getElementById('saveUserBtn').addEventListener('click', saveUser);
+        document.getElementById('confirmDeleteBtn').addEventListener('click', deleteUser);
+
+        document.getElementById('searchUsers').addEventListener('input', filterUsers);
+        document.getElementById('filterStatus').addEventListener('change', filterUsers);
+        document.getElementById('filterRole').addEventListener('change', filterUsers);
+        document.getElementById('filterType').addEventListener('change', filterUsers);
+
+        document.getElementById('togglePassword').addEventListener('click', togglePasswordVisibility);
+        document.getElementById('toggleConfirmPassword').addEventListener('click', toggleConfirmPasswordVisibility);
+
+        document.getElementById('exportUsersBtn').addEventListener('click', exportUsers);
+
+        document.getElementById('selectAll').addEventListener('change', toggleSelectAll);
+
+        // Show/hide expert profile section based on user type
+        document.getElementById('userType').addEventListener('change', function () {
+            const expertSection = document.getElementById('expertProfileSection');
+            if (this.value === 'expert') {
+                expertSection.classList.remove('hidden');
+            } else {
+                expertSection.classList.add('hidden');
+            }
         });
-        
-        if (response.status === 401 || response.status === 403) {
-            window.location.href = '/login?redirect=/users';
+
+        // Auto-generate username from email
+        document.getElementById('email').addEventListener('input', function () {
+            if (!document.getElementById('userId').value) {
+                document.getElementById('username').value = this.value.split('@')[0];
+            }
+        });
+
+        document.querySelector('#userModal .modal-overlay').addEventListener('click', closeUserModal);
+        document.querySelector('#deleteModal .modal-overlay').addEventListener('click', closeDeleteModal);
+    }
+
+    async function loadUsers() {
+        try {
+            const response = await fetch('/api/users/company', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                window.location.href = '/login?redirect=/users';
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error('Failed to load users');
+            }
+
+            const data = await response.json();
+            // Filter out deleted users (is_active = False with .deleted in email)
+            allUsers = (data.users || []).filter(u => !u.email.includes('.deleted'));
+
+            updateStats(allUsers);
+            renderUsers(allUsers);
+        } catch (error) {
+            console.error('Error loading users:', error);
+            showNotification('Failed to load users. Please try logging in again.', 'error');
+            renderEmptyState();
+        }
+    }
+
+    function updateStats(users) {
+        const totalUsers = users.length;
+        const activeUsers = users.filter(u => u.is_active && u.is_verified).length;
+        const pendingUsers = users.filter(u => !u.is_verified).length;
+        const expertUsers = users.filter(u => u.user_type === 'expert').length;
+
+        document.getElementById('totalUsers').textContent = totalUsers;
+        document.getElementById('activeUsers').textContent = activeUsers;
+        document.getElementById('pendingUsers').textContent = pendingUsers;
+        document.getElementById('expertUsers').textContent = expertUsers;
+    }
+
+    function renderUsers(users) {
+        const tbody = document.getElementById('usersTableBody');
+
+        if (users.length === 0) {
+            renderEmptyState();
             return;
         }
-        
-        if (!response.ok) {
-            throw new Error('Failed to load users');
-        }
-        
-        const data = await response.json();
-        // Filter out deleted users (is_active = False with .deleted in email)
-        allUsers = (data.users || []).filter(u => !u.email.includes('.deleted'));
-        
-        updateStats(allUsers);
-        renderUsers(allUsers);
-    } catch (error) {
-        console.error('Error loading users:', error);
-        showNotification('Failed to load users. Please try logging in again.', 'error');
-        renderEmptyState();
-    }
-}
 
-function updateStats(users) {
-    const totalUsers = users.length;
-    const activeUsers = users.filter(u => u.is_active && u.is_verified).length;
-    const pendingUsers = users.filter(u => !u.is_verified).length;
-    const expertUsers = users.filter(u => u.user_type === 'expert').length;
-    
-    document.getElementById('totalUsers').textContent = totalUsers;
-    document.getElementById('activeUsers').textContent = activeUsers;
-    document.getElementById('pendingUsers').textContent = pendingUsers;
-    document.getElementById('expertUsers').textContent = expertUsers;
-}
-
-function renderUsers(users) {
-    const tbody = document.getElementById('usersTableBody');
-    
-    if (users.length === 0) {
-        renderEmptyState();
-        return;
-    }
-    
-    tbody.innerHTML = users.map(user => `
+        tbody.innerHTML = users.map(user => `
         <tr>
             <td>
                 <input type="checkbox" class="user-checkbox" value="${user.id}">
@@ -1433,11 +1439,11 @@ function renderUsers(users) {
             </td>
         </tr>
     `).join('');
-}
+    }
 
-function renderEmptyState() {
-    const tbody = document.getElementById('usersTableBody');
-    tbody.innerHTML = `
+    function renderEmptyState() {
+        const tbody = document.getElementById('usersTableBody');
+        tbody.innerHTML = `
         <tr>
             <td colspan="9">
                 <div class="empty-state">
@@ -1454,518 +1460,518 @@ function renderEmptyState() {
             </td>
         </tr>
     `;
-}
-
-function getInitials(firstName, lastName) {
-    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
-}
-
-function getRoleBadgeColor(role) {
-    const colors = {
-        'admin': 'danger',
-        'manager': 'warning',
-        'user': 'primary',
-        'viewer': 'secondary'
-    };
-    return colors[role] || 'secondary';
-}
-
-function getTypeBadgeColor(type) {
-    const colors = {
-        'expert': 'success',
-        'consultant': 'primary',
-        'contractor': 'warning',
-        'client': 'secondary',
-        'sub_contractor': 'warning'
-    };
-    return colors[type] || 'secondary';
-}
-
-function formatRole(role) {
-    if (!role) return 'User';
-    return role.charAt(0).toUpperCase() + role.slice(1);
-}
-
-function formatType(type) {
-    if (!type) return 'N/A';
-    if (type === 'sub_contractor') return 'Sub-Contractor';
-    return type.charAt(0).toUpperCase() + type.slice(1);
-}
-
-function renderStatusBadge(user) {
-    if (user.is_active && user.is_verified) {
-        return '<span class="status-badge active"><i class="ti ti-check"></i> Active</span>';
-    } else if (!user.is_verified) {
-        return '<span class="status-badge pending"><i class="ti ti-clock"></i> Email Activation Pending</span>';
-    } else {
-        return '<span class="status-badge inactive"><i class="ti ti-x"></i> Inactive</span>';
     }
-}
 
-function formatLastActive(lastLogin) {
-    if (!lastLogin) return 'Never';
-    
-    const date = new Date(lastLogin);
-    const now = new Date();
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    
-    return date.toLocaleDateString();
-}
-
-function openUserModal(userId = null) {
-    currentUserId = userId;
-    const modal = document.getElementById('userModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const expertSection = document.getElementById('expertProfileSection');
-    const passwordField = document.getElementById('password');
-    const confirmPasswordField = document.getElementById('confirmPassword');
-    const passwordRequired = document.getElementById('passwordRequired');
-    const confirmPasswordRequired = document.getElementById('confirmPasswordRequired');
-    
-    if (userId) {
-        modalTitle.innerHTML = '<i class="ti ti-user-edit"></i> Edit User';
-        passwordField.required = false;
-        confirmPasswordField.required = false;
-        passwordRequired.style.display = 'none';
-        confirmPasswordRequired.style.display = 'none';
-        passwordField.placeholder = 'Leave blank to keep current password';
-        confirmPasswordField.placeholder = 'Leave blank to keep current password';
-        loadUserData(userId);
-    } else {
-        modalTitle.innerHTML = '<i class="ti ti-user-plus"></i> Add New User';
-        document.getElementById('userForm').reset();
-        document.getElementById('userId').value = '';
-        expertSection.classList.add('hidden');
-        passwordField.required = true;
-        confirmPasswordField.required = true;
-        passwordRequired.style.display = 'inline';
-        confirmPasswordRequired.style.display = 'inline';
-        passwordField.placeholder = '';
-        confirmPasswordField.placeholder = '';
+    function getInitials(firstName, lastName) {
+        return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
     }
-    
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
 
-function closeUserModal() {
-    const modal = document.getElementById('userModal');
-    modal.classList.remove('active');
-    document.body.style.overflow = '';
-    document.getElementById('userForm').reset();
-    document.getElementById('expertProfileSection').classList.add('hidden');
-    currentUserId = null;
-}
-
-async function loadUserData(userId) {
-    try {
-        console.log('🔍 Loading user data for ID:', userId);
-        
-        //  FIXED: Correct endpoint
-        const response = await fetch(`/api/users/${userId}`, {
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include'
-        });
-        
-        console.log('📡 Response status:', response.status);
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(' API Error:', errorText);
-            throw new Error('Failed to load user data');
-        }
-        
-        const result = await response.json();
-        console.log('📦 Full API Response:', result);
-        
-        // Handle both response formats
-        const user = result.data || result;
-        console.log('👤 User object:', user);
-        
-        // Populate basic user fields
-        document.getElementById('userId').value = user.id;
-        document.getElementById('firstName').value = user.first_name || '';
-        document.getElementById('lastName').value = user.last_name || '';
-        document.getElementById('email').value = user.email || '';
-        document.getElementById('mobileNumber').value = user.mobile_number || '';
-        document.getElementById('qidNumber').value = user.qid_number || '';
-        document.getElementById('jobTitle').value = user.job_title || '';
-        document.getElementById('username').value = user.username || '';
-        document.getElementById('userRole').value = user.user_role || '';
-        document.getElementById('department').value = user.department || '';
-        document.getElementById('userType').value = user.user_type || '';
-        document.getElementById('languagePreference').value = user.language_preference || 'en';
-        document.getElementById('timezone').value = user.timezone || 'Asia/Qatar';
-        document.getElementById('isActive').checked = user.is_active !== false;
-        
-        console.log(' All form fields populated');
-        
-        // Load expert profile if user is an expert
-        if (user.user_type === 'expert') {
-            console.log('🎓 User is expert type, loading expert profile...');
-            document.getElementById('expertProfileSection').classList.remove('hidden');
-            await loadExpertProfile(user.id);
-        } else {
-            console.log('ℹ️ User is not expert type');
-            document.getElementById('expertProfileSection').classList.add('hidden');
-        }
-        
-    } catch (error) {
-        console.error(' Error loading user data:', error);
-        showNotification('Failed to load user data: ' + error.message, 'error');
-    }
-}
-
-async function loadExpertProfile(userId) {
-    try {
-        console.log('🎓 Fetching expert profile for user:', userId);
-        
-        //  FIXED: Correct endpoint
-        const response = await fetch(`/api/users/expert-profiles/${userId}`, {
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include'
-        });
-        
-        console.log('📡 Expert profile response status:', response.status);
-        
-        if (response.ok) {
-            const profile = await response.json();
-            console.log('📋 Expert profile data:', profile);
-            
-            // Populate expert profile fields
-            document.getElementById('specialization').value = profile.specialization || '';
-            document.getElementById('yearsOfExperience').value = profile.years_of_experience || '';
-            document.getElementById('licenseNumber').value = profile.license_number || '';
-            document.getElementById('licenseAuthority').value = profile.license_authority || '';
-            document.getElementById('hourlyRate').value = profile.hourly_rate || '';
-            document.getElementById('expertiseAreas').value = profile.expertise_areas || '';
-            document.getElementById('bio').value = profile.bio || '';
-            document.getElementById('qfcraCertified').checked = profile.qfcra_certified || false;
-            document.getElementById('qidVerified').checked = profile.qid_verified || false;
-            document.getElementById('isAvailable').checked = profile.is_available !== false;
-            
-            console.log(' Expert profile fields populated');
-        } else {
-            console.log('ℹ️ No expert profile found');
-        }
-    } catch (error) {
-        console.log('ℹ️ No existing expert profile:', error.message);
-    }
-}
-
-async function saveUser(e) {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-        return;
-    }
-    
-    const formData = {
-        first_name: document.getElementById('firstName').value.trim(),
-        last_name: document.getElementById('lastName').value.trim(),
-        email: document.getElementById('email').value.trim(),
-        mobile_number: document.getElementById('mobileNumber').value.trim(),
-        qid_number: document.getElementById('qidNumber').value.trim() || null,
-        job_title: document.getElementById('jobTitle').value.trim() || null,
-        username: document.getElementById('username').value.trim(),
-        user_role: document.getElementById('userRole').value,
-        department: document.getElementById('department').value || null,
-        user_type: document.getElementById('userType').value || null,
-        language_preference: document.getElementById('languagePreference').value,
-        timezone: document.getElementById('timezone').value,
-        is_active: document.getElementById('isActive').checked,
-        send_welcome_email: document.getElementById('sendWelcomeEmail').checked
-    };
-    
-    // Add password if provided
-    const password = document.getElementById('password').value;
-    if (password) {
-        formData.password = password;
-    }
-    
-    // Add expert profile data if user type is expert
-    if (formData.user_type === 'expert') {
-        formData.expert_profile = {
-            specialization: document.getElementById('specialization').value.trim() || null,
-            years_of_experience: document.getElementById('yearsOfExperience').value ? parseInt(document.getElementById('yearsOfExperience').value) : null,
-            license_number: document.getElementById('licenseNumber').value.trim() || null,
-            license_authority: document.getElementById('licenseAuthority').value.trim() || null,
-            hourly_rate: document.getElementById('hourlyRate').value ? parseFloat(document.getElementById('hourlyRate').value) : null,
-            expertise_areas: document.getElementById('expertiseAreas').value.trim() || null,
-            bio: document.getElementById('bio').value.trim() || null,
-            qfcra_certified: document.getElementById('qfcraCertified').checked,
-            qid_verified: document.getElementById('qidVerified').checked,
-            is_available: document.getElementById('isAvailable').checked
+    function getRoleBadgeColor(role) {
+        const colors = {
+            'admin': 'danger',
+            'manager': 'warning',
+            'user': 'primary',
+            'viewer': 'secondary'
         };
+        return colors[role] || 'secondary';
     }
-    
-    try {
-        const url = currentUserId 
-            ? `/api/users/${currentUserId}` 
-            : '/api/users/create';
-        
-        const method = currentUserId ? 'PUT' : 'POST';
-        
-        const response = await fetch(url, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify(formData)
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Failed to save user');
-        }
-        
-        const result = await response.json();
-        
-        showNotification(
-            currentUserId ? 'User updated successfully' : 'User created successfully',
-            'success'
-        );
-        
-        closeUserModal();
-        await loadUsers();
-        
-    } catch (error) {
-        console.error('Error saving user:', error);
-        showNotification(error.message, 'error');
-    }
-}
 
-function validateForm() {
-    const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-    
-    // Only validate password if it's provided
-    if (password || confirmPassword) {
-        if (password !== confirmPassword) {
-            showNotification('Passwords do not match', 'error');
-            return false;
+    function getTypeBadgeColor(type) {
+        const colors = {
+            'expert': 'success',
+            'consultant': 'primary',
+            'contractor': 'warning',
+            'client': 'secondary',
+            'sub_contractor': 'warning'
+        };
+        return colors[type] || 'secondary';
+    }
+
+    function formatRole(role) {
+        if (!role) return 'User';
+        return role.charAt(0).toUpperCase() + role.slice(1);
+    }
+
+    function formatType(type) {
+        if (!type) return 'N/A';
+        if (type === 'sub_contractor') return 'Sub-Contractor';
+        return type.charAt(0).toUpperCase() + type.slice(1);
+    }
+
+    function renderStatusBadge(user) {
+        if (user.is_active && user.is_verified) {
+            return '<span class="status-badge active"><i class="ti ti-check"></i> Active</span>';
+        } else if (!user.is_verified) {
+            return '<span class="status-badge pending"><i class="ti ti-clock"></i> Email Activation Pending</span>';
+        } else {
+            return '<span class="status-badge inactive"><i class="ti ti-x"></i> Inactive</span>';
         }
-        
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-        if (!passwordRegex.test(password)) {
+    }
+
+    function formatLastActive(lastLogin) {
+        if (!lastLogin) return 'Never';
+
+        const date = new Date(lastLogin);
+        const now = new Date();
+        const diffTime = Math.abs(now - date);
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) return 'Today';
+        if (diffDays === 1) return 'Yesterday';
+        if (diffDays < 7) return `${diffDays} days ago`;
+        if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+
+        return date.toLocaleDateString();
+    }
+
+    function openUserModal(userId = null) {
+        currentUserId = userId;
+        const modal = document.getElementById('userModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const expertSection = document.getElementById('expertProfileSection');
+        const passwordField = document.getElementById('password');
+        const confirmPasswordField = document.getElementById('confirmPassword');
+        const passwordRequired = document.getElementById('passwordRequired');
+        const confirmPasswordRequired = document.getElementById('confirmPasswordRequired');
+
+        if (userId) {
+            modalTitle.innerHTML = '<i class="ti ti-user-edit"></i> Edit User';
+            passwordField.required = false;
+            confirmPasswordField.required = false;
+            passwordRequired.style.display = 'none';
+            confirmPasswordRequired.style.display = 'none';
+            passwordField.placeholder = 'Leave blank to keep current password';
+            confirmPasswordField.placeholder = 'Leave blank to keep current password';
+            loadUserData(userId);
+        } else {
+            modalTitle.innerHTML = '<i class="ti ti-user-plus"></i> Add New User';
+            document.getElementById('userForm').reset();
+            document.getElementById('userId').value = '';
+            expertSection.classList.add('hidden');
+            passwordField.required = true;
+            confirmPasswordField.required = true;
+            passwordRequired.style.display = 'inline';
+            confirmPasswordRequired.style.display = 'inline';
+            passwordField.placeholder = '';
+            confirmPasswordField.placeholder = '';
+        }
+
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeUserModal() {
+        const modal = document.getElementById('userModal');
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+        document.getElementById('userForm').reset();
+        document.getElementById('expertProfileSection').classList.add('hidden');
+        currentUserId = null;
+    }
+
+    async function loadUserData(userId) {
+        try {
+            console.log('🔍 Loading user data for ID:', userId);
+
+            //  FIXED: Correct endpoint
+            const response = await fetch(`/api/users/${userId}`, {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            console.log('📡 Response status:', response.status);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(' API Error:', errorText);
+                throw new Error('Failed to load user data');
+            }
+
+            const result = await response.json();
+            console.log('📦 Full API Response:', result);
+
+            // Handle both response formats
+            const user = result.data || result;
+            console.log('👤 User object:', user);
+
+            // Populate basic user fields
+            document.getElementById('userId').value = user.id;
+            document.getElementById('firstName').value = user.first_name || '';
+            document.getElementById('lastName').value = user.last_name || '';
+            document.getElementById('email').value = user.email || '';
+            document.getElementById('mobileNumber').value = user.mobile_number || '';
+            document.getElementById('qidNumber').value = user.qid_number || '';
+            document.getElementById('jobTitle').value = user.job_title || '';
+            document.getElementById('username').value = user.username || '';
+            document.getElementById('userRole').value = user.user_role || '';
+            document.getElementById('department').value = user.department || '';
+            document.getElementById('userType').value = user.user_type || '';
+            document.getElementById('languagePreference').value = user.language_preference || 'en';
+            document.getElementById('timezone').value = user.timezone || 'Asia/Qatar';
+            document.getElementById('isActive').checked = user.is_active !== false;
+
+            console.log(' All form fields populated');
+
+            // Load expert profile if user is an expert
+            if (user.user_type === 'expert') {
+                console.log('🎓 User is expert type, loading expert profile...');
+                document.getElementById('expertProfileSection').classList.remove('hidden');
+                await loadExpertProfile(user.id);
+            } else {
+                console.log('ℹ️ User is not expert type');
+                document.getElementById('expertProfileSection').classList.add('hidden');
+            }
+
+        } catch (error) {
+            console.error(' Error loading user data:', error);
+            showNotification('Failed to load user data: ' + error.message, 'error');
+        }
+    }
+
+    async function loadExpertProfile(userId) {
+        try {
+            console.log('🎓 Fetching expert profile for user:', userId);
+
+            //  FIXED: Correct endpoint
+            const response = await fetch(`/api/users/expert-profiles/${userId}`, {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            console.log('📡 Expert profile response status:', response.status);
+
+            if (response.ok) {
+                const profile = await response.json();
+                console.log('📋 Expert profile data:', profile);
+
+                // Populate expert profile fields
+                document.getElementById('specialization').value = profile.specialization || '';
+                document.getElementById('yearsOfExperience').value = profile.years_of_experience || '';
+                document.getElementById('licenseNumber').value = profile.license_number || '';
+                document.getElementById('licenseAuthority').value = profile.license_authority || '';
+                document.getElementById('hourlyRate').value = profile.hourly_rate || '';
+                document.getElementById('expertiseAreas').value = profile.expertise_areas || '';
+                document.getElementById('bio').value = profile.bio || '';
+                document.getElementById('qfcraCertified').checked = profile.qfcra_certified || false;
+                document.getElementById('qidVerified').checked = profile.qid_verified || false;
+                document.getElementById('isAvailable').checked = profile.is_available !== false;
+
+                console.log(' Expert profile fields populated');
+            } else {
+                console.log('ℹ️ No expert profile found');
+            }
+        } catch (error) {
+            console.log('ℹ️ No existing expert profile:', error.message);
+        }
+    }
+
+    async function saveUser(e) {
+        e.preventDefault();
+
+        if (!validateForm()) {
+            return;
+        }
+
+        const formData = {
+            first_name: document.getElementById('firstName').value.trim(),
+            last_name: document.getElementById('lastName').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            mobile_number: document.getElementById('mobileNumber').value.trim(),
+            qid_number: document.getElementById('qidNumber').value.trim() || null,
+            job_title: document.getElementById('jobTitle').value.trim() || null,
+            username: document.getElementById('username').value.trim(),
+            user_role: document.getElementById('userRole').value,
+            department: document.getElementById('department').value || null,
+            user_type: document.getElementById('userType').value || null,
+            language_preference: document.getElementById('languagePreference').value,
+            timezone: document.getElementById('timezone').value,
+            is_active: document.getElementById('isActive').checked,
+            send_welcome_email: document.getElementById('sendWelcomeEmail').checked
+        };
+
+        // Add password if provided
+        const password = document.getElementById('password').value;
+        if (password) {
+            formData.password = password;
+        }
+
+        // Add expert profile data if user type is expert
+        if (formData.user_type === 'expert') {
+            formData.expert_profile = {
+                specialization: document.getElementById('specialization').value.trim() || null,
+                years_of_experience: document.getElementById('yearsOfExperience').value ? parseInt(document.getElementById('yearsOfExperience').value) : null,
+                license_number: document.getElementById('licenseNumber').value.trim() || null,
+                license_authority: document.getElementById('licenseAuthority').value.trim() || null,
+                hourly_rate: document.getElementById('hourlyRate').value ? parseFloat(document.getElementById('hourlyRate').value) : null,
+                expertise_areas: document.getElementById('expertiseAreas').value.trim() || null,
+                bio: document.getElementById('bio').value.trim() || null,
+                qfcra_certified: document.getElementById('qfcraCertified').checked,
+                qid_verified: document.getElementById('qidVerified').checked,
+                is_available: document.getElementById('isAvailable').checked
+            };
+        }
+
+        try {
+            const url = currentUserId
+                ? `/api/users/${currentUserId}`
+                : '/api/users/create';
+
+            const method = currentUserId ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify(formData)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to save user');
+            }
+
+            const result = await response.json();
+
             showNotification(
-                'Password must be at least 8 characters with uppercase, lowercase, and number',
-                'error'
+                currentUserId ? 'User updated successfully' : 'User created successfully',
+                'success'
             );
-            return false;
+
+            closeUserModal();
+            await loadUsers();
+
+        } catch (error) {
+            console.error('Error saving user:', error);
+            showNotification(error.message, 'error');
         }
     }
-    
-    const email = document.getElementById('email').value;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        showNotification('Please enter a valid email address', 'error');
-        return false;
-    }
-    
-    const firstName = document.getElementById('firstName').value.trim();
-    const lastName = document.getElementById('lastName').value.trim();
-    const username = document.getElementById('username').value.trim();
-    const userRole = document.getElementById('userRole').value;
-    
-    if (!firstName || !lastName || !username || !userRole) {
-        showNotification('Please fill in all required fields', 'error');
-        return false;
-    }
-    
-    return true;
-}
 
-function confirmDeleteUser(userId, userName) {
-    currentUserId = userId;
-    document.getElementById('deleteUserInfo').innerHTML = `
+    function validateForm() {
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        // Only validate password if it's provided
+        if (password || confirmPassword) {
+            if (password !== confirmPassword) {
+                showNotification('Passwords do not match', 'error');
+                return false;
+            }
+
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+            if (!passwordRegex.test(password)) {
+                showNotification(
+                    'Password must be at least 8 characters with uppercase, lowercase, and number',
+                    'error'
+                );
+                return false;
+            }
+        }
+
+        const email = document.getElementById('email').value;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            showNotification('Please enter a valid email address', 'error');
+            return false;
+        }
+
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const username = document.getElementById('username').value.trim();
+        const userRole = document.getElementById('userRole').value;
+
+        if (!firstName || !lastName || !username || !userRole) {
+            showNotification('Please fill in all required fields', 'error');
+            return false;
+        }
+
+        return true;
+    }
+
+    function confirmDeleteUser(userId, userName) {
+        currentUserId = userId;
+        document.getElementById('deleteUserInfo').innerHTML = `
         <p style="margin-top: 1rem;"><strong>${userName}</strong></p>
         <p style="color: #666; margin-top: 0.5rem;">This will permanently delete this user and all associated data.</p>
     `;
-    document.getElementById('deleteModal').classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
+        document.getElementById('deleteModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
 
-function closeDeleteModal() {
-    document.getElementById('deleteModal').classList.remove('active');
-    document.body.style.overflow = '';
-    currentUserId = null;
-}
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.remove('active');
+        document.body.style.overflow = '';
+        currentUserId = null;
+    }
 
-async function deleteUser() {
-    if (!currentUserId) return;
-    
-    try {
-        const response = await fetch(`/api/users/${currentUserId}`, {
-            method: 'DELETE',
-            credentials: 'include'
+    async function deleteUser() {
+        if (!currentUserId) return;
+
+        try {
+            const response = await fetch(`/api/users/${currentUserId}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+
+            if (!response.ok) throw new Error('Failed to delete user');
+
+            showNotification('User deleted successfully', 'success');
+            closeDeleteModal();
+            await loadUsers();
+
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            showNotification('Failed to delete user', 'error');
+        }
+    }
+
+    function filterUsers() {
+        const searchTerm = document.getElementById('searchUsers').value.toLowerCase();
+        const statusFilter = document.getElementById('filterStatus').value;
+        const roleFilter = document.getElementById('filterRole').value;
+        const typeFilter = document.getElementById('filterType').value;
+
+        const filteredUsers = allUsers.filter(user => {
+            const matchesSearch =
+                user.first_name.toLowerCase().includes(searchTerm) ||
+                user.last_name.toLowerCase().includes(searchTerm) ||
+                user.email.toLowerCase().includes(searchTerm) ||
+                (user.job_title && user.job_title.toLowerCase().includes(searchTerm)) ||
+                (user.username && user.username.toLowerCase().includes(searchTerm));
+
+            const matchesStatus = !statusFilter ||
+                (statusFilter === 'active' && user.is_active && user.is_verified) ||
+                (statusFilter === 'inactive' && (!user.is_active || !user.is_verified)) ||
+                (statusFilter === 'pending' && !user.is_verified);
+
+            const matchesRole = !roleFilter || user.user_role === roleFilter;
+            const matchesType = !typeFilter || user.user_type === typeFilter;
+
+            return matchesSearch && matchesStatus && matchesRole && matchesType;
         });
-        
-        if (!response.ok) throw new Error('Failed to delete user');
-        
-        showNotification('User deleted successfully', 'success');
-        closeDeleteModal();
-        await loadUsers();
-        
-    } catch (error) {
-        console.error('Error deleting user:', error);
-        showNotification('Failed to delete user', 'error');
+
+        renderUsers(filteredUsers);
     }
-}
 
-function filterUsers() {
-    const searchTerm = document.getElementById('searchUsers').value.toLowerCase();
-    const statusFilter = document.getElementById('filterStatus').value;
-    const roleFilter = document.getElementById('filterRole').value;
-    const typeFilter = document.getElementById('filterType').value;
-    
-    const filteredUsers = allUsers.filter(user => {
-        const matchesSearch = 
-            user.first_name.toLowerCase().includes(searchTerm) ||
-            user.last_name.toLowerCase().includes(searchTerm) ||
-            user.email.toLowerCase().includes(searchTerm) ||
-            (user.job_title && user.job_title.toLowerCase().includes(searchTerm)) ||
-            (user.username && user.username.toLowerCase().includes(searchTerm));
-        
-        const matchesStatus = !statusFilter || 
-            (statusFilter === 'active' && user.is_active && user.is_verified) ||
-            (statusFilter === 'inactive' && (!user.is_active || !user.is_verified)) ||
-            (statusFilter === 'pending' && !user.is_verified);
-        
-        const matchesRole = !roleFilter || user.user_role === roleFilter;
-        const matchesType = !typeFilter || user.user_type === typeFilter;
-        
-        return matchesSearch && matchesStatus && matchesRole && matchesType;
-    });
-    
-    renderUsers(filteredUsers);
-}
+    function togglePasswordVisibility() {
+        const passwordInput = document.getElementById('password');
+        const icon = document.querySelector('#togglePassword i');
 
-function togglePasswordVisibility() {
-    const passwordInput = document.getElementById('password');
-    const icon = document.querySelector('#togglePassword i');
-    
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        icon.classList.remove('ti-eye');
-        icon.classList.add('ti-eye-off');
-    } else {
-        passwordInput.type = 'password';
-        icon.classList.remove('ti-eye-off');
-        icon.classList.add('ti-eye');
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('ti-eye');
+            icon.classList.add('ti-eye-off');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('ti-eye-off');
+            icon.classList.add('ti-eye');
+        }
     }
-}
 
-function toggleConfirmPasswordVisibility() {
-    const passwordInput = document.getElementById('confirmPassword');
-    const icon = document.querySelector('#toggleConfirmPassword i');
-    
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        icon.classList.remove('ti-eye');
-        icon.classList.add('ti-eye-off');
-    } else {
-        passwordInput.type = 'password';
-        icon.classList.remove('ti-eye-off');
-        icon.classList.add('ti-eye');
+    function toggleConfirmPasswordVisibility() {
+        const passwordInput = document.getElementById('confirmPassword');
+        const icon = document.querySelector('#toggleConfirmPassword i');
+
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('ti-eye');
+            icon.classList.add('ti-eye-off');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('ti-eye-off');
+            icon.classList.add('ti-eye');
+        }
     }
-}
 
-function toggleSelectAll() {
-    const selectAll = document.getElementById('selectAll');
-    const checkboxes = document.querySelectorAll('.user-checkbox');
-    
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = selectAll.checked;
-    });
-}
+    function toggleSelectAll() {
+        const selectAll = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('.user-checkbox');
 
-function exportUsers() {
-    const selectedIds = Array.from(document.querySelectorAll('.user-checkbox:checked'))
-        .map(cb => cb.value);
-    
-    const usersToExport = selectedIds.length > 0 
-        ? allUsers.filter(u => selectedIds.includes(String(u.id)))
-        : allUsers;
-    
-    if (usersToExport.length === 0) {
-        showNotification('No users to export', 'warning');
-        return;
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAll.checked;
+        });
     }
-    
-    const headers = ['First Name', 'Last Name', 'Email', 'Username', 'Role', 'Type', 'Department', 'Status', 'Phone', 'QID'];
-    const rows = usersToExport.map(user => [
-        user.first_name || '',
-        user.last_name || '',
-        user.email || '',
-        user.username || '',
-        user.user_role || 'N/A',
-        user.user_type || 'N/A',
-        user.department || 'N/A',
-        user.is_active ? 'Active' : 'Inactive',
-        user.mobile_number || 'N/A',
-        user.qid_number || 'N/A'
-    ]);
-    
-    const csv = [headers, ...rows]
-        .map(row => row.map(cell => `"${cell}"`).join(','))
-        .join('\n');
-    
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-    
-    showNotification(`Exported ${usersToExport.length} user(s) successfully`, 'success');
-}
 
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    
-    const iconClass = type === 'success' ? 'ti-check' : 
-                     type === 'error' ? 'ti-alert-circle' : 
-                     type === 'warning' ? 'ti-alert-triangle' : 'ti-info-circle';
-    
-    notification.innerHTML = `
+    function exportUsers() {
+        const selectedIds = Array.from(document.querySelectorAll('.user-checkbox:checked'))
+            .map(cb => cb.value);
+
+        const usersToExport = selectedIds.length > 0
+            ? allUsers.filter(u => selectedIds.includes(String(u.id)))
+            : allUsers;
+
+        if (usersToExport.length === 0) {
+            showNotification('No users to export', 'warning');
+            return;
+        }
+
+        const headers = ['First Name', 'Last Name', 'Email', 'Username', 'Role', 'Type', 'Department', 'Status', 'Phone', 'QID'];
+        const rows = usersToExport.map(user => [
+            user.first_name || '',
+            user.last_name || '',
+            user.email || '',
+            user.username || '',
+            user.user_role || 'N/A',
+            user.user_type || 'N/A',
+            user.department || 'N/A',
+            user.is_active ? 'Active' : 'Inactive',
+            user.mobile_number || 'N/A',
+            user.qid_number || 'N/A'
+        ]);
+
+        const csv = [headers, ...rows]
+            .map(row => row.map(cell => `"${cell}"`).join(','))
+            .join('\n');
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        showNotification(`Exported ${usersToExport.length} user(s) successfully`, 'success');
+    }
+
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+
+        const iconClass = type === 'success' ? 'ti-check' :
+            type === 'error' ? 'ti-alert-circle' :
+                type === 'warning' ? 'ti-alert-triangle' : 'ti-info-circle';
+
+        notification.innerHTML = `
         <div class="notification-icon">
             <i class="ti ${iconClass}"></i>
         </div>
         <div class="notification-message">${message}</div>
     `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => notification.classList.add('show'), 10);
-    
-    setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => notification.remove(), 300);
-    }, 4000);
-}
 
-// Global functions for onclick handlers
-window.editUser = function(userId) {
-    openUserModal(userId);
-};
+        document.body.appendChild(notification);
 
-window.confirmDeleteUser = confirmDeleteUser;
-window.openUserModal = openUserModal;
+        setTimeout(() => notification.classList.add('show'), 10);
+
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 4000);
+    }
+
+    // Global functions for onclick handlers
+    window.editUser = function (userId) {
+        openUserModal(userId);
+    };
+
+    window.confirmDeleteUser = confirmDeleteUser;
+    window.openUserModal = openUserModal;
 </script>
 {% endblock %}

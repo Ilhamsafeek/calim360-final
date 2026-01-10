@@ -5352,6 +5352,7 @@ async def stream_ai_contract_generation(
         end_date = request_data.get("end_date", "")
         selected_clause_descriptions = request_data.get("selected_clauses", [])
         jurisdiction = request_data.get("jurisdiction", "Qatar")
+        language = request_data.get("language", "en")
 
 
         #  EXTRACT METADATA WITH SPECIAL REQUIREMENTS
@@ -5376,11 +5377,12 @@ Selected Clauses: {', '.join(selected_clause_descriptions) if selected_clause_de
 
 1. Production-ready, contractually & legally binding (minimum 3,500 words)
 2. Professional legal language with contractually & legally binding for {jurisdiction}
+3. complete Contract should be written in {language}
 4. Every clause fully developed with procedures and consequences
 5. {additional_requirements}
 6. {payment_terms}
 7. {user_prompt}
-8. Dont include signature section
+8. Dont include signature section 
 
 **FORMAT:**
 - Clean HTML: <h2> for sections, <h3> for subsections, <p> for paragraphs

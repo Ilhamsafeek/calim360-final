@@ -746,8 +746,13 @@
 
     /* Animations */
     @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
     }
 
     @keyframes slideUp {
@@ -755,6 +760,7 @@
             transform: translateY(50px);
             opacity: 0;
         }
+
         to {
             transform: translateY(0);
             opacity: 1;
@@ -762,7 +768,9 @@
     }
 
     @keyframes spin {
-        to { transform: rotate(360deg); }
+        to {
+            transform: rotate(360deg);
+        }
     }
 
     /* Loading State */
@@ -783,7 +791,7 @@
         right: 20px;
         padding: 16px 24px;
         border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         z-index: 2000;
         animation: slideInRight 0.3s ease;
         display: flex;
@@ -821,6 +829,7 @@
             transform: translateX(100%);
             opacity: 0;
         }
+
         to {
             transform: translateX(0);
             opacity: 1;
@@ -832,6 +841,7 @@
             transform: translateX(0);
             opacity: 1;
         }
+
         to {
             transform: translateX(100%);
             opacity: 0;
@@ -1061,7 +1071,7 @@
                 </button>
             </div>
         </div>
-        
+
         <table>
             <thead>
                 <tr>
@@ -1088,7 +1098,8 @@
         <!-- Pagination -->
         <div class="pagination">
             <div class="pagination-info">
-                Showing <span id="showingFrom">1</span>-<span id="showingTo">10</span> of <span id="totalCount">127</span> users
+                Showing <span id="showingFrom">1</span>-<span id="showingTo">10</span> of <span
+                    id="totalCount">127</span> users
             </div>
             <div class="pagination-controls" id="paginationControls">
                 <!-- Pagination buttons will be generated here -->
@@ -1110,27 +1121,27 @@
         <div class="modal-body">
             <form class="form-grid" id="userForm">
                 <input type="hidden" id="userId">
-                
+
                 <div class="form-group">
                     <label class="form-label">First Name <span class="required">*</span></label>
                     <input type="text" class="form-input" id="firstName" required>
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label">Last Name <span class="required">*</span></label>
                     <input type="text" class="form-input" id="lastName" required>
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label">Email Address <span class="required">*</span></label>
                     <input type="email" class="form-input" id="email" required>
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label">QID Number <span class="required">*</span></label>
                     <input type="text" class="form-input" id="qid" pattern="[0-9]{11}" maxlength="11" required>
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label">Company <span class="required">*</span></label>
                     <select class="form-input" id="company" required>
@@ -1140,7 +1151,7 @@
                         {% endfor %}
                     </select>
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label">Department <span class="required">*</span></label>
                     <select class="form-input" id="department" required>
@@ -1153,7 +1164,20 @@
                         <option value="hr">HR</option>
                     </select>
                 </div>
-                
+
+                <div class="form-group">
+                    <label class="form-label">User Type <span class="required">*</span></label>
+                    <select class="form-input" id="userType" required>
+                        <option value="">Select User Type</option>
+                        <option value="client">Client</option>
+                        <option value="contractor">Contractor</option>
+                        <option value="subcontractor">Sub-Contractor</option>
+                        <option value="consultant">Consultant</option>
+                        <option value="supplier">Supplier</option>
+                        <option value="pmo">PMO</option>
+                    </select>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Role(s) <span class="required">*</span></label>
                     <select class="form-input" id="roles" multiple required>
@@ -1166,14 +1190,15 @@
                         <option value="finance">Finance</option>
                         <option value="admin">Super Admin</option>
                     </select>
-                    <small style="color: var(--text-muted); margin-top: 4px;">Hold Ctrl/Cmd to select multiple roles</small>
+                    <small style="color: var(--text-muted); margin-top: 4px;">Hold Ctrl/Cmd to select multiple
+                        roles</small>
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label">Phone Number</label>
                     <input type="tel" class="form-input" id="phone" pattern="[+]?[0-9]{8,15}">
                 </div>
-                
+
                 <div class="form-group full-width">
                     <label class="form-label">
                         <input type="checkbox" id="sendWelcomeEmail" checked>
@@ -1214,7 +1239,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <h3 style="margin-bottom: 16px; color: var(--primary-color);">Module Permissions</h3>
             <div class="permissions-container">
                 <div class="permission-module">
@@ -1239,7 +1264,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="permission-module">
                     <div class="permission-header">
                         <div class="permission-title">
@@ -1262,7 +1287,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="permission-module">
                     <div class="permission-header">
                         <div class="permission-title">
@@ -1285,7 +1310,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="permission-module">
                     <div class="permission-header">
                         <div class="permission-title">
@@ -1308,7 +1333,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="permission-module">
                     <div class="permission-header">
                         <div class="permission-title">
@@ -1361,7 +1386,8 @@
                     <label class="form-label" style="font-size: 16px; font-weight: 600;">USE MASTER WORKFLOW</label>
                     <div class="radio-group">
                         <label class="radio-label">
-                            <input type="radio" name="useMasterWorkflow" value="yes" checked onchange="toggleWorkflowSetup()">
+                            <input type="radio" name="useMasterWorkflow" value="yes" checked
+                                onchange="toggleWorkflowSetup()">
                             Yes
                         </label>
                         <label class="radio-label">
@@ -1370,7 +1396,7 @@
                         </label>
                     </div>
                 </div>
-                
+
                 <div id="workflowSetupSection">
                     <h3 style="margin-bottom: 16px; color: var(--text-color);">SETUP WORKFLOW FOR THIS CONTRACT:</h3>
                     <div class="workflow-grid">
@@ -1390,7 +1416,7 @@
                                 <option value="procurement">Procurement</option>
                             </select>
                         </div>
-                        
+
                         <div class="workflow-row">
                             <div class="workflow-label">APPROVER</div>
                             <select class="form-input" id="approverUser">
@@ -1406,7 +1432,7 @@
                                 <option value="operations">Operations</option>
                             </select>
                         </div>
-                        
+
                         <div class="workflow-row">
                             <div class="workflow-label">E-SIGN</div>
                             <select class="form-input" id="esignUser">
@@ -1422,7 +1448,7 @@
                                 <option value="management">Management</option>
                             </select>
                         </div>
-                        
+
                         <div class="workflow-row">
                             <div class="workflow-label">COUNTER-PARTY</div>
                             <select class="form-input" id="counterpartyUser">
@@ -1441,11 +1467,12 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="workflow-note">
                     <p>
-                        <strong>Note:</strong> Pressing Submit will finalize the Workflow and the user will return to the Landing Page.
-                        This master workflow will be used as the default for all contracts at the company level. 
+                        <strong>Note:</strong> Pressing Submit will finalize the Workflow and the user will return to
+                        the Landing Page.
+                        This master workflow will be used as the default for all contracts at the company level.
                         Users can override this workflow for specific contracts if needed.
                     </p>
                 </div>
@@ -1471,84 +1498,84 @@
 <script src="{{ url_for('static', filename='js/common.js') }}"></script>
 
 <script>
-// Sample user data
-const sampleUsers = [
-    {
-        id: 1,
-        firstName: 'Ahmed',
-        lastName: 'Al-Khalifa',
-        email: 'ahmed.khalifa@company.qa',
-        qid: '28574839201',
-        company: 'Qatar Construction Co.',
-        department: 'Legal',
-        roles: ['Approver', 'Reviewer'],
-        status: 'active',
-        lastLogin: '2 hours ago'
-    },
-    {
-        id: 2,
-        firstName: 'Fatima',
-        lastName: 'Al-Mahmoud',
-        email: 'fatima.m@company.qa',
-        qid: '29384756102',
-        company: 'Qatar Construction Co.',
-        department: 'Finance',
-        roles: ['Finance'],
-        status: 'active',
-        lastLogin: '1 day ago'
-    },
-    {
-        id: 3,
-        firstName: 'John',
-        lastName: 'Davidson',
-        email: 'j.davidson@company.qa',
-        qid: '30495867213',
-        company: 'Qatar Construction Co.',
-        department: 'Operations',
-        roles: ['Initiator'],
-        status: 'pending',
-        lastLogin: 'Never'
-    },
-    {
-        id: 4,
-        firstName: 'Sarah',
-        lastName: 'Williams',
-        email: 's.williams@company.qa',
-        qid: '31506978324',
-        company: 'Gulf Petroleum Ltd.',
-        department: 'Procurement',
-        roles: ['Reviewer', 'Initiator'],
-        status: 'active',
-        lastLogin: '5 hours ago'
-    },
-    {
-        id: 5,
-        firstName: 'Mohammed',
-        lastName: 'Al-Thani',
-        email: 'm.thani@company.qa',
-        qid: '32617089435',
-        company: 'Doha Infrastructure',
-        department: 'Legal',
-        roles: ['Legal Counsel', 'Approver'],
-        status: 'active',
-        lastLogin: '3 days ago'
-    }
-];
+    // Sample user data
+    const sampleUsers = [
+        {
+            id: 1,
+            firstName: 'Ahmed',
+            lastName: 'Al-Khalifa',
+            email: 'ahmed.khalifa@company.qa',
+            qid: '28574839201',
+            company: 'Qatar Construction Co.',
+            department: 'Legal',
+            roles: ['Approver', 'Reviewer'],
+            status: 'active',
+            lastLogin: '2 hours ago'
+        },
+        {
+            id: 2,
+            firstName: 'Fatima',
+            lastName: 'Al-Mahmoud',
+            email: 'fatima.m@company.qa',
+            qid: '29384756102',
+            company: 'Qatar Construction Co.',
+            department: 'Finance',
+            roles: ['Finance'],
+            status: 'active',
+            lastLogin: '1 day ago'
+        },
+        {
+            id: 3,
+            firstName: 'John',
+            lastName: 'Davidson',
+            email: 'j.davidson@company.qa',
+            qid: '30495867213',
+            company: 'Qatar Construction Co.',
+            department: 'Operations',
+            roles: ['Initiator'],
+            status: 'pending',
+            lastLogin: 'Never'
+        },
+        {
+            id: 4,
+            firstName: 'Sarah',
+            lastName: 'Williams',
+            email: 's.williams@company.qa',
+            qid: '31506978324',
+            company: 'Gulf Petroleum Ltd.',
+            department: 'Procurement',
+            roles: ['Reviewer', 'Initiator'],
+            status: 'active',
+            lastLogin: '5 hours ago'
+        },
+        {
+            id: 5,
+            firstName: 'Mohammed',
+            lastName: 'Al-Thani',
+            email: 'm.thani@company.qa',
+            qid: '32617089435',
+            company: 'Doha Infrastructure',
+            department: 'Legal',
+            roles: ['Legal Counsel', 'Approver'],
+            status: 'active',
+            lastLogin: '3 days ago'
+        }
+    ];
 
-// Load users on page load
-document.addEventListener('DOMContentLoaded', function() {
-    loadUsers();
-    generatePagination();
-});
+    // Load users on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        loadUsers();
+        generatePagination();
+    });
 
-// Load users into table
-function loadUsers(users = sampleUsers) {
-    const tbody = document.getElementById('usersTableBody');
-    tbody.innerHTML = '';
-    
-    users.forEach(user => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
+    // Load users into table
+    function loadUsers(users = sampleUsers) {
+        const tbody = document.getElementById('usersTableBody');
+        tbody.innerHTML = '';
+
+        users.forEach(user => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
             <td>
                 <div class="checkbox-wrapper">
                     <input type="checkbox" class="user-checkbox" value="${user.id}">
@@ -1576,9 +1603,9 @@ function loadUsers(users = sampleUsers) {
             </td>
             <td>
                 <span class="status-badge status-${user.status}">
-                    ${user.status === 'active' ? '<i class="ti ti-circle-check"></i>' : 
-                      user.status === 'pending' ? '<i class="ti ti-clock"></i>' : 
-                      '<i class="ti ti-circle-x"></i>'} 
+                    ${user.status === 'active' ? '<i class="ti ti-circle-check"></i>' :
+                    user.status === 'pending' ? '<i class="ti ti-clock"></i>' :
+                        '<i class="ti ti-circle-x"></i>'} 
                     ${user.status.charAt(0).toUpperCase() + user.status.slice(1)}
                 </span>
             </td>
@@ -1605,645 +1632,665 @@ function loadUsers(users = sampleUsers) {
                 </div>
             </td>
         `;
-        tbody.appendChild(row);
-    });
-}
+            tbody.appendChild(row);
+        });
+    }
 
-// Get role icon
-function getRoleIcon(role) {
-    const icons = {
-        'Initiator': 'file-plus',
-        'Reviewer': 'file-text',
-        'Approver': 'shield-check',
-        'Finance': 'currency-dollar',
-        'Legal Counsel': 'scale',
-        'E-Sign': 'writing-sign',
-        'Counter-Party': 'users',
-        'Admin': 'crown'
-    };
-    return icons[role] || 'user';
-}
+    // Get role icon
+    function getRoleIcon(role) {
+        const icons = {
+            'Initiator': 'file-plus',
+            'Reviewer': 'file-text',
+            'Approver': 'shield-check',
+            'Finance': 'currency-dollar',
+            'Legal Counsel': 'scale',
+            'E-Sign': 'writing-sign',
+            'Counter-Party': 'users',
+            'Admin': 'crown'
+        };
+        return icons[role] || 'user';
+    }
 
-// Generate pagination
-function generatePagination() {
-    const controls = document.getElementById('paginationControls');
-    const totalPages = 13;
-    const currentPage = 1;
-    
-    let html = `
+    // Generate pagination
+    function generatePagination() {
+        const controls = document.getElementById('paginationControls');
+        const totalPages = 13;
+        const currentPage = 1;
+
+        let html = `
         <button class="page-btn" ${currentPage === 1 ? 'disabled' : ''}>
             <i class="ti ti-chevron-left"></i>
         </button>
     `;
-    
-    for (let i = 1; i <= Math.min(3, totalPages); i++) {
-        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
-    }
-    
-    if (totalPages > 5) {
-        html += `<button class="page-btn" disabled>...</button>`;
-        html += `<button class="page-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
-    }
-    
-    html += `
+
+        for (let i = 1; i <= Math.min(3, totalPages); i++) {
+            html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+        }
+
+        if (totalPages > 5) {
+            html += `<button class="page-btn" disabled>...</button>`;
+            html += `<button class="page-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+        }
+
+        html += `
         <button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''}>
             <i class="ti ti-chevron-right"></i>
         </button>
     `;
-    
-    controls.innerHTML = html;
-}
 
-// Modal Functions
-function showAddUserModal() {
-    document.getElementById('modalTitle').textContent = 'Add New User';
-    document.getElementById('userForm').reset();
-    document.getElementById('userId').value = '';
-    document.getElementById('userModal').classList.add('active');
-}
+        controls.innerHTML = html;
+    }
 
-function editUser(id) {
-    const user = sampleUsers.find(u => u.id === id);
-    if (user) {
-        document.getElementById('modalTitle').textContent = 'Edit User';
-        document.getElementById('userId').value = user.id;
-        document.getElementById('firstName').value = user.firstName;
-        document.getElementById('lastName').value = user.lastName;
-        document.getElementById('email').value = user.email;
-        document.getElementById('qid').value = user.qid;
-        // Set other fields...
+    // Modal Functions
+    function showAddUserModal() {
+        document.getElementById('modalTitle').textContent = 'Add New User';
+        document.getElementById('userForm').reset();
+        document.getElementById('userId').value = '';
         document.getElementById('userModal').classList.add('active');
     }
-}
 
-function showPermissionsModal(id) {
-    const user = sampleUsers.find(u => u.id === id);
-    if (user) {
-        document.getElementById('permUserAvatar').textContent = user.firstName[0] + user.lastName[0];
-        document.getElementById('permUserName').textContent = `${user.firstName} ${user.lastName}`;
-        document.getElementById('permUserEmail').textContent = user.email;
-        document.getElementById('permissionsModal').classList.add('active');
+    function editUser(id) {
+        const user = sampleUsers.find(u => u.id === id);
+        if (user) {
+            document.getElementById('modalTitle').textContent = 'Edit User';
+            document.getElementById('userId').value = user.id;
+            document.getElementById('firstName').value = user.firstName;
+            document.getElementById('lastName').value = user.lastName;
+            document.getElementById('email').value = user.email;
+            document.getElementById('qid').value = user.qid;
+            // Set other fields...
+            document.getElementById('userModal').classList.add('active');
+        }
     }
-}
 
-function showMasterWorkflowModal() {
-    document.getElementById('workflowModal').classList.add('active');
-}
-
-function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('active');
-}
-
-// Save Functions
-function saveUser() {
-    const form = document.getElementById('userForm');
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
+    function showPermissionsModal(id) {
+        const user = sampleUsers.find(u => u.id === id);
+        if (user) {
+            document.getElementById('permUserAvatar').textContent = user.firstName[0] + user.lastName[0];
+            document.getElementById('permUserName').textContent = `${user.firstName} ${user.lastName}`;
+            document.getElementById('permUserEmail').textContent = user.email;
+            document.getElementById('permissionsModal').classList.add('active');
+        }
     }
-    
-    // API call would go here
-    showToast('User saved successfully', 'success');
-    closeModal('userModal');
-    loadUsers(); // Reload table
-}
 
-function savePermissions() {
-    // API call would go here
-    showToast('Permissions updated successfully', 'success');
-    closeModal('permissionsModal');
-}
+    function showMasterWorkflowModal() {
+        document.getElementById('workflowModal').classList.add('active');
+    }
 
-function saveAndExit() {
-    // API call would go here
-    showToast('Workflow saved successfully', 'success');
-    closeModal('workflowModal');
-}
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+    }
 
-function submitWorkflow() {
-    // API call would go here
-    showToast('Master workflow submitted successfully', 'success');
-    closeModal('workflowModal');
-}
+    // Save Functions
+    function saveUser() {
+        const form = document.getElementById('userForm');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
 
-// User Actions
-function approveUser(id) {
-    if (confirm('Are you sure you want to approve this user?')) {
+        const userData = {
+            first_name: document.getElementById('firstName').value,
+            last_name: document.getElementById('lastName').value,
+            email: document.getElementById('email').value,
+            qid_number: document.getElementById('qid').value,
+            mobile_number: document.getElementById('mobile').value,
+            mobile_country_code: document.getElementById('mobileCountryCode').value || '+974',
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value,
+            user_role: document.getElementById('userRole').value,
+            department: document.getElementById('department').value,
+            user_type: document.getElementById('userType').value,  // ADD THIS LINE
+            language_preference: 'en',
+            timezone: 'Asia/Qatar',
+            is_active: true
+        };
+
+        const userId = document.getElementById('userId').value;
+        if (userId) {
+            updateUser(userId, userData);
+        } else {
+            createUser(userData);
+        }
+    }
+
+
+    function savePermissions() {
         // API call would go here
-        showToast('User approved successfully', 'success');
+        showToast('Permissions updated successfully', 'success');
+        closeModal('permissionsModal');
+    }
+
+    function saveAndExit() {
+        // API call would go here
+        showToast('Workflow saved successfully', 'success');
+        closeModal('workflowModal');
+    }
+
+    function submitWorkflow() {
+        // API call would go here
+        showToast('Master workflow submitted successfully', 'success');
+        closeModal('workflowModal');
+    }
+
+    // User Actions
+    function approveUser(id) {
+        if (confirm('Are you sure you want to approve this user?')) {
+            // API call would go here
+            showToast('User approved successfully', 'success');
+            loadUsers();
+        }
+    }
+
+    function deleteUser(id) {
+        if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+            // API call would go here
+            showToast('User deleted successfully', 'success');
+            loadUsers();
+        }
+    }
+
+    function viewActivity(id) {
+        // Redirect to activity log
+        window.location.href = `/admin/users/${id}/activity`;
+    }
+
+    // Bulk Actions
+    function toggleSelectAll() {
+        const selectAll = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('.user-checkbox');
+        checkboxes.forEach(cb => cb.checked = selectAll.checked);
+    }
+
+    function bulkActivate() {
+        const selected = document.querySelectorAll('.user-checkbox:checked');
+        if (selected.length === 0) {
+            showToast('Please select users to activate', 'warning');
+            return;
+        }
+
+        if (confirm(`Are you sure you want to activate ${selected.length} user(s)?`)) {
+            // API call would go here
+            showToast(`${selected.length} user(s) activated successfully`, 'success');
+            loadUsers();
+        }
+    }
+
+    function bulkDeactivate() {
+        const selected = document.querySelectorAll('.user-checkbox:checked');
+        if (selected.length === 0) {
+            showToast('Please select users to deactivate', 'warning');
+            return;
+        }
+
+        if (confirm(`Are you sure you want to deactivate ${selected.length} user(s)?`)) {
+            // API call would go here
+            showToast(`${selected.length} user(s) deactivated successfully`, 'success');
+            loadUsers();
+        }
+    }
+
+    function bulkDelete() {
+        const selected = document.querySelectorAll('.user-checkbox:checked');
+        if (selected.length === 0) {
+            showToast('Please select users to delete', 'warning');
+            return;
+        }
+
+        if (confirm(`Are you sure you want to delete ${selected.length} user(s)? This action cannot be undone.`)) {
+            // API call would go here
+            showToast(`${selected.length} user(s) deleted successfully`, 'success');
+            loadUsers();
+        }
+    }
+
+    // Export Function
+    function exportUsers() {
+        // API call would go here
+        showToast('Export started. You will receive an email when ready.', 'info');
+    }
+
+    // Filter Functions
+    function clearFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('statusFilter').value = '';
+        document.getElementById('roleFilter').value = '';
+        document.getElementById('departmentFilter').value = '';
         loadUsers();
     }
-}
 
-function deleteUser(id) {
-    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+    // Search functionality
+    document.getElementById('searchInput')?.addEventListener('input', function (e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const filteredUsers = sampleUsers.filter(user =>
+            user.firstName.toLowerCase().includes(searchTerm) ||
+            user.lastName.toLowerCase().includes(searchTerm) ||
+            user.email.toLowerCase().includes(searchTerm) ||
+            user.qid.includes(searchTerm) ||
+            user.company.toLowerCase().includes(searchTerm)
+        );
+        loadUsers(filteredUsers);
+    });
+
+    // Filter handlers
+    document.getElementById('statusFilter')?.addEventListener('change', function () {
+        filterUsers();
+    });
+
+    document.getElementById('roleFilter')?.addEventListener('change', function () {
+        filterUsers();
+    });
+
+    document.getElementById('departmentFilter')?.addEventListener('change', function () {
+        filterUsers();
+    });
+
+    function filterUsers() {
+        const status = document.getElementById('statusFilter').value;
+        const role = document.getElementById('roleFilter').value;
+        const department = document.getElementById('departmentFilter').value;
+
+        let filteredUsers = sampleUsers;
+
+        if (status) {
+            filteredUsers = filteredUsers.filter(u => u.status === status);
+        }
+
+        if (department) {
+            filteredUsers = filteredUsers.filter(u => u.department.toLowerCase() === department);
+        }
+
+        loadUsers(filteredUsers);
+    }
+
+    // Workflow Toggle
+    function toggleWorkflowSetup() {
+        const useMaster = document.querySelector('input[name="useMasterWorkflow"]:checked').value;
+        const setupSection = document.getElementById('workflowSetupSection');
+
+        if (useMaster === 'no') {
+            setupSection.style.display = 'none';
+        } else {
+            setupSection.style.display = 'block';
+        }
+    }
+
+    // Pagination
+    function goToPage(page) {
         // API call would go here
-        showToast('User deleted successfully', 'success');
-        loadUsers();
+        generatePagination();
+        showToast(`Loading page ${page}...`, 'info');
     }
-}
 
-function viewActivity(id) {
-    // Redirect to activity log
-    window.location.href = `/admin/users/${id}/activity`;
-}
+    // Toast Notification
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
 
-// Bulk Actions
-function toggleSelectAll() {
-    const selectAll = document.getElementById('selectAll');
-    const checkboxes = document.querySelectorAll('.user-checkbox');
-    checkboxes.forEach(cb => cb.checked = selectAll.checked);
-}
+        const icon = {
+            success: 'circle-check',
+            warning: 'alert-triangle',
+            error: 'circle-x',
+            info: 'info-circle'
+        }[type];
 
-function bulkActivate() {
-    const selected = document.querySelectorAll('.user-checkbox:checked');
-    if (selected.length === 0) {
-        showToast('Please select users to activate', 'warning');
-        return;
-    }
-    
-    if (confirm(`Are you sure you want to activate ${selected.length} user(s)?`)) {
-        // API call would go here
-        showToast(`${selected.length} user(s) activated successfully`, 'success');
-        loadUsers();
-    }
-}
-
-function bulkDeactivate() {
-    const selected = document.querySelectorAll('.user-checkbox:checked');
-    if (selected.length === 0) {
-        showToast('Please select users to deactivate', 'warning');
-        return;
-    }
-    
-    if (confirm(`Are you sure you want to deactivate ${selected.length} user(s)?`)) {
-        // API call would go here
-        showToast(`${selected.length} user(s) deactivated successfully`, 'success');
-        loadUsers();
-    }
-}
-
-function bulkDelete() {
-    const selected = document.querySelectorAll('.user-checkbox:checked');
-    if (selected.length === 0) {
-        showToast('Please select users to delete', 'warning');
-        return;
-    }
-    
-    if (confirm(`Are you sure you want to delete ${selected.length} user(s)? This action cannot be undone.`)) {
-        // API call would go here
-        showToast(`${selected.length} user(s) deleted successfully`, 'success');
-        loadUsers();
-    }
-}
-
-// Export Function
-function exportUsers() {
-    // API call would go here
-    showToast('Export started. You will receive an email when ready.', 'info');
-}
-
-// Filter Functions
-function clearFilters() {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('statusFilter').value = '';
-    document.getElementById('roleFilter').value = '';
-    document.getElementById('departmentFilter').value = '';
-    loadUsers();
-}
-
-// Search functionality
-document.getElementById('searchInput')?.addEventListener('input', function(e) {
-    const searchTerm = e.target.value.toLowerCase();
-    const filteredUsers = sampleUsers.filter(user => 
-        user.firstName.toLowerCase().includes(searchTerm) ||
-        user.lastName.toLowerCase().includes(searchTerm) ||
-        user.email.toLowerCase().includes(searchTerm) ||
-        user.qid.includes(searchTerm) ||
-        user.company.toLowerCase().includes(searchTerm)
-    );
-    loadUsers(filteredUsers);
-});
-
-// Filter handlers
-document.getElementById('statusFilter')?.addEventListener('change', function() {
-    filterUsers();
-});
-
-document.getElementById('roleFilter')?.addEventListener('change', function() {
-    filterUsers();
-});
-
-document.getElementById('departmentFilter')?.addEventListener('change', function() {
-    filterUsers();
-});
-
-function filterUsers() {
-    const status = document.getElementById('statusFilter').value;
-    const role = document.getElementById('roleFilter').value;
-    const department = document.getElementById('departmentFilter').value;
-    
-    let filteredUsers = sampleUsers;
-    
-    if (status) {
-        filteredUsers = filteredUsers.filter(u => u.status === status);
-    }
-    
-    if (department) {
-        filteredUsers = filteredUsers.filter(u => u.department.toLowerCase() === department);
-    }
-    
-    loadUsers(filteredUsers);
-}
-
-// Workflow Toggle
-function toggleWorkflowSetup() {
-    const useMaster = document.querySelector('input[name="useMasterWorkflow"]:checked').value;
-    const setupSection = document.getElementById('workflowSetupSection');
-    
-    if (useMaster === 'no') {
-        setupSection.style.display = 'none';
-    } else {
-        setupSection.style.display = 'block';
-    }
-}
-
-// Pagination
-function goToPage(page) {
-    // API call would go here
-    generatePagination();
-    showToast(`Loading page ${page}...`, 'info');
-}
-
-// Toast Notification
-function showToast(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    
-    const icon = {
-        success: 'circle-check',
-        warning: 'alert-triangle',
-        error: 'circle-x',
-        info: 'info-circle'
-    }[type];
-    
-    toast.innerHTML = `
+        toast.innerHTML = `
         <i class="ti ti-${icon}"></i>
         <span>${message}</span>
     `;
-    
-    document.body.appendChild(toast);
-    
-    // Auto remove after 3 seconds
-    setTimeout(() => {
-        toast.style.animation = 'slideOutRight 0.3s ease';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
 
-// Initialize on load
-window.addEventListener('load', function() {
-    // Check for any pending approvals
-    const pendingCount = sampleUsers.filter(u => u.status === 'pending').length;
-    if (pendingCount > 0) {
-        showToast(`You have ${pendingCount} pending user approval(s)`, 'warning');
+        document.body.appendChild(toast);
+
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            toast.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
     }
-});
 
-// Handle Enter key in search
-document.getElementById('searchInput')?.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        filterUsers();
-    }
-});
-
-// Handle form submission with Enter key
-document.getElementById('userForm')?.addEventListener('submit', function(e) {
-    e.preventDefault();
-    saveUser();
-});
-
-// Auto-save draft
-let draftTimer;
-document.querySelectorAll('#userForm input, #userForm select').forEach(element => {
-    element.addEventListener('change', function() {
-        clearTimeout(draftTimer);
-        draftTimer = setTimeout(() => {
-            // Save draft to localStorage
-            const formData = new FormData(document.getElementById('userForm'));
-            const draft = {};
-            for (let [key, value] of formData.entries()) {
-                draft[key] = value;
-            }
-            localStorage.setItem('userFormDraft', JSON.stringify(draft));
-        }, 1000);
+    // Initialize on load
+    window.addEventListener('load', function () {
+        // Check for any pending approvals
+        const pendingCount = sampleUsers.filter(u => u.status === 'pending').length;
+        if (pendingCount > 0) {
+            showToast(`You have ${pendingCount} pending user approval(s)`, 'warning');
+        }
     });
-});
 
-// Restore draft if exists
-function restoreDraft() {
-    const draft = localStorage.getItem('userFormDraft');
-    if (draft && document.getElementById('userId').value === '') {
-        if (confirm('Would you like to restore your previous draft?')) {
-            const data = JSON.parse(draft);
-            Object.keys(data).forEach(key => {
-                const element = document.getElementById(key);
-                if (element) {
-                    element.value = data[key];
+    // Handle Enter key in search
+    document.getElementById('searchInput')?.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            filterUsers();
+        }
+    });
+
+    // Handle form submission with Enter key
+    document.getElementById('userForm')?.addEventListener('submit', function (e) {
+        e.preventDefault();
+        saveUser();
+    });
+
+    // Auto-save draft
+    let draftTimer;
+    document.querySelectorAll('#userForm input, #userForm select').forEach(element => {
+        element.addEventListener('change', function () {
+            clearTimeout(draftTimer);
+            draftTimer = setTimeout(() => {
+                // Save draft to localStorage
+                const formData = new FormData(document.getElementById('userForm'));
+                const draft = {};
+                for (let [key, value] of formData.entries()) {
+                    draft[key] = value;
                 }
+                localStorage.setItem('userFormDraft', JSON.stringify(draft));
+            }, 1000);
+        });
+    });
+
+    // Restore draft if exists
+    function restoreDraft() {
+        const draft = localStorage.getItem('userFormDraft');
+        if (draft && document.getElementById('userId').value === '') {
+            if (confirm('Would you like to restore your previous draft?')) {
+                const data = JSON.parse(draft);
+                Object.keys(data).forEach(key => {
+                    const element = document.getElementById(key);
+                    if (element) {
+                        element.value = data[key];
+                    }
+                });
+            }
+        }
+    }
+
+    // Clear draft on successful save
+    function clearDraft() {
+        localStorage.removeItem('userFormDraft');
+    }
+
+    // Export to different formats
+    function exportUsers(format = 'csv') {
+        const formats = {
+            csv: 'text/csv',
+            excel: 'application/vnd.ms-excel',
+            pdf: 'application/pdf'
+        };
+
+        // Show format selection modal or proceed with default
+        showToast(`Exporting users as ${format.toUpperCase()}...`, 'info');
+
+        // In real implementation, make API call
+        setTimeout(() => {
+            showToast('Export completed. Check your email for download link.', 'success');
+        }, 2000);
+    }
+
+    // Advanced search
+    function toggleAdvancedSearch() {
+        const advancedPanel = document.getElementById('advancedSearchPanel');
+        if (advancedPanel) {
+            advancedPanel.classList.toggle('active');
+        }
+    }
+
+    // Activity monitoring
+    function startActivityMonitoring() {
+        let inactivityTimer;
+        const WARNING_TIME = 10 * 60 * 1000; // 10 minutes
+        const LOGOUT_TIME = 15 * 60 * 1000; // 15 minutes
+
+        function resetTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(() => {
+                showToast('You will be logged out due to inactivity in 5 minutes', 'warning');
+                setTimeout(() => {
+                    window.location.href = '/logout';
+                }, 5 * 60 * 1000);
+            }, WARNING_TIME);
+        }
+
+        // Monitor user activity
+        ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(event => {
+            document.addEventListener(event, resetTimer, true);
+        });
+
+        resetTimer();
+    }
+
+    // Start monitoring when page loads
+    startActivityMonitoring();
+
+    // Handle window resize for responsive table
+    function handleTableResponsive() {
+        const table = document.querySelector('table');
+        const container = document.querySelector('.table-container');
+
+        if (window.innerWidth < 768) {
+            container.style.overflowX = 'auto';
+            table.style.minWidth = '800px';
+        } else {
+            container.style.overflowX = 'visible';
+            table.style.minWidth = 'auto';
+        }
+    }
+
+    window.addEventListener('resize', handleTableResponsive);
+    handleTableResponsive();
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function (e) {
+        // Ctrl/Cmd + K for search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            document.getElementById('searchInput')?.focus();
+        }
+
+        // Ctrl/Cmd + N for new user
+        if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+            e.preventDefault();
+            showAddUserModal();
+        }
+
+        // Escape to close modals
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal.active').forEach(modal => {
+                modal.classList.remove('active');
+            });
+        }
+    });
+
+    // Role-based UI adjustments
+    function adjustUIForUserRole() {
+        // This would be based on actual user role from backend
+        const userRole = '{{ current_user.role | default("admin") }}';
+
+        if (userRole !== 'admin' && userRole !== 'super_admin') {
+            // Hide certain actions for non-admin users
+            document.querySelectorAll('.action-btn.danger').forEach(btn => {
+                btn.style.display = 'none';
+            });
+
+            document.querySelectorAll('.bulk-actions').forEach(section => {
+                section.style.display = 'none';
             });
         }
     }
-}
 
-// Clear draft on successful save
-function clearDraft() {
-    localStorage.removeItem('userFormDraft');
-}
+    adjustUIForUserRole();
 
-// Export to different formats
-function exportUsers(format = 'csv') {
-    const formats = {
-        csv: 'text/csv',
-        excel: 'application/vnd.ms-excel',
-        pdf: 'application/pdf'
-    };
-    
-    // Show format selection modal or proceed with default
-    showToast(`Exporting users as ${format.toUpperCase()}...`, 'info');
-    
-    // In real implementation, make API call
-    setTimeout(() => {
-        showToast('Export completed. Check your email for download link.', 'success');
-    }, 2000);
-}
+    // Real-time updates using WebSocket (placeholder)
+    function initializeWebSocket() {
+        // In production, connect to actual WebSocket server
+        // const ws = new WebSocket('ws://localhost:8000/ws/users');
 
-// Advanced search
-function toggleAdvancedSearch() {
-    const advancedPanel = document.getElementById('advancedSearchPanel');
-    if (advancedPanel) {
-        advancedPanel.classList.toggle('active');
+        // ws.onmessage = function(event) {
+        //     const data = JSON.parse(event.data);
+        //     if (data.type === 'user_update') {
+        //         loadUsers();
+        //         showToast('User list updated', 'info');
+        //     }
+        // };
     }
-}
 
-// Activity monitoring
-function startActivityMonitoring() {
-    let inactivityTimer;
-    const WARNING_TIME = 10 * 60 * 1000; // 10 minutes
-    const LOGOUT_TIME = 15 * 60 * 1000; // 15 minutes
-    
-    function resetTimer() {
-        clearTimeout(inactivityTimer);
-        inactivityTimer = setTimeout(() => {
-            showToast('You will be logged out due to inactivity in 5 minutes', 'warning');
-            setTimeout(() => {
-                window.location.href = '/logout';
-            }, 5 * 60 * 1000);
-        }, WARNING_TIME);
+    // API Integration Functions
+    async function fetchUsers() {
+        try {
+            const response = await fetch('/api/users', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                loadUsers(data.users);
+            } else {
+                showToast('Failed to load users', 'error');
+            }
+        } catch (error) {
+            console.error('Error fetching users:', error);
+            showToast('Network error. Please try again.', 'error');
+        }
     }
-    
-    // Monitor user activity
-    ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(event => {
-        document.addEventListener(event, resetTimer, true);
+
+    async function createUser(userData) {
+        try {
+            const response = await fetch('/api/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(userData)
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                showToast('User created successfully', 'success');
+                clearDraft();
+                closeModal('userModal');
+                fetchUsers();
+            } else {
+                const error = await response.json();
+                showToast(error.message || 'Failed to create user', 'error');
+            }
+        } catch (error) {
+            console.error('Error creating user:', error);
+            showToast('Network error. Please try again.', 'error');
+        }
+    }
+
+    async function updateUser(userId, userData) {
+        try {
+            const response = await fetch(`/api/users/${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(userData)
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                showToast('User updated successfully', 'success');
+                closeModal('userModal');
+                fetchUsers();
+            } else {
+                const error = await response.json();
+                showToast(error.message || 'Failed to update user', 'error');
+            }
+        } catch (error) {
+            console.error('Error updating user:', error);
+            showToast('Network error. Please try again.', 'error');
+        }
+    }
+
+    async function removeUser(userId) {
+        try {
+            const response = await fetch(`/api/users/${userId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (response.ok) {
+                showToast('User deleted successfully', 'success');
+                fetchUsers();
+            } else {
+                const error = await response.json();
+                showToast(error.message || 'Failed to delete user', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            showToast('Network error. Please try again.', 'error');
+        }
+    }
+
+    async function updatePermissions(userId, permissions) {
+        try {
+            const response = await fetch(`/api/users/${userId}/permissions`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(permissions)
+            });
+
+            if (response.ok) {
+                showToast('Permissions updated successfully', 'success');
+                closeModal('permissionsModal');
+            } else {
+                const error = await response.json();
+                showToast(error.message || 'Failed to update permissions', 'error');
+            }
+        } catch (error) {
+            console.error('Error updating permissions:', error);
+            showToast('Network error. Please try again.', 'error');
+        }
+    }
+
+    async function saveMasterWorkflow(workflowData) {
+        try {
+            const response = await fetch('/api/workflow/master', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(workflowData)
+            });
+
+            if (response.ok) {
+                showToast('Master workflow saved successfully', 'success');
+                closeModal('workflowModal');
+            } else {
+                const error = await response.json();
+                showToast(error.message || 'Failed to save workflow', 'error');
+            }
+        } catch (error) {
+            console.error('Error saving workflow:', error);
+            showToast('Network error. Please try again.', 'error');
+        }
+    }
+
+    // Initialize everything when DOM is ready
+    document.addEventListener('DOMContentLoaded', function () {
+        // Load initial data
+        fetchUsers();
+
+        // Initialize WebSocket for real-time updates
+        initializeWebSocket();
+
+        // Check for draft
+        restoreDraft();
+
+        // Set up auto-refresh
+        setInterval(fetchUsers, 60000); // Refresh every minute
     });
-    
-    resetTimer();
-}
-
-// Start monitoring when page loads
-startActivityMonitoring();
-
-// Handle window resize for responsive table
-function handleTableResponsive() {
-    const table = document.querySelector('table');
-    const container = document.querySelector('.table-container');
-    
-    if (window.innerWidth < 768) {
-        container.style.overflowX = 'auto';
-        table.style.minWidth = '800px';
-    } else {
-        container.style.overflowX = 'visible';
-        table.style.minWidth = 'auto';
-    }
-}
-
-window.addEventListener('resize', handleTableResponsive);
-handleTableResponsive();
-
-// Keyboard shortcuts
-document.addEventListener('keydown', function(e) {
-    // Ctrl/Cmd + K for search
-    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        document.getElementById('searchInput')?.focus();
-    }
-    
-    // Ctrl/Cmd + N for new user
-    if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-        e.preventDefault();
-        showAddUserModal();
-    }
-    
-    // Escape to close modals
-    if (e.key === 'Escape') {
-        document.querySelectorAll('.modal.active').forEach(modal => {
-            modal.classList.remove('active');
-        });
-    }
-});
-
-// Role-based UI adjustments
-function adjustUIForUserRole() {
-    // This would be based on actual user role from backend
-    const userRole = '{{ current_user.role | default("admin") }}';
-    
-    if (userRole !== 'admin' && userRole !== 'super_admin') {
-        // Hide certain actions for non-admin users
-        document.querySelectorAll('.action-btn.danger').forEach(btn => {
-            btn.style.display = 'none';
-        });
-        
-        document.querySelectorAll('.bulk-actions').forEach(section => {
-            section.style.display = 'none';
-        });
-    }
-}
-
-adjustUIForUserRole();
-
-// Real-time updates using WebSocket (placeholder)
-function initializeWebSocket() {
-    // In production, connect to actual WebSocket server
-    // const ws = new WebSocket('ws://localhost:8000/ws/users');
-    
-    // ws.onmessage = function(event) {
-    //     const data = JSON.parse(event.data);
-    //     if (data.type === 'user_update') {
-    //         loadUsers();
-    //         showToast('User list updated', 'info');
-    //     }
-    // };
-}
-
-// API Integration Functions
-async function fetchUsers() {
-    try {
-        const response = await fetch('/api/users', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            loadUsers(data.users);
-        } else {
-            showToast('Failed to load users', 'error');
-        }
-    } catch (error) {
-        console.error('Error fetching users:', error);
-        showToast('Network error. Please try again.', 'error');
-    }
-}
-
-async function createUser(userData) {
-    try {
-        const response = await fetch('/api/users', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: JSON.stringify(userData)
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            showToast('User created successfully', 'success');
-            clearDraft();
-            closeModal('userModal');
-            fetchUsers();
-        } else {
-            const error = await response.json();
-            showToast(error.message || 'Failed to create user', 'error');
-        }
-    } catch (error) {
-        console.error('Error creating user:', error);
-        showToast('Network error. Please try again.', 'error');
-    }
-}
-
-async function updateUser(userId, userData) {
-    try {
-        const response = await fetch(`/api/users/${userId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: JSON.stringify(userData)
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            showToast('User updated successfully', 'success');
-            closeModal('userModal');
-            fetchUsers();
-        } else {
-            const error = await response.json();
-            showToast(error.message || 'Failed to update user', 'error');
-        }
-    } catch (error) {
-        console.error('Error updating user:', error);
-        showToast('Network error. Please try again.', 'error');
-    }
-}
-
-async function removeUser(userId) {
-    try {
-        const response = await fetch(`/api/users/${userId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        });
-        
-        if (response.ok) {
-            showToast('User deleted successfully', 'success');
-            fetchUsers();
-        } else {
-            const error = await response.json();
-            showToast(error.message || 'Failed to delete user', 'error');
-        }
-    } catch (error) {
-        console.error('Error deleting user:', error);
-        showToast('Network error. Please try again.', 'error');
-    }
-}
-
-async function updatePermissions(userId, permissions) {
-    try {
-        const response = await fetch(`/api/users/${userId}/permissions`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: JSON.stringify(permissions)
-        });
-        
-        if (response.ok) {
-            showToast('Permissions updated successfully', 'success');
-            closeModal('permissionsModal');
-        } else {
-            const error = await response.json();
-            showToast(error.message || 'Failed to update permissions', 'error');
-        }
-    } catch (error) {
-        console.error('Error updating permissions:', error);
-        showToast('Network error. Please try again.', 'error');
-    }
-}
-
-async function saveMasterWorkflow(workflowData) {
-    try {
-        const response = await fetch('/api/workflow/master', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: JSON.stringify(workflowData)
-        });
-        
-        if (response.ok) {
-            showToast('Master workflow saved successfully', 'success');
-            closeModal('workflowModal');
-        } else {
-            const error = await response.json();
-            showToast(error.message || 'Failed to save workflow', 'error');
-        }
-    } catch (error) {
-        console.error('Error saving workflow:', error);
-        showToast('Network error. Please try again.', 'error');
-    }
-}
-
-// Initialize everything when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    // Load initial data
-    fetchUsers();
-    
-    // Initialize WebSocket for real-time updates
-    initializeWebSocket();
-    
-    // Check for draft
-    restoreDraft();
-    
-    // Set up auto-refresh
-    setInterval(fetchUsers, 60000); // Refresh every minute
-});
 </script>

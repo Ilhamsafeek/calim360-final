@@ -1286,7 +1286,7 @@
         color: var(--text-color);
     }
 
-    .clause-item input[type="checkbox"]:checked + span {
+    .clause-item input[type="checkbox"]:checked+span {
         font-weight: 500;
     }
 </style>
@@ -3050,8 +3050,7 @@
             </div> -->
 
             <!-- Custom Workflow Configuration -->
-            <div id="customWorkflowConfig"
-                style="display: block;">
+            <div id="customWorkflowConfig" style="display: block;">
                 <h4 style="margin-bottom: 1rem;">Configure Workflow Steps</h4>
 
                 <table style="width: 100%; border-collapse: collapse;">
@@ -3286,7 +3285,7 @@
             </button>
         </div>
         <div class="modal-body">
-         
+
 
             <!-- Master Workflow Option -->
             <div style="margin-bottom: 1.5rem;" id="masterWorkflowContainer">
@@ -3631,42 +3630,74 @@
         </div>
 
         <div class="modal-body">
-          
+            <!-- Three Fields in One Row -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                <!-- Contract Type -->
+                <div>
+                    <label style="font-weight: 600; margin-bottom: 0.5rem; display: block; font-size: 0.875rem;">
+                        Contract Type <span style="color: var(--danger-color);">*</span>
+                    </label>
+                    <select id="regenContractType" class="form-control" required
+                        style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                        <option value="">Select Contract Type</option>
+                        <option value="construction">Construction Contract</option>
+                        <option value="service">Service Agreement</option>
+                        <option value="supply">Supply Agreement</option>
+                        <option value="consultancy">Consultancy Agreement</option>
+                        <option value="nda">Non-Disclosure Agreement</option>
+                        <option value="mou">Memorandum of Understanding</option>
+                        <option value="loi">Letter of Intent</option>
+                        <option value="purchase_order">Purchase Order</option>
+                        <option value="subcontract">Subcontract Agreement</option>
+                    </select>
+                </div>
 
-            <!-- Contract Type -->
-            <div style="margin-bottom: 1.5rem;">
-                <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
-                    Contract Type <span style="color: var(--danger-color);">*</span>
-                </label>
-                <select id="regenContractType" class="form-control" required
-                    style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
-                    <option value="">Select Contract Type</option>
-                    <option value="construction">Construction Contract</option>
-                    <option value="service">Service Agreement</option>
-                    <option value="supply">Supply Agreement</option>
-                    <option value="consultancy">Consultancy Agreement</option>
-                    <option value="nda">Non-Disclosure Agreement</option>
-                    <option value="mou">Memorandum of Understanding</option>
-                    <option value="loi">Letter of Intent</option>
-                    <option value="purchase_order">Purchase Order</option>
-                    <option value="subcontract">Subcontract Agreement</option>
-                </select>
+                <!-- Profile Type -->
+                <div>
+                    <label style="font-weight: 600; margin-bottom: 0.5rem; display: block; font-size: 0.875rem;">
+                        Profile Type <span style="color: var(--danger-color);">*</span>
+                    </label>
+                    <select id="regenProfileType" class="form-control" required
+                        style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                        <option value="">Select Profile Type</option>
+                        <option value="client">Client</option>
+                        <option value="consultant">Consultant</option>
+                        <option value="contractor">Contractor</option>
+                        <option value="subcontractor">Sub-Contractor</option>
+                    </select>
+                </div>
+
+                <!-- Jurisdiction -->
+                <div>
+                    <label style="font-weight: 600; margin-bottom: 0.5rem; display: block; font-size: 0.875rem;">
+                        Jurisdiction <span style="color: var(--danger-color);">*</span>
+                    </label>
+                    <select id="regenJurisdiction" class="form-control" required
+                        style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                        <option value="">Select Jurisdiction</option>
+                        <option value="Qatar" selected>Qatar</option>
+                        <option value="UAE">United Arab Emirates (UAE)</option>
+                        <option value="Saudi Arabia">Saudi Arabia</option>
+                        <option value="Kuwait">Kuwait</option>
+                        <option value="Bahrain">Bahrain</option>
+                        <option value="Oman">Oman</option>
+                        <option value="UK">United Kingdom</option>
+                        <option value="USA">United States</option>
+                        <option value="International">International Arbitration</option>
+                    </select>
+                </div>
+
+                <div class="ai-question-item">
+                    <label>
+                        Contract Language <span style="color: var(--danger-color);">*</span>
+                    </label>
+                    <select id="contractLanguage" class="form-control">
+                        <option value="en" selected>English</option>
+                        <option value="ar">Arabic (العربية)</option>
+                    </select>
+                </div>
             </div>
 
-            <!-- Profile Type -->
-            <div style="margin-bottom: 1.5rem;">
-                <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
-                    Profile Type <span style="color: var(--danger-color);">*</span>
-                </label>
-                <select id="regenProfileType" class="form-control" required
-                    style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
-                    <option value="">Select Profile Type</option>
-                    <option value="client">Client</option>
-                    <option value="consultant">Consultant</option>
-                    <option value="contractor">Contractor</option>
-                    <option value="subcontractor">Sub-Contractor</option>
-                </select>
-            </div>
 
             <!-- Add/Remove Clauses Section -->
             <div style="margin-bottom: 1.5rem;">
@@ -3679,14 +3710,17 @@
                 </div>
 
                 <!-- Clause Selection Section (Hidden by default) -->
-                <div id="regenClauseSection" style="display: none; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; background: var(--background-light);">
-                    
+                <div id="regenClauseSection"
+                    style="display: none; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; background: var(--background-light);">
+
                     <!-- Essential Clauses -->
                     <div style="margin-bottom: 1.5rem;">
-                        <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                        <h4
+                            style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
                             Essential Clauses
                         </h4>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem;">
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem;">
                             <label class="clause-item">
                                 <input type="checkbox" name="regen_clause_performance_bond" checked>
                                 <span>Performance Bond</span>
@@ -3708,10 +3742,12 @@
 
                     <!-- Legal & Compliance -->
                     <div style="margin-bottom: 1.5rem;">
-                        <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                        <h4
+                            style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
                             Legal & Compliance
                         </h4>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem;">
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem;">
                             <label class="clause-item">
                                 <input type="checkbox" name="regen_clause_back_to_back" checked>
                                 <span>Back-to-Back Terms</span>
@@ -3733,10 +3769,12 @@
 
                     <!-- Risk Management -->
                     <div style="margin-bottom: 1.5rem;">
-                        <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                        <h4
+                            style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
                             Risk Management
                         </h4>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem;">
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem;">
                             <label class="clause-item">
                                 <input type="checkbox" name="regen_clause_insurance" checked>
                                 <span>Insurance Requirements</span>
@@ -3758,10 +3796,12 @@
 
                     <!-- Contract Management -->
                     <div style="margin-bottom: 0;">
-                        <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                        <h4
+                            style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
                             Contract Management
                         </h4>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem;">
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem;">
                             <label class="clause-item">
                                 <input type="checkbox" name="regen_clause_termination" checked>
                                 <span>Termination Conditions</span>
@@ -3792,7 +3832,7 @@
                     <div class="alert alert-info" style="margin-top: 1rem; margin-bottom: 0;">
                         <i class="ti ti-info-circle"></i>
                         <span style="font-size: 0.875rem;">
-                            Selected clauses will be included in the regenerated contract. 
+                            Selected clauses will be included in the regenerated contract.
                             Uncheck any clause you don't want to include.
                         </span>
                     </div>
@@ -3804,7 +3844,7 @@
                 <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
                     Additional Requirements / Modifications
                 </label>
-                <textarea id="regenAdditionalRequirements" class="form-control" 
+                <textarea id="regenAdditionalRequirements" class="form-control"
                     placeholder="Enter any specific requirements, modifications, or special clauses..."
                     style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; min-height: 100px; resize: vertical;"></textarea>
                 <small style="color: var(--text-muted); font-size: 0.875rem;">
@@ -3817,7 +3857,7 @@
                 <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
                     Payment Terms <span style="color: var(--text-muted); font-weight: 400;">(Optional)</span>
                 </label>
-                <input type="text" id="regenPaymentTerms" class="form-control" 
+                <input type="text" id="regenPaymentTerms" class="form-control"
                     placeholder="e.g., 30 days net, milestone-based, monthly"
                     style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
             </div>
@@ -3827,8 +3867,7 @@
                 <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
                     Contract Duration <span style="color: var(--text-muted); font-weight: 400;">(Optional)</span>
                 </label>
-                <input type="text" id="regenDuration" class="form-control" 
-                    placeholder="e.g., 6 months, 1 year, 2 years"
+                <input type="text" id="regenDuration" class="form-control" placeholder="e.g., 6 months, 1 year, 2 years"
                     style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
             </div>
         </div>
@@ -5216,18 +5255,18 @@
 
 
 
-function toggleClauseSection() {
-    const section = document.getElementById('regenClauseSection');
-    const toggleText = document.getElementById('clauseToggleText');
-    
-    if (section.style.display === 'none') {
-        section.style.display = 'block';
-        toggleText.textContent = 'Hide Clause Selection';
-    } else {
-        section.style.display = 'none';
-        toggleText.textContent = 'Show Clause Selection';
+    function toggleClauseSection() {
+        const section = document.getElementById('regenClauseSection');
+        const toggleText = document.getElementById('clauseToggleText');
+
+        if (section.style.display === 'none') {
+            section.style.display = 'block';
+            toggleText.textContent = 'Hide Clause Selection';
+        } else {
+            section.style.display = 'none';
+            toggleText.textContent = 'Show Clause Selection';
+        }
     }
-}
 
 
 
@@ -5284,63 +5323,63 @@ function toggleClauseSection() {
     // =====================================================
     // DATA LOADING FUNCTIONS
     // =====================================================
-async function loadContractData() {
-    try {
-        console.log('📡 Loading contract data for ID:', contractId);
-        
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`/api/contracts/edit/${contractId}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include'
-        });
-        
-        const data = await response.json();
+    async function loadContractData() {
+        try {
+            console.log('📡 Loading contract data for ID:', contractId);
 
-        console.log('Contract data received:', data);
+            const token = localStorage.getItem('access_token');
+            const response = await fetch(`/api/contracts/edit/${contractId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
 
-        if (data.success) {
-            contractData = data;
-            
-            // Set currentContractId
-            if (data.contract && data.contract.id) {
-                currentContractId = data.contract.id;
-                console.log('✅ currentContractId set to:', currentContractId);
+            const data = await response.json();
+
+            console.log('Contract data received:', data);
+
+            if (data.success) {
+                contractData = data;
+
+                // Set currentContractId
+                if (data.contract && data.contract.id) {
+                    currentContractId = data.contract.id;
+                    console.log('✅ currentContractId set to:', currentContractId);
+                }
+
+                // Render the editor
+                renderContractEditor(data);
+
+                // ⭐ NEW: Update signature fields with actual signature data
+                if (data.certificate) {
+                    console.log('🖊️ Certificate data found, updating signature displays...');
+                    // Wait a moment for DOM to be ready
+                    setTimeout(() => {
+                        updateSignatureFields(data.certificate);
+                    }, 500);
+                }
+
+                document.getElementById('contractEditor').classList.add('loaded');
+                document.getElementById('contractEditor').style.display = 'block';
+                hideLoader();
+
+                startAutoSave();
+
+                // Initialize AI AFTER contract is rendered
+                await initializeAIGeneration();
+            } else {
+                hideLoader();
+                showError('Failed to load contract data: ' + (data.message || 'Unknown error'));
             }
-            
-            // Render the editor
-            renderContractEditor(data);
-
-            // ⭐ NEW: Update signature fields with actual signature data
-            if (data.certificate) {
-                console.log('🖊️ Certificate data found, updating signature displays...');
-                // Wait a moment for DOM to be ready
-                setTimeout(() => {
-                    updateSignatureFields(data.certificate);
-                }, 500);
-            }
-
-            document.getElementById('contractEditor').classList.add('loaded');
-            document.getElementById('contractEditor').style.display = 'block';
+        } catch (error) {
+            console.error('Error loading contract:', error);
             hideLoader();
-
-            startAutoSave();
-
-            // Initialize AI AFTER contract is rendered
-            await initializeAIGeneration();
-        } else {
-            hideLoader();
-            showError('Failed to load contract data: ' + (data.message || 'Unknown error'));
+            showError('Failed to load contract data: ' + error.message);
         }
-    } catch (error) {
-        console.error('Error loading contract:', error);
-        hideLoader();
-        showError('Failed to load contract data: ' + error.message);
     }
-}
 
     // =====================================================
     // RENDERING FUNCTIONS
@@ -5363,83 +5402,83 @@ async function loadContractData() {
         // =================================================================
 
         // Extract signatory data from certificate with proper handling
- let clientSignatory = {
-    name: '[Name]',
-    signer_type: '[Title]',
-    email: '',
-    has_signed: false,
-    signed_at: null,
-    signature_data: null,
-    signature_method: 'draw'  // ✅ ADD THIS
-};
+        let clientSignatory = {
+            name: '[Name]',
+            signer_type: '[Title]',
+            email: '',
+            has_signed: false,
+            signed_at: null,
+            signature_data: null,
+            signature_method: 'draw'  // ✅ ADD THIS
+        };
 
-let companySignatory = {
-    name: '[Name]',
-    signer_type: '[Title]',
-    email: '',
-    has_signed: false,
-    signed_at: null,
-    signature_data: null,
-    signature_method: 'draw'  // ✅ ADD THIS
-};
+        let companySignatory = {
+            name: '[Name]',
+            signer_type: '[Title]',
+            email: '',
+            has_signed: false,
+            signed_at: null,
+            signature_data: null,
+            signature_method: 'draw'  // ✅ ADD THIS
+        };
 
-if (certificate && certificate.signatories) {
-    const clientSig = certificate.signatories.find(s =>
-        s.signer_type === 'client' || s.signer_type === 'party_a'
-    );
-    const companySig = certificate.signatories.find(s =>
-        s.signer_type === 'company' || s.signer_type === 'party_b' || s.signer_type === 'provider'
-    );
+        if (certificate && certificate.signatories) {
+            const clientSig = certificate.signatories.find(s =>
+                s.signer_type === 'client' || s.signer_type === 'party_a'
+            );
+            const companySig = certificate.signatories.find(s =>
+                s.signer_type === 'company' || s.signer_type === 'party_b' || s.signer_type === 'provider'
+            );
 
- if (clientSig && clientSig.has_signed) {
-        // Update client name and title fields in the DOM
-        const clientNameSpan = document.querySelector('.signature-block-client .editable-field[contenteditable]');
-        if (clientNameSpan && clientNameSpan.textContent === '[Name]') {
-            clientNameSpan.textContent = clientSig.name;
+            if (clientSig && clientSig.has_signed) {
+                // Update client name and title fields in the DOM
+                const clientNameSpan = document.querySelector('.signature-block-client .editable-field[contenteditable]');
+                if (clientNameSpan && clientNameSpan.textContent === '[Name]') {
+                    clientNameSpan.textContent = clientSig.name;
+                }
+
+                const clientTitleSpan = document.querySelectorAll('.signature-block-client .editable-field')[1];
+                if (clientTitleSpan && clientTitleSpan.textContent === '[Title]') {
+                    clientTitleSpan.textContent = 'Client Representative';
+                }
+            }
+
+            if (companySig && companySig.has_signed) {
+                // Update company name and title fields in the DOM
+                const companyNameSpan = document.querySelector('.signature-block-company .editable-field[contenteditable]');
+                if (companyNameSpan && companyNameSpan.textContent === '[Name]') {
+                    companyNameSpan.textContent = companySig.name;
+                }
+
+                const companyTitleSpan = document.querySelectorAll('.signature-block-company .editable-field')[1];
+                if (companyTitleSpan && companyTitleSpan.textContent === '[Title]') {
+                    companyTitleSpan.textContent = 'Company Representative';
+                }
+            }
         }
-        
-        const clientTitleSpan = document.querySelectorAll('.signature-block-client .editable-field')[1];
-        if (clientTitleSpan && clientTitleSpan.textContent === '[Title]') {
-            clientTitleSpan.textContent = 'Client Representative';
-        }
-    }
 
-   if (companySig && companySig.has_signed) {
-        // Update company name and title fields in the DOM
-        const companyNameSpan = document.querySelector('.signature-block-company .editable-field[contenteditable]');
-        if (companyNameSpan && companyNameSpan.textContent === '[Name]') {
-            companyNameSpan.textContent = companySig.name;
-        }
-        
-        const companyTitleSpan = document.querySelectorAll('.signature-block-company .editable-field')[1];
-        if (companyTitleSpan && companyTitleSpan.textContent === '[Title]') {
-            companyTitleSpan.textContent = 'Company Representative';
-        }
-    }
-}
+        // ✅ ADD HELPER FUNCTION to render actual signature
+        function renderSignature(signatory) {
+            if (!signatory.signature_data) {
+                return '<div style="font-family: \'Brush Script MT\', cursive; font-size: 1.5rem; color: #000;">Digitally Signed</div>';
+            }
 
-// ✅ ADD HELPER FUNCTION to render actual signature
-function renderSignature(signatory) {
-    if (!signatory.signature_data) {
-        return '<div style="font-family: \'Brush Script MT\', cursive; font-size: 1.5rem; color: #000;">Digitally Signed</div>';
-    }
-
-    // If it's a base64 image (drawn signature)
-    if (signatory.signature_data.startsWith('data:image')) {
-        return `<img src="${signatory.signature_data}" 
+            // If it's a base64 image (drawn signature)
+            if (signatory.signature_data.startsWith('data:image')) {
+                return `<img src="${signatory.signature_data}" 
                      alt="Signature" 
                      style="max-width: 200px; max-height: 80px; object-fit: contain;">`;
-    }
-    
-    // If it's typed text
-    return `<div style="font-family: 'Brush Script MT', cursive; font-size: 2rem; color: #000; padding: 0.5rem;">
+            }
+
+            // If it's typed text
+            return `<div style="font-family: 'Brush Script MT', cursive; font-size: 2rem; color: #000; padding: 0.5rem;">
                 ${signatory.signature_data}
             </div>`;
-}
+        }
 
-// CLIENT SIGNATURE HTML
-const clientSignatureHTML = clientSignatory.has_signed
-    ? `<div class="signature-field signed" id="clientSignature" 
+        // CLIENT SIGNATURE HTML
+        const clientSignatureHTML = clientSignatory.has_signed
+            ? `<div class="signature-field signed" id="clientSignature" 
             style="border: 2px solid #28a745; border-radius: 8px; padding: 1.5rem; background: #f0fff4; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
            <!-- ✅ ACTUAL SIGNATURE DISPLAY -->
            <div style="margin-bottom: 0.75rem;">
@@ -5452,16 +5491,16 @@ const clientSignatureHTML = clientSignatory.has_signed
                </span>
            </div>
        </div>`
-    : `<div class="signature-field" id="clientSignature" 
+            : `<div class="signature-field" id="clientSignature" 
             onclick="${(contract.status === 'signature' && contract.is_counterparty) ? "openSignature('client')" : "void(0)"}"
             style="border: 3px dashed #cbd5e0; border-radius: 8px; padding: 2rem; background: #f8fafc; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: ${(contract.status === 'signature' && contract.is_counterparty) ? 'pointer' : 'default'};">
            <i class="ti ti-writing-sign" style="font-size: 2.5rem; color: #94a3b8; margin-bottom: 0.75rem;"></i>
            <span style="color: #64748b; font-weight: 500;">Click to Sign (Client)</span>
        </div>`;
 
-// COMPANY SIGNATURE HTML  
-const companySignatureHTML = companySignatory.has_signed
-    ? `<div class="signature-field signed" id="companySignature" 
+        // COMPANY SIGNATURE HTML  
+        const companySignatureHTML = companySignatory.has_signed
+            ? `<div class="signature-field signed" id="companySignature" 
             style="border: 2px solid #28a745; border-radius: 8px; padding: 1.5rem; background: #f0fff4; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
            <!-- ✅ ACTUAL SIGNATURE DISPLAY -->
            <div style="margin-bottom: 0.75rem;">
@@ -5474,7 +5513,7 @@ const companySignatureHTML = companySignatory.has_signed
                </span>
            </div>
        </div>`
-    : `<div class="signature-field" id="companySignature" 
+            : `<div class="signature-field" id="companySignature" 
             onclick="${(contract.status === 'signature' && !contract.is_counterparty) ? "openSignature('company')" : "void(0)"}"
             style="border: 3px dashed #cbd5e0; border-radius: 8px; padding: 2rem; background: #f8fafc; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: ${(contract.status === 'signature' && !contract.is_counterparty) ? 'pointer' : 'default'};">
            <i class="ti ti-writing-sign" style="font-size: 2.5rem; color: #94a3b8; margin-bottom: 0.75rem;"></i>
@@ -5483,9 +5522,7 @@ const companySignatureHTML = companySignatory.has_signed
 
         // COMPLETE SIGNATURE BLOCK WITH AUTO-FILLED NAMES AND TITLES
         const signature_block = `
-<div style="margin-top: 3rem; page-break-inside: avoid;">
-    <p style="font-weight: 600; font-size: 1.1rem; margin-bottom: 2rem;"><strong>IN WITNESS WHEREOF</strong>, the parties have executed this Agreement.</p>
-    
+<div style="margin-top: 3rem; page-break-inside: avoid;">    
     <div style="display: flex; justify-content: space-between; gap: 3rem; margin-top: 3rem;">
         <!-- CLIENT SIGNATURE SECTION -->
         <div style="flex: 1;">
@@ -5847,71 +5884,71 @@ ${contract.content && contract.content.trim() !== '' ?
 
 
 
-    
 
- function updateSignatureFields(certificate) {
-    console.log('🖊️ Updating signature fields with certificate data:', certificate);
-    
-    if (!certificate || !certificate.signatories || certificate.signatories.length === 0) {
-        console.log('⚠️ No certificate data to display');
-        return;
-    }
 
-    const clientSig = certificate.signatories.find(s => s.signer_type === 'client' || s.signer_type === 'party_a');
-    const companySig = certificate.signatories.find(s => s.signer_type === 'company' || s.signer_type === 'party_b' || s.signer_type === 'provider');
+    function updateSignatureFields(certificate) {
+        console.log('🖊️ Updating signature fields with certificate data:', certificate);
 
-    // Update CLIENT signature
-    if (clientSig && clientSig.has_signed) {
-        const clientField = document.getElementById('clientSignature');
-        if (clientField) {
-            clientField.innerHTML = `
+        if (!certificate || !certificate.signatories || certificate.signatories.length === 0) {
+            console.log('⚠️ No certificate data to display');
+            return;
+        }
+
+        const clientSig = certificate.signatories.find(s => s.signer_type === 'client' || s.signer_type === 'party_a');
+        const companySig = certificate.signatories.find(s => s.signer_type === 'company' || s.signer_type === 'party_b' || s.signer_type === 'provider');
+
+        // Update CLIENT signature
+        if (clientSig && clientSig.has_signed) {
+            const clientField = document.getElementById('clientSignature');
+            if (clientField) {
+                clientField.innerHTML = `
                 <div style="margin-bottom: 0.75rem;">${renderSignature(clientSig)}</div>
                 <div style="font-size: 0.875rem; color: #28a745; font-weight: 600; text-align: center;">
                     <strong>&#10003; Signed</strong><br>
                     <span style="font-size: 0.75rem;">${clientSig.signed_at ? new Date(clientSig.signed_at).toLocaleString() : 'N/A'}</span>
                 </div>
             `;
-            clientField.style.border = '2px solid #28a745';
-            clientField.style.background = '#f0fff4';
-            clientField.onclick = null;
-        }
-        
-        // ⭐ Update Name/Title fields for CLIENT
-        const clientContainer = clientField?.parentElement;
-        if (clientContainer) {
-            const nameFields = clientContainer.querySelectorAll('.editable-field');
-            if (nameFields[0]) nameFields[0].textContent = clientSig.name;
-            if (nameFields[1]) nameFields[1].textContent = 'Client Representative';
-        }
-    }
+                clientField.style.border = '2px solid #28a745';
+                clientField.style.background = '#f0fff4';
+                clientField.onclick = null;
+            }
 
-    // Update COMPANY signature
-    if (companySig && companySig.has_signed) {
-        const companyField = document.getElementById('companySignature');
-        if (companyField) {
-            companyField.innerHTML = `
+            // ⭐ Update Name/Title fields for CLIENT
+            const clientContainer = clientField?.parentElement;
+            if (clientContainer) {
+                const nameFields = clientContainer.querySelectorAll('.editable-field');
+                if (nameFields[0]) nameFields[0].textContent = clientSig.name;
+                if (nameFields[1]) nameFields[1].textContent = 'Client Representative';
+            }
+        }
+
+        // Update COMPANY signature
+        if (companySig && companySig.has_signed) {
+            const companyField = document.getElementById('companySignature');
+            if (companyField) {
+                companyField.innerHTML = `
                 <div style="margin-bottom: 0.75rem;">${renderSignature(companySig)}</div>
                 <div style="font-size: 0.875rem; color: #28a745; font-weight: 600; text-align: center;">
                     <strong>&#10003; Signed</strong><br>
                     <span style="font-size: 0.75rem;">${companySig.signed_at ? new Date(companySig.signed_at).toLocaleString() : 'N/A'}</span>
                 </div>
             `;
-            companyField.style.border = '2px solid #28a745';
-            companyField.style.background = '#f0fff4';
-            companyField.onclick = null;
-        }
-        
-        // ⭐ Update Name/Title fields for COMPANY
-        const companyContainer = companyField?.parentElement;
-        if (companyContainer) {
-            const nameFields = companyContainer.querySelectorAll('.editable-field');
-            if (nameFields[0]) nameFields[0].textContent = companySig.name;
-            if (nameFields[1]) nameFields[1].textContent = 'Company Representative';
-        }
-    }
+                companyField.style.border = '2px solid #28a745';
+                companyField.style.background = '#f0fff4';
+                companyField.onclick = null;
+            }
 
-    console.log('✅ Signature fields and names updated');
-}
+            // ⭐ Update Name/Title fields for COMPANY
+            const companyContainer = companyField?.parentElement;
+            if (companyContainer) {
+                const nameFields = companyContainer.querySelectorAll('.editable-field');
+                if (nameFields[0]) nameFields[0].textContent = companySig.name;
+                if (nameFields[1]) nameFields[1].textContent = 'Company Representative';
+            }
+        }
+
+        console.log('✅ Signature fields and names updated');
+    }
 
 
     function renderWorkflowStepper(status) {
@@ -8184,7 +8221,7 @@ ${contract.content && contract.content.trim() !== '' ?
         // Determine the party based on current user context
         const isInitiator = contractData?.contract?.is_initiator || false;
 
-        console.log('is initiator??',contractData);
+        console.log('is initiator??', contractData);
         const party = isInitiator ? 'company' : 'client';
 
 
@@ -8331,11 +8368,11 @@ ${contract.content && contract.content.trim() !== '' ?
 
         const workflow = contractData.workflow;
 
-         console.log(workflow);
+        console.log(workflow);
         // If it's my workflow turn and role includes e-signature authority
         if (workflow.is_my_workflow_turn) {
 
-           
+
             const currentStep = workflow.current_step_name?.toLowerCase() || '';
             if (currentStep.includes('e-sign') ||
                 currentStep.includes('esign') ||
@@ -8349,57 +8386,57 @@ ${contract.content && contract.content.trim() !== '' ?
     }
 
     // Apply signature with enhanced response handling
-async function applySignature() {
-    const signatureData = document.getElementById('typedSig')?.value ||
-        (canvas ? canvas.toDataURL() : 'Digitally Signed');
-    const signatureMethod = document.querySelector('.signature-tab.active')?.textContent.includes('Type') ? 'type' : 'draw';
+    async function applySignature() {
+        const signatureData = document.getElementById('typedSig')?.value ||
+            (canvas ? canvas.toDataURL() : 'Digitally Signed');
+        const signatureMethod = document.querySelector('.signature-tab.active')?.textContent.includes('Type') ? 'type' : 'draw';
 
-    showLoader();
-    try {
-        console.log('📝 Sending signature request...');
-        
-        const response = await fetch('/api/contracts/signature/apply', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('access_token')}`  // Ensure auth token is sent
-            },
-            credentials: 'include',  // Include cookies
-            body: JSON.stringify({
-                contract_id: parseInt(contractId),
-                signer_type: currentSignatureField,
-                signature_method: signatureMethod,
-                signature_data: signatureData
-            })
-        });
+        showLoader();
+        try {
+            console.log('📝 Sending signature request...');
 
-        console.log('📡 Response status:', response.status, response.statusText);
+            const response = await fetch('/api/contracts/signature/apply', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`  // Ensure auth token is sent
+                },
+                credentials: 'include',  // Include cookies
+                body: JSON.stringify({
+                    contract_id: parseInt(contractId),
+                    signer_type: currentSignatureField,
+                    signature_method: signatureMethod,
+                    signature_data: signatureData
+                })
+            });
 
-        // ✅ FIX: Check response.ok FIRST before parsing JSON
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.detail || errorData.message || 'Failed to apply signature');
-        }
+            console.log('📡 Response status:', response.status, response.statusText);
 
-        const data = await response.json();
-        console.log('✅ Response data:', data);
+            // ✅ FIX: Check response.ok FIRST before parsing JSON
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || errorData.message || 'Failed to apply signature');
+            }
 
-        // ✅ FIX: Now check data.success
-        if (data.success) {
-            // Close modal first
-            closeModal('signatureModal');
+            const data = await response.json();
+            console.log('✅ Response data:', data);
 
-            // Update UI to show signature with actual signature data
-            const fieldId = currentSignatureField === 'client' ? 'clientSignature' : 'companySignature';
-            const fieldElement = document.getElementById(fieldId);
+            // ✅ FIX: Now check data.success
+            if (data.success) {
+                // Close modal first
+                closeModal('signatureModal');
 
-            if (fieldElement) {
-                // Create signature display with actual signature
-                const signatureDisplay = signatureMethod === 'type'
-                    ? `<div class="typed-signature">${signatureData}</div>`
-                    : `<img src="${signatureData}" alt="Signature" style="max-width: 100%; height: auto;">`;
+                // Update UI to show signature with actual signature data
+                const fieldId = currentSignatureField === 'client' ? 'clientSignature' : 'companySignature';
+                const fieldElement = document.getElementById(fieldId);
 
-                fieldElement.innerHTML = `
+                if (fieldElement) {
+                    // Create signature display with actual signature
+                    const signatureDisplay = signatureMethod === 'type'
+                        ? `<div class="typed-signature">${signatureData}</div>`
+                        : `<img src="${signatureData}" alt="Signature" style="max-width: 100%; height: auto;">`;
+
+                    fieldElement.innerHTML = `
                     <div class="signature-applied">
                         ${signatureDisplay}
                         <p class="signature-info">
@@ -8408,53 +8445,53 @@ async function applySignature() {
                         </p>
                     </div>
                 `;
-                fieldElement.classList.add('signed');
-            }
-
-            // Show success notification with signer name
-            showNotification(
-                data.message || `Signature applied successfully by ${data.signer_name}`, 
-                'success'
-            );
-
-            // Update contract status if all parties signed
-            if (data.all_signed) {
-                showNotification('All parties have signed! Contract is now executed.', 'success');
-                
-                // Update status badge
-                const statusBadge = document.querySelector('.status-badge');
-                if (statusBadge) {
-                    statusBadge.textContent = 'Executed';
-                    statusBadge.className = 'status-badge status-executed';
+                    fieldElement.classList.add('signed');
                 }
-            }
 
-            // Reload contract data to reflect changes
-            setTimeout(async () => {
-                await refreshContractData();
-            }, 1500);
+                // Show success notification with signer name
+                showNotification(
+                    data.message || `Signature applied successfully by ${data.signer_name}`,
+                    'success'
+                );
 
-        } else {
-            // Handle specific error cases
-            if (data.not_authorized) {
-                showNotification(data.detail || 'Only E-Signature Authority can sign.', 'error');
-            } else if (data.already_signed) {
-                showNotification(data.detail || 'You have already signed this contract', 'warning');
+                // Update contract status if all parties signed
+                if (data.all_signed) {
+                    showNotification('All parties have signed! Contract is now executed.', 'success');
+
+                    // Update status badge
+                    const statusBadge = document.querySelector('.status-badge');
+                    if (statusBadge) {
+                        statusBadge.textContent = 'Executed';
+                        statusBadge.className = 'status-badge status-executed';
+                    }
+                }
+
+                // Reload contract data to reflect changes
+                setTimeout(async () => {
+                    await refreshContractData();
+                }, 1500);
+
             } else {
-                showNotification(data.detail || data.message || 'Failed to apply signature', 'error');
+                // Handle specific error cases
+                if (data.not_authorized) {
+                    showNotification(data.detail || 'Only E-Signature Authority can sign.', 'error');
+                } else if (data.already_signed) {
+                    showNotification(data.detail || 'You have already signed this contract', 'warning');
+                } else {
+                    showNotification(data.detail || data.message || 'Failed to apply signature', 'error');
+                }
+                closeModal('signatureModal');
             }
-            closeModal('signatureModal');
-        }
 
-    } catch (error) {
-        console.error('❌ Error applying signature:', error);
-        hideLoader();
-        showNotification(error.message || 'Failed to apply signature. Please try again.', 'error');
-        closeModal('signatureModal');
-    } finally {
-        hideLoader();
+        } catch (error) {
+            console.error('❌ Error applying signature:', error);
+            hideLoader();
+            showNotification(error.message || 'Failed to apply signature. Please try again.', 'error');
+            closeModal('signatureModal');
+        } finally {
+            hideLoader();
+        }
     }
-}
 
 
 
@@ -13180,10 +13217,10 @@ Generated by CALIM 360 Smart CLM
 
 
 
-// Set  as a global variable (used in regenerate function)
+    // Set  as a global variable (used in regenerate function)
 
-console.log('🆔 Contract ID from URL:', contractId);
-console.log('🆔 Current Contract ID set to:', currentContractId);
+    console.log('🆔 Contract ID from URL:', contractId);
+    console.log('🆔 Current Contract ID set to:', currentContractId);
 
 
     let isAIGenerated = false;
@@ -13525,61 +13562,66 @@ console.log('🆔 Current Contract ID set to:', currentContractId);
     // =====================================================
     // REGENERATE CONTRACT FUNCTIONS
     // =====================================================
-function regenerateContract() {
-    console.log('🔄 Opening regenerate modal...');
-    console.log('📦 Full generationParams:', generationParams);
+    function regenerateContract() {
+        console.log('🔄 Opening regenerate modal...');
+        console.log('📦 Full generationParams:', generationParams);
 
-    // Pre-fill modal with existing metadata
-    if (generationParams) {
-        // Set contract type
-        const contractType = generationParams.contract_type || '';
-        document.getElementById('regenContractType').value = contractType;
+        // Pre-fill modal with existing metadata
+        if (generationParams) {
+            // Set contract type
+            const contractType = generationParams.contract_type || '';
+            document.getElementById('regenContractType').value = contractType;
 
-        // Set profile type
-        const profileType = generationParams.profile_type || '';
-        document.getElementById('regenProfileType').value = profileType;
+            // Set profile type
+            const profileType = generationParams.profile_type || '';
+            document.getElementById('regenProfileType').value = profileType;
 
-        // Set additional requirements
-        const additionalReqs = generationParams.metadata?.additional_requirements || 
-                               generationParams.metadata?.prompt || '';
-        document.getElementById('regenAdditionalRequirements').value = additionalReqs;
+            // ADD THIS: Set jurisdiction
+            const jurisdiction = generationParams.jurisdiction || 'Qatar';
+            document.getElementById('regenJurisdiction').value = jurisdiction;
 
-        // Set payment terms
-        const paymentTerms = generationParams.metadata?.payment_terms || '';
-        document.getElementById('regenPaymentTerms').value = paymentTerms;
+            // Set additional requirements
+            const additionalReqs = generationParams.metadata?.additional_requirements ||
+                generationParams.metadata?.prompt || '';
+            document.getElementById('regenAdditionalRequirements').value = additionalReqs;
 
-        // Set duration
-        const duration = generationParams.metadata?.duration || '';
-        document.getElementById('regenDuration').value = duration;
 
-        // Restore clause selections if they exist
-        const existingClauses = generationParams.selected_clauses || [];
-        console.log('📋 Existing selected clauses:', existingClauses);
+            // Set payment terms
+            const paymentTerms = generationParams.metadata?.payment_terms || '';
+            document.getElementById('regenPaymentTerms').value = paymentTerms;
 
-        if (existingClauses.length > 0) {
-            // Show clause section if clauses were previously selected
-            const section = document.getElementById('regenClauseSection');
-            const toggleText = document.getElementById('clauseToggleText');
-            section.style.display = 'block';
-            toggleText.textContent = 'Hide Clause Selection';
+            // Set duration
+            const duration = generationParams.metadata?.duration || '';
+            document.getElementById('regenDuration').value = duration;
 
-            // Check the boxes for previously selected clauses
-            existingClauses.forEach(clauseKey => {
-                const checkbox = document.querySelector(`input[name="regen_clause_${clauseKey}"]`);
-                if (checkbox) {
-                    checkbox.checked = true;
-                    console.log(`  ✓ Restored clause: ${clauseKey}`);
-                }
-            });
+            // Restore clause selections if they exist
+            const existingClauses = generationParams.selected_clauses || [];
+            console.log('📋 Existing selected clauses:', existingClauses);
+
+            if (existingClauses.length > 0) {
+                // Show clause section if clauses were previously selected
+                const section = document.getElementById('regenClauseSection');
+                const toggleText = document.getElementById('clauseToggleText');
+                section.style.display = 'block';
+                toggleText.textContent = 'Hide Clause Selection';
+
+                // Check the boxes for previously selected clauses
+                existingClauses.forEach(clauseKey => {
+                    const checkbox = document.querySelector(`input[name="regen_clause_${clauseKey}"]`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        console.log(`  ✓ Restored clause: ${clauseKey}`);
+                    }
+                });
+            }
         }
-    }
 
-    // Show modal
-    const modal = document.getElementById('regenerateContractModal');
-    modal.style.display = 'flex';
-    
-    console.log('✅ Regenerate modal opened');
-}
+        // Show modal
+        const modal = document.getElementById('regenerateContractModal');
+        modal.style.display = 'flex';
+
+        console.log('✅ Regenerate modal opened');
+    }
 
     function closeRegenerateModal() {
         const modal = document.getElementById('regenerateContractModal');
@@ -13592,135 +13634,142 @@ function regenerateContract() {
 
 
     function getRegenSelectedClauses() {
-    regenSelectedClauses = [];
-    
-    // Get all checked checkboxes in regenerate modal
-    const checkedBoxes = document.querySelectorAll('#regenClauseSection input[type="checkbox"]:checked');
-    
-    console.log(`📊 Found ${checkedBoxes.length} checked clauses in regen modal`);
-    
-    checkedBoxes.forEach(checkbox => {
-        // Extract clause key from name attribute (remove 'regen_clause_' prefix)
-        const clauseKey = checkbox.name.replace('regen_clause_', '');
-        
-        if (clauseKey && clauseKey !== '') {
-            regenSelectedClauses.push(clauseKey);
-            console.log(`  ✓ Selected: ${clauseKey}`);
-        }
-    });
-    
-    console.log(`📋 Total clauses selected for regeneration: ${regenSelectedClauses.length}`);
-    console.log('📋 Selected clauses array:', regenSelectedClauses);
-    
-    return regenSelectedClauses;
-}
+        regenSelectedClauses = [];
 
+        // Get all checked checkboxes in regenerate modal
+        const checkedBoxes = document.querySelectorAll('#regenClauseSection input[type="checkbox"]:checked');
 
-async function submitRegeneration() {
-    console.log('🚀 Submitting regeneration request...');
-    console.log('🆔 Using Contract ID:', currentContractId);
+        console.log(`📊 Found ${checkedBoxes.length} checked clauses in regen modal`);
 
-    try {
-        // Validate contract ID first
-        if (!currentContractId || currentContractId === 'null' || currentContractId === null) {
-            console.error('❌ Invalid contract ID:', currentContractId);
-            showNotification('Error: Contract ID is missing. Please refresh the page.', 'error');
-            return;
-        }
+        checkedBoxes.forEach(checkbox => {
+            // Extract clause key from name attribute (remove 'regen_clause_' prefix)
+            const clauseKey = checkbox.name.replace('regen_clause_', '');
 
-        // Validate required fields
-        const contractType = document.getElementById('regenContractType').value;
-        const profileType = document.getElementById('regenProfileType').value;
-
-        if (!contractType) {
-            showNotification('Please select a contract type', 'warning');
-            return;
-        }
-
-        if (!profileType) {
-            showNotification('Please select a profile type', 'warning');
-            return;
-        }
-
-        // Get clause selections
-        const selectedClauses = getRegenSelectedClauses();
-        
-        // Get additional fields
-        const additionalRequirements = document.getElementById('regenAdditionalRequirements').value.trim();
-        const paymentTerms = document.getElementById('regenPaymentTerms').value.trim();
-        const duration = document.getElementById('regenDuration').value.trim();
-
-        // Prepare updated generation parameters
-        const updatedParams = {
-            contract_type: contractType,
-            profile_type: profileType,
-            selected_clauses: selectedClauses,
-            clause_descriptions: selectedClauses, // Use same array for descriptions
-            jurisdiction: generationParams?.jurisdiction || "Qatar",
-            language: generationParams?.language || "en",
-            parties: generationParams?.parties || {},
-            contract_value: generationParams?.contract_value,
-            currency: generationParams?.currency,
-            start_date: generationParams?.start_date,
-            end_date: generationParams?.end_date,
-            metadata: {
-                prompt: additionalRequirements || generationParams?.metadata?.prompt || '',
-                additional_requirements: additionalRequirements,
-                payment_terms: paymentTerms,
-                duration: duration
+            if (clauseKey && clauseKey !== '') {
+                regenSelectedClauses.push(clauseKey);
+                console.log(`  ✓ Selected: ${clauseKey}`);
             }
-        };
-
-        console.log('📤 Updated params being sent:', updatedParams);
-        console.log('🔗 API URL:', `/api/contracts/${currentContractId}/update-metadata`);
-
-        // Show loading indicator
-        showLoader('Updating contract parameters...');
-
-        // Step 1: Update contract metadata
-        const token = getAuthToken();
-        
-        const updateResponse = await fetch(`/api/contracts/${currentContractId}/update-metadata`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-                ai_generation_params: updatedParams
-            })
         });
 
-        console.log('📡 Update response status:', updateResponse.status);
+        console.log(`📋 Total clauses selected for regeneration: ${regenSelectedClauses.length}`);
+        console.log('📋 Selected clauses array:', regenSelectedClauses);
 
-        if (!updateResponse.ok) {
-            const errorData = await updateResponse.json();
-            console.error('❌ Update failed:', errorData);
-            throw new Error(errorData.detail || 'Failed to update metadata');
-        }
+        return regenSelectedClauses;
+    }
 
-        const updateResult = await updateResponse.json();
-        console.log('✅ Metadata updated successfully:', updateResult);
 
-        // Update local generationParams
-        generationParams = updatedParams;
+    async function submitRegeneration() {
+        console.log('🚀 Submitting regeneration request...');
+        console.log('🆔 Using Contract ID:', currentContractId);
 
-        // Close modal
-        closeRegenerateModal();
+        try {
+            // Validate contract ID first
+            if (!currentContractId || currentContractId === 'null' || currentContractId === null) {
+                console.error('❌ Invalid contract ID:', currentContractId);
+                showNotification('Error: Contract ID is missing. Please refresh the page.', 'error');
+                return;
+            }
 
-        hideLoader();
+            // Validate required fields
+            const contractType = document.getElementById('regenContractType').value;
+            const profileType = document.getElementById('regenProfileType').value;
+            const jurisdiction = document.getElementById('regenJurisdiction').value; // ADD THIS
 
-        // Step 2: Regenerate contract content
-        console.log('🤖 Regenerating contract with AI...');
+            if (!contractType) {
+                showNotification('Please select a contract type', 'warning');
+                return;
+            }
 
-        // Show AI banner
-        showAIBanner();
+            if (!profileType) {
+                showNotification('Please select a profile type', 'warning');
+                return;
+            }
 
-        // Clear editor and show loading
-        const editor = document.getElementById('contractContent');
-        if (editor) {
-            editor.innerHTML = `
+            // ADD THIS VALIDATION
+            if (!jurisdiction) {
+                showNotification('Please select a jurisdiction', 'warning');
+                return;
+            }
+
+            // Get clause selections
+            const selectedClauses = getRegenSelectedClauses();
+
+            // Get additional fields
+            const additionalRequirements = document.getElementById('regenAdditionalRequirements').value.trim();
+            const paymentTerms = document.getElementById('regenPaymentTerms').value.trim();
+            const duration = document.getElementById('regenDuration').value.trim();
+
+            // Prepare updated generation parameters
+            const updatedParams = {
+                contract_type: contractType,
+                profile_type: profileType,
+                selected_clauses: selectedClauses,
+                clause_descriptions: selectedClauses,
+                jurisdiction: jurisdiction, // UPDATED: Use the value from form field
+                language: generationParams?.language || "en",
+                parties: generationParams?.parties || {},
+                contract_value: generationParams?.contract_value,
+                currency: generationParams?.currency,
+                start_date: generationParams?.start_date,
+                end_date: generationParams?.end_date,
+                metadata: {
+                    prompt: additionalRequirements || generationParams?.metadata?.prompt || '',
+                    additional_requirements: additionalRequirements,
+                    payment_terms: paymentTerms,
+                    duration: duration
+                }
+            };
+
+            console.log('📤 Updated params being sent:', updatedParams);
+            console.log('🔗 API URL:', `/api/contracts/${currentContractId}/update-metadata`);
+
+            // Show loading indicator
+            showLoader('Updating contract parameters...');
+
+            // Step 1: Update contract metadata
+            const token = getAuthToken();
+
+            const updateResponse = await fetch(`/api/contracts/${currentContractId}/update-metadata`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    ai_generation_params: updatedParams
+                })
+            });
+
+            console.log('📡 Update response status:', updateResponse.status);
+
+            if (!updateResponse.ok) {
+                const errorData = await updateResponse.json();
+                console.error('❌ Update failed:', errorData);
+                throw new Error(errorData.detail || 'Failed to update metadata');
+            }
+
+            const updateResult = await updateResponse.json();
+            console.log('✅ Metadata updated successfully:', updateResult);
+
+            // Update local generationParams
+            generationParams = updatedParams;
+
+            // Close modal
+            closeRegenerateModal();
+
+            hideLoader();
+
+            // Step 2: Regenerate contract content
+            console.log('🤖 Regenerating contract with AI...');
+
+            // Show AI banner
+            showAIBanner();
+
+            // Clear editor and show loading
+            const editor = document.getElementById('contractContent');
+            if (editor) {
+                editor.innerHTML = `
                 <div style="text-align: center; padding: 4rem 2rem; color: #666;">
                     <div style="width: 3rem; height: 3rem; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1.5rem;"></div>
                     <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">Regenerating Your Contract</h3>
@@ -13731,24 +13780,24 @@ async function submitRegeneration() {
                     <div id="streamProgress" style="margin-top: 1.5rem; font-size: 0.875rem; color: var(--primary-color);"></div>
                 </div>
             `;
+            }
+
+            // Call streaming endpoint
+            await startAIStreaming();
+
+            console.log('✅ Contract regeneration initiated');
+
+            showNotification(
+                `Contract regeneration started with ${selectedClauses.length} clause(s) selected`,
+                'success'
+            );
+
+        } catch (error) {
+            hideLoader();
+            console.error('❌ Regeneration error:', error);
+            showNotification('Failed to regenerate contract: ' + error.message, 'error');
         }
-
-        // Call streaming endpoint
-        await startAIStreaming();
-
-        console.log('✅ Contract regeneration initiated');
-
-        showNotification(
-            `Contract regeneration started with ${selectedClauses.length} clause(s) selected`,
-            'success'
-        );
-
-    } catch (error) {
-        hideLoader();
-        console.error('❌ Regeneration error:', error);
-        showNotification('Failed to regenerate contract: ' + error.message, 'error');
     }
-}
 
 
     // Add spinner animation CSS
@@ -13786,46 +13835,46 @@ async function submitRegeneration() {
 
 
     // Add this RIGHT AFTER the contractId declaration
-  async function refreshContractData() {
-    try {
-        console.log('🔄 Refreshing contract data...');
-        
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`/api/contracts/edit/${contractId}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include'
-        });
-        
-        const data = await response.json();
+    async function refreshContractData() {
+        try {
+            console.log('🔄 Refreshing contract data...');
 
-        if (data.success) {
-            contractData = data;
-            
-            // Update certificate data and signature fields
-            if (data.certificate) {
-                console.log('🖊️ Refreshing signature displays...');
-                updateSignatureFields(data.certificate);
-            }
-            
-            // Update status badge if needed
-            if (data.contract && data.contract.status) {
-                const statusBadge = document.querySelector('.status-badge');
-                if (statusBadge) {
-                    statusBadge.textContent = data.contract.status.charAt(0).toUpperCase() + data.contract.status.slice(1);
-                    statusBadge.className = `status-badge status-${data.contract.status.toLowerCase()}`;
+            const token = localStorage.getItem('access_token');
+            const response = await fetch(`/api/contracts/edit/${contractId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                contractData = data;
+
+                // Update certificate data and signature fields
+                if (data.certificate) {
+                    console.log('🖊️ Refreshing signature displays...');
+                    updateSignatureFields(data.certificate);
                 }
+
+                // Update status badge if needed
+                if (data.contract && data.contract.status) {
+                    const statusBadge = document.querySelector('.status-badge');
+                    if (statusBadge) {
+                        statusBadge.textContent = data.contract.status.charAt(0).toUpperCase() + data.contract.status.slice(1);
+                        statusBadge.className = `status-badge status-${data.contract.status.toLowerCase()}`;
+                    }
+                }
+
+                console.log('✅ Contract data refreshed successfully');
             }
-            
-            console.log('✅ Contract data refreshed successfully');
+        } catch (error) {
+            console.error('Error refreshing contract:', error);
         }
-    } catch (error) {
-        console.error('Error refreshing contract:', error);
     }
-}
 
 
     function updateWorkflowStepper(workflow) {
@@ -14519,21 +14568,21 @@ async function submitRegeneration() {
 
 
 
-/**
- * Toggle the clause selection section visibility
- */
-function toggleClauseSection() {
-    const section = document.getElementById('regenClauseSection');
-    const toggleText = document.getElementById('clauseToggleText');
-    
-    if (section.style.display === 'none') {
-        section.style.display = 'block';
-        toggleText.textContent = 'Hide Clause Selection';
-    } else {
-        section.style.display = 'none';
-        toggleText.textContent = 'Show Clause Selection';
+    /**
+     * Toggle the clause selection section visibility
+     */
+    function toggleClauseSection() {
+        const section = document.getElementById('regenClauseSection');
+        const toggleText = document.getElementById('clauseToggleText');
+
+        if (section.style.display === 'none') {
+            section.style.display = 'block';
+            toggleText.textContent = 'Hide Clause Selection';
+        } else {
+            section.style.display = 'none';
+            toggleText.textContent = 'Show Clause Selection';
+        }
     }
-}
 
 
 </script>
