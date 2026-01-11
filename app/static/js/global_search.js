@@ -3,7 +3,7 @@
  * File: app/static/js/global_search.js
  */
 
-let searchTimeout = null;
+let globalSearchTimeout = null;
 let currentSearchQuery = '';
 
 /**
@@ -75,7 +75,7 @@ function handleSearchInput(e) {
     const query = e.target.value.trim();
     
     // Clear previous timeout
-    clearTimeout(searchTimeout);
+    clearTimeout(globalSearchTimeout);
     
     // Hide dropdown if query is empty
     if (query.length === 0) {
@@ -89,7 +89,7 @@ function handleSearchInput(e) {
     }
     
     // Debounce search
-    searchTimeout = setTimeout(() => {
+    globalSearchTimeout = setTimeout(() => {
         if (query.length >= 2) {
             performGlobalSearch(query);
         }

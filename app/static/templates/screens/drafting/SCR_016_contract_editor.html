@@ -3103,8 +3103,33 @@
                     style="font-weight: 600; font-size: 0.95rem; color: var(--text-color); display: block; margin-bottom: 0.75rem;">
                     SEND TO SPECIFIC PERSONNEL:
                 </label>
-                <input type="text" id="specificPersonnel" placeholder="Enter email addresses (comma separated)"
-                    style="width: 100%; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 8px; font-size: 0.95rem;">
+
+                <!-- Searchable Input -->
+                <div style="position: relative;">
+                    <input type="text" id="specificPersonnelSearch"
+                        placeholder="Type to search users by name or email..." autocomplete="off"
+                        style="width: 100%; padding: 0.75rem; padding-right: 2.5rem; border: 2px solid var(--border-color); border-radius: 8px; font-size: 0.95rem;">
+                    <i class="ti ti-search"
+                        style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                </div>
+
+                <!-- Dropdown Results -->
+                <div id="userDropdownResults"
+                    style="display: none; position: absolute; z-index: 1000; width: calc(100% - 3rem); max-height: 200px; overflow-y: auto; background: white; border: 2px solid var(--border-color); border-radius: 8px; margin-top: 0.25rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                </div>
+
+                <!-- Selected User Display -->
+                <div id="selectedUserDisplay"
+                    style="display: none; margin-top: 0.5rem; padding: 0.5rem; background: var(--background-light); border-radius: 6px; font-size: 0.875rem;">
+                    <span id="selectedUserName"></span>
+                    <button onclick="clearSelectedUser()"
+                        style="float: right; background: none; border: none; color: var(--text-muted); cursor: pointer;">
+                        <i class="ti ti-x"></i>
+                    </button>
+                </div>
+
+                <!-- Hidden input for email -->
+                <input type="hidden" id="specificPersonnel">
             </div>
 
             <div style="text-align: center; margin: 2rem 0; position: relative;">
@@ -4643,6 +4668,10 @@
     .btn-outline-secondary:hover {
         background: #f8f9fa;
     }
+
+    [dir="rtl"] {
+        font-family: 'Segoe UI', 'Tahoma', 'Arial', sans-serif;
+    }
 </style>
 
 <!-- MOD-021: Risk Assessment Modal -->
@@ -4653,10 +4682,7 @@
             <h3 class="modal-title" style="color: white; display: flex; align-items: center; gap: 0.75rem;">
                 <i class="ti ti-alert-triangle"></i>
                 AI Review Analysis Report
-                <span id="aiPoweredBadge" class="badge"
-                    style="background: rgba(255,255,255,0.2); font-size: 0.7rem; padding: 0.25rem 0.5rem; border-radius: 4px; display: none;">
-                    <i class="ti ti-sparkles"></i> AI Powered
-                </span>
+
             </h3>
             <button class="modal-close" onclick="closeModal('riskAnalysisModal')"
                 style="background: rgba(255,255,255,0.2); color: white;">
@@ -5393,6 +5419,11 @@
         console.log('Certificate workflow:', workflow);
 
         console.log('trsting');
+
+        const editor = document.getElementById('contractContent');
+        const language = contract.ai_generation_params?.language || 'en';
+        if (language === 'ar') editor.setAttribute('dir', 'rtl');
+
 
         // Extract signatory data from certificate
 
@@ -6653,6 +6684,8 @@ ${contract.content && contract.content.trim() !== '' ?
         try {
             showLoader('AI is analyzing all clauses in your contract...');
 
+            const language = generationParams?.language || 'en';
+
             // Call the new full contract analysis endpoint
             const response = await fetch('/api/contracts/analyze-full-contract', {
                 method: 'POST',
@@ -6662,7 +6695,8 @@ ${contract.content && contract.content.trim() !== '' ?
                 },
                 body: JSON.stringify({
                     contract_text: fullContent,
-                    contract_id: contractId
+                    contract_id: contractId,
+                    language: language
                 })
             });
 
@@ -9128,7 +9162,7 @@ ${contract.content && contract.content.trim() !== '' ?
     }
 
     // =====================================================
-    // DELETE COMMENT FUNCTION
+    // DELETE COMMENT FUNCTION - WITH AUTO-SAVE
     // =====================================================
     async function deleteComment(commentId, bubbleId) {
         if (!confirm('Are you sure you want to delete this comment?')) {
@@ -9150,38 +9184,60 @@ ${contract.content && contract.content.trim() !== '' ?
             }
 
             if (data.success) {
-                // Remove the visual indicator
-                const commentElement = document.querySelector(`[data-comment-db-id="${commentId}"]`);
-                if (commentElement) {
-                    // If it's a span wrapper, unwrap the text
-                    if (commentElement.tagName === 'SPAN' && commentElement.className === 'track-change-comment') {
-                        const parent = commentElement.parentNode;
-                        while (commentElement.firstChild) {
-                            parent.insertBefore(commentElement.firstChild, commentElement);
-                        }
-                        commentElement.remove();
-                    } else {
-                        // If it's a marker icon, just remove it
-                        commentElement.remove();
-                    }
-                }
+                console.log('✅ Comment deleted from database, removing UI elements...');
 
-                // Remove the bubble
+                // STEP 1: Remove the bubble FIRST (it's inside the span)
                 const bubble = document.getElementById(bubbleId);
                 if (bubble) {
                     bubble.remove();
+                    console.log('✅ Comment bubble removed:', bubbleId);
+                } else {
+                    console.warn('⚠️ Bubble not found:', bubbleId);
+                }
+
+                // STEP 2: Find and remove the comment highlight element
+                const commentElement = document.querySelector(`[data-comment-db-id="${commentId}"]`);
+
+                if (commentElement) {
+                    console.log('Found comment element:', commentElement);
+
+                    // If it's a span wrapper with highlight
+                    if (commentElement.tagName === 'SPAN' && commentElement.classList.contains('track-change-comment')) {
+                        // Get the text content
+                        const textContent = commentElement.textContent || commentElement.innerText;
+
+                        // Create a text node with the content
+                        const textNode = document.createTextNode(textContent);
+
+                        // Replace the span with the text node
+                        commentElement.parentNode.replaceChild(textNode, commentElement);
+
+                        console.log('✅ Highlight removed, text preserved:', textContent);
+
+                    } else if (commentElement.classList.contains('comment-marker')) {
+                        // If it's a marker icon, just remove it
+                        commentElement.remove();
+                        console.log('✅ Comment marker removed');
+                    }
+                } else {
+                    console.warn('⚠️ Comment element not found in DOM with ID:', commentId);
                 }
 
                 showNotification('Comment deleted successfully', 'success');
 
-                // Auto-save the contract
-                saveAsDraft();
+                // STEP 3: CRITICAL - Save the modified content to database
+                // This ensures the highlight removal is persisted
+                console.log('💾 Saving contract content without highlight...');
+                await saveAsDraft();
+
+                console.log('💬 Comment deletion and save complete');
+
             } else {
                 throw new Error(data.message || 'Failed to delete comment');
             }
 
         } catch (error) {
-            console.error(' Error deleting comment:', error);
+            console.error('❌ Error deleting comment:', error);
             showNotification('Failed to delete comment: ' + error.message, 'error');
         }
     }
@@ -12212,13 +12268,6 @@ Generated by CALIM 360 Smart CLM
     }
 
 
-    async function openInternalReviewModal() {
-        await checkWorkflowAvailability();
-        openModal('internalReviewModal');
-    }
-
-
-
 </script>
 
 
@@ -13657,6 +13706,9 @@ Generated by CALIM 360 Smart CLM
             return;
         }
 
+        const language = generationParams?.language || 'en';
+        if (language === 'ar') editor.setAttribute('dir', 'rtl');
+
         console.log('✅ Editor found, starting stream...');
 
         // Reset auto-scroll state
@@ -14137,7 +14189,7 @@ Generated by CALIM 360 Smart CLM
                 renderContractEditor(data);
                 await checkWorkflowAvailability();
                 await checkIfAIGenerated();
-                 if (typeof loadExistingComments === 'function') {
+                if (typeof loadExistingComments === 'function') {
                     await loadExistingComments();
                 }
 
@@ -14879,6 +14931,135 @@ Generated by CALIM 360 Smart CLM
 
 
 </script>
+
+
+<script>
+    let companyUsers = [];
+    let selectedUserEmail = '';
+
+    // Load all company users
+    async function loadCompanyUsersForReview() {
+        console.log('loading');
+        try {
+            const response = await fetch('/api/users/company?limit=100', {
+                method: 'GET',
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch users');
+            }
+
+            const data = await response.json();
+            companyUsers = data.users || [];
+
+            console.log('✅ Loaded', companyUsers.length, 'users for review');
+
+            if (companyUsers.length === 0) {
+                showNotification('No users found in your company', 'warning');
+            }
+        } catch (error) {
+            console.error('❌ Error loading users:', error);
+            showNotification('Failed to load users', 'error');
+        }
+    }
+
+    // Search and filter users
+    function searchUsers(query) {
+        if (!query || query.length < 2) {
+            document.getElementById('userDropdownResults').style.display = 'none';
+            return;
+        }
+
+        const filtered = companyUsers.filter(user => {
+            const fullName = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase();
+            const email = (user.email || '').toLowerCase();
+            const department = (user.department || '').toLowerCase();
+            const searchTerm = query.toLowerCase();
+
+            return fullName.includes(searchTerm) ||
+                email.includes(searchTerm) ||
+                department.includes(searchTerm);
+        });
+
+        displayUserResults(filtered);
+    }
+
+    // Display search results
+    function displayUserResults(users) {
+        const resultsDiv = document.getElementById('userDropdownResults');
+
+        if (users.length === 0) {
+            resultsDiv.innerHTML = '<div style="padding: 0.75rem; color: var(--text-muted);">No users found</div>';
+            resultsDiv.style.display = 'block';
+            return;
+        }
+
+        resultsDiv.innerHTML = users.map(user => {
+            const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+            const displayName = fullName || user.email;
+            return `
+        <div onclick="selectUser('${user.email}', '${displayName.replace(/'/g, "\\'")}', '${user.department || ''}')" 
+             style="padding: 0.75rem; cursor: pointer; border-bottom: 1px solid var(--border-color);"
+             onmouseover="this.style.background='var(--background-light)'"
+             onmouseout="this.style.background='white'">
+            <div style="font-weight: 500;">${displayName}</div>
+            <div style="font-size: 0.875rem; color: var(--text-muted);">${user.email}</div>
+            ${user.department ? `<div style="font-size: 0.75rem; color: var(--text-muted);">${user.department}</div>` : ''}
+        </div>
+    `}).join('');
+
+        resultsDiv.style.display = 'block';
+    }
+
+    // Select user from dropdown
+    function selectUser(email, name, department) {
+        selectedUserEmail = email;
+        document.getElementById('specificPersonnel').value = email;
+        document.getElementById('specificPersonnelSearch').value = '';
+        document.getElementById('userDropdownResults').style.display = 'none';
+
+        // Show selected user
+        document.getElementById('selectedUserName').textContent = `${name} (${email})${department ? ' - ' + department : ''}`;
+        document.getElementById('selectedUserDisplay').style.display = 'block';
+    }
+
+    // Clear selected user
+    function clearSelectedUser() {
+        selectedUserEmail = '';
+        document.getElementById('specificPersonnel').value = '';
+        document.getElementById('selectedUserDisplay').style.display = 'none';
+    }
+
+    // Open modal and load users
+    async function openInternalReviewModal() {
+        await checkWorkflowAvailability();
+        console.log('🔍 DEBUG: openInternalReviewModal called');
+        openModal('internalReviewModal');
+        console.log('🔍 DEBUG: Modal opened, now loading users...');
+        await loadCompanyUsersForReview();
+        await clearSelectedUser();
+        console.log('🔍 DEBUG: Cleared selected user');
+    }
+
+    // Setup search input listener
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('specificPersonnelSearch');
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                searchUsers(this.value);
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function (e) {
+                if (!searchInput.contains(e.target) && !document.getElementById('userDropdownResults').contains(e.target)) {
+                    document.getElementById('userDropdownResults').style.display = 'none';
+                }
+            });
+        }
+    });
+</script>
+
 
 {% endblock %}
 

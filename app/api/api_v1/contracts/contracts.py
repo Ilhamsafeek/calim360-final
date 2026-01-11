@@ -1941,7 +1941,7 @@ async def apply_signature(
             "contract_id": contract_id
         }).fetchone()
         
-        all_signed = (signature_status.signed_count == signature_status.total_signatories)
+        all_signed = (signature_status.total_signatories==2)
         
         logger.info(f"📊 Signature status: {signature_status.signed_count}/{signature_status.total_signatories}")
         
@@ -3252,11 +3252,13 @@ def calculate_completion(contract):
 @router.post("/risk-analysis/{contract_id}")
 async def analyze_contract_risks(
     contract_id: int,
+    request: dict = {}, 
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """AI-powered risk analysis for contract using Claude API"""
     try:
+        language = request.get("language", "en") if request else "en"
         logger.info(f"🔍 Starting AI risk analysis for contract {contract_id}")
         
         # Get contract details - FIXED column name
@@ -3279,8 +3281,7 @@ async def analyze_contract_risks(
         contract_content = result.contract_content if result.contract_content else ""
         contract_title = result.contract_title if result.contract_title else "Unknown Contract"
         contract_type = result.contract_type if result.contract_type else "General"
-        jurisdiction = result.governing_law if result.governing_law else "Qatar"
-        
+        jurisdiction = result.governing_law if result.governing_law else "Qatar"        
         # If no content, try to get clauses
         if not contract_content:
             clauses_query = text("""
@@ -3305,9 +3306,16 @@ async def analyze_contract_risks(
                 status_code=503, 
                 detail="Claude AI service not available. Please configure CLAUDE_API_KEY in .env"
             )
-        
+
+        language_instruction = ""
+        if language == "ar":
+            language_instruction = """
+        **IMPORTANT: Respond in Arabic (العربية)**
+        Provide all analysis, descriptions, recommendations, and findings in Modern Standard Arabic.
+        Use professional legal Arabic terminology appropriate for Qatar jurisdiction.
+        """        
         # Prepare comprehensive prompt for Claude
-        prompt = f"""You are a legal contract risk analyst specializing in Qatar and GCC region contracts. 
+        prompt = f"""{language_instruction}You are a legal contract risk analyst specializing in Qatar and GCC region contracts. 
 Analyze the following contract and provide a comprehensive risk assessment.
 
 CONTRACT INFORMATION:
@@ -5377,12 +5385,13 @@ Selected Clauses: {', '.join(selected_clause_descriptions) if selected_clause_de
 
 1. Production-ready, contractually & legally binding (minimum 3,500 words)
 2. Professional legal language with contractually & legally binding for {jurisdiction}
-3. complete Contract should be written in {language}
+3. complete Contract should be written in {language} language
 4. Every clause fully developed with procedures and consequences
 5. {additional_requirements}
 6. {payment_terms}
 7. {user_prompt}
 8. Dont include signature section 
+9. Write in Right to Left if Arabic
 
 **FORMAT:**
 - Clean HTML: <h2> for sections, <h3> for subsections, <p> for paragraphs

@@ -576,7 +576,7 @@
     </a>
 
     <!-- Pending Actions / My Approvals -->
-    <a href="#" class="stat-card">
+    <a href="/pending-actions" class="stat-card">
         <div class="stat-header">
             <div class="stat-icon cyan">
                 <i class="ti ti-clipboard-check"></i>
@@ -724,6 +724,8 @@
 
             if (statsData.success) {
                 const data = statsData.data;
+
+
 
                 // Update overview stats
                 document.getElementById('totalContracts').textContent = data.overview?.total_contracts || 0;

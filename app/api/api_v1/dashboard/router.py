@@ -48,7 +48,7 @@ async def get_dashboard_statistics(
             text("""
                 SELECT COUNT(*) as count FROM contracts 
                 WHERE (company_id = :company_id OR party_b_id = :company_id) 
-                AND status = 'active'
+                AND status = 'executed'
             """),
             {"company_id": company_id}
         ).fetchone()
@@ -60,7 +60,7 @@ async def get_dashboard_statistics(
             text("""
                 SELECT COUNT(*) as count FROM contracts 
                 WHERE (company_id = :company_id OR party_b_id = :company_id)
-                AND status = 'active'
+                AND status = 'executed'
                 AND end_date BETWEEN :today AND :end_date
             """),
             {

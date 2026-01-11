@@ -73,7 +73,7 @@ async function runDockerCommand() {
     `;
 
     try {
-        const response = await fetch('/api/blockchain/terminal/blockchain-records?limit=20', {
+        const response = await fetch('/api/blockchain/terminal/blockchain-records?limit=10', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${getAuthToken()}`,
@@ -103,14 +103,14 @@ function displayBlockchainRecords(terminalId, data) {
 
     // Header
     terminal.innerHTML = `
-        <div class="terminal-line success">✓ Retrieved blockchain records </div>
-       
-        <div class="terminal-line dim">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
-        <div class="terminal-line" style="color: #00d9ff; font-weight: bold;">
-            ${'TX HASH'.padEnd(22)} ${'BLOCK'.padEnd(12)} ${'STATUS'.padEnd(12)} CONTRACT
-        </div>
-        <div class="terminal-line dim">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
-    `;
+    <div class="terminal-line success">✓ TX HASH BLOCK STATUS FOR LATEST 10 CONTRACTS</div>
+   
+    <div class="terminal-line dim">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+    <div class="terminal-line" style="color: #00d9ff; font-weight: bold;">
+        ${'TX HASH'.padEnd(22)} ${'BLOCK'.padEnd(12)} ${'STATUS'.padEnd(12)} CONTRACT
+    </div>
+    <div class="terminal-line dim">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+`;
 
     if (data.records.length === 0) {
         terminal.innerHTML += `
@@ -148,8 +148,8 @@ function displayBlockchainRecords(terminalId, data) {
 
 async function runQueryCommand() {
 
-    
-   let contractId= getContractIdFromPage();
+
+    let contractId = getContractIdFromPage();
 
     // const contractId = document.getElementById('queryContractId').value.trim();
 

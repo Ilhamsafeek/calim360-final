@@ -33,7 +33,7 @@ from app.api.api_v1.workflow import approval_router
 from app.api.api_v1.users import license as license_router
 
 from app.api.api_v1.experts.unified_chat import router as unified_chat_router
-
+from app.api.api_v1.approvals import router as approvals_router
 
 # Configure logging FIRST
 logging.basicConfig(level=logging.INFO)
@@ -364,6 +364,8 @@ app.include_router(
     tags=["workflow"]
 )
 app.include_router(search.router, prefix="/api/search", tags=["search"])
+
+app.include_router(approvals_router)
 
 
 app.include_router(
@@ -1495,6 +1497,25 @@ async def transcript_page(request: Request, consultation_id: str):
         "active_page": "consultations"
     })
 
+
+@app.get("/pending-actions", response_class=HTMLResponse)
+async def pending_actions_page(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+
+    user_context = get_user_context_with_subscriptions(current_user, db)
+
+    """Render pending actions page"""
+    return templates.TemplateResponse(
+        "screens/approvals/pending_actions.html",
+        {
+            "request": request,
+            "user": user_context,
+            "subscriptions": user_context['subscriptions'],
+        }
+    )
 # =====================================================
 # API DOCUMENTATION ROUTES
 # =====================================================

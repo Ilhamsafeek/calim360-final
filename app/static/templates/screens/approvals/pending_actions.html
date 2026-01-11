@@ -1,0 +1,624 @@
+{% extends "base.html" %}
+
+{% block title %}Pending Actions{% endblock %}
+
+{% block head %}
+<style>
+    .pending-actions-container {
+        padding: 2rem;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .page-subtitle {
+        color: #64748b;
+        font-size: 14px;
+    }
+
+    /* Tabs */
+    .tabs-container {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .tab-btn {
+        padding: 12px 24px;
+        background: none;
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: #64748b;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .tab-btn.active {
+        color: #2762cb;
+        border-bottom-color: #2762cb;
+    }
+
+    .tab-badge {
+        background: #e2e8f0;
+        color: #64748b;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .tab-btn.active .tab-badge {
+        background: #2762cb;
+        color: white;
+    }
+
+    /* Actions Grid */
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 20px;
+    }
+
+    .action-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border-left: 4px solid #e2e8f0;
+        cursor: pointer;
+    }
+
+    .action-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .action-card.approval {
+        border-left-color: #f59e0b;
+    }
+
+    .action-card.signature {
+        border-left-color: #8b5cf6;
+    }
+
+    .action-card.review {
+        border-left-color: #3b82f6;
+    }
+
+    .action-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+
+    .action-badge {
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .action-badge.pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .action-badge.urgent {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .action-title {
+        font-weight: 600;
+        font-size: 16px;
+        color: #1e293b;
+        margin-bottom: 8px;
+    }
+
+    .action-description {
+        font-size: 13px;
+        color: #64748b;
+        margin-bottom: 12px;
+        line-height: 1.5;
+    }
+
+    .action-meta {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .meta-icon {
+        font-size: 16px;
+        color: #94a3b8;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .btn-sm {
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: none;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+    }
+
+    .btn-approve {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        flex: 1;
+    }
+
+    .btn-approve:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-reject {
+        background: #ef4444;
+        color: white;
+    }
+
+    .btn-reject:hover {
+        background: #dc2626;
+    }
+
+    .btn-view {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .btn-view:hover {
+        background: #e2e8f0;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        background: white;
+        border-radius: 12px;
+    }
+
+    .empty-icon {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f1f5f9;
+        border-radius: 50%;
+        color: #94a3b8;
+        font-size: 48px;
+    }
+
+    .empty-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 8px;
+    }
+
+    .empty-message {
+        color: #64748b;
+        font-size: 14px;
+    }
+
+    /* Loading State */
+    .loading-container {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #f3f4f6;
+        border-top-color: #2762cb;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pending-actions-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="ti ti-clipboard-check"></i>
+            Pending Actions
+        </h1>
+        <p class="page-subtitle">Review and take action on items requiring your attention</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs-container">
+        <button class="tab-btn active" onclick="switchTab('all')" data-tab="all">
+            <i class="ti ti-list"></i>
+            <span>All Actions</span>
+            <span class="tab-badge" id="allCount">0</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('approvals')" data-tab="approvals">
+            <i class="ti ti-circle-check"></i>
+            <span>Approvals</span>
+            <span class="tab-badge" id="approvalsCount">0</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('reviews')" data-tab="reviews">
+            <i class="ti ti-file-search"></i>
+            <span>Reviews</span>
+            <span class="tab-badge" id="reviewsCount">0</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('signatures')" data-tab="signatures">
+            <i class="ti ti-writing-sign"></i>
+            <span>Signatures</span>
+            <span class="tab-badge" id="signaturesCount">0</span>
+        </button>
+    </div>
+
+    <!-- Actions Content -->
+    <div id="actionsContent">
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <p style="color: #64748b;">Loading pending actions...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentTab = 'all';
+    let allActions = [];
+
+    // Load pending actions on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        loadPendingActions();
+    });
+
+    // Switch between tabs
+    function switchTab(tab) {
+        currentTab = tab;
+
+        // Update tab buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+
+        // Filter and display actions
+        displayActions(filterActions(tab));
+    }
+
+    // Load pending actions from API
+    async function loadPendingActions() {
+        try {
+            const response = await fetch('/api/v1/pending-actions', {
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load pending actions');
+            }
+
+            const result = await response.json();
+
+            if (result.success) {
+                allActions = result.data;
+                updateCounts();
+                displayActions(filterActions(currentTab));
+            } else {
+                showError(result.message || 'Failed to load actions');
+            }
+        } catch (error) {
+            console.error('Error loading pending actions:', error);
+            showError('Failed to load pending actions. Please try again.');
+        }
+    }
+
+    // Filter actions by tab
+    function filterActions(tab) {
+        if (tab === 'all') return allActions;
+
+        return allActions.filter(action => {
+            if (tab === 'approvals') return action.action_type === 'approval';
+            if (tab === 'reviews') return action.action_type === 'review';
+            if (tab === 'signatures') return action.action_type === 'signature';
+            return true;
+        });
+    }
+
+    // Update tab counts
+    function updateCounts() {
+        document.getElementById('allCount').textContent = allActions.length;
+        document.getElementById('approvalsCount').textContent =
+            allActions.filter(a => a.action_type === 'approval').length;
+        document.getElementById('reviewsCount').textContent =
+            allActions.filter(a => a.action_type === 'review').length;
+        document.getElementById('signaturesCount').textContent =
+            allActions.filter(a => a.action_type === 'signature').length;
+    }
+
+    // Display actions
+    function displayActions(actions) {
+        const content = document.getElementById('actionsContent');
+
+        if (actions.length === 0) {
+            content.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="ti ti-check-circle"></i>
+                    </div>
+                    <h3 class="empty-title">All caught up!</h3>
+                    <p class="empty-message">You have no pending actions at this time.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const grid = document.createElement('div');
+        grid.className = 'actions-grid';
+
+        actions.forEach(action => {
+            const card = createActionCard(action);
+            grid.appendChild(card);
+        });
+
+        content.innerHTML = '';
+        content.appendChild(grid);
+    }
+
+    // Create action card HTML
+    function createActionCard(action) {
+        const card = document.createElement('div');
+        card.className = `action-card ${action.action_type}`;
+        card.onclick = () => viewContract(action.contract_id);
+
+        const urgencyBadge = action.is_urgent ?
+            '<span class="action-badge urgent">Urgent</span>' :
+            '<span class="action-badge pending">Pending</span>';
+
+        card.innerHTML = `
+            <div class="action-header">
+                <div>
+                    <div class="action-title">${escapeHtml(action.contract_title)}</div>
+                    <div style="font-size: 12px; color: #94a3b8;">${action.contract_number || 'N/A'}</div>
+                </div>
+                ${urgencyBadge}
+            </div>
+            
+            <div class="action-description">
+                ${escapeHtml(action.description)}
+            </div>
+            
+            <div class="action-meta">
+                <div class="meta-item">
+                    <i class="ti ti-calendar meta-icon"></i>
+                    <span>${formatDate(action.created_at)}</span>
+                </div>
+                ${action.due_date ? `
+                <div class="meta-item">
+                    <i class="ti ti-clock meta-icon"></i>
+                    <span>Due: ${formatDate(action.due_date)}</span>
+                </div>
+                ` : ''}
+                <div class="meta-item">
+                    <i class="ti ti-tag meta-icon"></i>
+                    <span>${formatActionType(action.action_type)}</span>
+                </div>
+            </div>
+            
+            <div class="action-buttons" onclick="event.stopPropagation()">
+                ${getActionButtons(action)}
+            </div>
+        `;
+
+        return card;
+    }
+
+    // Get action buttons based on type
+    function getActionButtons(action) {
+        if (action.action_type === 'approval') {
+            return `
+                <button class="btn-sm btn-approve" onclick="approveAction('${action.id}', '${action.contract_id}')">
+                    <i class="ti ti-check"></i>
+                    Approve
+                </button>
+                <button class="btn-sm btn-reject" onclick="rejectAction('${action.id}', '${action.contract_id}')">
+                    <i class="ti ti-x"></i>
+                    Reject
+                </button>
+                <button class="btn-sm btn-view" onclick="viewContract('${action.contract_id}')">
+                    <i class="ti ti-eye"></i>
+                    View
+                </button>
+            `;
+        } else if (action.action_type === 'signature') {
+            return `
+                <button class="btn-sm btn-approve" onclick="signContract('${action.contract_id}')">
+                    <i class="ti ti-writing-sign"></i>
+                    Sign Contract
+                </button>
+                <button class="btn-sm btn-view" onclick="viewContract('${action.contract_id}')">
+                    <i class="ti ti-eye"></i>
+                    View
+                </button>
+            `;
+        } else {
+            return `
+                <button class="btn-sm btn-view" onclick="viewContract('${action.contract_id}')">
+                    <i class="ti ti-eye"></i>
+                    Review Contract
+                </button>
+            `;
+        }
+    }
+
+    // Action handlers
+    async function approveAction(actionId, contractId) {
+        if (!confirm('Are you sure you want to approve this contract?')) return;
+
+        try {
+            const response = await fetch(`/api/v1/workflow/approve/${contractId}`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'approve',
+                    comments: 'Approved via pending actions'
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert('Contract approved successfully');
+                loadPendingActions(); // Reload the list
+            } else {
+                alert(result.message || 'Failed to approve contract');
+            }
+        } catch (error) {
+            console.error('Error approving contract:', error);
+            alert('Failed to approve contract');
+        }
+    }
+
+    async function rejectAction(actionId, contractId) {
+        const reason = prompt('Please provide a reason for rejection:');
+        if (!reason) return;
+
+        try {
+            const response = await fetch(`/api/v1/workflow/approve/${contractId}`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'reject',
+                    comments: reason
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert('Contract rejected');
+                loadPendingActions();
+            } else {
+                alert(result.message || 'Failed to reject contract');
+            }
+        } catch (error) {
+            console.error('Error rejecting contract:', error);
+            alert('Failed to reject contract');
+        }
+    }
+
+    function viewContract(contractId) {
+        window.location.href = `/contract/edit/${contractId}`;
+    }
+
+    function signContract(contractId) {
+        window.location.href = `/contract/edit/${contractId}?action=sign`;
+    }
+
+    // Utility functions
+    function formatDate(dateString) {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) return 'Today';
+        if (diffDays === 1) return 'Yesterday';
+        if (diffDays < 7) return `${diffDays} days ago`;
+
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    }
+
+    function formatActionType(type) {
+        const types = {
+            'approval': 'Approval Required',
+            'review': 'Review Required',
+            'signature': 'Signature Required'
+        };
+        return types[type] || type;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function showError(message) {
+        const content = document.getElementById('actionsContent');
+        content.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon" style="background: #fee2e2;">
+                    <i class="ti ti-alert-circle" style="color: #dc2626;"></i>
+                </div>
+                <h3 class="empty-title">Error Loading Actions</h3>
+                <p class="empty-message">${message}</p>
+                <button onclick="loadPendingActions()" style="margin-top: 16px; padding: 8px 16px; background: #2762cb; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                    Retry
+                </button>
+            </div>
+        `;
+    }
+</script>
+{% endblock %}

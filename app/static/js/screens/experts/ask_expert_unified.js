@@ -314,6 +314,7 @@ async function loadMessages(sessionId) {
     try {
 
         const response = await fetch(`/api/v1/experts/sessions/${sessionId}/messages`, {
+            credentials: 'include',
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -448,6 +449,7 @@ async function loadMessages(sessionId) {
             console.log('📤 Sending message to session:', currentSessionId);
             
             const response = await fetch(`/api/v1/experts/sessions/${currentSessionId}/messages`, {
+                credentials: 'include',
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -631,6 +633,7 @@ async function loadMessages(sessionId) {
             };
             
             const response = await fetch('/api/v1/experts/sessions', {
+                credentials: 'include',
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -839,6 +842,7 @@ async function loadMessages(sessionId) {
         
         try {
             const response = await fetch(`/api/v1/experts/sessions/${currentSessionId}/end`, {
+                credentials: 'include',
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
