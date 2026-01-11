@@ -104,6 +104,7 @@ async def register_user(
             qid_number=user_data.authRepQID if user_data.authRepQID else None,  #  Convert empty to None
             mobile_number=user_data.phoneNumber if user_data.phoneNumber else None,  #  Convert empty to None
             user_type=user_data.userType,
+            user_role='admin',
             language_preference='en',
             timezone=user_data.get("timeZone", "Asia/Qatar"),
             is_active=False,  # Activate after email verification

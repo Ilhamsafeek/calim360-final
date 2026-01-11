@@ -100,7 +100,6 @@ async def get_workflow_users(
 # =====================================================
 # Create/Update Master Workflow
 # =====================================================
-
 @router.post("/master")
 async def create_master_workflow(
     workflow_data: MasterWorkflowCreate,
@@ -111,25 +110,29 @@ async def create_master_workflow(
     Create or update master workflow for the company
     """
     try:
-        logger.info(f"📥 Received workflow data: {workflow_data.dict()}")
+        logger.info(f"Received workflow data: {workflow_data.dict()}")
         
         # Check if master workflow already exists
         existing_workflow = db.query(Workflow).filter(
             Workflow.company_id == current_user.company_id,
-            Workflow.is_master == True
+            Workflow.is_master == True,
+            Workflow.is_active == True
         ).first()
 
-        workflow_json_data = {
+        # Prepare workflow JSON data
+        workflow_json_data = json.dumps({
             "settings": workflow_data.settings.dict(),
-            "excluded_types": workflow_data.excluded_contract_types,
-            "steps": [step.dict() for step in workflow_data.steps]
-        }
+            "excluded_contract_types": workflow_data.excluded_contract_types
+        })
 
         if existing_workflow:
-            # Update existing
+            # ✅ UPDATE EXISTING - Keep active, update metadata and steps
+            logger.info(f"Updating existing master workflow ID {existing_workflow.id}")
+            
             existing_workflow.workflow_name = workflow_data.name
             existing_workflow.workflow_json = workflow_json_data
             existing_workflow.updated_at = datetime.utcnow()
+            # ✅ Keep is_active = True
             
             # Delete old steps
             db.query(WorkflowStep).filter(
@@ -137,22 +140,26 @@ async def create_master_workflow(
             ).delete()
             
             workflow = existing_workflow
-            logger.info(f" Updated master workflow for company {current_user.company_id}")
+            logger.info(f"✅ Updated master workflow for company {current_user.company_id}")
         else:
-            # Create new
+            # ✅ CREATE NEW
+            logger.info(f"Creating new master workflow for company {current_user.company_id}")
+            
             workflow = Workflow(
                 company_id=current_user.company_id,
                 workflow_name=workflow_data.name,
                 workflow_type="master",
                 is_master=True,
-                is_active=True,
-                workflow_json=workflow_json_data
+                is_active=True,  # ✅ Active from creation
+                workflow_json=workflow_json_data,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
             )
             db.add(workflow)
             db.flush()
-            logger.info(f" Created new master workflow for company {current_user.company_id}")
+            logger.info(f"✅ Created new master workflow ID {workflow.id}")
 
-        # Create workflow steps
+        # Create workflow steps (same for both create and update)
         for step_data in workflow_data.steps:
             workflow_step = WorkflowStep(
                 workflow_id=workflow.id,
@@ -161,14 +168,15 @@ async def create_master_workflow(
                 step_type=step_data.role.lower().replace(" ", "_"),
                 assignee_role=step_data.department,
                 department=step_data.department or "General",
-                sla_hours=workflow_data.settings.auto_escalation_hours
+                sla_hours=workflow_data.settings.auto_escalation_hours,
+                created_at=datetime.utcnow()
             )
             db.add(workflow_step)
 
         db.commit()
         db.refresh(workflow)
 
-        logger.info(f" Workflow saved successfully with {len(workflow_data.steps)} steps")
+        logger.info(f"✅ Workflow saved successfully with {len(workflow_data.steps)} steps")
 
         return {
             "success": True,
@@ -178,12 +186,11 @@ async def create_master_workflow(
 
     except Exception as e:
         db.rollback()
-        logger.error(f" Error saving master workflow: {str(e)}", exc_info=True)
+        logger.error(f"❌ Error saving master workflow: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
-
         
 @router.get("/master")
 async def get_master_workflow(

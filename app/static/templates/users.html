@@ -245,6 +245,12 @@
         flex-shrink: 0;
     }
 
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
     .user-details {
         flex: 1;
     }
@@ -534,6 +540,10 @@
         color: #dc3545;
     }
 
+    .expert-required {
+        color: #dc3545;
+    }
+
     .form-input {
         padding: 0.75rem 1rem;
         border: 1px solid #e9ecef;
@@ -546,6 +556,10 @@
         outline: none;
         border-color: #2762cb;
         box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
+    }
+
+    .required-field {
+        border-left: 3px solid #2762cb;
     }
 
     .input-group {
@@ -782,6 +796,11 @@
         color: #28a745;
     }
 
+    /* Hide elements based on role */
+    .hidden-for-users {
+        display: none !important;
+    }
+
     @media (max-width: 768px) {
         .content-wrapper {
             padding: 1rem;
@@ -838,7 +857,7 @@
     </div>
 
     <!-- Stats Cards -->
-    <div class="stats-grid">
+    <div class="stats-grid" id="statsGrid">
         <div class="stat-card">
             <div class="stat-icon bg-primary">
                 <i class="ti ti-users"></i>
@@ -857,7 +876,7 @@
                 <div class="stat-label">Active Users</div>
             </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" id="pendingUsersCard">
             <div class="stat-icon bg-warning">
                 <i class="ti ti-user-exclamation"></i>
             </div>
@@ -905,7 +924,6 @@
                 <option value="sub_contractor">Sub-Contractor</option>
                 <option value="expert">Expert</option>
             </select>
-
         </div>
     </div>
 
@@ -916,7 +934,7 @@
                 <table class="data-table" id="usersTable">
                     <thead>
                         <tr>
-                            <th>
+                            <th id="selectAllHeader">
                                 <input type="checkbox" id="selectAll">
                             </th>
                             <th>User</th>
@@ -924,14 +942,13 @@
                             <th>Role</th>
                             <th>Type</th>
                             <th>Department</th>
-                            <th>Status</th>
-                            <!-- <th>Last Active</th> -->
+                            <th id="statusHeader">Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="usersTableBody">
                         <tr class="loading-row">
-                            <td colspan="9">
+                            <td colspan="8">
                                 <div class="loading-spinner">
                                     <i class="ti ti-loader-2"></i>
                                     Loading users...
@@ -951,7 +968,6 @@
     <div class="modal-container">
         <div class="modal-header">
             <h2 class="modal-title">
-
                 <span id="modalTitle">Add New User</span>
             </h2>
             <button class="modal-close" id="closeModalBtn">
@@ -1120,12 +1136,16 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Specialization</label>
+                            <label class="form-label">
+                                Specialization <span class="expert-required">*</span>
+                            </label>
                             <input type="text" id="specialization" class="form-input"
                                 placeholder="e.g., Construction Law, QFCRA Compliance">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Years of Experience</label>
+                            <label class="form-label">
+                                Years of Experience <span class="expert-required">*</span>
+                            </label>
                             <input type="number" id="yearsOfExperience" class="form-input" min="0" max="50">
                         </div>
                     </div>
@@ -1144,11 +1164,15 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Hourly Rate (QAR)</label>
+                            <label class="form-label">
+                                Hourly Rate (QAR) <span class="expert-required">*</span>
+                            </label>
                             <input type="number" id="hourlyRate" class="form-input" min="0" step="0.01">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Expertise Areas</label>
+                            <label class="form-label">
+                                Expertise Areas <span class="expert-required">*</span>
+                            </label>
                             <input type="text" id="expertiseAreas" class="form-input"
                                 placeholder="QFCRA, Construction, Arbitration">
                             <small class="form-hint">Separate multiple areas with commas</small>
@@ -1289,19 +1313,112 @@
 
     let allUsers = [];
     let currentUserId = null;
+    let currentUserRole = null; // Store current user's role
 
     document.addEventListener('DOMContentLoaded', function () {
-        console.log(' User Management initialized');
+        console.log('🚀 User Management initialized');
         initializeUserManagement();
     });
 
-    function initializeUserManagement() {
+    async function initializeUserManagement() {
+        await getCurrentUserRole(); // Get current user's role first
         loadUsers();
         setupEventListeners();
+        updateUIBasedOnRole(); // Update UI based on role
+    }
+
+// Temporary fallback if /api/auth/me fails
+async function getCurrentUserRole() {
+    try {
+        // Try primary endpoint first
+        let response = await fetch('/api/auth/me', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+
+        // If 422, try alternative endpoint
+        if (response.status === 422) {
+            console.log('⚠️ /api/auth/me returned 422, trying /api/users/debug/current-user');
+            response = await fetch('/api/users/debug/current-user', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+        }
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log('📦 User data:', data);
+            
+            // Extract role from various possible structures
+            const user = data.user || data;
+            currentUserRole = user.user_role || user.role || 'viewer';
+            console.log('👤 Current user role:', currentUserRole);
+        } else {
+            console.error('❌ Auth check failed, status:', response.status);
+            currentUserRole = 'viewer';
+        }
+    } catch (error) {
+        console.error('❌ Error getting current user role:', error);
+        currentUserRole = 'viewer';
+    }
+}
+    
+    // Check if user has permission to manage users
+    function canManageUsers() {
+        return currentUserRole === 'admin' || currentUserRole === 'manager';
+    }
+
+    // Update UI elements based on user role
+    function updateUIBasedOnRole() {
+        const addUserBtn = document.getElementById('addUserBtn');
+        const statusHeader = document.getElementById('statusHeader');
+        const selectAllHeader = document.getElementById('selectAllHeader');
+        const filterStatus = document.getElementById('filterStatus');
+        const pendingUsersCard = document.getElementById('pendingUsersCard');
+
+        if (!canManageUsers()) {
+            // Hide add user button for non-admin/manager
+            if (addUserBtn) {
+                addUserBtn.style.display = 'none';
+            }
+
+            // Hide status column header
+            if (statusHeader) {
+                statusHeader.classList.add('hidden-for-users');
+            }
+
+            // Hide select all checkbox header
+            if (selectAllHeader) {
+                selectAllHeader.classList.add('hidden-for-users');
+            }
+
+            // Hide status filter
+            if (filterStatus) {
+                filterStatus.parentElement.style.display = 'none';
+            }
+
+            // Hide pending users stat card
+            if (pendingUsersCard) {
+                pendingUsersCard.style.display = 'none';
+            }
+        }
     }
 
     function setupEventListeners() {
-        document.getElementById('addUserBtn').addEventListener('click', () => openUserModal());
+        document.getElementById('addUserBtn').addEventListener('click', () => {
+            if (canManageUsers()) {
+                openUserModal();
+            } else {
+                showNotification('You do not have permission to add users', 'error');
+            }
+        });
+
         document.getElementById('closeModalBtn').addEventListener('click', closeUserModal);
         document.getElementById('cancelBtn').addEventListener('click', closeUserModal);
         document.getElementById('closeDeleteModalBtn').addEventListener('click', closeDeleteModal);
@@ -1318,17 +1435,19 @@
         document.getElementById('togglePassword').addEventListener('click', togglePasswordVisibility);
         document.getElementById('toggleConfirmPassword').addEventListener('click', toggleConfirmPasswordVisibility);
 
-        document.getElementById('exportUsersBtn').addEventListener('click', exportUsers);
-
         document.getElementById('selectAll').addEventListener('change', toggleSelectAll);
 
         // Show/hide expert profile section based on user type
         document.getElementById('userType').addEventListener('change', function () {
             const expertSection = document.getElementById('expertProfileSection');
-            if (this.value === 'expert') {
+            const userType = this.value;
+
+            if (userType === 'expert') {
                 expertSection.classList.remove('hidden');
+                setExpertFieldsRequired(true);
             } else {
                 expertSection.classList.add('hidden');
+                setExpertFieldsRequired(false);
             }
         });
 
@@ -1341,6 +1460,30 @@
 
         document.querySelector('#userModal .modal-overlay').addEventListener('click', closeUserModal);
         document.querySelector('#deleteModal .modal-overlay').addEventListener('click', closeDeleteModal);
+    }
+
+    // Function to set expert fields as required/optional
+    function setExpertFieldsRequired(required) {
+        const expertFields = [
+            'specialization',
+            'yearsOfExperience',
+            'hourlyRate',
+            'expertiseAreas'
+        ];
+
+        expertFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.required = required;
+
+                // Add visual indicator
+                if (required) {
+                    field.classList.add('required-field');
+                } else {
+                    field.classList.remove('required-field');
+                }
+            }
+        });
     }
 
     async function loadUsers() {
@@ -1364,12 +1507,20 @@
 
             const data = await response.json();
             // Filter out deleted users (is_active = False with .deleted in email)
-            allUsers = (data.users || []).filter(u => !u.email.includes('.deleted'));
+            let users = (data.users || []).filter(u => !u.email.includes('.deleted'));
 
-            updateStats(allUsers);
-            renderUsers(allUsers);
+            // If not admin/manager, filter to show only active users
+            if (!canManageUsers()) {
+                users = users.filter(u => u.is_active && u.is_verified);
+                console.log('📊 Filtered to active users only:', users.length);
+            }
+
+            allUsers = users;
+
+            updateStats(users);
+            renderUsers(users);
         } catch (error) {
-            console.error('Error loading users:', error);
+            console.error('❌ Error loading users:', error);
             showNotification('Failed to load users. Please try logging in again.', 'error');
             renderEmptyState();
         }
@@ -1395,11 +1546,19 @@
             return;
         }
 
+        // Check if user can manage users
+        const hasManagePermission = canManageUsers();
+
+        // Calculate colspan based on role
+        const totalColumns = hasManagePermission ? 8 : 7;
+
         tbody.innerHTML = users.map(user => `
         <tr>
+            ${hasManagePermission ? `
             <td>
                 <input type="checkbox" class="user-checkbox" value="${user.id}">
             </td>
+            ` : ''}
             <td>
                 <div class="user-info">
                     <div class="user-avatar">
@@ -1423,11 +1582,13 @@
                 </span>
             </td>
             <td>${user.department || 'N/A'}</td>
+            ${hasManagePermission ? `
             <td>
                 ${renderStatusBadge(user)}
             </td>
-            
+            ` : ''}
             <td>
+                ${hasManagePermission ? `
                 <div class="action-buttons">
                     <button class="btn-icon" onclick="editUser(${user.id})" title="Edit">
                         <i class="ti ti-edit"></i>
@@ -1436,6 +1597,9 @@
                         <i class="ti ti-trash"></i>
                     </button>
                 </div>
+                ` : `
+                <span style="color: #999; font-size: 0.875rem;">View Only</span>
+                `}
             </td>
         </tr>
     `).join('');
@@ -1443,19 +1607,24 @@
 
     function renderEmptyState() {
         const tbody = document.getElementById('usersTableBody');
+        const hasManagePermission = canManageUsers();
+        const totalColumns = hasManagePermission ? 8 : 7;
+
         tbody.innerHTML = `
         <tr>
-            <td colspan="9">
+            <td colspan="${totalColumns}">
                 <div class="empty-state">
                     <i class="ti ti-users-off"></i>
                     <div class="empty-state-title">No Users Found</div>
                     <div class="empty-state-text">
-                        Get started by adding your first user to the system.
+                        ${hasManagePermission ? 'Get started by adding your first user to the system.' : 'No users available to display.'}
                     </div>
+                    ${hasManagePermission ? `
                     <button class="btn btn-primary" onclick="openUserModal()">
                         <i class="ti ti-plus"></i>
                         Add First User
                     </button>
+                    ` : ''}
                 </div>
             </td>
         </tr>
@@ -1508,23 +1677,13 @@
         }
     }
 
-    function formatLastActive(lastLogin) {
-        if (!lastLogin) return 'Never';
-
-        const date = new Date(lastLogin);
-        const now = new Date();
-        const diffTime = Math.abs(now - date);
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 0) return 'Today';
-        if (diffDays === 1) return 'Yesterday';
-        if (diffDays < 7) return `${diffDays} days ago`;
-        if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-
-        return date.toLocaleDateString();
-    }
-
     function openUserModal(userId = null) {
+        // Check permission
+        if (!canManageUsers()) {
+            showNotification('You do not have permission to manage users', 'error');
+            return;
+        }
+
         currentUserId = userId;
         const modal = document.getElementById('userModal');
         const modalTitle = document.getElementById('modalTitle');
@@ -1548,6 +1707,7 @@
             document.getElementById('userForm').reset();
             document.getElementById('userId').value = '';
             expertSection.classList.add('hidden');
+            setExpertFieldsRequired(false); // Reset expert fields
             passwordField.required = true;
             confirmPasswordField.required = true;
             passwordRequired.style.display = 'inline';
@@ -1566,6 +1726,7 @@
         document.body.style.overflow = '';
         document.getElementById('userForm').reset();
         document.getElementById('expertProfileSection').classList.add('hidden');
+        setExpertFieldsRequired(false); // Reset expert fields
         currentUserId = null;
     }
 
@@ -1573,7 +1734,6 @@
         try {
             console.log('🔍 Loading user data for ID:', userId);
 
-            //  FIXED: Correct endpoint
             const response = await fetch(`/api/users/${userId}`, {
                 headers: {
                     'Content-Type': 'application/json'
@@ -1585,7 +1745,7 @@
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error(' API Error:', errorText);
+                console.error('❌ API Error:', errorText);
                 throw new Error('Failed to load user data');
             }
 
@@ -1612,20 +1772,22 @@
             document.getElementById('timezone').value = user.timezone || 'Asia/Qatar';
             document.getElementById('isActive').checked = user.is_active !== false;
 
-            console.log(' All form fields populated');
+            console.log('✅ All form fields populated');
 
             // Load expert profile if user is an expert
             if (user.user_type === 'expert') {
                 console.log('🎓 User is expert type, loading expert profile...');
                 document.getElementById('expertProfileSection').classList.remove('hidden');
+                setExpertFieldsRequired(true);
                 await loadExpertProfile(user.id);
             } else {
                 console.log('ℹ️ User is not expert type');
                 document.getElementById('expertProfileSection').classList.add('hidden');
+                setExpertFieldsRequired(false);
             }
 
         } catch (error) {
-            console.error(' Error loading user data:', error);
+            console.error('❌ Error loading user data:', error);
             showNotification('Failed to load user data: ' + error.message, 'error');
         }
     }
@@ -1634,7 +1796,6 @@
         try {
             console.log('🎓 Fetching expert profile for user:', userId);
 
-            //  FIXED: Correct endpoint
             const response = await fetch(`/api/users/expert-profiles/${userId}`, {
                 headers: {
                     'Content-Type': 'application/json'
@@ -1660,7 +1821,7 @@
                 document.getElementById('qidVerified').checked = profile.qid_verified || false;
                 document.getElementById('isAvailable').checked = profile.is_available !== false;
 
-                console.log(' Expert profile fields populated');
+                console.log('✅ Expert profile fields populated');
             } else {
                 console.log('ℹ️ No expert profile found');
             }
@@ -1671,6 +1832,12 @@
 
     async function saveUser(e) {
         e.preventDefault();
+
+        // Check permission
+        if (!canManageUsers()) {
+            showNotification('You do not have permission to manage users', 'error');
+            return;
+        }
 
         if (!validateForm()) {
             return;
@@ -1747,7 +1914,7 @@
             await loadUsers();
 
         } catch (error) {
-            console.error('Error saving user:', error);
+            console.error('❌ Error saving user:', error);
             showNotification(error.message, 'error');
         }
     }
@@ -1784,16 +1951,65 @@
         const lastName = document.getElementById('lastName').value.trim();
         const username = document.getElementById('username').value.trim();
         const userRole = document.getElementById('userRole').value;
+        const userType = document.getElementById('userType').value;
 
         if (!firstName || !lastName || !username || !userRole) {
             showNotification('Please fill in all required fields', 'error');
             return false;
         }
 
+        // Validate expert profile fields if user type is expert
+        if (userType === 'expert') {
+            const specialization = document.getElementById('specialization').value.trim();
+            const yearsOfExperience = document.getElementById('yearsOfExperience').value;
+            const hourlyRate = document.getElementById('hourlyRate').value;
+            const expertiseAreas = document.getElementById('expertiseAreas').value.trim();
+
+            if (!specialization) {
+                showNotification('Please enter specialization for expert profile', 'error');
+                return false;
+            }
+
+            if (!yearsOfExperience) {
+                showNotification('Please enter years of experience for expert profile', 'error');
+                return false;
+            }
+
+            if (!hourlyRate) {
+                showNotification('Please enter hourly rate for expert profile', 'error');
+                return false;
+            }
+
+            if (!expertiseAreas) {
+                showNotification('Please enter expertise areas for expert profile', 'error');
+                return false;
+            }
+
+            // Validate years of experience range
+            const years = parseInt(yearsOfExperience);
+            if (years < 0 || years > 50) {
+                showNotification('Years of experience must be between 0 and 50', 'error');
+                return false;
+            }
+
+            // Validate hourly rate is positive
+            const rate = parseFloat(hourlyRate);
+            if (rate <= 0) {
+                showNotification('Hourly rate must be greater than 0', 'error');
+                return false;
+            }
+        }
+
         return true;
     }
 
     function confirmDeleteUser(userId, userName) {
+        // Check permission
+        if (!canManageUsers()) {
+            showNotification('You do not have permission to delete users', 'error');
+            return;
+        }
+
         currentUserId = userId;
         document.getElementById('deleteUserInfo').innerHTML = `
         <p style="margin-top: 1rem;"><strong>${userName}</strong></p>
@@ -1812,6 +2028,12 @@
     async function deleteUser() {
         if (!currentUserId) return;
 
+        // Check permission
+        if (!canManageUsers()) {
+            showNotification('You do not have permission to delete users', 'error');
+            return;
+        }
+
         try {
             const response = await fetch(`/api/users/${currentUserId}`, {
                 method: 'DELETE',
@@ -1825,7 +2047,7 @@
             await loadUsers();
 
         } catch (error) {
-            console.error('Error deleting user:', error);
+            console.error('❌ Error deleting user:', error);
             showNotification('Failed to delete user', 'error');
         }
     }
@@ -1836,7 +2058,7 @@
         const roleFilter = document.getElementById('filterRole').value;
         const typeFilter = document.getElementById('filterType').value;
 
-        const filteredUsers = allUsers.filter(user => {
+        let filteredUsers = allUsers.filter(user => {
             const matchesSearch =
                 user.first_name.toLowerCase().includes(searchTerm) ||
                 user.last_name.toLowerCase().includes(searchTerm) ||
@@ -1893,52 +2115,10 @@
         const checkboxes = document.querySelectorAll('.user-checkbox');
 
         checkboxes.forEach(checkbox => {
-            checkbox.checked = selectAll.checked;
+            if (!checkbox.disabled) {
+                checkbox.checked = selectAll.checked;
+            }
         });
-    }
-
-    function exportUsers() {
-        const selectedIds = Array.from(document.querySelectorAll('.user-checkbox:checked'))
-            .map(cb => cb.value);
-
-        const usersToExport = selectedIds.length > 0
-            ? allUsers.filter(u => selectedIds.includes(String(u.id)))
-            : allUsers;
-
-        if (usersToExport.length === 0) {
-            showNotification('No users to export', 'warning');
-            return;
-        }
-
-        const headers = ['First Name', 'Last Name', 'Email', 'Username', 'Role', 'Type', 'Department', 'Status', 'Phone', 'QID'];
-        const rows = usersToExport.map(user => [
-            user.first_name || '',
-            user.last_name || '',
-            user.email || '',
-            user.username || '',
-            user.user_role || 'N/A',
-            user.user_type || 'N/A',
-            user.department || 'N/A',
-            user.is_active ? 'Active' : 'Inactive',
-            user.mobile_number || 'N/A',
-            user.qid_number || 'N/A'
-        ]);
-
-        const csv = [headers, ...rows]
-            .map(row => row.map(cell => `"${cell}"`).join(','))
-            .join('\n');
-
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-
-        showNotification(`Exported ${usersToExport.length} user(s) successfully`, 'success');
     }
 
     function showNotification(message, type = 'info') {

@@ -133,82 +133,113 @@ class WorkflowService:
         company_id: int,
         workflow_data: Any
     ):
-        """Create or update master workflow - FIXED VERSION"""
+        """Create or update master workflow - CORRECTED VERSION"""
         try:
-            logger.info(f"Creating workflow for company {company_id}")
+            logger.info(f"Creating/Updating workflow for company {company_id}")
             logger.info(f"Received {len(workflow_data.steps)} steps")
             
-            # Deactivate existing master workflow
+            # Check if existing master workflow exists
             existing = self.db.query(Workflow).filter(
                 and_(
                     Workflow.company_id == company_id,
-                    Workflow.is_master == True
+                    Workflow.is_master == True,
+                    Workflow.is_active == True  # Only get active master workflow
                 )
-            ).all()
+            ).first()
             
-            for ex in existing:
-                ex.is_active = False
-                logger.info(f"Deactivated workflow ID {ex.id}")
+            if existing:
+                # ✅ UPDATE EXISTING - Keep it active, just update steps
+                logger.info(f"Found existing master workflow ID {existing.id} - Updating steps only")
+                
+                # Update workflow metadata
+                existing.workflow_name = workflow_data.workflow_name
+                existing.description = workflow_data.description
+                existing.updated_at = datetime.utcnow()
+                # ✅ Keep is_active = True - DO NOT DEACTIVATE
+                
+                # Build department mapping
+                departments_map = {}
+                for step_data in workflow_data.steps:
+                    if step_data.department:
+                        departments_map[step_data.step_number] = step_data.department
+                        logger.info(f"Department mapping: Step {step_data.step_number} -> {step_data.department}")
+                
+                # Update departments_json
+                existing.departments_json = json.dumps(departments_map) if departments_map else None
+                
+                # Delete old steps
+                deleted_count = self.db.query(WorkflowStep).filter(
+                    WorkflowStep.workflow_id == existing.id
+                ).delete()
+                logger.info(f"Deleted {deleted_count} old workflow steps")
+                
+                workflow = existing
+                
+            else:
+                # ✅ CREATE NEW - No existing master workflow
+                logger.info(f"No existing master workflow found - Creating new one")
+                
+                # Build department mapping
+                departments_map = {}
+                for step_data in workflow_data.steps:
+                    if step_data.department:
+                        departments_map[step_data.step_number] = step_data.department
+                        logger.info(f"Department mapping: Step {step_data.step_number} -> {step_data.department}")
+                
+                logger.info(f"Final departments_map to save: {departments_map}")
+                
+                # Create new master workflow
+                workflow = Workflow(
+                    company_id=company_id,
+                    workflow_name=workflow_data.workflow_name,
+                    description=workflow_data.description,
+                    workflow_type="master",
+                    is_master=True,
+                    is_active=True,  # ✅ Set as active
+                    departments_json=json.dumps(departments_map) if departments_map else None,
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow()
+                )
+                self.db.add(workflow)
+                self.db.flush()  # Get the workflow ID
+                logger.info(f"Created new master workflow ID {workflow.id}")
             
-            self.db.commit()
-            
-            # Build department mapping
-            departments_map = {}
-            for step_data in workflow_data.steps:
-                if step_data.department:
-                    departments_map[step_data.step_number] = step_data.department
-                    logger.info(f"Department mapping: Step {step_data.step_number} -> {step_data.department}")
-            
-            logger.info(f"Final departments_map to save: {departments_map}")
-            
-            # Create new master workflow
-            workflow = Workflow(
-                company_id=company_id,
-                workflow_name=workflow_data.workflow_name,
-                description=workflow_data.description,
-                workflow_type="master",
-                is_master=True,
-                is_active=True,
-                workflow_json=json.dumps({
-                    "auto_escalation": workflow_data.auto_escalation,
-                    "escalation_hours": workflow_data.escalation_hours,
-                    "departments": departments_map
-                }),
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
-            )
-            
-            self.db.add(workflow)
-            self.db.flush()  # Get workflow ID
-            logger.info(f"Created workflow ID {workflow.id}")
-            logger.info(f"Saved workflow_json: {workflow.workflow_json}")
-            
-            # Create workflow steps - ONE ENTRY PER USER
+            # ✅ Insert new steps (same for both create and update)
             step_count = 0
             for step_data in workflow_data.steps:
-                logger.info(f"Processing step {step_data.step_number}: {step_data.role}, dept={step_data.department}")
-                logger.info(f"  Users in this step: {len(step_data.users)}")
+                logger.info(f"Processing step {step_data.step_number}: {step_data.step_name or step_data.role}")
                 
+                # Handle users
                 if step_data.users and len(step_data.users) > 0:
-                    # Create separate WorkflowStep entry for each user
-                    for user in step_data.users:
-                        step = WorkflowStep(
-                            workflow_id=workflow.id,
-                            step_number=step_data.step_number,
-                            step_name=step_data.step_name or step_data.role,
-                            step_type=step_data.step_type or step_data.role,
-                            assignee_role=step_data.role,
-                            department=step_data.department or "General",
-                            assignee_user_id=user.id,
-                            sla_hours=step_data.sla_hours or 24,
-                            is_mandatory=step_data.is_mandatory,
-                            created_at=datetime.utcnow()
-                        )
-                        self.db.add(step)
-                        step_count += 1
-                        logger.info(f"  Added step entry for user ID {user.id} ({user.name})")
+                    for user_data in step_data.users:
+                        # Find user by email
+                        user = self.db.query(User).filter(
+                            and_(
+                                User.email == user_data.email,
+                                User.company_id == company_id
+                            )
+                        ).first()
+                        
+                        if user:
+                            step = WorkflowStep(
+                                workflow_id=workflow.id,
+                                step_number=step_data.step_number,
+                                step_name=step_data.step_name or step_data.role,
+                                step_type=step_data.step_type or step_data.role,
+                                assignee_role=step_data.role,
+                                department=step_data.department or "General",
+                                assignee_user_id=user.id,
+                                sla_hours=step_data.sla_hours or 24,
+                                is_mandatory=step_data.is_mandatory,
+                                created_at=datetime.utcnow()
+                            )
+                            self.db.add(step)
+                            step_count += 1
+                            logger.info(f"  Added step for user {user.email} (ID: {user.id})")
+                        else:
+                            logger.warning(f"  User not found: {user_data.email}")
                 else:
-                    # Create step without user
+                    # No users assigned - create step without user
                     step = WorkflowStep(
                         workflow_id=workflow.id,
                         step_number=step_data.step_number,
@@ -223,21 +254,23 @@ class WorkflowService:
                     )
                     self.db.add(step)
                     step_count += 1
-                    logger.info(f"  Added step entry without user")
+                    logger.info(f"  Added step without user assignment")
             
+            # Commit all changes
             self.db.commit()
-            logger.info(f"Successfully saved {step_count} workflow step entries")
+            logger.info(f"✅ Successfully saved master workflow with {step_count} steps")
             
-            # Return the created workflow
+            # Return the workflow
             return self.get_master_workflow(company_id)
             
         except Exception as e:
             self.db.rollback()
-            logger.error(f"Error creating workflow: {e}")
+            logger.error(f"❌ Error creating/updating workflow: {e}")
             import traceback
             logger.error(traceback.format_exc())
             raise
-    
+
+
     def delete_master_workflow(self, company_id: int) -> bool:
         """Delete master workflow"""
         try:

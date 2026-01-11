@@ -133,60 +133,41 @@ def delete_expert_profile(db: Session, user_id: int):
 # =====================================================
 @router.get("/company")
 async def get_company_users(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    type: Optional[str] = Query(None, description="Filter by type"),
-    search: Optional[str] = Query(None, description="Search by name or email"),
-    status_filter: Optional[str] = Query(None, description="Filter by status"),
-    role_filter: Optional[str] = Query(None, description="Filter by role"),
+    skip: int = 0,
+    limit: int = 100,
+    search: Optional[str] = None,
+    status_filter: Optional[str] = None,
+    role_filter: Optional[str] = None,
+    user_type_filter: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)  # ✅ Added authentication
 ):
     """
-    Get users for company
-    - Internal users: See ALL users across all companies WITH company names
-    - Regular users: See only users from their company
+    Get all users in the current user's company with filtering and pagination.
+    Includes expert profile information for consultants.
     """
+    
     try:
-        logger.info(f"Fetching company users with skip={skip}, limit={limit}")
+        logger.info(f"Fetching users for company: {current_user.company_id}")
         
-        # Build base query with LEFT JOIN to companies table        
-        query = db.query(
-            User,
-            Company.company_name.label('company_name')
-        ).outerjoin(Company, User.company_id == Company.id)
+        # ✅ Use current user's company_id
+        company_id = current_user.company_id
         
-        #  INTERNAL USER CHECK - Show all users if internal
-        if current_user.user_type != 'internal':
-            # Not internal user - filter by company_id
-            if current_user.company_id:
-                if type!='counterparty':
-                  query = query.filter(User.company_id == current_user.company_id)
-                  logger.info(f"Filtering by company_id={current_user.company_id} for non-internal user")
-            else:
-                # User has no company - return empty
-                logger.warning(f"User {current_user.id} has no company_id")
-                return {
-                    "users": [],
-                    "total": 0,
-                    "skip": skip,
-                    "limit": limit
-                }
-        else:
-            logger.info(f"Internal user {current_user.id} - showing all users with company names")
+        # Build base query
+        query = db.query(User).filter(User.company_id == company_id)
         
         # Apply search filter
         if search:
             search_term = f"%{search.lower()}%"
-            search_filter = or_(
-                User.first_name.ilike(search_term),
-                User.last_name.ilike(search_term),
-                User.email.ilike(search_term),
-                User.username.ilike(search_term),
-                User.job_title.ilike(search_term),
-                Company.company_name.ilike(search_term)  # Search by company name too
+            query = query.filter(
+                or_(
+                    User.first_name.ilike(search_term),
+                    User.last_name.ilike(search_term),
+                    User.email.ilike(search_term),
+                    User.job_title.ilike(search_term),
+                    User.username.ilike(search_term)
+                )
             )
-            query = query.filter(search_filter)
         
         # Apply status filter
         if status_filter:
@@ -201,21 +182,29 @@ async def get_company_users(
         if role_filter:
             query = query.filter(User.user_role == role_filter)
         
+        # Apply user type filter
+        if user_type_filter:
+            query = query.filter(User.user_type == user_type_filter)
+        
         # Get total count
         total_users = query.count()
         
-        # Get users with pagination
-        results = query.order_by(User.created_at.desc()).offset(skip).limit(limit).all()
+        # Apply pagination
+        users = query.order_by(User.created_at.desc()).offset(skip).limit(limit).all()
         
-        # Convert to the format your frontend expects
+        # Format response with expert profile data
         user_list = []
-        for user, company_name in results:
+        for user in users:
+            # Get company name
+            company = db.query(Company).filter(Company.id == user.company_id).first()
+            company_name = company.company_name if company else None
+            
             user_data = {
                 "id": user.id,
                 "company_id": user.company_id,
-                "first_name": user.first_name or "",
-                "last_name": user.last_name or "",
-                "email": user.email or "",
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email": user.email,
                 "username": user.username or "",
                 "user_role": user.user_role or "user",
                 "department": user.department or "",
@@ -229,9 +218,25 @@ async def get_company_users(
                 "is_verified": bool(user.is_verified) if user.is_verified is not None else True,
                 "last_login_at": user.last_login_at.isoformat() if user.last_login_at else None,
                 "created_at": user.created_at.isoformat() if user.created_at else None,
-                #  Add company name (only meaningful for internal users viewing multiple companies)
                 "company_name": company_name or "N/A"
             }
+            
+            # Add expert profile if user is a consultant
+            if user.user_type == "consultant":
+                expert_profile = db.query(ExpertProfile).filter(
+                    ExpertProfile.user_id == user.id
+                ).first()
+                
+                if expert_profile:
+                    user_data["expert_profile"] = {
+                        "specialization": expert_profile.specialization,
+                        "experience_years": expert_profile.experience_years,
+                        "hourly_rate": float(expert_profile.hourly_rate) if expert_profile.hourly_rate else None,
+                        "availability_status": expert_profile.availability_status,
+                        "certifications": expert_profile.certifications,
+                        "languages": expert_profile.languages
+                    }
+            
             user_list.append(user_data)
         
         logger.info(f"Successfully returning {len(user_list)} users (total: {total_users})")
@@ -255,14 +260,15 @@ async def get_company_users(
 # =====================================================
 @router.post("/create")
 async def create_user(
-    user_data: dict,  # Accept dict for simplicity
+    user_data: dict,
     db: Session = Depends(get_db),
-    # TEMPORARILY DISABLED FOR TESTING - UNCOMMENT WHEN READY:
-    # current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)  # ✅ Re-enabled authentication
 ):
     """
-    Create a new user with optional expert profile
-    TEMPORARILY WITHOUT AUTHENTICATION FOR TESTING
+    Create a new user in the same company as the current user.
+    Supports creating expert profiles for consultant users.
+    
+    ✅ FIXED: Now uses current_user.company_id instead of hardcoded default
     """
     try:
         logger.info(f"Creating user: {user_data.get('email', 'unknown')}")
@@ -292,6 +298,17 @@ async def create_user(
                 detail="Last name is required"
             )
         
+        # Check permission - only admins and managers can create users
+        if current_user.user_role not in ['admin', 'manager']:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only administrators and managers can create users"
+            )
+        
+        # ✅ CRITICAL FIX: Use current user's company_id instead of hardcoded default
+        company_id = current_user.company_id
+        logger.info(f"✅ Creating user for company ID: {company_id} (current user's company)")
+        
         # Check if email already exists
         existing_user = db.query(User).filter(User.email == user_data["email"]).first()
         if existing_user:
@@ -316,24 +333,9 @@ async def create_user(
         salt = bcrypt.gensalt()
         hashed_password = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
         
-        # Get or create default company
-        company_id = 1  # Default company ID for testing
-        company = db.query(Company).filter(Company.id == company_id).first()
-        if not company:
-            logger.info("Creating default company")
-            new_company = Company(
-                id=1,
-                company_name="Default Company",
-                email="admin@company.com",
-                is_active=True,
-                created_at=datetime.utcnow()
-            )
-            db.add(new_company)
-            db.commit()
-        
-        # Create new user
+        # Create new user with current user's company
         new_user = User(
-            company_id=company_id,
+            company_id=company_id,  # ✅ FIXED: Use current user's company instead of default
             first_name=user_data["first_name"],
             last_name=user_data["last_name"],
             email=user_data["email"],
@@ -349,57 +351,88 @@ async def create_user(
             language_preference=user_data.get("language_preference", "en"),
             timezone=user_data.get("timezone", "Asia/Qatar"),
             is_active=user_data.get("is_active", True),
-            is_verified=True,
+            is_verified=True,  # Auto-verify for admin-created users
+            email_verified_at=datetime.utcnow(),
             created_at=datetime.utcnow()
         )
         
-        logger.info(f"Saving user to database: {new_user.email}")
-        
-        # Save to database
+        # Save user first to get ID
         db.add(new_user)
+        db.flush()  # Get the user ID without committing
+        
+        logger.info(f"✅ User created: {new_user.email} (ID: {new_user.id}) in company {company_id}")
+        
+        # Create expert profile if user is a consultant
+        if user_data.get("user_type") == "consultant" and user_data.get("expert_profile"):
+            expert_data = user_data["expert_profile"]
+            
+            expert_profile = ExpertProfile(
+                user_id=new_user.id,
+                specialization=expert_data.get("specialization"),
+                expertise_areas=expert_data.get("expertise_areas", []),
+                experience_years=expert_data.get("experience_years"),
+                hourly_rate=expert_data.get("hourly_rate"),
+                availability_status=expert_data.get("availability_status", "available"),
+                certifications=expert_data.get("certifications", []),
+                languages=expert_data.get("languages", ["English", "Arabic"]),
+                bio=expert_data.get("bio"),
+                created_at=datetime.utcnow()
+            )
+            
+            db.add(expert_profile)
+            logger.info(f"✅ Expert profile created for user {new_user.id}")
+        
+        # Commit all changes
         db.commit()
         db.refresh(new_user)
         
-        logger.info(f"User created successfully with ID: {new_user.id}")
-        
-        # Create expert profile if user_type is expert
-        is_expert = False
-        if user_data.get("user_type") == "expert" and user_data.get("expert_profile"):
-            try:
-                create_expert_profile(db, new_user.id, user_data["expert_profile"])
-                is_expert = True
-                logger.info(f" Expert profile created for user {new_user.id}")
-            except Exception as e:
-                logger.error(f" Failed to create expert profile: {str(e)}")
-                # Don't fail the entire user creation, just log the error
-        
-        return {
-            "success": True,
-            "message": "User created successfully",
-            "user_id": new_user.id,
+        # Prepare response
+        response = {
+            "id": new_user.id,
+            "company_id": new_user.company_id,
+            "first_name": new_user.first_name,
+            "last_name": new_user.last_name,
             "email": new_user.email,
-            "is_expert": is_expert,
-            "data": {
-                "id": new_user.id,
-                "email": new_user.email,
-                "username": new_user.username,
-                "first_name": new_user.first_name,
-                "last_name": new_user.last_name,
-                "user_type": new_user.user_type
-            }
+            "username": new_user.username,
+            "user_role": new_user.user_role,
+            "department": new_user.department,
+            "job_title": new_user.job_title,
+            "mobile_number": new_user.mobile_number,
+            "qid_number": new_user.qid_number,
+            "user_type": new_user.user_type,
+            "language_preference": new_user.language_preference,
+            "timezone": new_user.timezone,
+            "is_active": new_user.is_active,
+            "is_verified": new_user.is_verified,
+            "created_at": new_user.created_at.isoformat() if new_user.created_at else None
         }
         
+        # Add expert profile to response if applicable
+        if new_user.user_type == "consultant":
+            expert_profile = db.query(ExpertProfile).filter(
+                ExpertProfile.user_id == new_user.id
+            ).first()
+            
+            if expert_profile:
+                response["expert_profile"] = {
+                    "specialization": expert_profile.specialization,
+                    "experience_years": expert_profile.experience_years,
+                    "hourly_rate": float(expert_profile.hourly_rate) if expert_profile.hourly_rate else None,
+                    "availability_status": expert_profile.availability_status
+                }
+        
+        logger.info(f"✅ User creation completed successfully")
+        return response
+        
     except HTTPException:
-        db.rollback()
         raise
     except Exception as e:
+        logger.error(f"❌ Error creating user: {str(e)}", exc_info=True)
         db.rollback()
-        logger.error(f"Error creating user: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create user: {str(e)}"
         )
-
 
 @router.get("/search")
 async def search_users(
@@ -576,76 +609,71 @@ async def get_users(
 async def get_user(
     user_id: int,
     db: Session = Depends(get_db),
-    # TEMPORARILY DISABLED FOR TESTING - UNCOMMENT WHEN READY:
-    # current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
-    """
-    Get detailed information about a specific user - YOUR ORIGINAL ENDPOINT
-    """
+    """Get specific user by ID (must be in same company)."""
+    
     try:
-        logger.info(f"Fetching user: {user_id}")
-        
-        user = db.query(User).filter(User.id == user_id).first()
+        # ✅ Security: Only allow access to users in the same company
+        user = db.query(User).filter(
+            User.id == user_id,
+            User.company_id == current_user.company_id
+        ).first()
         
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with ID {user_id} not found"
+                detail="User not found"
             )
         
-        # Check if current user has permission to view this user
-        # TEMPORARILY DISABLED FOR TESTING:
-        # if current_user.company_id != user.company_id:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_403_FORBIDDEN,
-        #         detail="You don't have permission to view this user"
-        #     )
-        
-        # Get company info
-        company_name = None
-        if user.company_id:
-            company = db.query(Company).filter(Company.id == user.company_id).first()
-            if company:
-                company_name = company.company_name
-        
-        return {
-            "success": True,
-            "data": {
-                "id": user.id,
-                "email": user.email,
-                "username": user.username,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "first_name_ar": user.first_name_ar,
-                "last_name_ar": user.last_name_ar,
-                "qid_number": user.qid_number,
-                "mobile_number": user.mobile_number,
-                "mobile_country_code": user.mobile_country_code,
-                "user_type": user.user_type,
-                "department": user.department,
-                "job_title": user.job_title,
-                "company_id": user.company_id,
-                "company_name": company_name,
-                "language_preference": user.language_preference,
-                "timezone": user.timezone,
-                "is_active": user.is_active,
-                "is_verified": user.is_verified,
-                "user_role": user.user_role,
-                "two_factor_enabled": user.two_factor_enabled,
-                "created_at": user.created_at.isoformat() if user.created_at else None,
-                "updated_at": user.updated_at.isoformat() if user.updated_at else None,
-                "last_login_at": user.last_login_at.isoformat() if user.last_login_at else None,
-                "profile_picture_url": user.profile_picture_url
-            }
+        response = {
+            "id": user.id,
+            "company_id": user.company_id,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "username": user.username or "",
+            "user_role": user.user_role or "user",
+            "department": user.department or "",
+            "job_title": user.job_title or "",
+            "mobile_number": user.mobile_number or "",
+            "qid_number": user.qid_number or "",
+            "user_type": user.user_type or "client",
+            "language_preference": user.language_preference or "en",
+            "timezone": user.timezone or "Asia/Qatar",
+            "is_active": bool(user.is_active),
+            "is_verified": bool(user.is_verified),
+            "last_login_at": user.last_login_at.isoformat() if user.last_login_at else None,
+            "created_at": user.created_at.isoformat() if user.created_at else None
         }
+        
+        # Add expert profile if consultant
+        if user.user_type == "consultant":
+            expert_profile = db.query(ExpertProfile).filter(
+                ExpertProfile.user_id == user.id
+            ).first()
+            
+            if expert_profile:
+                response["expert_profile"] = {
+                    "specialization": expert_profile.specialization,
+                    "expertise_areas": expert_profile.expertise_areas,
+                    "experience_years": expert_profile.experience_years,
+                    "hourly_rate": float(expert_profile.hourly_rate) if expert_profile.hourly_rate else None,
+                    "availability_status": expert_profile.availability_status,
+                    "certifications": expert_profile.certifications,
+                    "languages": expert_profile.languages,
+                    "bio": expert_profile.bio
+                }
+        
+        return response
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error fetching user: {str(e)}", exc_info=True)
+        logger.error(f"Error in get_user: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch user: {str(e)}"
+            detail=f"Failed to retrieve user: {str(e)}"
         )
 
 # =====================================================
@@ -713,18 +741,23 @@ async def update_user(
     user_id: int,
     user_data: dict,
     db: Session = Depends(get_db),
-    # TEMPORARILY DISABLED FOR TESTING - UNCOMMENT WHEN READY:
-    # current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
-    """
-    Update an existing user with optional expert profile
-    TEMPORARILY WITHOUT AUTHENTICATION FOR TESTING
-    """
+    """Update user information (must be in same company)."""
+    
     try:
-        logger.info(f"Updating user: {user_id}")
+        # Check permission
+        if current_user.user_role not in ['admin', 'manager'] and current_user.id != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You don't have permission to update this user"
+            )
         
-        # Get the user to update
-        user = db.query(User).filter(User.id == user_id).first()
+        # Get user (must be in same company)
+        user = db.query(User).filter(
+            User.id == user_id,
+            User.company_id == current_user.company_id
+        ).first()
         
         if not user:
             raise HTTPException(
@@ -732,116 +765,73 @@ async def update_user(
                 detail="User not found"
             )
         
-        # Check if current user has permission to update this user
-        # TEMPORARILY DISABLED FOR TESTING:
-        # if current_user.company_id != user.company_id:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_403_FORBIDDEN,
-        #         detail="You don't have permission to update this user"
-        #     )
+        # Update basic fields
+        if "first_name" in user_data:
+            user.first_name = user_data["first_name"]
+        if "last_name" in user_data:
+            user.last_name = user_data["last_name"]
+        if "job_title" in user_data:
+            user.job_title = user_data["job_title"]
+        if "department" in user_data:
+            user.department = user_data["department"]
+        if "mobile_number" in user_data:
+            user.mobile_number = user_data["mobile_number"]
+        if "qid_number" in user_data:
+            user.qid_number = user_data["qid_number"]
+        if "language_preference" in user_data:
+            user.language_preference = user_data["language_preference"]
+        if "timezone" in user_data:
+            user.timezone = user_data["timezone"]
         
-        # Check email uniqueness if changed
-        if user_data.get("email") and user_data["email"] != user.email:
-            existing_email = db.query(User).filter(
-                and_(
-                    User.email == user_data["email"],
-                    User.id != user_id
-                )
-            ).first()
-            if existing_email:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Email address already exists"
-                )
+        # Admin-only fields
+        if current_user.user_role == 'admin':
+            if "user_role" in user_data:
+                user.user_role = user_data["user_role"]
+            if "is_active" in user_data:
+                user.is_active = user_data["is_active"]
         
-        # Check username uniqueness if changed
-        if user_data.get("username") and user_data["username"] != user.username:
-            existing_username = db.query(User).filter(
-                and_(
-                    User.username == user_data["username"],
-                    User.id != user_id
-                )
-            ).first()
-            if existing_username:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Username already exists"
-                )
-        
-        # Update user fields
-        update_fields = [
-            'first_name', 'last_name', 'email', 'username', 'user_role',
-            'department', 'job_title', 'mobile_number', 'qid_number',
-            'user_type', 'language_preference', 'timezone'
-        ]
-        
-        for field in update_fields:
-            if field in user_data and user_data[field] is not None:
-                setattr(user, field, user_data[field])
-        
-        if 'is_active' in user_data:
-            user.is_active = user_data['is_active']
-        
-        # Update password if provided
-        if user_data.get("password"):
-            password_bytes = user_data["password"].encode('utf-8')
-            salt = bcrypt.gensalt()
-            user.password_hash = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
-        
-        # Update metadata
         user.updated_at = datetime.utcnow()
         
-        # Save changes
+        # Update expert profile if applicable
+        if user.user_type == "consultant" and "expert_profile" in user_data:
+            expert_profile = db.query(ExpertProfile).filter(
+                ExpertProfile.user_id == user.id
+            ).first()
+            
+            if expert_profile:
+                expert_data = user_data["expert_profile"]
+                if "specialization" in expert_data:
+                    expert_profile.specialization = expert_data["specialization"]
+                if "experience_years" in expert_data:
+                    expert_profile.experience_years = expert_data["experience_years"]
+                if "hourly_rate" in expert_data:
+                    expert_profile.hourly_rate = expert_data["hourly_rate"]
+                if "availability_status" in expert_data:
+                    expert_profile.availability_status = expert_data["availability_status"]
+                if "bio" in expert_data:
+                    expert_profile.bio = expert_data["bio"]
+                
+                expert_profile.updated_at = datetime.utcnow()
+        
         db.commit()
         db.refresh(user)
         
-        logger.info(f"User {user_id} updated successfully")
-        
-        # Handle expert profile
-        if user_data.get("user_type") == "expert" and user_data.get("expert_profile"):
-            try:
-                update_expert_profile(db, user_id, user_data["expert_profile"])
-                logger.info(f" Expert profile updated for user {user_id}")
-            except Exception as e:
-                logger.error(f" Failed to update expert profile: {str(e)}")
-                # Don't fail the entire update, just log the error
-        elif user_data.get("user_type") and user_data.get("user_type") != "expert":
-            # If user type changed from expert to something else, mark profile as unavailable
-            try:
-                unavailable_query = text("""
-                    UPDATE expert_profiles 
-                    SET is_available = 0, updated_at = NOW()
-                    WHERE user_id = :user_id
-                """)
-                db.execute(unavailable_query, {"user_id": user_id})
-                db.commit()
-            except Exception as e:
-                logger.error(f"Error deactivating expert profile: {str(e)}")
+        logger.info(f"✅ User updated: {user.email}")
         
         return {
-            "success": True,
             "message": "User updated successfully",
-            "data": {
-                "id": user.id,
-                "email": user.email,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "username": user.username,
-                "user_type": user.user_type
-            }
+            "user_id": user.id
         }
         
     except HTTPException:
-        db.rollback()
         raise
     except Exception as e:
+        logger.error(f"Error updating user: {str(e)}")
         db.rollback()
-        logger.error(f"Error updating user: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update user: {str(e)}"
         )
-
 # =====================================================
 # DELETE USER ENDPOINT (Enhanced to handle expert profiles)
 # =====================================================

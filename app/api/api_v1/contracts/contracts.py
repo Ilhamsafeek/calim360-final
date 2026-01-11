@@ -3315,7 +3315,7 @@ async def analyze_contract_risks(
         Use professional legal Arabic terminology appropriate for Qatar jurisdiction.
         """        
         # Prepare comprehensive prompt for Claude
-        prompt = f"""{language_instruction}You are a legal contract risk analyst specializing in Qatar and GCC region contracts. 
+        prompt = f"""{language_instruction}You are a legal contract risk analyst. 
 Analyze the following contract and provide a comprehensive risk assessment.
 
 CONTRACT INFORMATION:
@@ -3325,7 +3325,7 @@ CONTRACT INFORMATION:
 - Value: {result.contract_value if result.contract_value else 'Not specified'}
 
 CONTRACT CONTENT:
-{contract_content[:10000] if contract_content else 'No detailed content available - provide general risk assessment for this contract type'}
+{contract_content if contract_content else 'No detailed content available - provide general risk assessment for this contract type'}
 
 Please provide a detailed risk analysis in the following JSON format:
 {{

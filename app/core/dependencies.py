@@ -252,6 +252,7 @@ def get_user_context_with_subscriptions(current_user: User, db: Session) -> Dict
         "last_name": current_user.last_name,
         "full_name": f"{current_user.first_name} {current_user.last_name}",
         "user_type": current_user.user_type,
+        "user_role": current_user.user_role,
         "company_id": current_user.company_id,
     }
     
