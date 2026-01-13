@@ -229,11 +229,11 @@
         line-height: 1;
     }
 
-    .user-search-input.has-value ~ .clear-user-btn {
+    .user-search-input.has-value~.clear-user-btn {
         display: block;
     }
 
-    .user-search-input.has-value ~ .search-icon {
+    .user-search-input.has-value~.search-icon {
         display: none;
     }
 
@@ -421,6 +421,7 @@
             transform: translateX(100%);
             opacity: 0;
         }
+
         to {
             transform: translateX(0);
             opacity: 1;
@@ -448,14 +449,16 @@
             Master Workflow Setup
         </h1>
         <p>
-            Configure the default workflow for all contracts. This workflow will be applied company-wide unless overridden.
+            Configure the default workflow for all contracts. This workflow will be applied company-wide unless
+            overridden.
         </p>
     </div>
 
     <div class="alert alert-info">
         <i class="ti ti-info-circle"></i>
         <div>
-            <strong>Important:</strong> The Master Workflow will be the default for all new contracts. Individual contracts can override this workflow if needed.
+            <strong>Important:</strong> The Master Workflow will be the default for all new contracts. Individual
+            contracts can override this workflow if needed.
         </div>
     </div>
 
@@ -493,7 +496,10 @@
     <!-- Action Buttons -->
     <div class="workflow-card">
         <div class="action-buttons">
-          
+            <button class="btn btn-secondary" onclick="window.location.href='/contract/create'">
+                <i class="ti ti-arrow-left"></i>
+                Back
+            </button>
             <button class="btn btn-success" onclick="submitWorkflow()">
                 <i class="ti ti-check"></i>
                 Submit
@@ -503,134 +509,134 @@
 </div>
 
 <script>
-let workflowSteps = [];
-let stepCount = 0;
-let availableRoles = ['Reviewer', 'Approver', 'Legal Reviewer', 'Finance Approver', 'Director', 'E-Sign Authority'];
-let allUsers = []; // Store all users for quick lookup
+    let workflowSteps = [];
+    let stepCount = 0;
+    let availableRoles = ['Reviewer', 'Approver', 'Legal Reviewer', 'Finance Approver', 'Director', 'E-Sign Authority'];
+    let allUsers = []; // Store all users for quick lookup
 
-// Initialize
-document.addEventListener('DOMContentLoaded', function() {
-    console.log(' Master Workflow page loaded');
-    loadAllUsers();
-    loadWorkflowData();
-});
-
-// Load all users from the company
-async function loadAllUsers() {
-    try {
-        const response = await fetch('/api/workflows/users/search?query=');
-        if (response.ok) {
-            const data = await response.json();
-            allUsers = data.users || [];
-            console.log(` Loaded ${allUsers.length} users`);
-        }
-    } catch (error) {
-        console.error(' Error loading users:', error);
-    }
-}
-
-// Load workflow data from API
-async function loadWorkflowData() {
-    try {
-        const response = await fetch('/api/workflows/master');
-        if (response.ok) {
-            const data = await response.json();
-            
-            // Check if data is the workflow object directly or wrapped
-            const workflow = data.workflow_name ? data : (data.workflow || null);
-            
-            if (workflow && workflow.steps && workflow.steps.length > 0) {
-                console.log('📥 Loaded workflow from database:', workflow);
-                populateWorkflowFromDatabase(workflow);
-            } else {
-                console.log('ℹ️ No existing workflow, rendering empty table');
-                renderWorkflowSteps();
-            }
-        } else {
-            console.log('ℹ️ No workflow found, starting fresh');
-            renderWorkflowSteps();
-        }
-    } catch (error) {
-        console.error(' Error loading workflow:', error);
-        renderWorkflowSteps();
-    }
-}
-
-// Populate workflow from database
-function populateWorkflowFromDatabase(workflowData) {
-    console.log('🔄 Populating workflow from database');
-    
-    workflowSteps = [];
-    stepCount = 0;
-
-    if (workflowData.steps && workflowData.steps.length > 0) {
-        workflowData.steps.forEach(step => {
-            // Handle both formats - with users array or direct user_id
-            let userId = null;
-            let userName = '';
-            let userEmail = '';
-            let department = step.department || '';
-            
-            if (step.users && step.users.length > 0) {
-                // Users array format
-                const user = step.users[0];
-                userId = user.id;
-                userName = user.name;
-                userEmail = user.email;
-                department = step.department || user.department || '';
-            } else if (step.assignee_user_id) {
-                // Direct user_id format (from database response)
-                userId = step.assignee_user_id;
-                userName = step.user_name || '';
-                userEmail = step.user_email || '';
-                department = step.department || '';
-            }
-            
-            workflowSteps.push({
-                step_number: step.step_number,
-                role: step.assignee_role || step.role || step.step_type || '',
-                user_id: userId,
-                user_name: userName,
-                user_email: userEmail,
-                department: department
-            });
-        });
-        stepCount = workflowSteps.length;
-        console.log(` Populated ${stepCount} steps:`, workflowSteps);
-    }
-
-    renderWorkflowSteps();
-}
-
-// Render workflow steps
-function renderWorkflowSteps() {
-    console.log('🎨 Rendering workflow steps');
-    const tbody = document.getElementById('workflowSteps');
-    tbody.innerHTML = '';
-
-    workflowSteps.forEach((step, index) => {
-        tbody.appendChild(createStepRow(step, index));
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log(' Master Workflow page loaded');
+        loadAllUsers();
+        loadWorkflowData();
     });
 
-    console.log(` Rendered ${workflowSteps.length} workflow steps`);
-}
+    // Load all users from the company
+    async function loadAllUsers() {
+        try {
+            const response = await fetch('/api/workflows/users/search?query=');
+            if (response.ok) {
+                const data = await response.json();
+                allUsers = data.users || [];
+                console.log(` Loaded ${allUsers.length} users`);
+            }
+        } catch (error) {
+            console.error(' Error loading users:', error);
+        }
+    }
 
-// Create step row
-function createStepRow(step, index) {
-    const stepNum = index + 1;
-    const tr = document.createElement('tr');
-    tr.className = 'workflow-step';
+    // Load workflow data from API
+    async function loadWorkflowData() {
+        try {
+            const response = await fetch('/api/workflows/master');
+            if (response.ok) {
+                const data = await response.json();
 
-    // Role options
-    const roleOptions = availableRoles.map(role => 
-        `<option value="${role}" ${step.role === role ? 'selected' : ''}>${role}</option>`
-    ).join('');
+                // Check if data is the workflow object directly or wrapped
+                const workflow = data.workflow_name ? data : (data.workflow || null);
 
-    // User display value
-    const userDisplayValue = step.user_name ? `${step.user_name} (${step.user_email})` : '';
-    const hasUserClass = step.user_name ? 'has-value' : '';
+                if (workflow && workflow.steps && workflow.steps.length > 0) {
+                    console.log('📥 Loaded workflow from database:', workflow);
+                    populateWorkflowFromDatabase(workflow);
+                } else {
+                    console.log('ℹ️ No existing workflow, rendering empty table');
+                    renderWorkflowSteps();
+                }
+            } else {
+                console.log('ℹ️ No workflow found, starting fresh');
+                renderWorkflowSteps();
+            }
+        } catch (error) {
+            console.error(' Error loading workflow:', error);
+            renderWorkflowSteps();
+        }
+    }
 
-    tr.innerHTML = `
+    // Populate workflow from database
+    function populateWorkflowFromDatabase(workflowData) {
+        console.log('🔄 Populating workflow from database');
+
+        workflowSteps = [];
+        stepCount = 0;
+
+        if (workflowData.steps && workflowData.steps.length > 0) {
+            workflowData.steps.forEach(step => {
+                // Handle both formats - with users array or direct user_id
+                let userId = null;
+                let userName = '';
+                let userEmail = '';
+                let department = step.department || '';
+
+                if (step.users && step.users.length > 0) {
+                    // Users array format
+                    const user = step.users[0];
+                    userId = user.id;
+                    userName = user.name;
+                    userEmail = user.email;
+                    department = step.department || user.department || '';
+                } else if (step.assignee_user_id) {
+                    // Direct user_id format (from database response)
+                    userId = step.assignee_user_id;
+                    userName = step.user_name || '';
+                    userEmail = step.user_email || '';
+                    department = step.department || '';
+                }
+
+                workflowSteps.push({
+                    step_number: step.step_number,
+                    role: step.assignee_role || step.role || step.step_type || '',
+                    user_id: userId,
+                    user_name: userName,
+                    user_email: userEmail,
+                    department: department
+                });
+            });
+            stepCount = workflowSteps.length;
+            console.log(` Populated ${stepCount} steps:`, workflowSteps);
+        }
+
+        renderWorkflowSteps();
+    }
+
+    // Render workflow steps
+    function renderWorkflowSteps() {
+        console.log('🎨 Rendering workflow steps');
+        const tbody = document.getElementById('workflowSteps');
+        tbody.innerHTML = '';
+
+        workflowSteps.forEach((step, index) => {
+            tbody.appendChild(createStepRow(step, index));
+        });
+
+        console.log(` Rendered ${workflowSteps.length} workflow steps`);
+    }
+
+    // Create step row
+    function createStepRow(step, index) {
+        const stepNum = index + 1;
+        const tr = document.createElement('tr');
+        tr.className = 'workflow-step';
+
+        // Role options
+        const roleOptions = availableRoles.map(role =>
+            `<option value="${role}" ${step.role === role ? 'selected' : ''}>${role}</option>`
+        ).join('');
+
+        // User display value
+        const userDisplayValue = step.user_name ? `${step.user_name} (${step.user_email})` : '';
+        const hasUserClass = step.user_name ? 'has-value' : '';
+
+        tr.innerHTML = `
         <td>
             <div class="step-number">${stepNum}</div>
         </td>
@@ -671,110 +677,110 @@ function createStepRow(step, index) {
         </td>
     `;
 
-    return tr;
-}
-
-// Add new workflow step
-function addWorkflowStep() {
-    workflowSteps.push({
-        step_number: workflowSteps.length + 1,
-        role: '',
-        user_id: null,
-        user_name: '',
-        user_email: '',
-        department: ''
-    });
-    stepCount = workflowSteps.length;
-    console.log('➕ Added new step. Total:', stepCount);
-    renderWorkflowSteps();
-}
-
-// Remove step
-function removeStep(index) {
-    if (workflowSteps.length <= 1) {
-        showNotification('At least one workflow step is required', 'warning');
-        return;
+        return tr;
     }
 
-    if (confirm('Are you sure you want to remove this workflow step?')) {
-        workflowSteps.splice(index, 1);
-        // Renumber steps
-        workflowSteps.forEach((step, idx) => {
-            step.step_number = idx + 1;
+    // Add new workflow step
+    function addWorkflowStep() {
+        workflowSteps.push({
+            step_number: workflowSteps.length + 1,
+            role: '',
+            user_id: null,
+            user_name: '',
+            user_email: '',
+            department: ''
         });
         stepCount = workflowSteps.length;
-        console.log(`🗑️ Removed step. Total: ${stepCount}`);
+        console.log('➕ Added new step. Total:', stepCount);
         renderWorkflowSteps();
     }
-}
 
-// Update step role
-function updateStepRole(index, role) {
-    if (workflowSteps[index]) {
-        workflowSteps[index].role = role;
-        console.log(`✏️ Updated step ${index + 1} role to: ${role}`);
-    }
-}
-
-// Search users
-let searchTimeout;
-window.searchUsers = function(index, query) {
-    clearTimeout(searchTimeout);
-
-    const stepNum = index + 1;
-    const dropdown = document.getElementById(`userDropdown_${stepNum}`);
-    
-    if (!dropdown) return;
-
-    // If query is empty and no user selected, hide dropdown
-    if (!query.trim()) {
-        if (!workflowSteps[index] || !workflowSteps[index].user_id) {
-            hideUserDropdown(index);
+    // Remove step
+    function removeStep(index) {
+        if (workflowSteps.length <= 1) {
+            showNotification('At least one workflow step is required', 'warning');
+            return;
         }
-        return;
+
+        if (confirm('Are you sure you want to remove this workflow step?')) {
+            workflowSteps.splice(index, 1);
+            // Renumber steps
+            workflowSteps.forEach((step, idx) => {
+                step.step_number = idx + 1;
+            });
+            stepCount = workflowSteps.length;
+            console.log(`🗑️ Removed step. Total: ${stepCount}`);
+            renderWorkflowSteps();
+        }
     }
 
-    searchTimeout = setTimeout(() => {
-        const filteredUsers = allUsers.filter(user => {
-            const searchLower = query.toLowerCase();
-            return user.name.toLowerCase().includes(searchLower) || 
-                   user.email.toLowerCase().includes(searchLower);
-        });
-
-        displayUserDropdown(index, filteredUsers);
-    }, 300);
-};
-
-// Show user dropdown
-window.showUserDropdown = function(index) {
-    const stepNum = index + 1;
-    const input = document.getElementById(`userSearch_${stepNum}`);
-    
-    // If user already selected, don't show dropdown on focus
-    if (workflowSteps[index] && workflowSteps[index].user_id && input && input.value) {
-        return;
+    // Update step role
+    function updateStepRole(index, role) {
+        if (workflowSteps[index]) {
+            workflowSteps[index].role = role;
+            console.log(`✏️ Updated step ${index + 1} role to: ${role}`);
+        }
     }
 
-    // Show all users if no search query
-    displayUserDropdown(index, allUsers);
-};
+    // Search users
+    let searchTimeout;
+    window.searchUsers = function (index, query) {
+        clearTimeout(searchTimeout);
 
-// Display user dropdown
-function displayUserDropdown(index, users) {
-    const stepNum = index + 1;
-    const dropdown = document.getElementById(`userDropdown_${stepNum}`);
-    
-    if (!dropdown) return;
+        const stepNum = index + 1;
+        const dropdown = document.getElementById(`userDropdown_${stepNum}`);
 
-    if (users.length === 0) {
-        dropdown.innerHTML = '<div class="no-users-found">No users found</div>';
-        dropdown.style.display = 'block';
-        return;
-    }
+        if (!dropdown) return;
 
-    dropdown.innerHTML = users.map(user => {
-        const userJson = JSON.stringify(user).replace(/"/g, '&quot;');
-        return `
+        // If query is empty and no user selected, hide dropdown
+        if (!query.trim()) {
+            if (!workflowSteps[index] || !workflowSteps[index].user_id) {
+                hideUserDropdown(index);
+            }
+            return;
+        }
+
+        searchTimeout = setTimeout(() => {
+            const filteredUsers = allUsers.filter(user => {
+                const searchLower = query.toLowerCase();
+                return user.name.toLowerCase().includes(searchLower) ||
+                    user.email.toLowerCase().includes(searchLower);
+            });
+
+            displayUserDropdown(index, filteredUsers);
+        }, 300);
+    };
+
+    // Show user dropdown
+    window.showUserDropdown = function (index) {
+        const stepNum = index + 1;
+        const input = document.getElementById(`userSearch_${stepNum}`);
+
+        // If user already selected, don't show dropdown on focus
+        if (workflowSteps[index] && workflowSteps[index].user_id && input && input.value) {
+            return;
+        }
+
+        // Show all users if no search query
+        displayUserDropdown(index, allUsers);
+    };
+
+    // Display user dropdown
+    function displayUserDropdown(index, users) {
+        const stepNum = index + 1;
+        const dropdown = document.getElementById(`userDropdown_${stepNum}`);
+
+        if (!dropdown) return;
+
+        if (users.length === 0) {
+            dropdown.innerHTML = '<div class="no-users-found">No users found</div>';
+            dropdown.style.display = 'block';
+            return;
+        }
+
+        dropdown.innerHTML = users.map(user => {
+            const userJson = JSON.stringify(user).replace(/"/g, '&quot;');
+            return `
             <div class="user-dropdown-item" onclick="selectUser(${index}, JSON.parse(this.getAttribute('data-user')))" data-user="${userJson}">
                 <div class="user-info">
                     <strong>${escapeHtml(user.name)}</strong>
@@ -783,211 +789,211 @@ function displayUserDropdown(index, users) {
                 <span class="user-badge">${escapeHtml(user.department || 'No Dept')}</span>
             </div>
         `;
-    }).join('');
+        }).join('');
 
-    dropdown.style.display = 'block';
-}
-
-// Helper function to escape HTML
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// Hide user dropdown
-function hideUserDropdown(index) {
-    const stepNum = index + 1;
-    const dropdown = document.getElementById(`userDropdown_${stepNum}`);
-    if (dropdown) {
-        setTimeout(() => {
-            dropdown.style.display = 'none';
-        }, 200);
-    }
-}
-
-// Select user from dropdown
-window.selectUser = function(index, user) {
-    if (!workflowSteps[index]) return;
-
-    workflowSteps[index].user_id = user.id;
-    workflowSteps[index].user_name = user.name;
-    workflowSteps[index].user_email = user.email;
-    workflowSteps[index].department = user.department || '';
-
-    console.log(`✏️ Updated step ${index + 1} user to: ${user.name} (${user.department})`);
-
-    // Update department badge
-    const stepNum = index + 1;
-    const departmentBadge = document.getElementById(`department_${stepNum}`);
-    if (departmentBadge) {
-        const span = departmentBadge.querySelector('span');
-        if (span) {
-            span.textContent = user.department || 'Not assigned';
-        }
+        dropdown.style.display = 'block';
     }
 
-    // Update input field
-    const input = document.getElementById(`userSearch_${stepNum}`);
-    if (input) {
-        input.value = `${user.name} (${user.email})`;
-        input.classList.add('has-value');
+    // Helper function to escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
-    // Hide dropdown
-    hideUserDropdown(index);
-};
-
-// Clear selected user
-window.clearUser = function(index) {
-    if (!workflowSteps[index]) return;
-
-    const stepNum = index + 1;
-
-    // Clear user data
-    workflowSteps[index].user_id = null;
-    workflowSteps[index].user_name = '';
-    workflowSteps[index].user_email = '';
-    workflowSteps[index].department = '';
-
-    // Clear input
-    const input = document.getElementById(`userSearch_${stepNum}`);
-    if (input) {
-        input.value = '';
-        input.classList.remove('has-value');
-        input.focus();
-    }
-
-    // Clear department
-    const departmentBadge = document.getElementById(`department_${stepNum}`);
-    if (departmentBadge) {
-        const span = departmentBadge.querySelector('span');
-        if (span) {
-            span.textContent = 'Not assigned';
-        }
-    }
-
-    console.log(`🗑️ Cleared user for step ${stepNum}`);
-};
-
-// Close dropdown when clicking outside
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('.user-selection-wrapper')) {
-        document.querySelectorAll('.user-dropdown').forEach(dropdown => {
-            dropdown.style.display = 'none';
-        });
-    }
-});
-
-// Save workflow
-async function saveWorkflow() {
-    if (!validateWorkflow()) return;
-
-    const workflowData = collectWorkflowData();
-    console.log(' Saving workflow:', workflowData);
-    console.log('📋 Steps data:', JSON.stringify(workflowData.steps, null, 2));
-
-    try {
-        const response = await fetch('/api/workflows/master', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(workflowData)
-        });
-
-        if (response.ok) {
-            const result = await response.json();
-            console.log(' Save successful:', result);
-            showNotification('Master workflow saved successfully', 'success');
-            
-            // Reload the workflow data to show what was saved
+    // Hide user dropdown
+    function hideUserDropdown(index) {
+        const stepNum = index + 1;
+        const dropdown = document.getElementById(`userDropdown_${stepNum}`);
+        if (dropdown) {
             setTimeout(() => {
-                loadWorkflowData();
-            }, 500);
-        } else {
-            const error = await response.json();
-            console.error(' Server error response:', error);
-            showNotification('Error: ' + (error.detail || 'Failed to save workflow'), 'error');
-        }
-    } catch (error) {
-        console.error(' Error:', error);
-        showNotification('Error saving workflow. Please try again.', 'error');
-    }
-}
-
-// Submit workflow
-async function submitWorkflow() {
-    if (!validateWorkflow()) return;
-
-    if (confirm('Are you sure you want to submit this master workflow? It will be applied to all new contracts.')) {
-        await saveWorkflow();
-    }
-}
-
-// Validate workflow
-function validateWorkflow() {
-    if (workflowSteps.length === 0) {
-        showNotification('Please add at least one workflow step', 'warning');
-        return false;
-    }
-
-    for (let i = 0; i < workflowSteps.length; i++) {
-        const step = workflowSteps[i];
-
-        if (!step.role) {
-            showNotification(`Please select a role for step ${i + 1}`, 'warning');
-            return false;
-        }
-
-        if (!step.user_id) {
-            showNotification(`Please select a user for step ${i + 1}`, 'warning');
-            return false;
+                dropdown.style.display = 'none';
+            }, 200);
         }
     }
 
-    return true;
-}
+    // Select user from dropdown
+    window.selectUser = function (index, user) {
+        if (!workflowSteps[index]) return;
 
-// Collect workflow data
-function collectWorkflowData() {
-    return {
-        workflow_name: "Master Workflow",
-        description: "Company-wide default workflow",
-        steps: workflowSteps.map(step => ({
-            step_number: step.step_number,
-            step_name: step.role || `Step ${step.step_number}`,
-            step_type: step.role || 'reviewer',
-            role: step.role,
-            department: step.department || null,
-            users: step.user_id ? [{
-                id: step.user_id,
-                name: step.user_name,
-                email: step.user_email,
-                department: step.department || null
-            }] : [],
-            sla_hours: 24,
-            is_mandatory: true
-        })),
-        auto_escalation: false,
-        escalation_hours: 48
+        workflowSteps[index].user_id = user.id;
+        workflowSteps[index].user_name = user.name;
+        workflowSteps[index].user_email = user.email;
+        workflowSteps[index].department = user.department || '';
+
+        console.log(`✏️ Updated step ${index + 1} user to: ${user.name} (${user.department})`);
+
+        // Update department badge
+        const stepNum = index + 1;
+        const departmentBadge = document.getElementById(`department_${stepNum}`);
+        if (departmentBadge) {
+            const span = departmentBadge.querySelector('span');
+            if (span) {
+                span.textContent = user.department || 'Not assigned';
+            }
+        }
+
+        // Update input field
+        const input = document.getElementById(`userSearch_${stepNum}`);
+        if (input) {
+            input.value = `${user.name} (${user.email})`;
+            input.classList.add('has-value');
+        }
+
+        // Hide dropdown
+        hideUserDropdown(index);
     };
-}
 
-// Show notification
-function showNotification(message, type = 'success') {
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.innerHTML = `
+    // Clear selected user
+    window.clearUser = function (index) {
+        if (!workflowSteps[index]) return;
+
+        const stepNum = index + 1;
+
+        // Clear user data
+        workflowSteps[index].user_id = null;
+        workflowSteps[index].user_name = '';
+        workflowSteps[index].user_email = '';
+        workflowSteps[index].department = '';
+
+        // Clear input
+        const input = document.getElementById(`userSearch_${stepNum}`);
+        if (input) {
+            input.value = '';
+            input.classList.remove('has-value');
+            input.focus();
+        }
+
+        // Clear department
+        const departmentBadge = document.getElementById(`department_${stepNum}`);
+        if (departmentBadge) {
+            const span = departmentBadge.querySelector('span');
+            if (span) {
+                span.textContent = 'Not assigned';
+            }
+        }
+
+        console.log(`🗑️ Cleared user for step ${stepNum}`);
+    };
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.user-selection-wrapper')) {
+            document.querySelectorAll('.user-dropdown').forEach(dropdown => {
+                dropdown.style.display = 'none';
+            });
+        }
+    });
+
+    // Save workflow
+    async function saveWorkflow() {
+        if (!validateWorkflow()) return;
+
+        const workflowData = collectWorkflowData();
+        console.log(' Saving workflow:', workflowData);
+        console.log('📋 Steps data:', JSON.stringify(workflowData.steps, null, 2));
+
+        try {
+            const response = await fetch('/api/workflows/master', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(workflowData)
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log(' Save successful:', result);
+                showNotification('Master workflow saved successfully', 'success');
+
+                // Reload the workflow data to show what was saved
+                setTimeout(() => {
+                    loadWorkflowData();
+                }, 500);
+            } else {
+                const error = await response.json();
+                console.error(' Server error response:', error);
+                showNotification('Error: ' + (error.detail || 'Failed to save workflow'), 'error');
+            }
+        } catch (error) {
+            console.error(' Error:', error);
+            showNotification('Error saving workflow. Please try again.', 'error');
+        }
+    }
+
+    // Submit workflow
+    async function submitWorkflow() {
+        if (!validateWorkflow()) return;
+
+        if (confirm('Are you sure you want to submit this master workflow? It will be applied to all new contracts.')) {
+            await saveWorkflow();
+        }
+    }
+
+    // Validate workflow
+    function validateWorkflow() {
+        if (workflowSteps.length === 0) {
+            showNotification('Please add at least one workflow step', 'warning');
+            return false;
+        }
+
+        for (let i = 0; i < workflowSteps.length; i++) {
+            const step = workflowSteps[i];
+
+            if (!step.role) {
+                showNotification(`Please select a role for step ${i + 1}`, 'warning');
+                return false;
+            }
+
+            if (!step.user_id) {
+                showNotification(`Please select a user for step ${i + 1}`, 'warning');
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // Collect workflow data
+    function collectWorkflowData() {
+        return {
+            workflow_name: "Master Workflow",
+            description: "Company-wide default workflow",
+            steps: workflowSteps.map(step => ({
+                step_number: step.step_number,
+                step_name: step.role || `Step ${step.step_number}`,
+                step_type: step.role || 'reviewer',
+                role: step.role,
+                department: step.department || null,
+                users: step.user_id ? [{
+                    id: step.user_id,
+                    name: step.user_name,
+                    email: step.user_email,
+                    department: step.department || null
+                }] : [],
+                sla_hours: 24,
+                is_mandatory: true
+            })),
+            auto_escalation: false,
+            escalation_hours: 48
+        };
+    }
+
+    // Show notification
+    function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
         <i class="ti ti-${type === 'success' ? 'check' : type === 'error' ? 'x' : 'alert-triangle'}"></i>
         <span>${message}</span>
     `;
-    document.body.appendChild(notification);
+        document.body.appendChild(notification);
 
-    setTimeout(() => {
-        notification.style.animation = 'slideIn 0.3s ease reverse';
-        setTimeout(() => notification.remove(), 300);
-    }, 3000);
-}
+        setTimeout(() => {
+            notification.style.animation = 'slideIn 0.3s ease reverse';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
 </script>
 {% endblock %}
