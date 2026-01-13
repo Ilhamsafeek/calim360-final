@@ -3308,67 +3308,53 @@
         </div>
         <div class="modal-body">
 
-
-            <!-- Master Workflow Option -->
-            <div style="margin-bottom: 1.5rem;" id="masterWorkflowContainer">
+            <div style="margin-bottom: 1.5rem;">
                 <label
-                    style="display: flex; align-items: center; cursor: pointer; padding: 1rem; border: 2px solid var(--border-color); border-radius: 8px; transition: all 0.3s ease;"
-                    id="masterWorkflowLabel"
-                    onmouseover="if(!this.classList.contains('disabled')) { this.style.borderColor='var(--primary-color)'; this.style.background='var(--background-light)'; }"
-                    onmouseout="if(!this.classList.contains('disabled')) { this.style.borderColor='var(--border-color)'; this.style.background='white'; }">
-                    <input type="radio" name="signatureOption" id="masterWorkflow" value="masterWorkflow"
-                        style="margin-right: 0.75rem; width: 18px; height: 18px; cursor: pointer;">
-                    <div style="flex: 1;">
-                        <span
-                            style="font-weight: 600; font-size: 0.95rem; color: var(--text-color); text-decoration: underline;">
-                            USE MASTER WORKFLOW
-                        </span>
-                        <!-- <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);"
-                            id="masterWorkflowDesc">
-                            Automatically send to predefined reviewers in sequence
-                        </p> -->
-                    </div>
-                    <button type="button" id="masterWorkflowSetupBtn"
-                        style="display: none; margin-left: 1rem; padding: 0.5rem 1rem; background: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 0.85rem; cursor: pointer;"
-                        onclick="event.preventDefault(); event.stopPropagation(); redirectToMasterWorkflowSetup();">
-                        Setup Master Workflow
-                    </button>
+                    style="font-weight: 600; font-size: 0.95rem; color: var(--text-color); display: block; margin-bottom: 0.75rem;">
+                    Initiator e-Signee Email: <span style="color: var(--danger-color);">*</span>
                 </label>
+                <div style="position: relative;">
+                    <input type="email" id="counterPartyEmail" placeholder="Search or enter email address"
+                        style="width: 100%; padding: 0.75rem; padding-right: 2.5rem; border: 2px solid var(--border-color); border-radius: 8px; font-size: 0.95rem;"
+                        autocomplete="off" oninput="searchCounterPartyUsers(this.value)"
+                        onfocus="searchCounterPartyUsers(this.value)" required>
+                    <i class="ti ti-search"
+                        style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;"></i>
+
+                    <!-- Email Suggestions Dropdown -->
+                    <div id="counterPartyEmailSuggestions"
+                        style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid var(--border-color); border-top: none; border-radius: 0 0 8px 8px; max-height: 250px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                        <!-- Suggestions will be populated here -->
+                    </div>
+                </div>
             </div>
 
-            <!-- Custom Workflow Option -->
-            <div style="margin-bottom: 1.5rem;" id="customWorkflowContainer">
+                <div style="margin-bottom: 1.5rem;">
                 <label
-                    style="display: flex; align-items: center; cursor: pointer; padding: 1rem; border: 2px solid var(--border-color); border-radius: 8px; transition: all 0.3s ease;"
-                    id="customWorkflowLabel"
-                    onmouseover="if(!this.classList.contains('disabled')) { this.style.borderColor='var(--primary-color)'; this.style.background='var(--background-light)'; }"
-                    onmouseout="if(!this.classList.contains('disabled')) { this.style.borderColor='var(--border-color)'; this.style.background='white'; }">
-                    <input type="radio" name="signatureOption" id="customWorkflow" value="customWorkflow"
-                        style="margin-right: 0.75rem; width: 18px; height: 18px; cursor: pointer;">
-                    <div style="flex: 1;">
-                        <span
-                            style="font-weight: 600; font-size: 0.95rem; color: var(--text-color); text-decoration: underline;">
-                            USE CUSTOM WORKFLOW
-                        </span>
-                        <!-- <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);"
-                            id="customWorkflowDesc">
-                            Use workflow specific to this contract
-                        </p> -->
-                    </div>
-                    <!-- <button type="button" id="customWorkflowSetupBtn"
-                        style="display: none; margin-left: 1rem; padding: 0.5rem 1rem; background: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 0.85rem; cursor: pointer;"
-                        onclick="event.preventDefault(); event.stopPropagation(); openCustomWorkflowSetup();">
-                        Setup Custom Workflow
-                    </button> -->
+                    style="font-weight: 600; font-size: 0.95rem; color: var(--text-color); display: block; margin-bottom: 0.75rem;">
+                    Counter-Party e-Signee Email: <span style="color: var(--danger-color);">*</span>
                 </label>
+                <div style="position: relative;">
+                    <input type="email" id="counterPartyEmail" placeholder="Search or enter email address"
+                        style="width: 100%; padding: 0.75rem; padding-right: 2.5rem; border: 2px solid var(--border-color); border-radius: 8px; font-size: 0.95rem;"
+                        autocomplete="off" oninput="searchCounterPartyUsers(this.value)"
+                        onfocus="searchCounterPartyUsers(this.value)" required>
+                    <i class="ti ti-search"
+                        style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;"></i>
+
+                    <!-- Email Suggestions Dropdown -->
+                    <div id="counterPartyEmailSuggestions"
+                        style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid var(--border-color); border-top: none; border-radius: 0 0 8px 8px; max-height: 250px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                        <!-- Suggestions will be populated here -->
+                    </div>
+                </div>
+                <small style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem; display: block;">
+                    E-Signees will receive an email notification with access to Sign and Execute this
+                    contract.
+                </small>
             </div>
 
-            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
-                <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 0.5rem;">Additional
-                    Notes (Optional):</label>
-                <textarea id="signaturewNotes" placeholder="Add any notes for the reviewers..."
-                    style="width: 100%; min-height: 80px; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.875rem; resize: vertical;"></textarea>
-            </div>
+
         </div>
         <div class="modal-footer">
             <button class="btn btn-outline-secondary" onclick="closeModal('sendForSignatureModal')">
@@ -9843,7 +9829,6 @@ ${(riskAnalysisData.risk_items || []).map(item => `
             <option value="legal_reviewer">Legal Reviewer</option>
             <option value="finance_approver">Finance Approver</option>
             <option value="director">Director</option>
-            <option value="e_sign_authority">E-Sign Authority</option>
             </select>
          
         </select>
@@ -10132,7 +10117,6 @@ ${(riskAnalysisData.risk_items || []).map(item => `
             <option value="legal_reviewer" ${stepType === 'legal_reviewer' ? 'selected' : ''}>Legal Reviewer</option>
             <option value="finance_approver" ${stepType === 'finance_approver' ? 'selected' : ''}>Finance Approver</option>
             <option value="director" ${stepType === 'director' ? 'selected' : ''}>Director</option>
-            <option value="e_sign_authority" ${stepType === 'e_sign_authority' ? 'selected' : ''}>E-Sign Authority</option>        
         </select>
     </td>
     <td style="padding: 0.75rem; position: relative;">
