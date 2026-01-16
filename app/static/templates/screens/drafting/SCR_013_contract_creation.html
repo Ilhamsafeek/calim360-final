@@ -586,13 +586,27 @@
             </div>
 
             <div>
-                <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Tags (Optional)</label>
-                <input type="text" id="tagsInput" class="form-control" placeholder="Add tags (comma separated)"
-                    style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
-                <small style="color: var(--text-muted); font-size: 0.875rem;">
-                    Example: urgent, high-value, construction
-                </small>
-            </div>
+    <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+        Tag <span style="color: var(--text-muted); font-weight: 400;">(Optional)</span>
+    </label>
+    <select id="tagsSelect" class="form-control"
+        style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
+        <option value="">Select Tag (Optional)</option>
+        <option value="urgent">Urgent</option>
+        <option value="high-priority">High Priority</option>
+        <option value="standard">Standard</option>
+        <option value="high-value">High Value</option>
+        <option value="construction">Construction</option>
+        <option value="oil-gas">Oil & Gas</option>
+        <option value="infrastructure">Infrastructure</option>
+        <option value="confidential">Confidential</option>
+        <option value="qfcra-regulated">QFCRA Regulated</option>
+        <option value="government">Government Contract</option>
+    </select>
+    <small style="color: var(--text-muted); font-size: 0.875rem;">
+        <i class="ti ti-info-circle"></i> Select one tag to categorize your contract
+    </small>
+</div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-outline-secondary" onclick="closeSaveContractModal()">Cancel</button>
@@ -706,5 +720,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="/app/static/js/contract-creation.js?v=1"></script>
+<script src="/app/static/js/contract-creation.js?v=3"></script>
 {% endblock %}

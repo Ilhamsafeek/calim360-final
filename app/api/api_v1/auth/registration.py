@@ -106,7 +106,7 @@ async def register_user(
             user_type=user_data.userType,
             user_role='admin',
             language_preference='en',
-            timezone=user_data.get("timeZone", "Asia/Qatar"),
+            timezone=user_data.timeZone if user_data.timeZone else "Asia/Qatar",
             is_active=False,  # Activate after email verification
             is_verified=False,
             email_verification_token=verification_token,

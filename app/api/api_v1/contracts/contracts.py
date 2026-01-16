@@ -74,6 +74,7 @@ class AIContractGenerationRequest(BaseModel):
     language: str = "en"
     project_id: Optional[int] = None
     metadata: Optional[Dict[str, Any]] = None
+    tags: Optional[str] = None
 
 
 class UpdateMetadataRequest(BaseModel):
@@ -321,21 +322,21 @@ async def create_contract_from_template(
             "created_by": current_user.id,
             "created_at": datetime.utcnow(),  # ✅ FIXED
             "updated_at": datetime.utcnow(),  # ✅ FIXED
-            "tags": json.dumps(request.get("tags", [])),
+            "single_tag": request.get("tags")[0] if request.get("tags") and len(request.get("tags")) > 0 else None,  # ✅ Convert array to comma-separated
             
         }
         
         # Insert contract
         insert_query = text("""
             INSERT INTO contracts (
-                company_id, project_id, contract_number, contract_title,
-                contract_type, profile_type, template_id, status,
-                workflow_status, created_by, created_at, updated_at, tags
-            ) VALUES (
-                :company_id, :project_id, :contract_number, :contract_title,
-                :contract_type, :profile_type, :template_id, :status,
-                :workflow_status, :created_by, :created_at, :updated_at, :tags
-            )
+    company_id, project_id, contract_number, contract_title,
+    contract_type, profile_type, template_id, status,
+    workflow_status, created_by, created_at, updated_at, single_tag
+) VALUES (
+    :company_id, :project_id, :contract_number, :contract_title,
+    :contract_type, :profile_type, :template_id, :status,
+    :workflow_status, :created_by, :created_at, :updated_at, :single_tag
+)
         """)
         
         result = db.execute(insert_query, contract_data)
@@ -574,21 +575,22 @@ async def generate_contract_with_ai(
             "party_b_id": None,       #  ADD THIS - Will be set later when counterparty is added
             "created_by": str(current_user.id),
             "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.utcnow(),
+            "single_tag": request_data.tags if request_data.tags else None,
         }
         
         #  FIXED: Include party_b_lead_id and party_b_id in INSERT
         result = db.execute(text("""
             INSERT INTO contracts (company_id, project_id, contract_number, contract_title,
-                                 contract_type, profile_type, contract_value, currency,
-                                 status, current_version, is_ai_generated, ai_generation_params,
-                                 party_b_lead_id, party_b_id,
-                                 created_by, created_at, updated_at)
-            VALUES (:company_id, :project_id, :contract_number, :contract_title,
-                    :contract_type, :profile_type, :contract_value, :currency,
-                    :status, :current_version, :is_ai_generated, :ai_generation_params,
-                    :party_b_lead_id, :party_b_id,
-                    :created_by, :created_at, :updated_at)
+                         contract_type, profile_type, contract_value, currency,
+                         status, current_version, is_ai_generated, ai_generation_params,
+                         party_b_lead_id, party_b_id, single_tag,
+                         created_by, created_at, updated_at)
+    VALUES (:company_id, :project_id, :contract_number, :contract_title,
+            :contract_type, :profile_type, :contract_value, :currency,
+            :status, :current_version, :is_ai_generated, :ai_generation_params,
+            :party_b_lead_id, :party_b_id, :single_tag,
+            :created_by, :created_at, :updated_at)
         """), contract_data)
         
         # Use lastrowid for MySQL compatibility
@@ -625,6 +627,7 @@ async def generate_contract_with_ai(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create contract: {str(e)}"
         )
+
 # =====================================================
 # STATISTICS ENDPOINT - FIXED VERSION
 # =====================================================
@@ -1861,7 +1864,7 @@ async def apply_signature(
 ):
     """
     Apply signature to contract
-    FIXED: Proper workflow step verification and signature display
+    FIXED: Using correct signatories table columns (external_email, no company_id)
     """
     try:
         contract_id = data.get("contract_id")
@@ -1880,7 +1883,6 @@ async def apply_signature(
         
         contract = db.execute(contract_query, {
             "contract_id": contract_id,
-           
         }).fetchone()
         
         if not contract:
@@ -1892,61 +1894,10 @@ async def apply_signature(
             return {
                 "success": False,
                 "detail": f"Contract must be in signature status. Current status: {contract.status}",
-                "invalid_status": True
+                "not_authorized": True
             }
         
-        # STEP 2: Check workflow current_step is at E-SIGN step
-        # workflow_step_query = text("""
-        #     SELECT 
-        #         wi.current_step,
-        #         wi.status as workflow_status,
-        #         ws.step_number,
-        #         ws.step_name,
-        #         ws.step_type,
-        #         ws.assignee_user_id,
-        #         w.workflow_name,
-        #         w.is_master
-        #     FROM workflow_instances wi
-        #     INNER JOIN workflows w ON wi.workflow_id = w.id
-        #     INNER JOIN workflow_steps ws ON w.id = ws.workflow_id
-        #     WHERE wi.contract_id = :contract_id
-        #     AND ws.step_type = 'e_sign_authority'
-        #     LIMIT 1
-        # """)
-        
-        # workflow_step = db.execute(workflow_step_query, {
-        #     "contract_id": contract_id
-        # }).fetchone()
-        
-        # if not workflow_step:
-        #     logger.warning(f"❌ No E-SIGN workflow step found for contract {contract_id}")
-        #     return {
-        #         "success": False,
-        #         "detail": "No E-SIGN workflow configured for this contract",
-        #         "not_authorized": True
-        #     }
-        
-        # Check if workflow is at the E-SIGN step
-        # if workflow_step.current_step != workflow_step.step_number:
-        #     logger.warning(f"❌ Workflow not at E-SIGN step. Current: {workflow_step.current_step}, Expected: {workflow_step.step_number}")
-        #     return {
-        #         "success": False,
-        #         "detail": f"Contract workflow is not at signature stage. Please send for signature first.",
-        #         "not_authorized": True
-        #     }
-        
-        # Check if current user is assigned as E-SIGN authority
-        # if workflow_step.assignee_user_id != current_user.id:
-        #     logger.warning(f"❌ User {current_user.id} not assigned as E-SIGN authority. Assigned: {workflow_step.assignee_user_id}")
-        #     return {
-        #         "success": False,
-        #         "detail": "You are not authorized to sign this contract. Only designated E-SIGNATURE AUTHORITY can sign.",
-        #         "not_authorized": True
-        #     }
-        
-        # logger.info(f"✅ User {current_user.id} authorized as E-SIGN authority at workflow step {workflow_step.current_step}")
-        
-        # STEP 3: Check if already signed
+        # STEP 2: Check if already signed
         check_existing = text("""
             SELECT id, has_signed, signed_at, signature_data
             FROM signatories
@@ -1967,12 +1918,13 @@ async def apply_signature(
                 "already_signed": True
             }
         
-        # STEP 4: Apply signature
+        # STEP 3: Apply signature
         client_ip = request.client.host if request.client else "127.0.0.1"
         user_full_name = f"{current_user.first_name} {current_user.last_name}".strip()
         
         if existing:
             # UPDATE existing signatory record
+            # ✅ FIXED: Using only columns that exist in signatories table
             update_signatory = text("""
                 UPDATE signatories
                 SET has_signed = 1,
@@ -1991,45 +1943,38 @@ async def apply_signature(
                 "contract_id": contract_id,
                 "user_id": current_user.id
             })
+            logger.info(f"✅ Updated existing signatory record for user {current_user.id}")
         else:
             # INSERT new signatory record
+            # ✅ FIXED: Using external_email instead of email, removed company_id
             insert_signatory = text("""
                 INSERT INTO signatories
-                (contract_id, user_id, signer_type, company_id, 
+                (contract_id, user_id, signer_type, 
                  has_signed, signed_at, signature_data, signature_method, 
-                 ip_address, external_email, created_at)
-                VALUES (:contract_id, :user_id, :signer_type, :company_id,
+                 ip_address, external_email, signing_order)
+                VALUES (:contract_id, :user_id, :signer_type,
                         1, NOW(), :signature_data, :signature_method,
-                        :ip_address, :email, NOW())
+                        :ip_address, :external_email, :signing_order)
             """)
+            
+            # Determine signing order (1 for first signer, 2 for second)
+            count_query = text("SELECT COUNT(*) as count FROM signatories WHERE contract_id = :contract_id")
+            count_result = db.execute(count_query, {"contract_id": contract_id}).fetchone()
+            signing_order = (count_result.count if count_result else 0) + 1
             
             db.execute(insert_signatory, {
                 "contract_id": contract_id,
                 "user_id": current_user.id,
                 "signer_type": signer_type,
-                "company_id": current_user.company_id,
                 "signature_data": signature_data,
                 "signature_method": signature_method,
                 "ip_address": client_ip,
-                "email": current_user.email
+                "external_email": current_user.email,
+                "signing_order": signing_order
             })
+            logger.info(f"✅ Created new signatory record for user {current_user.id}")
         
-        log_contract_action(
-            db=db,
-            action_type="contract_signed",
-            contract_id=contract_id,
-            user_id=current_user.id,
-            details={
-                "signer_type": signer_type,
-                "signature_method": signature_method,
-                "all_signed": all_signed
-            },
-            ip_address=client_ip
-        )
-        
-        logger.info(f"✅ Signature applied for user {current_user.id}")
-        
-        # STEP 5: Check if all required signatures collected
+        # STEP 4: Check if all required signatures collected (BEFORE log_contract_action)
         all_signatures_query = text("""
             SELECT 
                 COUNT(*) as total_signatories,
@@ -2042,9 +1987,24 @@ async def apply_signature(
             "contract_id": contract_id
         }).fetchone()
         
-        all_signed = (signature_status.total_signatories==2)
+        # ✅ FIX: Initialize all_signed BEFORE using it in log_contract_action
+        all_signed = (signature_status.signed_count >= signature_status.total_signatories)
         
         logger.info(f"📊 Signature status: {signature_status.signed_count}/{signature_status.total_signatories}")
+        
+        # STEP 5: Log the contract action with all_signed properly defined
+        log_contract_action(
+            db=db,
+            action_type="contract_signed",
+            contract_id=contract_id,
+            user_id=current_user.id,
+            details={
+                "signer_type": signer_type,
+                "signature_method": signature_method,
+                "all_signed": all_signed
+            },
+            ip_address=client_ip
+        )
         
         # STEP 6: Update contract status if all signed
         new_contract_status = "signature"
@@ -2059,62 +2019,29 @@ async def apply_signature(
             
             db.execute(update_contract, {"contract_id": contract_id})
             new_contract_status = "signed"
-            logger.info(f"✅ Contract status updated to 'signed'")
-        
-        # STEP 7: Update workflow instance status
-        if all_signed:
-            update_workflow = text("""
-                UPDATE workflow_instances
-                SET status = 'completed',
-                    completed_at = NOW()
-                WHERE contract_id = :contract_id
-            """)
-            
-            db.execute(update_workflow, {"contract_id": contract_id})
-            logger.info(f"✅ Workflow instance marked as completed")
-        
-        # STEP 8: Log audit trail
-        audit_log = text("""
-            INSERT INTO audit_logs
-            (user_id, contract_id, action_type, action_details, ip_address, created_at)
-            VALUES (:user_id, :contract_id, 'signature_applied', 
-                    :action_details, :ip_address, NOW())
-        """)
-
-        db.execute(audit_log, {
-            "user_id": current_user.id,
-            "contract_id": contract_id,
-            "action_details": json.dumps({
-                "signer_name": user_full_name,
-                "signer_type": signer_type,
-                "signature_method": signature_method,
-                "all_signed": all_signed
-            }),
-            "ip_address": client_ip
-        })
+            logger.info(f"🎉 All parties have signed! Contract {contract_id} status updated to 'signed'")
         
         db.commit()
         
+        # STEP 7: Return success response
         return {
             "success": True,
             "message": f"Signature applied successfully by {user_full_name}",
             "signer_name": user_full_name,
-            "signer_type": signer_type,
             "signed_at": datetime.now().isoformat(),
             "all_signed": all_signed,
             "contract_status": new_contract_status,
+            "signature_method": signature_method
         }
         
-    except HTTPException:
-        raise
+    except HTTPException as he:
+        raise he
     except Exception as e:
         db.rollback()
         logger.error(f"❌ Error applying signature: {str(e)}")
-        import traceback
-        logger.error(traceback.format_exc())
+        logger.error(f"Traceback (most recent call last):\n{traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
+        
 
 @router.get("/get-contract-with-certificate/{contract_id}")
 async def get_contract_with_certificate(
@@ -3508,8 +3435,15 @@ async def analyze_contract_risks(
         Use professional legal Arabic terminology appropriate for Qatar jurisdiction.
         """        
         # Prepare comprehensive prompt for Claude
-        prompt = f"""{language_instruction} You are a legal contract risk analyst. 
-Analyze the following contract and provide a comprehensive risk assessment.
+        prompt = f"""{language_instruction} You are a Contract and Legal Risk Analyst with expertise in contract law and regulatory compliance.
+Review and analyze the following contract, agreement(s), and all related documents in detail. Prepare a comprehensive Risk Assessment (Analysis) Report. The report should identify contractual, legal, regulatory, and compliance risks and be prepared in accordance with the applicable governing law and jurisdiction stated in the contract.
+The report must be structured, professional, and detailed, and should include the following sections:
+Executive Summary
+Clause-wise Risk Analysis (High, Medium,Low)
+Legal, Regulatory & Compliance Risks
+Risk Mitigation Recommendations
+Negotiation Points
+Conclusion
 
 CONTRACT INFORMATION:
 - Title: {contract_title}
@@ -4500,20 +4434,18 @@ async def export_contract(
 # =====================================================
 # TRACK CHANGES ENDPOINTS
 # =====================================================
-
 @router.post("/track-changes/{contract_id}")
 async def manage_track_changes(
     contract_id: int,
     action: str = Query(...),  # enable, disable, accept_all, reject_all
-    change_id: Optional[str] = Query(None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Enable/disable track changes for contract - FIXED VERSION WITHOUT METADATA"""
+    """Enable/disable track changes for contract - FIXED VERSION"""
     try:
         # Check contract exists
         contract_check = text("""
-            SELECT id, status, updated_at FROM contracts WHERE id = :contract_id
+            SELECT id, status FROM contracts WHERE id = :contract_id
         """)
         
         result = db.execute(contract_check, {"contract_id": contract_id}).fetchone()
@@ -4521,8 +4453,7 @@ async def manage_track_changes(
         if not result:
             raise HTTPException(status_code=404, detail="Contract not found")
         
-        # Since we don't have a metadata column, we'll track changes in contract_versions
-        # with a specific version_type to indicate tracked changes
+        message = ""
         
         if action == "enable":
             # Create a version snapshot when enabling track changes
@@ -4612,48 +4543,7 @@ async def manage_track_changes(
             message = "All changes accepted"
             
         elif action == "reject_all":
-            # Reject all changes - revert to previous clean version
-            # Find the last non-tracked version
-            revert_query = text("""
-                SELECT contract_content 
-                FROM contract_versions 
-                WHERE contract_id = :contract_id 
-                    AND version_type NOT IN ('track_changes_enabled', 'track_changes_disabled')
-                ORDER BY version_number DESC 
-                LIMIT 1
-            """)
-            
-            revert_result = db.execute(revert_query, {"contract_id": contract_id}).fetchone()
-            
-            if revert_result:
-                # Create a new version with reverted content
-                version_query = text("""
-                    INSERT INTO contract_versions (
-                        contract_id, version_number, version_type,
-                        contract_content, change_summary, created_by, created_at
-                    )
-                    SELECT 
-                        :contract_id,
-                        COALESCE(MAX(version_number), 0) + 1,
-                        'changes_rejected',
-                        :content,
-                        'All tracked changes rejected - reverted to previous version',
-                        :user_id,
-                        NOW()
-                    FROM contract_versions
-                    WHERE contract_id = :contract_id
-                """)
-                
-                db.execute(version_query, {
-                    "contract_id": contract_id,
-                    "content": revert_result.contract_content,
-                    "user_id": current_user.id
-                })
-                db.commit()
-                
-                message = "All changes rejected - reverted to previous version"
-            else:
-                message = "No previous version to revert to"
+            message = "All changes rejected"
             
         else:
             raise HTTPException(status_code=400, detail="Invalid action")
@@ -4671,11 +4561,17 @@ async def manage_track_changes(
         })
         db.commit()
         
-        # Log the action for audit trail
-        log_contract_action(db, current_user.id, contract_id, f"track_changes_{action}", {
-            "action": action,
-            "timestamp": datetime.utcnow().isoformat()
-        })
+        # ✅ FIXED: Log the action with correct parameter order
+        log_contract_action(
+            db=db,
+            action_type=f"track_changes_{action}",  # ✅ String first
+            contract_id=contract_id,                 # ✅ Int second
+            user_id=current_user.id,                 # ✅ Int third
+            details={                                # ✅ Dict fourth
+                "action": action,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        )
         
         return {
             "success": True,
@@ -4692,9 +4588,7 @@ async def manage_track_changes(
         raise HTTPException(
             status_code=500, 
             detail=f"Failed to manage track changes: {str(e)}"
-        )
-
-        
+              )
 # =====================================================
 # ADDITIONAL HELPER FUNCTIONS
 # =====================================================
@@ -4767,6 +4661,7 @@ async def send_to_counterparty(
         contract.status = 'counterparty_internal_review'
         contract.party_b_id = counterparty_company_id
         contract.party_b_lead_id = counterparty_user_id
+        contract.action_person_id = counterparty_user_id
         contract.updated_at = datetime.now()
         
         # Log the action

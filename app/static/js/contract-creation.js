@@ -279,7 +279,7 @@ function buildAIPrompt() {
     console.log('  Selected Clauses:', selectedClauses);
 
     let fullPrompt = '';
-    
+
 
     if (contractType) {
         const contractTypeSelect = document.getElementById('contractTypeSelect');
@@ -1075,7 +1075,7 @@ async function saveContract() {
         // Get form elements
         const contractNameInput = document.getElementById('contractNameInput');
         const projectSelect = document.getElementById('projectSelect');
-        const tagsInput = document.getElementById('tagsInput');
+        const tagsSelect = document.getElementById('tagsSelect');
 
         if (!contractNameInput || !projectSelect) {
             console.error(' Form elements not found');
@@ -1085,7 +1085,7 @@ async function saveContract() {
 
         const contractName = contractNameInput.value.trim();
         const projectId = projectSelect.value;
-        const tags = tagsInput ? tagsInput.value.split(',').map(t => t.trim()).filter(Boolean) : [];
+        const tags = tagsSelect && tagsSelect.value ? [tagsSelect.value] : [];
 
         // Validate
         if (!contractName) {
@@ -1121,6 +1121,11 @@ async function saveContract() {
             if (projectId && projectId !== 'create_new' && projectId !== '') {
                 formData.append('project_id', projectId);
             }
+
+            if (tags && tags.length > 0) {  // ✅ ADD THIS
+                formData.append('tags', tags[0]);  // ✅ Send single tag
+            }
+
 
             const response = await authenticatedFetch('/api/contracts/upload-contract', {
                 method: 'POST',

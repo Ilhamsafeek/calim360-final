@@ -2622,9 +2622,6 @@ ${(analysis.recommendations || []).map((rec, idx) => `${idx + 1}. ${rec}`).join(
             <button class="sub-tab active" onclick="switchSubTab('all')" data-subtab="all">
                 <i class="ti ti-files"></i> All Contracts
             </button>
-            <button class="sub-tab" onclick="switchSubTab('my')" data-subtab="my">
-                <i class="ti ti-user-check"></i> My Contracts
-            </button>
             
             <button class="sub-tab" onclick="switchSubTab('draft')" data-subtab="draft">
                 <i class="ti ti-file-pencil"></i> Drafts
@@ -2816,6 +2813,7 @@ ${(analysis.recommendations || []).map((rec, idx) => `${idx + 1}. ${rec}`).join(
             
             <div class="contract-header">
                 <span class="contract-id">${contract.contract_number}</span>
+                
             </div>
             
             <h3 class="contract-title" title="${contract.title}">${contract.title}-${contract.contract_number.replace('CNT-', '')}</h3>
@@ -2826,7 +2824,8 @@ ${(analysis.recommendations || []).map((rec, idx) => `${idx + 1}. ${rec}`).join(
             </div>
 
             <div>
-               <span class="contract-date">Last Updated: ${getTimeAgo(contract.updated_at)}</span>
+               <span class="contract-party-label">Contract type: </span>
+               <span class="contract-party-name">${contract.contract_type.toUpperCase()}</span>
             </div>
             
             <div class="quick-actions">

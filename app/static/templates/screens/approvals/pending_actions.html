@@ -476,14 +476,7 @@
     function getActionButtons(action) {
         if (action.action_type === 'approval') {
             return `
-                <button class="btn-sm btn-approve" onclick="approveAction('${action.id}', '${action.contract_id}')">
-                    <i class="ti ti-check"></i>
-                    Approve
-                </button>
-                <button class="btn-sm btn-reject" onclick="rejectAction('${action.id}', '${action.contract_id}')">
-                    <i class="ti ti-x"></i>
-                    Reject
-                </button>
+              
                 <button class="btn-sm btn-view" onclick="viewContract('${action.contract_id}')">
                     <i class="ti ti-eye"></i>
                     View

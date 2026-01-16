@@ -92,7 +92,7 @@ async def get_dashboard_statistics(
                 FROM contracts
                 WHERE action_person_id = :user_id
                 AND (company_id = :company_id OR party_b_id = :company_id)
-                AND status IN ('approval', 'signature', 'review','draft')
+                AND status IN ('approval', 'signature', 'review','draft','review_completed','counterparty_internal_review')
             """),
             {"company_id": company_id, "user_id": user_id}
         ).fetchone()
@@ -645,17 +645,14 @@ async def get_pending_actions(
                 END as description
             FROM contracts c
             WHERE c.action_person_id = :user_id
-            AND c.company_id = :company_id
-            AND c.status IN ('approval', 'signature', 'review','draft')
             ORDER BY c.updated_at DESC
         """)
         
         result = db.execute(query, {
             "user_id": current_user.id,
-            "company_id": current_user.company_id
         }).fetchall()
         
-        logger.info(f"✅ Found {len(result)} pending actions")
+        logger.info(f"✅ Found {len(result)} pending actions {current_user.id}, {current_user.company_id}")
         
         # Format response
         actions = []

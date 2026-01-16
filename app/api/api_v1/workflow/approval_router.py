@@ -81,7 +81,34 @@ async def approve_reject_workflow(
         logger.info(f"   - Workflow ID: {workflow.workflow_id}")
         logger.info(f"   - Current Step: {workflow.current_step}")
         logger.info(f"   - Is Master Workflow: {workflow.is_master}")
-        
+
+            # Get contract creator to set as action person on rejection
+        logger.info("🔍 Finding contract creator...")
+        creator_query = text("""
+            SELECT created_by FROM contracts WHERE id = :contract_id
+        """)
+        creator_result = db.execute(creator_query, {"contract_id": request.contract_id}).first()
+        contract_creator_id = creator_result.created_by if creator_result else None
+            
+        if contract_creator_id:
+            logger.info(f"✅ Contract creator found: User ID {contract_creator_id}")
+        else:
+            logger.warning("⚠️ Contract creator not found")
+
+
+        # Get party B Lead to set as action person
+        logger.info("🔍 Finding counter-party lead...")
+        party_b_lead_query = text("""
+            SELECT party_b_lead_id FROM contracts WHERE id = :contract_id
+        """)
+        party_b_lead_result = db.execute(party_b_lead_query, {"contract_id": request.contract_id}).first()
+        party_b_lead_id = party_b_lead_result.party_b_lead_id if party_b_lead_result else None
+            
+        if party_b_lead_id:
+            logger.info(f"✅ Party B Lead found: User ID {party_b_lead_id}")
+        else:
+            logger.warning("⚠️ Party B Lead not found")
+
         # =====================================================
         # APPROVAL FLOW
         # =====================================================
@@ -134,23 +161,23 @@ async def approve_reject_workflow(
                         SET approval_status = 'review_completed',
                             status = 'review_completed',
                             workflow_status = 'completed',
-                            action_person_id = NULL
+                            action_person_id = :action_person_id
                         WHERE id = :contract_id
                     """)
-                    db.execute(update_contract, {"contract_id": request.contract_id})
+                    db.execute(update_contract, {"contract_id": request.contract_id, "action_person_id": contract_creator_id})
                     logger.info("✅ Contract status updated: review_completed, action_person_id cleared")
                     message = "Internal review fully Completed!"
                     
-                elif request.request_type == "counterparty_review":
+                elif request.request_type == "counterparty_internal_review":
                     logger.info("🔄 Counterparty Review completed - updating contract status...")
                     update_contract = text("""
                         UPDATE contracts
                         SET approval_status = 'counterparty_review_completed',
                             status = 'counterparty_review_completed',
-                            action_person_id = NULL
+                            action_person_id = :action_person_id
                         WHERE id = :contract_id
                     """)
-                    db.execute(update_contract, {"contract_id": request.contract_id})
+                    db.execute(update_contract, {"contract_id": request.contract_id, "action_person_id": party_b_lead_id})
                     logger.info("✅ Contract status updated: counterparty_review_completed, action_person_id cleared")
                     message = "Counter-Party review fully Completed!"
                     
@@ -160,10 +187,10 @@ async def approve_reject_workflow(
                         UPDATE contracts
                         SET approval_status = 'approved',
                             status = 'approved',
-                            action_person_id = NULL
+                            action_person_id = :action_person_id
                         WHERE id = :contract_id
                     """)
-                    db.execute(update_contract, {"contract_id": request.contract_id})
+                    db.execute(update_contract, {"contract_id": request.contract_id, "action_person_id": contract_creator_id})
                     logger.info("✅ Contract status updated: approved, action_person_id cleared")
                     message = "Approval fully Completed!"
                 else:
@@ -355,18 +382,6 @@ async def approve_reject_workflow(
             })
             logger.info(f"✅ Audit log created: {audit_details}")
 
-            # Get contract creator to set as action person on rejection
-            logger.info("🔍 Finding contract creator...")
-            creator_query = text("""
-                SELECT created_by FROM contracts WHERE id = :contract_id
-            """)
-            creator_result = db.execute(creator_query, {"contract_id": request.contract_id}).first()
-            contract_creator_id = creator_result.created_by if creator_result else None
-            
-            if contract_creator_id:
-                logger.info(f"✅ Contract creator found: User ID {contract_creator_id}")
-            else:
-                logger.warning("⚠️ Contract creator not found")
 
             # Handle rejection for both initiator and counterparty internal reviews
             if request.request_type == "internal_review":
@@ -411,10 +426,10 @@ async def approve_reject_workflow(
                 """)    
                 db.execute(update_contract, {
                     "contract_id": request.contract_id,
-                    "action_person_id": contract_creator_id
+                    "action_person_id": party_b_lead_id
                 })
                 logger.info(f"✅ Contract status updated to 'counterparty_internal_review' with approval_status 'counterparty_team_rejected'")
-                logger.info(f"✅ Workflow status set to 'pending', action_person_id set to: {contract_creator_id}")
+                logger.info(f"✅ Workflow status set to 'pending', action_person_id set to: {party_b_lead_id}")
 
                 logger.info("🔄 Resetting counterparty workflow to step 1...")
                 update_workflow = text("""

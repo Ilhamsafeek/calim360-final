@@ -15,6 +15,7 @@ from app.core.config import settings
 from uuid import uuid4
 from sqlalchemy import text
 from pydantic import BaseModel
+import json
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
@@ -936,7 +937,8 @@ async def upload_contract(
             status="draft",
             current_version=1,
             created_by=current_user.id,
-            company_id=current_user.company_id
+            company_id=current_user.company_id,
+            single_tag=tags if tags else None,
         )
         
         db.add(new_contract)
