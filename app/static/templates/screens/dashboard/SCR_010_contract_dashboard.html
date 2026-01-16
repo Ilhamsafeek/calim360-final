@@ -2049,309 +2049,816 @@
     // =====================================================
     //  NEW FUNCTION: Display Risk Analysis Results Modal
     // =====================================================
-    function displayRiskAnalysisResultsModal(contractId, contractTitle, analysis) {
-        // Remove any existing modal
-        const existingModal = document.getElementById('riskResultsModal');
-        if (existingModal) existingModal.remove();
+function displayRiskAnalysisResultsModal(contractId, contractTitle, analysis) {
+    // Remove any existing modal
+    const existingModal = document.getElementById('riskResultsModal');
+    if (existingModal) existingModal.remove();
 
-        // Determine risk level color
-        const riskScore = analysis.overall_score || analysis.risk_score || 50;
-        const riskLevel = analysis.risk_level || (riskScore >= 70 ? 'High' : riskScore >= 40 ? 'Medium' : 'Low');
-        const riskColor = riskScore >= 70 ? '#dc3545' : riskScore >= 40 ? '#ffc107' : '#28a745';
+    console.log('Analysis data received:', analysis); // Debug log
 
-        // Build risk items HTML - safely extract text from all fields
-        const riskItemsHtml = (analysis.risk_items || []).map(item => {
-            const issueText = extractText(item.issue) || extractText(item.type) || 'Risk Item';
-            const descText = extractText(item.description) || 'Review recommended';
-            const mitigationText = extractText(item.mitigation);
-            const severityText = extractText(item.severity) || 'Medium';
-            const typeText = extractText(item.type) || 'General';
+    // Extract data from the analysis structure
+    const executiveSummary = analysis.executive_summary || {};
+    const contractOverview = analysis.contract_overview || {};
+    const clauseWiseAnalysis = analysis.clause_wise_analysis || [];
+    const regulatoryCompliance = analysis.regulatory_compliance || {};
+    const riskMitigation = analysis.risk_mitigation || {};
+    const negotiationPoints = analysis.negotiation_points || {};
+    const riskSummary = analysis.risk_summary || analysis;
+    const conclusion = analysis.conclusion || {};
+
+    // Determine risk level and color
+    const riskScore = executiveSummary.overall_score || analysis.overall_score || analysis.risk_score || 50;
+    const riskLevel = executiveSummary.overall_risk_rating || analysis.risk_level || (riskScore >= 70 ? 'High' : riskScore >= 40 ? 'Medium' : 'Low');
+    const riskColor = riskScore >= 70 ? '#dc3545' : riskScore >= 40 ? '#ffc107' : '#28a745';
+
+    // Extract risk counts
+    const highRisks = riskSummary.high_risks || analysis.high_risks || 0;
+    const mediumRisks = riskSummary.medium_risks || analysis.medium_risks || 0;
+    const lowRisks = riskSummary.low_risks || analysis.low_risks || 0;
+
+    // Extract executive summary text
+    let execSummaryText = '';
+    if (typeof executiveSummary === 'object' && executiveSummary.overview) {
+        execSummaryText = extractText(executiveSummary.overview);
+    } else if (typeof executiveSummary === 'string') {
+        execSummaryText = executiveSummary;
+    } else {
+        execSummaryText = extractText(analysis.executive_summary) || 'Contract has been analyzed for potential risks.';
+    }
+
+    // Build Critical Red Flags HTML
+    let redFlagsHtml = '';
+    const redFlags = riskSummary.red_flags || analysis.red_flags || [];
+    if (redFlags.length > 0) {
+        redFlagsHtml = redFlags.map(flag => {
+            const flagText = extractText(flag);
+            return `
+            <div style="background: rgba(220, 53, 69, 0.05); padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 0.5rem; border-left: 3px solid #dc3545; display: flex; align-items: start; gap: 0.5rem;">
+                <i class="ti ti-flag" style="color: #dc3545; font-size: 1.1rem; flex-shrink: 0; margin-top: 0.1rem;"></i>
+                <span style="color: var(--text-color); line-height: 1.5;">${flagText}</span>
+            </div>
+            `;
+        }).join('');
+    }
+
+    // Build Risk Items HTML
+    const riskItems = riskSummary.risk_items || analysis.risk_items || [];
+    const riskItemsHtml = riskItems.map(item => {
+        // Extract all possible fields
+        const issueText = extractText(item.issue) || extractText(item.title) || extractText(item.type) || 'Risk Item';
+        const descText = extractText(item.description) || extractText(item.details) || 'Review recommended';
+        const mitigationText = extractText(item.mitigation) || extractText(item.recommended_action);
+        const severityText = (extractText(item.severity) || 'Medium').toLowerCase();
+        const typeText = extractText(item.type) || 'General';
+        const clauseRef = extractText(item.clause_reference) || extractText(item.clause) || extractText(item.article);
+        const financialImpact = extractText(item.financial_impact);
+        const scoreValue = item.score || '';
+
+        // Determine severity badge text
+        let severityBadge = severityText.toUpperCase();
+        if (severityText.includes('critical') || severityText === 'high') {
+            severityBadge = 'CRITICAL';
+        }
+
+        return `
+        <div class="risk-item" style="background: ${getSeverityBg(severityText)}; border-left: 4px solid ${getSeverityColor(severityText)}; padding: 1.25rem; border-radius: 8px; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem; gap: 1rem;">
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; color: var(--text-color); font-size: 1rem; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                        <i class="ti ti-${getRiskIcon(typeText)}" style="color: ${getSeverityColor(severityText)};"></i>
+                        ${issueText}
+                    </div>
+                    ${clauseRef ? `
+                    <div style="color: var(--text-muted); font-size: 0.85rem; display: flex; align-items: center; gap: 0.25rem; margin-top: 0.25rem;">
+                        <i class="ti ti-file-text" style="font-size: 0.9rem;"></i>
+                        <span>${clauseRef}</span>
+                    </div>
+                    ` : ''}
+                </div>
+                <span class="badge" style="background: ${getSeverityColor(severityText)}; color: white; padding: 0.35rem 0.75rem; border-radius: 4px; font-size: 0.7rem; text-transform: uppercase; font-weight: 600; flex-shrink: 0;">
+                    ${severityBadge}
+                </span>
+            </div>
+            
+            <p style="font-size: 0.9rem; color: var(--text-color); margin: 0.75rem 0; line-height: 1.6;">${descText}</p>
+            
+            ${financialImpact ? `
+            <div style="background: rgba(255, 193, 7, 0.1); padding: 0.5rem 0.75rem; border-radius: 4px; margin: 0.75rem 0; border-left: 2px solid #ffc107;">
+                <span style="font-size: 0.85rem; color: #f76707; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="ti ti-coin"></i>
+                    <strong>Financial Impact:</strong> ${financialImpact}
+                </span>
+            </div>
+            ` : ''}
+            
+            ${mitigationText ? `
+            <div style="background: rgba(40, 167, 69, 0.08); padding: 0.75rem; border-radius: 4px; margin-top: 0.75rem; border-left: 2px solid #28a745;">
+                <span style="font-size: 0.85rem; color: #2b8a3e; display: flex; align-items: start; gap: 0.5rem; line-height: 1.5;">
+                    <i class="ti ti-bulb" style="font-size: 1rem; flex-shrink: 0; margin-top: 0.1rem;"></i>
+                    <span><strong>Mitigation:</strong> ${mitigationText}</span>
+                </span>
+            </div>
+            ` : ''}
+        </div>
+        `;
+    }).join('') || '<div style="text-align: center; padding: 2rem; color: var(--text-muted);"><i class="ti ti-info-circle"></i> No specific risks identified</div>';
+
+    // Build Compliance Issues HTML
+    let complianceHtml = '';
+    const complianceIssues = analysis.compliance_issues || regulatoryCompliance.compliance_gaps || [];
+    if (complianceIssues.length > 0) {
+        complianceHtml = complianceIssues.map(issue => {
+            // Handle both string and object formats
+            let issueText = '';
+            let severity = 'medium';
+            let regulation = '';
+            
+            if (typeof issue === 'string') {
+                issueText = issue;
+            } else if (typeof issue === 'object') {
+                issueText = extractText(issue.issue) || extractText(issue.description) || JSON.stringify(issue);
+                severity = extractText(issue.severity) || 'medium';
+                regulation = extractText(issue.regulation) || '';
+            }
 
             return `
-            <div class="risk-item" style="background: ${getSeverityBg(severityText)}; border-left: 4px solid ${getSeverityColor(severityText)}; padding: 1rem; border-radius: 8px; margin-bottom: 0.75rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                    <span style="font-weight: 600; color: var(--text-color);">
-                        <i class="ti ti-${getRiskIcon(typeText)}"></i> ${issueText}
-                    </span>
-                    <span class="badge" style="background: ${getSeverityColor(severityText)}; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.7rem; text-transform: uppercase;">
-                        ${severityText}
+            <div style="background: rgba(255, 193, 7, 0.05); padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 0.5rem; border-left: 3px solid #ffc107; display: flex; align-items: start; gap: 0.75rem;">
+                <i class="ti ti-alert-triangle" style="color: #ffc107; font-size: 1.1rem; flex-shrink: 0; margin-top: 0.1rem;"></i>
+                <div style="flex: 1;">
+                    ${regulation ? `<div style="font-weight: 600; color: var(--text-color); margin-bottom: 0.25rem;">${regulation}</div>` : ''}
+                    <div style="font-size: 0.9rem; color: var(--text-color); line-height: 1.5;">${issueText}</div>
+                </div>
+            </div>
+            `;
+        }).join('');
+    }
+
+    // Build Recommendations HTML
+    let recommendationsHtml = '';
+    const recommendations = conclusion.recommendations_priority || 
+                          riskMitigation.immediate_actions || 
+                          analysis.recommendations || [];
+    
+    if (recommendations.length > 0) {
+        recommendationsHtml = recommendations.map(rec => {
+            let recText = '';
+            let priority = '';
+            
+            if (typeof rec === 'string') {
+                recText = rec;
+            } else if (typeof rec === 'object') {
+                recText = extractText(rec.recommendation) || extractText(rec.action) || extractText(rec);
+                priority = extractText(rec.priority);
+            }
+
+            return `
+            <li style="margin-bottom: 0.75rem; color: var(--text-color); display: flex; align-items: start; gap: 0.5rem;">
+                <i class="ti ti-check" style="color: var(--success-color); font-size: 1.1rem; flex-shrink: 0; margin-top: 0.1rem;"></i>
+                <span style="line-height: 1.6;">
+                    ${priority ? `<span class="badge" style="background: ${getSeverityColor(priority.toLowerCase())}; color: white; padding: 0.2rem 0.4rem; border-radius: 3px; font-size: 0.65rem; margin-right: 0.5rem;">${priority.toUpperCase()}</span>` : ''}
+                    ${recText}
+                </span>
+            </li>
+            `;
+        }).join('');
+    } else {
+        recommendationsHtml = '<li style="color: var(--text-muted); list-style: none;">No specific recommendations available</li>';
+    }
+
+    // Build Clause-Wise Analysis HTML (if available)
+    let clauseAnalysisHtml = '';
+    if (clauseWiseAnalysis.length > 0) {
+        const topClauses = clauseWiseAnalysis.slice(0, 5);
+        clauseAnalysisHtml = topClauses.map(clause => {
+            const clauseTitle = extractText(clause.clause_title) || extractText(clause.clause_number) || 'Clause';
+            const severity = (extractText(clause.severity) || 'medium').toLowerCase();
+            const risks = clause.risks_identified || [];
+            const clauseSummary = extractText(clause.clause_summary);
+            
+            return `
+            <div style="background: ${getSeverityBg(severity)}; padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 0.5rem; border-left: 3px solid ${getSeverityColor(severity)};">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                    <span style="font-weight: 600; color: var(--text-color);">${clauseTitle}</span>
+                    <span class="badge" style="background: ${getSeverityColor(severity)}; color: white; padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.65rem;">
+                        ${severity.toUpperCase()}
                     </span>
                 </div>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0.5rem 0;">${descText}</p>
-                ${mitigationText ? `<p style="font-size: 0.8rem; color: var(--success-color); margin: 0;"><i class="ti ti-bulb"></i> ${mitigationText}</p>` : ''}
+                ${clauseSummary ? `<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">${clauseSummary}</div>` : ''}
+                ${risks.length > 0 ? `<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;"><i class="ti ti-alert-circle" style="font-size: 0.9rem;"></i> ${risks.slice(0, 2).map(r => extractText(r)).join('; ')}</div>` : ''}
             </div>
-        `;
-        }).join('') || '<p style="text-align: center; color: var(--text-muted);">No specific risks identified</p>';
+            `;
+        }).join('');
+    }
 
-        // Build recommendations HTML - handle both string and object formats
-        const recommendationsHtml = (analysis.recommendations || []).map(rec => {
-            const recText = extractText(rec);
+    // Build Negotiation Points HTML (if available)
+    let negotiationHtml = '';
+    if (negotiationPoints.critical_issues && negotiationPoints.critical_issues.length > 0) {
+        const topNegotiations = negotiationPoints.critical_issues.slice(0, 4);
+        negotiationHtml = topNegotiations.map(issue => {
+            const issueTitle = extractText(issue.issue) || 'Negotiation Point';
+            const priority = (extractText(issue.priority) || 'medium').toLowerCase();
+            const recommendedPosition = extractText(issue.recommended_position);
+            
             return `
-            <li style="margin-bottom: 0.5rem; color: var(--text-color);">
-                <i class="ti ti-check" style="color: var(--success-color);"></i> ${recText}
-            </li>
-        `;
-        }).join('') || '<li style="color: var(--text-muted);">No specific recommendations</li>';
+            <div style="background: ${getSeverityBg(priority)}; padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 0.5rem; border-left: 3px solid ${getSeverityColor(priority)};">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                    <span style="font-weight: 600; color: var(--text-color);">${issueTitle}</span>
+                    <span class="badge" style="background: ${getSeverityColor(priority)}; color: white; padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.65rem;">
+                        ${priority.toUpperCase()} PRIORITY
+                    </span>
+                </div>
+                ${recommendedPosition ? `<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;"><i class="ti ti-arrow-right"></i> ${recommendedPosition}</div>` : ''}
+            </div>
+            `;
+        }).join('');
+    }
 
-        // Create the modal HTML
-        const modalHtml = `
-        <div id="riskResultsModal" class="modal" style="display: flex; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; padding: 1rem;">
-            <div class="modal-content" style="background: var(--card-bg, #fff); border-radius: 12px; max-width: 900px; width: 95%; max-height: 90vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+    // Create the modal HTML
+    const modalHtml = `
+    <div id="riskResultsModal" class="modal" style="display: flex; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; padding: 1rem;">
+        <div class="modal-content" style="background: var(--card-bg, #fff); border-radius: 12px; max-width: 1000px; width: 95%; max-height: 90vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            
+            <!-- Header -->
+            <div class="modal-header" style="background: linear-gradient(135deg, #28a745, #20883b); padding: 1.5rem; color: white; display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="flex: 1;">
+                    <h3 style="margin: 0; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                        <i class="ti ti-shield-check" style="font-size: 1.75rem;"></i>
+                        Risk Analysis Complete
+                        <span style="background: rgba(255,255,255,0.25); padding: 0.35rem 0.85rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">
+                            <i class="ti ti-sparkles"></i> AI Powered
+                        </span>
+                    </h3>
+                    <p style="margin: 0.5rem 0 0; opacity: 0.95; font-size: 0.95rem; font-weight: 500;">${contractTitle}</p>
+                </div>
+                <button onclick="closeRiskResultsModal()" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.25rem; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-left: 1rem; transition: background 0.2s;">
+                    <i class="ti ti-x"></i>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body" style="padding: 1.5rem; max-height: calc(90vh - 200px); overflow-y: auto;">
                 
-                <!-- Header - Fixed alignment -->
-                <div class="modal-header" style="background: linear-gradient(135deg, ${riskColor}, ${adjustColor(riskColor, 20)}); padding: 1.5rem; color: white; display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div style="flex: 1;">
-                        <h3 style="margin: 0; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-                            <i class="ti ti-shield-check"></i>
-                            Risk Analysis Complete
-                            <span style="background: rgba(255,255,255,0.2); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem;">
-                                <i class="ti ti-sparkles"></i> AI Powered
-                            </span>
-                        </h3>
-                        <p style="margin: 0.5rem 0 0; opacity: 0.9; font-size: 0.9rem;">${contractTitle}</p>
+                <!-- Risk Score Summary -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div style="background: linear-gradient(135deg, ${riskColor}15, ${riskColor}08); padding: 1.5rem; border-radius: 12px; text-align: center; border: 2px solid ${riskColor}40; position: relative; overflow: hidden;">
+                        <div style="font-size: 2.75rem; font-weight: bold; color: ${riskColor};">${riskScore}%</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; margin-top: 0.25rem;">Risk Score</div>
                     </div>
-                    <button onclick="closeRiskResultsModal()" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.25rem; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-left: 1rem;">
-                        <i class="ti ti-x"></i>
+                    <div style="background: linear-gradient(135deg, rgba(220, 53, 69, 0.08), rgba(220, 53, 69, 0.02)); padding: 1.5rem; border-radius: 12px; text-align: center; border: 2px solid rgba(220, 53, 69, 0.25);">
+                        <div style="font-size: 2.75rem; font-weight: bold; color: #dc3545;">${highRisks}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; margin-top: 0.25rem;">High Risk</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.08), rgba(255, 193, 7, 0.02)); padding: 1.5rem; border-radius: 12px; text-align: center; border: 2px solid rgba(255, 193, 7, 0.25);">
+                        <div style="font-size: 2.75rem; font-weight: bold; color: #ffc107;">${mediumRisks}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; margin-top: 0.25rem;">Medium Risk</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(40, 167, 69, 0.08), rgba(40, 167, 69, 0.02)); padding: 1.5rem; border-radius: 12px; text-align: center; border: 2px solid rgba(40, 167, 69, 0.25);">
+                        <div style="font-size: 2.75rem; font-weight: bold; color: #28a745;">${lowRisks}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; margin-top: 0.25rem;">Low Risk</div>
+                    </div>
+                </div>
+
+                <!-- Executive Summary -->
+                <div style="background: linear-gradient(to right, rgba(13, 110, 253, 0.05), rgba(13, 110, 253, 0.01)); padding: 1.25rem 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #0d6efd;">
+                    <h4 style="margin: 0 0 0.75rem; font-size: 0.95rem; color: #0d6efd; display: flex; align-items: center; gap: 0.5rem; font-weight: 600;">
+                        <i class="ti ti-file-description"></i> Executive Summary
+                    </h4>
+                    <p style="margin: 0; color: var(--text-color); line-height: 1.7; font-size: 0.95rem;">${execSummaryText}</p>
+                </div>
+
+                <!-- Critical Red Flags -->
+                ${redFlagsHtml ? `
+                <div style="background: rgba(220, 53, 69, 0.03); padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid rgba(220, 53, 69, 0.15);">
+                    <h4 style="margin: 0 0 1rem; color: #dc3545; display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; font-weight: 600;">
+                        <i class="ti ti-flag-filled"></i>
+                        Critical Red Flags
+                    </h4>
+                    ${redFlagsHtml}
+                </div>
+                ` : ''}
+
+                <!-- Risk Items -->
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="margin: 0 0 1rem; color: var(--text-color); display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; font-weight: 600;">
+                        <i class="ti ti-alert-triangle" style="color: #ffc107;"></i>
+                        Risk Items
+                    </h4>
+                    ${riskItemsHtml}
+                </div>
+
+                <!-- Clause-Wise Analysis -->
+                ${clauseAnalysisHtml ? `
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="margin: 0 0 1rem; color: var(--text-color); display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; font-weight: 600;">
+                        <i class="ti ti-file-analytics"></i>
+                        Key Clause Issues
+                    </h4>
+                    ${clauseAnalysisHtml}
+                    ${clauseWiseAnalysis.length > 5 ? `<div style="text-align: center; margin-top: 0.75rem; padding: 0.5rem; background: var(--body-bg, #f8f9fa); border-radius: 6px;"><small style="color: var(--text-muted);"><i class="ti ti-info-circle"></i> ${clauseWiseAnalysis.length - 5} more clauses analyzed - download full report for details</small></div>` : ''}
+                </div>
+                ` : ''}
+
+                <!-- Compliance Issues -->
+                ${complianceHtml ? `
+                <div style="background: rgba(255, 193, 7, 0.03); padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid rgba(255, 193, 7, 0.15);">
+                    <h4 style="margin: 0 0 1rem; color: #f76707; display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; font-weight: 600;">
+                        <i class="ti ti-clipboard-check"></i>
+                        Regulatory & Compliance Issues
+                    </h4>
+                    ${complianceHtml}
+                </div>
+                ` : ''}
+
+                <!-- Negotiation Points -->
+                ${negotiationHtml ? `
+                <div style="background: rgba(13, 110, 253, 0.03); padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid rgba(13, 110, 253, 0.15);">
+                    <h4 style="margin: 0 0 1rem; color: #0d6efd; display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; font-weight: 600;">
+                        <i class="ti ti-message-circle-2"></i>
+                        Priority Negotiation Points
+                    </h4>
+                    ${negotiationHtml}
+                    ${(negotiationPoints.critical_issues || []).length > 4 ? `<div style="text-align: center; margin-top: 0.75rem; padding: 0.5rem; background: var(--body-bg, #f8f9fa); border-radius: 6px;"><small style="color: var(--text-muted);"><i class="ti ti-info-circle"></i> ${(negotiationPoints.critical_issues || []).length - 4} more negotiation points - download full report</small></div>` : ''}
+                </div>
+                ` : ''}
+
+                <!-- Recommendations -->
+                <div style="background: linear-gradient(to right, rgba(40, 167, 69, 0.05), rgba(40, 167, 69, 0.01)); padding: 1.25rem 1.5rem; border-radius: 8px; border: 1px solid rgba(40, 167, 69, 0.2);">
+                    <h4 style="margin: 0 0 0.75rem; color: #28a745; display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; font-weight: 600;">
+                        <i class="ti ti-bulb-filled"></i>
+                        Priority Recommendations
+                    </h4>
+                    <ul style="margin: 0; padding-left: 0; list-style: none;">
+                        ${recommendationsHtml}
+                    </ul>
+                </div>
+
+                <!-- Execution Readiness -->
+                ${conclusion.execution_readiness ? `
+                <div style="margin-top: 1.5rem; padding: 1rem 1.25rem; background: var(--body-bg, #f8f9fa); border-radius: 8px; text-align: center; border: 1px solid var(--border-color, #dee2e6);">
+                    <strong style="color: var(--text-color); font-size: 0.95rem;">Contract Execution Readiness:</strong> 
+                    <span class="badge" style="background: ${conclusion.execution_readiness === 'Yes' ? '#28a745' : conclusion.execution_readiness === 'No' ? '#dc3545' : '#ffc107'}; color: white; padding: 0.35rem 0.85rem; margin-left: 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">
+                        ${extractText(conclusion.execution_readiness)}
+                    </span>
+                </div>
+                ` : ''}
+
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer" style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color, #dee2e6); display: flex; justify-content: space-between; align-items: center; background: var(--body-bg, #f8f9fa);">
+                <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
+                    <i class="ti ti-clock"></i>
+                    <span>Analyzed: ${new Date(analysis.analyzed_at || Date.now()).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button onclick="downloadRiskReport('${contractId}')" class="btn" style="background: #6c757d; color: white; border: none; padding: 0.6rem 1.25rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; transition: all 0.2s;">
+                        <i class="ti ti-download"></i> Download Report
+                    </button>
+                    <button onclick="goToContractEditor('${contractId}')" class="btn" style="background: #0d6efd; color: white; border: none; padding: 0.6rem 1.25rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; transition: all 0.2s;">
+                        <i class="ti ti-edit"></i> Open Contract Editor
+                    </button>
+                    <button onclick="closeRiskResultsAndRefresh()" class="btn" style="background: #28a745; color: white; border: none; padding: 0.6rem 1.25rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 600; transition: all 0.2s;">
+                        <i class="ti ti-check"></i> Done
                     </button>
                 </div>
-
-                <!-- Body -->
-                <div class="modal-body" style="padding: 1.5rem; max-height: calc(90vh - 200px); overflow-y: auto;">
-                    
-                    <!-- Risk Score Summary -->
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
-                        <div style="background: linear-gradient(135deg, ${riskColor}15, ${riskColor}05); padding: 1.25rem; border-radius: 12px; text-align: center; border: 1px solid ${riskColor}30;">
-                            <div style="font-size: 2.5rem; font-weight: bold; color: ${riskColor};">${riskScore}%</div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Risk Score</div>
-                        </div>
-                        <div style="background: rgba(220, 53, 69, 0.05); padding: 1.25rem; border-radius: 12px; text-align: center; border: 1px solid rgba(220, 53, 69, 0.2);">
-                            <div style="font-size: 2.5rem; font-weight: bold; color: #dc3545;">${analysis.high_risks || 0}</div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">High Risk</div>
-                        </div>
-                        <div style="background: rgba(255, 193, 7, 0.05); padding: 1.25rem; border-radius: 12px; text-align: center; border: 1px solid rgba(255, 193, 7, 0.2);">
-                            <div style="font-size: 2.5rem; font-weight: bold; color: #ffc107;">${analysis.medium_risks || 0}</div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Medium Risk</div>
-                        </div>
-                        <div style="background: rgba(40, 167, 69, 0.05); padding: 1.25rem; border-radius: 12px; text-align: center; border: 1px solid rgba(40, 167, 69, 0.2);">
-                            <div style="font-size: 2.5rem; font-weight: bold; color: #28a745;">${analysis.low_risks || 0}</div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Low Risk</div>
-                        </div>
-                    </div>
-
-                    <!-- Executive Summary -->
-                    <div style="background: var(--body-bg, #f8f9fa); padding: 1rem 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid var(--primary-color, #0d6efd);">
-                        <h4 style="margin: 0 0 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
-                            <i class="ti ti-file-text"></i> Executive Summary
-                        </h4>
-                        <p style="margin: 0; color: var(--text-color); line-height: 1.6;">${extractText(analysis.executive_summary) || extractText(analysis.summary) || 'Contract has been analyzed for potential risks. Review the detailed findings below.'}</p>
-                    </div>
-
-                    <!-- Risk Items -->
-                    <div style="margin-bottom: 1.5rem;">
-                        <h4 style="margin: 0 0 1rem; color: var(--text-color); display: flex; align-items: center; gap: 0.5rem;">
-                            <i class="ti ti-alert-triangle" style="color: var(--warning-color);"></i>
-                            Risk Items
-                        </h4>
-                        ${riskItemsHtml}
-                    </div>
-
-                    <!-- Recommendations -->
-                    <div style="background: rgba(40, 167, 69, 0.05); padding: 1.25rem; border-radius: 8px; border: 1px solid rgba(40, 167, 69, 0.2);">
-                        <h4 style="margin: 0 0 0.75rem; color: var(--success-color); display: flex; align-items: center; gap: 0.5rem;">
-                            <i class="ti ti-bulb"></i>
-                            Recommendations
-                        </h4>
-                        <ul style="margin: 0; padding-left: 1.5rem; list-style: none;">
-                            ${recommendationsHtml}
-                        </ul>
-                    </div>
-
-                </div>
-
-                <!-- Footer -->
-                <div class="modal-footer" style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color, #dee2e6); display: flex; justify-content: space-between; align-items: center; background: var(--body-bg, #f8f9fa);">
-                    <div style="font-size: 0.75rem; color: var(--text-muted);">
-                        <i class="ti ti-clock"></i> Analyzed: ${new Date().toLocaleString()}
-                    </div>
-                    <div style="display: flex; gap: 0.75rem;">
-                        <button onclick="downloadRiskReport('${contractId}')" class="btn" style="background: var(--secondary-color, #6c757d); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
-                            <i class="ti ti-download"></i> Download Report
-                        </button>
-                        <button onclick="goToContractEditor('${contractId}')" class="btn" style="background: var(--primary-color, #0d6efd); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
-                            <i class="ti ti-edit"></i> Open Contract Editor
-                        </button>
-                        <button onclick="closeRiskResultsAndRefresh()" class="btn" style="background: var(--success-color, #28a745); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
-                            <i class="ti ti-check"></i> Done
-                        </button>
-                    </div>
-                </div>
-
             </div>
+
         </div>
+    </div>
     `;
 
-        // Append modal to body
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    // Append modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-        // Store analysis data globally for export
-        window.currentRiskAnalysis = analysis;
-        window.currentContractId = contractId;
-        window.currentContractTitle = contractTitle;
+    // Store analysis data globally for export
+    window.currentRiskAnalysis = analysis;
+    window.currentContractId = contractId;
+    window.currentContractTitle = contractTitle;
+}
+
+// Helper function to extract text from various formats
+function extractText(value) {
+    if (!value) return '';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number') return String(value);
+    if (typeof value === 'object') {
+        if (value.text) return value.text;
+        if (value.value) return value.value;
+        if (value.content) return value.content;
+        if (value.description) return value.description;
+        // Don't stringify objects - return empty string
+        return '';
     }
+    return String(value);
+}
 
-    // =====================================================
-    // Helper Functions
-    // =====================================================
+// Helper functions for severity styling
+function getSeverityColor(severity) {
+    const sev = (severity || 'medium').toString().toLowerCase();
+    if (sev.includes('critical') || sev === 'high') return '#dc3545';
+    if (sev.includes('medium') || sev.includes('moderate')) return '#ffc107';
+    if (sev === 'low') return '#28a745';
+    return '#6c757d';
+}
 
-    //  Helper to safely extract text from string or object
-    function extractText(value) {
-        if (!value) return '';
-        if (typeof value === 'string') return value;
-        if (typeof value === 'object') {
-            return value.text || value.description || value.message || value.content || value.recommendation || value.value || value.name || JSON.stringify(value);
-        }
-        return String(value);
-    }
+function getSeverityBg(severity) {
+    const sev = (severity || 'medium').toString().toLowerCase();
+    if (sev.includes('critical') || sev === 'high') return 'rgba(220, 53, 69, 0.06)';
+    if (sev.includes('medium') || sev.includes('moderate')) return 'rgba(255, 193, 7, 0.06)';
+    if (sev === 'low') return 'rgba(40, 167, 69, 0.06)';
+    return 'rgba(108, 117, 125, 0.06)';
+}
 
-    function getSeverityColor(severity) {
-        const colors = {
-            'high': '#dc3545',
-            'critical': '#dc3545',
-            'medium': '#ffc107',
-            'moderate': '#ffc107',
-            'low': '#28a745',
-            'minor': '#17a2b8'
-        };
-        return colors[(severity || 'medium').toLowerCase()] || '#6c757d';
-    }
+function getRiskIcon(type) {
+    const t = (type || '').toLowerCase();
+    if (t.includes('legal')) return 'gavel';
+    if (t.includes('financial') || t.includes('liability')) return 'coin';
+    if (t.includes('operational')) return 'settings';
+    if (t.includes('compliance') || t.includes('regulatory')) return 'clipboard-check';
+    if (t.includes('termination')) return 'ban';
+    if (t.includes('indemnif')) return 'shield-x';
+    if (t.includes('warranty')) return 'certificate';
+    if (t.includes('tax')) return 'receipt-tax';
+    return 'alert-triangle';
+}
 
-    function getSeverityBg(severity) {
-        const colors = {
-            'high': 'rgba(220, 53, 69, 0.05)',
-            'critical': 'rgba(220, 53, 69, 0.08)',
-            'medium': 'rgba(255, 193, 7, 0.05)',
-            'moderate': 'rgba(255, 193, 7, 0.05)',
-            'low': 'rgba(40, 167, 69, 0.05)',
-            'minor': 'rgba(23, 162, 184, 0.05)'
-        };
-        return colors[(severity || 'medium').toLowerCase()] || 'rgba(108, 117, 125, 0.05)';
-    }
+function adjustColor(color, amount) {
+    const clamp = (val) => Math.min(Math.max(val, 0), 255);
+    const num = parseInt(color.replace('#', ''), 16);
+    const r = clamp((num >> 16) + amount);
+    const g = clamp(((num >> 8) & 0x00FF) + amount);
+    const b = clamp((num & 0x0000FF) + amount);
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
 
-    function getRiskIcon(type) {
-        const icons = {
-            'Legal': 'scale',
-            'Financial': 'currency-dollar',
-            'Operational': 'settings',
-            'Compliance': 'shield-check',
-            'Dispute': 'gavel',
-            'Termination': 'door-exit',
-            'Liability': 'alert-octagon',
-            'Payment': 'cash',
-            'General': 'alert-circle'
-        };
-        return icons[type] || 'alert-triangle';
-    }
+// Close modal functions
+function closeRiskResultsModal() {
+    const modal = document.getElementById('riskResultsModal');
+    if (modal) modal.remove();
+}
 
-    function adjustColor(hex, percent) {
-        // Darken/lighten hex color
-        const num = parseInt(hex.replace('#', ''), 16);
-        const amt = Math.round(2.55 * percent);
-        const R = (num >> 16) + amt;
-        const G = (num >> 8 & 0x00FF) + amt;
-        const B = (num & 0x0000FF) + amt;
-        return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
-            (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
-            (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
-    }
-
-    function closeRiskResultsModal() {
-        const modal = document.getElementById('riskResultsModal');
-        if (modal) modal.remove();
-    }
-
-    function closeRiskResultsAndRefresh() {
-        closeRiskResultsModal();
+function closeRiskResultsAndRefresh() {
+    closeRiskResultsModal();
+    if (typeof loadContracts === 'function') {
+        loadContracts();
+    } else {
         location.reload();
     }
+}
 
-    function goToContractEditor(contractId) {
-        window.location.href = `/contract/edit/${contractId}`;
+// Navigation functions
+function goToContractEditor(contractId) {
+    window.location.href = `/contract-editor/${contractId}`;
+}
+
+// Download report function
+// Download report function - UPDATED VERSION
+function downloadRiskReport(contractId) {
+    if (!window.currentRiskAnalysis) {
+        alert('Risk analysis data not available');
+        return;
     }
 
-    function downloadRiskReport(contractId) {
-        const analysis = window.currentRiskAnalysis;
-        const title = window.currentContractTitle;
+    // Generate a comprehensive text report
+    const analysis = window.currentRiskAnalysis;
+    const contractTitle = window.currentContractTitle || 'Contract';
+    
+    // Extract data from nested structures
+    const executiveSummary = analysis.executive_summary || {};
+    const riskSummary = analysis.risk_summary || analysis;
+    const conclusion = analysis.conclusion || {};
+    const regulatoryCompliance = analysis.regulatory_compliance || {};
+    const riskMitigation = analysis.risk_mitigation || {};
+    const negotiationPoints = analysis.negotiation_points || {};
+    
+    // Build text report
+    let report = `RISK ANALYSIS REPORT
+${contractTitle}
+Generated: ${new Date().toLocaleString('en-GB', { 
+    day: '2-digit', 
+    month: '2-digit', 
+    year: 'numeric', 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    second: '2-digit' 
+})}
+${'='.repeat(80)}
 
-        if (!analysis) {
-            showNotification('No analysis data available', 'warning');
-            return;
-        }
-
-        const reportContent = `
-════════════════════════════════════════════════════════════════════════════════
-                        CALIM 360 - RISK ANALYSIS REPORT
-════════════════════════════════════════════════════════════════════════════════
-
-CONTRACT: ${title}
-DATE: ${new Date().toLocaleString()}
-ANALYSIS TYPE: AI-Powered Risk Assessment
-
-────────────────────────────────────────────────────────────────────────────────
-                              RISK SUMMARY
-────────────────────────────────────────────────────────────────────────────────
-
-Overall Risk Score: ${analysis.overall_score || analysis.risk_score || 'N/A'}/100
-Risk Level: ${analysis.risk_level || 'Medium'}
-
-Risk Distribution:
-  • High Risk Items:   ${analysis.high_risks || 0}
-  • Medium Risk Items: ${analysis.medium_risks || 0}
-  • Low Risk Items:    ${analysis.low_risks || 0}
-  • Total Risks:       ${analysis.total_risks || (analysis.risk_items || []).length}
-
-────────────────────────────────────────────────────────────────────────────────
-                           EXECUTIVE SUMMARY
-────────────────────────────────────────────────────────────────────────────────
-
-${analysis.executive_summary || analysis.summary || 'Contract has been analyzed for potential risks.'}
-
-────────────────────────────────────────────────────────────────────────────────
-                            DETAILED FINDINGS
-────────────────────────────────────────────────────────────────────────────────
-
-${(analysis.risk_items || []).map((item, idx) => `
-[${idx + 1}] ${item.issue || item.type}
-    Severity: ${item.severity || 'Medium'}
-    Description: ${item.description || 'N/A'}
-    Clause Reference: ${item.clause_reference || 'General'}
-    Mitigation: ${item.mitigation || 'Review recommended'}
-`).join('\n') || 'No specific risks identified.'}
-
-────────────────────────────────────────────────────────────────────────────────
-                            RECOMMENDATIONS
-────────────────────────────────────────────────────────────────────────────────
-
-${(analysis.recommendations || []).map((rec, idx) => `${idx + 1}. ${rec}`).join('\n') || 'No specific recommendations.'}
-
-════════════════════════════════════════════════════════════════════════════════
-                Generated by CALIM 360 Smart CLM
-                © ${new Date().getFullYear()} All Rights Reserved
-════════════════════════════════════════════════════════════════════════════════
 `;
 
-        const blob = new Blob([reportContent], { type: 'text/plain' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Risk_Analysis_Report_${contractId}_${new Date().toISOString().split('T')[0]}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+    // EXECUTIVE SUMMARY
+    const execSummaryText = extractText(executiveSummary.overview) || 
+                           extractText(analysis.executive_summary) || 
+                           'Contract has been analyzed for potential risks.';
+    
+    const overallScore = executiveSummary.overall_score || analysis.overall_score || analysis.risk_score || 50;
+    const riskLevel = executiveSummary.overall_risk_rating || analysis.risk_level || 'Medium';
+    const highRisks = riskSummary.high_risks || analysis.high_risks || 0;
+    const mediumRisks = riskSummary.medium_risks || analysis.medium_risks || 0;
+    const lowRisks = riskSummary.low_risks || analysis.low_risks || 0;
+    
+    report += `EXECUTIVE SUMMARY
+${'-'.repeat(80)}
+${execSummaryText}
 
-        showNotification('Risk report downloaded successfully', 'success');
+Risk Level: ${riskLevel}
+Risk Score: ${overallScore}%
+High Risks: ${highRisks}
+Medium Risks: ${mediumRisks}
+Low Risks: ${lowRisks}
+
+`;
+
+    // KEY RISK AREAS
+    const keyRiskAreas = executiveSummary.key_risk_areas || [];
+    if (keyRiskAreas.length > 0) {
+        report += `KEY RISK AREAS
+${'-'.repeat(80)}
+${keyRiskAreas.map((area, i) => `${i + 1}. ${extractText(area)}`).join('\n')}
+
+`;
     }
 
+    // CRITICAL RED FLAGS
+    const redFlags = riskSummary.red_flags || analysis.red_flags || [];
+    if (redFlags.length > 0) {
+        report += `CRITICAL RED FLAGS
+${'-'.repeat(80)}
+${redFlags.map((flag, i) => `${i + 1}. ${extractText(flag)}`).join('\n')}
+
+`;
+    }
+
+    // RISK ITEMS
+    const riskItems = riskSummary.risk_items || analysis.risk_items || [];
+    if (riskItems.length > 0) {
+        report += `RISK ITEMS
+${'-'.repeat(80)}
+`;
+        riskItems.forEach((item, i) => {
+            const issue = extractText(item.issue) || extractText(item.type) || 'Risk Item';
+            const severity = (extractText(item.severity) || 'Medium').toUpperCase();
+            const clauseRef = extractText(item.clause_reference) || extractText(item.clause);
+            const description = extractText(item.description) || '';
+            const mitigation = extractText(item.mitigation);
+            const financialImpact = extractText(item.financial_impact);
+            
+            report += `
+${i + 1}. ${issue}
+   Severity: ${severity}`;
+            
+            if (clauseRef) {
+                report += `
+   Clause: ${clauseRef}`;
+            }
+            
+            report += `
+   Description: ${description}`;
+            
+            if (financialImpact) {
+                report += `
+   Financial Impact: ${financialImpact}`;
+            }
+            
+            if (mitigation) {
+                report += `
+   Mitigation: ${mitigation}`;
+            }
+            
+            report += '\n';
+        });
+        report += '\n';
+    }
+
+    // COMPLIANCE ISSUES
+    const complianceIssues = analysis.compliance_issues || 
+                            regulatoryCompliance.compliance_gaps || 
+                            regulatoryCompliance.qfcra_compliance || [];
+    
+    if (complianceIssues.length > 0) {
+        report += `REGULATORY & COMPLIANCE ISSUES
+${'-'.repeat(80)}
+`;
+        complianceIssues.forEach((issue, i) => {
+            let issueText = '';
+            let regulation = '';
+            let severity = '';
+            let recommendation = '';
+            
+            if (typeof issue === 'string') {
+                issueText = issue;
+            } else if (typeof issue === 'object') {
+                regulation = extractText(issue.regulation) || '';
+                issueText = extractText(issue.issue) || extractText(issue.description) || '';
+                severity = extractText(issue.severity) || '';
+                recommendation = extractText(issue.recommendation) || extractText(issue.mitigation) || '';
+            }
+            
+            report += `\n${i + 1}. ${regulation ? `${regulation}` : 'Compliance Issue'}`;
+            if (severity) {
+                report += `
+   Severity: ${severity.toUpperCase()}`;
+            }
+            if (issueText) {
+                report += `
+   Issue: ${issueText}`;
+            }
+            if (recommendation) {
+                report += `
+   Mitigation: ${recommendation}`;
+            }
+            report += '\n';
+        });
+        report += '\n';
+    }
+
+    // NEGOTIATION POINTS
+    const criticalIssues = negotiationPoints.critical_issues || [];
+    if (criticalIssues.length > 0) {
+        report += `PRIORITY NEGOTIATION POINTS
+${'-'.repeat(80)}
+`;
+        criticalIssues.forEach((issue, i) => {
+            const issueTitle = extractText(issue.issue) || 'Negotiation Point';
+            const priority = extractText(issue.priority) || '';
+            const currentPosition = extractText(issue.current_position) || '';
+            const recommendedPosition = extractText(issue.recommended_position) || '';
+            const fallbackOptions = issue.fallback_options || [];
+            
+            report += `\n${i + 1}. ${issueTitle}`;
+            if (priority) {
+                report += `
+   Priority: ${priority.toUpperCase()}`;
+            }
+            if (currentPosition) {
+                report += `
+   Current Position: ${currentPosition}`;
+            }
+            if (recommendedPosition) {
+                report += `
+   Recommended Position: ${recommendedPosition}`;
+            }
+            if (fallbackOptions.length > 0) {
+                report += `
+   Fallback Options: ${fallbackOptions.map(opt => extractText(opt)).join('; ')}`;
+            }
+            report += '\n';
+        });
+        report += '\n';
+    }
+
+    // RECOMMENDATIONS
+    // Try multiple possible locations for recommendations
+    const recommendations = conclusion.recommendations_priority || 
+                          conclusion.next_steps ||
+                          riskMitigation.immediate_actions || 
+                          analysis.recommendations || 
+                          [];
+    
+    if (recommendations.length > 0) {
+        report += `RECOMMENDATIONS
+${'-'.repeat(80)}
+`;
+        recommendations.forEach((rec, i) => {
+            let recText = '';
+            let priority = '';
+            let rationale = '';
+            
+            if (typeof rec === 'string') {
+                recText = rec;
+            } else if (typeof rec === 'object') {
+                recText = extractText(rec.recommendation) || 
+                         extractText(rec.action) || 
+                         extractText(rec.text) ||
+                         extractText(rec);
+                priority = extractText(rec.priority);
+                rationale = extractText(rec.rationale) || extractText(rec.reason);
+            }
+            
+            if (recText) {
+                report += `${i + 1}. `;
+                if (priority) {
+                    report += `[${priority.toUpperCase()}] `;
+                }
+                report += `${recText}`;
+                if (rationale) {
+                    report += `
+   Rationale: ${rationale}`;
+                }
+                report += '\n';
+            }
+        });
+        report += '\n';
+    }
+
+    // CLAUSE-WISE ANALYSIS
+    const clauseWiseAnalysis = analysis.clause_wise_analysis || [];
+    if (clauseWiseAnalysis.length > 0) {
+        report += `CLAUSE-WISE ANALYSIS
+${'-'.repeat(80)}
+`;
+        clauseWiseAnalysis.forEach((clause, i) => {
+            const clauseNumber = extractText(clause.clause_number) || extractText(clause.clause_title) || `Clause ${i + 1}`;
+            const clauseTitle = extractText(clause.clause_title);
+            const clauseSummary = extractText(clause.clause_summary);
+            const severity = extractText(clause.severity);
+            const risks = clause.risks_identified || [];
+            const enforceability = extractText(clause.enforceability);
+            
+            report += `\n${i + 1}. ${clauseNumber}`;
+            if (clauseTitle && clauseTitle !== clauseNumber) {
+                report += ` - ${clauseTitle}`;
+            }
+            if (severity) {
+                report += `
+   Severity: ${severity.toUpperCase()}`;
+            }
+            if (clauseSummary) {
+                report += `
+   Summary: ${clauseSummary}`;
+            }
+            if (risks.length > 0) {
+                report += `
+   Risks: ${risks.map(r => extractText(r)).join('; ')}`;
+            }
+            if (enforceability) {
+                report += `
+   Enforceability: ${enforceability}`;
+            }
+            report += '\n';
+        });
+        report += '\n';
+    }
+
+    // CONTRACT OVERVIEW
+    const contractOverview = analysis.contract_overview || {};
+    if (Object.keys(contractOverview).length > 0) {
+        report += `CONTRACT OVERVIEW
+${'-'.repeat(80)}
+`;
+        if (contractOverview.parties_involved) {
+            report += `Parties: ${contractOverview.parties_involved.map(p => extractText(p)).join(', ')}\n`;
+        }
+        if (contractOverview.purpose) {
+            report += `Purpose: ${extractText(contractOverview.purpose)}\n`;
+        }
+        if (contractOverview.contract_value) {
+            report += `Value: ${extractText(contractOverview.contract_value)}\n`;
+        }
+        if (contractOverview.term_summary) {
+            report += `Term: ${extractText(contractOverview.term_summary)}\n`;
+        }
+        if (contractOverview.governing_law) {
+            report += `Governing Law: ${extractText(contractOverview.governing_law)}\n`;
+        }
+        report += '\n';
+    }
+
+    // CONCLUSION
+    if (Object.keys(conclusion).length > 0) {
+        report += `CONCLUSION
+${'-'.repeat(80)}
+`;
+        if (conclusion.key_findings) {
+            report += `Key Findings:\n${conclusion.key_findings.map((f, i) => `${i + 1}. ${extractText(f)}`).join('\n')}\n\n`;
+        }
+        if (conclusion.final_risk_position) {
+            report += `Final Risk Position: ${extractText(conclusion.final_risk_position)}\n\n`;
+        }
+        if (conclusion.execution_readiness) {
+            report += `Execution Readiness: ${extractText(conclusion.execution_readiness)}\n`;
+        }
+        if (conclusion.conditions_for_execution && conclusion.conditions_for_execution.length > 0) {
+            report += `\nConditions for Execution:\n${conclusion.conditions_for_execution.map((c, i) => `${i + 1}. ${extractText(c)}`).join('\n')}\n`;
+        }
+        report += '\n';
+    }
+
+    // ANALYSIS METADATA
+    report += `\n${'='.repeat(80)}
+Analysis Information:
+- Profile Type: ${analysis.profile_type || 'Not specified'}
+- Analysis Version: ${analysis.analysis_version || 'N/A'}
+- Generated: ${analysis.analyzed_at ? new Date(analysis.analyzed_at).toLocaleString() : 'N/A'}
+${'='.repeat(80)}
+End of Report
+`;
+
+    // Download as text file
+    const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const timestamp = new Date().toISOString().split('T')[0];
+    a.download = `Risk_Analysis_Report_${contractId}_${timestamp}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    // Show success message
+    console.log('Risk analysis report downloaded successfully');
+}
 
     //  NEW: Show Loading Overlay
     function showLoadingOverlay(message) {
@@ -2363,11 +2870,7 @@ ${(analysis.recommendations || []).map((rec, idx) => `${idx + 1}. ${rec}`).join(
         overlay.className = 'upload-loading-overlay';
         overlay.innerHTML = `
         <div class="upload-loading-content">
-            <div class="upload-loading-spinner">
-                <div class="spinner-border text-primary" role="status" style="width: 4rem; height: 4rem;">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
+           
             <div class="upload-loading-message" id="uploadLoadingMessage">
                 ${message}
             </div>

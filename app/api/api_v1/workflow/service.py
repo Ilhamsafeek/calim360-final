@@ -165,7 +165,7 @@ class WorkflowService:
                         logger.info(f"Department mapping: Step {step_data.step_number} -> {step_data.department}")
                 
                 # Update departments_json
-                existing.departments_json = json.dumps(departments_map) if departments_map else None
+                existing.workflow_json = json.dumps({"departments": departments_map}) if departments_map else None  # ✅ CORRECT
                 
                 # Delete old steps
                 deleted_count = self.db.query(WorkflowStep).filter(
@@ -196,7 +196,7 @@ class WorkflowService:
                     workflow_type="master",
                     is_master=True,
                     is_active=True,  # ✅ Set as active
-                    departments_json=json.dumps(departments_map) if departments_map else None,
+                    workflow_json=json.dumps({"departments": departments_map}) if departments_map else None,  # ✅ CORRECT
                     created_at=datetime.utcnow(),
                     updated_at=datetime.utcnow()
                 )

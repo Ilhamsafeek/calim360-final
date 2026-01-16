@@ -3275,7 +3275,37 @@
                     style="background: white; padding: 0 1rem; position: relative; color: var(--text-muted); font-weight: 500; font-size: 1rem;">OR</span>
             </div>
 
-            <div style="margin-bottom: 1.5rem;">
+
+            <!-- Master Workflow Option -->
+            <div style="margin-bottom: 1.5rem;" id="masterWorkflowContainerApproval">
+                <label
+                    style="display: flex; align-items: center; cursor: pointer; padding: 1rem; border: 2px solid var(--border-color); border-radius: 8px; transition: all 0.3s ease;"
+                    id="masterWorkflowLabelApproval"
+                    onmouseover="if(!this.classList.contains('disabled')) { this.style.borderColor='var(--primary-color)'; this.style.background='var(--background-light)'; }"
+                    onmouseout="if(!this.classList.contains('disabled')) { this.style.borderColor='var(--border-color)'; this.style.background='white'; }">
+                    <input type="radio" name="reviewOption" id="masterWorkflowApproval" value="masterWorkflow"
+                        style="margin-right: 0.75rem; width: 18px; height: 18px; cursor: pointer;">
+                    <div style="flex: 1;">
+                        <span
+                            style="font-weight: 600; font-size: 0.95rem; color: var(--text-color); text-decoration: underline;">
+                            USE MASTER WORKFLOW
+                        </span>
+                        <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);"
+                            id="masterWorkflowDesc">
+                            Automatically send to predefined reviewers in sequence
+                        </p>
+                    </div>
+                    <button type="button" id="masterWorkflowSetupBtnApproval"
+                        style="display: none; margin-left: 1rem; padding: 0.5rem 1rem; background: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 0.85rem; cursor: pointer;"
+                        onclick="event.preventDefault(); event.stopPropagation(); redirectToMasterWorkflowSetup();">
+                        Setup Master Workflow
+                    </button>
+                </label>
+            </div>
+
+
+
+            <!-- <div style="margin-bottom: 1.5rem;">
                 <label
                     style="display: flex; align-items: center; cursor: pointer; padding: 1rem; border: 2px solid var(--border-color); border-radius: 8px; transition: all 0.3s ease;"
                     onmouseover="this.style.borderColor='var(--primary-color)'; this.style.background='var(--background-light)'"
@@ -3292,9 +3322,39 @@
                         </p>
                     </div>
                 </label>
+            </div> -->
+
+
+            <!-- Custom Workflow Option -->
+            <div style="margin-bottom: 1.5rem;" id="customWorkflowContainerApproval">
+                <label
+                    style="display: flex; align-items: center; cursor: pointer; padding: 1rem; border: 2px solid var(--border-color); border-radius: 8px; transition: all 0.3s ease;"
+                    id="customWorkflowLabelApproval"
+                    onmouseover="if(!this.classList.contains('disabled')) { this.style.borderColor='var(--primary-color)'; this.style.background='var(--background-light)'; }"
+                    onmouseout="if(!this.classList.contains('disabled')) { this.style.borderColor='var(--border-color)'; this.style.background='white'; }">
+                    <input type="radio" name="reviewOption" id="customWorkflowApproval" value="customWorkflow"
+                        style="margin-right: 0.75rem; width: 18px; height: 18px; cursor: pointer;">
+                    <div style="flex: 1;">
+                        <span
+                            style="font-weight: 600; font-size: 0.95rem; color: var(--text-color); text-decoration: underline;">
+                            USE CUSTOM WORKFLOW
+                        </span>
+                        <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);"
+                            id="customWorkflowDescApproval">
+                            Use workflow specific to this contract
+                        </p>
+                    </div>
+                    <!-- <button type="button" id="customWorkflowSetupBtn"
+                        style="display: none; margin-left: 1rem; padding: 0.5rem 1rem; background: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 0.85rem; cursor: pointer;"
+                        onclick="event.preventDefault(); event.stopPropagation(); openCustomWorkflowSetup();">
+                        Setup Custom Workflow
+                    </button> -->
+                </label>
             </div>
 
-            <div style="margin-bottom: 1.5rem;">
+
+
+            <!-- <div style="margin-bottom: 1.5rem;">
                 <label
                     style="display: flex; align-items: center; cursor: pointer; padding: 1rem; border: 2px solid var(--border-color); border-radius: 8px; transition: all 0.3s ease;"
                     onmouseover="this.style.borderColor='var(--primary-color)'; this.style.background='var(--background-light)'"
@@ -3313,7 +3373,7 @@
 
 
                 </label>
-            </div>
+            </div> -->
 
             <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
                 <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 0.5rem;">Additional
@@ -6409,36 +6469,36 @@
             showError('Failed to load contract data: ' + error.message);
         }
 
-    if (contractData.contract.status === 'executed' || 
-        contractData.contract.status === 'signed') {
-        
-        // Lock the editor
-        const editor = document.getElementById('contractContent');
-        editor.contentEditable = false;
-        editor.style.background = '#f9fafb';
-        editor.style.border = '2px solid #fbbf24';
-        
-        // Disable all editing buttons
-        document.querySelectorAll('.toolbar-btn, .editor-toolbar button').forEach(btn => {
-            btn.disabled = true;
-            btn.style.opacity = '0.5';
-            btn.style.cursor = 'not-allowed';
-        });
-        
-        // Show warning banner
-        showNotification('This contract cannot be edited. All changes are locked.', 'warning');
-        
-        // Add visible banner
-        const banner = document.createElement('div');
-        banner.style.cssText = 'background: #fef3c7; border: 2px solid #f59e0b; padding: 15px; margin-bottom: 20px; border-radius: 8px; text-align: center;';
-        banner.innerHTML = `
+        if (contractData.contract.status === 'executed' ||
+            contractData.contract.status === 'signed') {
+
+            // Lock the editor
+            const editor = document.getElementById('contractContent');
+            editor.contentEditable = false;
+            editor.style.background = '#f9fafb';
+            editor.style.border = '2px solid #fbbf24';
+
+            // Disable all editing buttons
+            document.querySelectorAll('.toolbar-btn, .editor-toolbar button').forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+            });
+
+            // Show warning banner
+            showNotification('This contract cannot be edited. All changes are locked.', 'warning');
+
+            // Add visible banner
+            const banner = document.createElement('div');
+            banner.style.cssText = 'background: #fef3c7; border: 2px solid #f59e0b; padding: 15px; margin-bottom: 20px; border-radius: 8px; text-align: center;';
+            banner.innerHTML = `
             <i class="ti ti-lock" style="font-size: 24px; color: #f59e0b;"></i>
             <strong style="color: #92400e;">CONTRACT EXECUTED & LOCKED</strong>
             <p style="margin: 5px 0 0 0; color: #92400e;">This contract is finalized and cannot be modified. All edits are permanently disabled.</p>
         `;
-        document.querySelector('.contract-editor-wrapper').prepend(banner);
+            document.querySelector('.contract-editor-wrapper').prepend(banner);
+        }
     }
-}
 
     // =====================================================
     // RENDERING FUNCTIONS
@@ -6847,6 +6907,8 @@
             </button>`;
             }
         } else if (contract.status === 'signed') {
+
+            if ((contract.is_initiator === true)) {
             // 🆕 SIGNED STAGE - READY FOR EXECUTION
             actionButtons = `
             <button class="btn btn-success" onclick="openExecuteContractModal()" style="background: linear-gradient(135deg, var(--success-color), #20c997);">
@@ -6855,6 +6917,7 @@
             <button class="btn btn-outline-secondary" onclick="exportDocument()">
                 <i class="ti ti-download"></i> Download
             </button>`;
+        }
         } else if (contract.status === 'executed') {
             // Executed stage - Show certificate and download
             actionButtons = `
@@ -9229,7 +9292,13 @@ ${contract.content && contract.content.trim() !== '' ?
     }
 
     async function initiateApprovalWorkflow() {
-        openModal('internalApprovalModal');
+
+         await checkWorkflowAvailability();
+         openModal('internalApprovalModal');
+        await loadCompanyUsersForReview();
+        await clearSelectedUser();
+       
+       
     }
 
     async function submitInternalApproval() {
@@ -10482,7 +10551,7 @@ ${contract.content && contract.content.trim() !== '' ?
                 }
             });
 
-          
+
         } catch (error) {
             console.error(' Error loading comments:', error);
         }
@@ -10546,7 +10615,7 @@ ${contract.content && contract.content.trim() !== '' ?
             loadExistingComments();
         }
     });
-  
+
     // =====================================================
     // Initialize When Document is Ready
     // =====================================================
@@ -11677,21 +11746,21 @@ ${(riskAnalysisData.risk_items || []).map(item => `
         }
     }
 
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    const colors = {
-        success: 'var(--success-color)',
-        error: 'var(--danger-color)',
-        info: 'var(--primary-color)',
-        warning: 'var(--warning-color)'
-    };
-    const icons = {
-        success: 'check',
-        error: 'alert-circle',
-        info: 'info-circle',
-        warning: 'alert-triangle'
-    };
-    notification.style.cssText = `
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        const colors = {
+            success: 'var(--success-color)',
+            error: 'var(--danger-color)',
+            info: 'var(--primary-color)',
+            warning: 'var(--warning-color)'
+        };
+        const icons = {
+            success: 'check',
+            error: 'alert-circle',
+            info: 'info-circle',
+            warning: 'alert-triangle'
+        };
+        notification.style.cssText = `
         position: fixed; 
         top: 10px; 
         right: 250px;  /* Increased from 20px to 40px */
@@ -11704,15 +11773,15 @@ function showNotification(message, type = 'info') {
         animation: slideIn 0.3s ease;
         max-width: 400px;
     `;
-    notification.innerHTML = `
+        notification.innerHTML = `
         <div style="display: flex; align-items: center; gap: 0.5rem;">
             <i class="ti ti-${icons[type] || icons.info}"></i>
             ${message}
         </div>
     `;
-    document.body.appendChild(notification);
-    setTimeout(() => notification.remove(), 4000);
-}
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 4000);
+    }
 
     function showError(message) {
         document.getElementById('contractEditor').innerHTML = `
@@ -14606,6 +14675,7 @@ Generated by CALIM 360 Smart CLM
 
             console.log(' Workflow availability checked:', workflowAvailability);
             updateWorkflowOptions();
+            updateWorkflowOptionsApproval();
 
         } catch (error) {
             console.error(' Error checking workflow availability:', error);
@@ -14623,6 +14693,7 @@ Generated by CALIM 360 Smart CLM
         const masterLabel = document.getElementById('masterWorkflowLabel');
         const masterDesc = document.getElementById('masterWorkflowDesc');
         const masterSetupBtn = document.getElementById('masterWorkflowSetupBtn');
+        
 
         const customRadio = document.getElementById('customWorkflow');
         const customLabel = document.getElementById('customWorkflowLabel');
@@ -14637,7 +14708,7 @@ Generated by CALIM 360 Smart CLM
             masterLabel.style.opacity = '1';
             masterLabel.style.cursor = 'pointer';
             masterLabel.style.background = 'white';
-            masterDesc.textContent = ``;
+            // masterDesc.textContent = ``;
             masterSetupBtn.style.display = 'none';
         } else {
             // Master workflow NOT available - show setup option
@@ -14647,7 +14718,7 @@ Generated by CALIM 360 Smart CLM
             masterLabel.style.opacity = '0.5';
             masterLabel.style.cursor = 'not-allowed';
             masterLabel.style.background = '#f5f5f5';
-            masterDesc.textContent = 'Master workflow not configured for your company';
+            // masterDesc.textContent = 'Master workflow not configured for your company';
             masterSetupBtn.style.display = 'block';
         }
 
@@ -14673,6 +14744,67 @@ Generated by CALIM 360 Smart CLM
             // customSetupBtn.style.display = 'block';
         }
     }
+
+
+
+     function updateWorkflowOptionsApproval() {
+        const masterRadio = document.getElementById('masterWorkflowApproval');
+        const masterLabel = document.getElementById('masterWorkflowLabelApproval');
+        const masterDesc = document.getElementById('masterWorkflowDescApproval');
+        const masterSetupBtn = document.getElementById('masterWorkflowSetupBtnApproval');
+        
+
+        const customRadio = document.getElementById('customWorkflowApproval');
+        const customLabel = document.getElementById('customWorkflowLabelApproval');
+        const customDesc = document.getElementById('customWorkflowDescApproval');
+        const customSetupBtn = document.getElementById('customWorkflowSetupBtnApproval');
+
+        console.log('ilham workflow',workflowAvailability);
+        // Handle Master Workflow
+        if (workflowAvailability.master.available) {
+            // Master workflow is available
+            masterRadio.disabled = false;
+            masterLabel.classList.remove('disabled');
+            masterLabel.style.opacity = '1';
+            masterLabel.style.cursor = 'pointer';
+            masterLabel.style.background = 'white';
+            // masterDesc.textContent = ``;
+            masterSetupBtn.style.display = 'none';
+        } else {
+            // Master workflow NOT available - show setup option
+            masterRadio.disabled = true;
+            masterRadio.checked = false;
+            masterLabel.classList.add('disabled');
+            masterLabel.style.opacity = '0.5';
+            masterLabel.style.cursor = 'not-allowed';
+            masterLabel.style.background = '#f5f5f5';
+            // masterDesc.textContent = 'Master workflow not configured for your company';
+            masterSetupBtn.style.display = 'block';
+        }
+
+        // Handle Custom Workflow
+        if (workflowAvailability.custom.available) {
+            // Custom workflow is available
+            customRadio.disabled = false;
+            customLabel.classList.remove('disabled');
+            customLabel.style.opacity = '1';
+            customLabel.style.cursor = 'pointer';
+            customLabel.style.background = 'white';
+            customDesc.textContent = ``;
+            // customSetupBtn.style.display = 'none';
+        } else {
+            // Custom workflow NOT available - show setup option
+            customRadio.disabled = true;
+            customRadio.checked = false;
+            customLabel.classList.add('disabled');
+            customLabel.style.opacity = '0.5';
+            customLabel.style.cursor = 'not-allowed';
+            customLabel.style.background = '#f5f5f5';
+            customDesc.textContent = 'No custom workflow configured for this contract';
+            // customSetupBtn.style.display = 'block';
+        }
+    }
+
 
     /**
      * Redirect to master workflow setup page
@@ -14845,15 +14977,15 @@ Generated by CALIM 360 Smart CLM
 
 
         if (contractData && contractData.contract) {
-        const status = contractData.contract.status;
-        
-        if (status === 'executed' || 
-        status === 'signed' || status === 'approved') {
-        
-            console.log(`⛔ Contract status is '${status}' - Regenerate button will NOT be shown`);
-            return; // Exit function - don't show button
+            const status = contractData.contract.status;
+
+            if (status === 'executed' ||
+                status === 'signed' || status === 'approved'|| status === 'signature') {
+
+                console.log(`⛔ Contract status is '${status}' - Regenerate button will NOT be shown`);
+                return; // Exit function - don't show button
+            }
         }
-    }
 
         // Wait for toolbar to exist
         const checkToolbar = setInterval(() => {
@@ -16587,76 +16719,76 @@ Generated by CALIM 360 Smart CLM
 
 
 
-// =====================================================
-// PERMANENT FIX FOR TRACK CHANGES
-// Add this to SCR_016_contract_editor.html
-// Place this AFTER all other script code, near the end of <script> section
-// =====================================================
+    // =====================================================
+    // PERMANENT FIX FOR TRACK CHANGES
+    // Add this to SCR_016_contract_editor.html
+    // Place this AFTER all other script code, near the end of <script> section
+    // =====================================================
 
-// =====================================================
-// WORKING TRACK CHANGES - BEFOREINPUT LISTENER
-// =====================================================
-(function() {
-    console.log("🔧 Initializing WORKING Track Changes listener...");
-    
-    // Wait for DOM to be ready
-    function initTrackChangesListener() {
-        const contractContent = document.getElementById('contractContent');
-        
-        if (!contractContent) {
-            console.error("❌ Contract content not found!");
-            return;
-        }
-        
-        console.log("✅ Attaching track changes beforeinput listener...");
-        
-        // Remove any existing listener by cloning (clean slate)
-        const newContent = contractContent.cloneNode(true);
-        contractContent.parentNode.replaceChild(newContent, contractContent);
-        
-        // Reattach the ID
-        newContent.id = 'contractContent';
-        
-        // Attach the WORKING beforeinput listener
-        newContent.addEventListener('beforeinput', function(e) {
-            // Only process if track changes is enabled
-            if (!trackChangesEnabled) {
-                return; // Normal editing
+    // =====================================================
+    // WORKING TRACK CHANGES - BEFOREINPUT LISTENER
+    // =====================================================
+    (function () {
+        console.log("🔧 Initializing WORKING Track Changes listener...");
+
+        // Wait for DOM to be ready
+        function initTrackChangesListener() {
+            const contractContent = document.getElementById('contractContent');
+
+            if (!contractContent) {
+                console.error("❌ Contract content not found!");
+                return;
             }
-            
-            console.log("🔥 Track Changes - beforeinput fired:", e.inputType);
-            
-            const inputType = e.inputType;
-            
-            // Handle DELETIONS
-            if (inputType === 'deleteContentBackward' || 
-                inputType === 'deleteContentForward' || 
-                inputType === 'deleteByCut') {
-                
-                const selection = window.getSelection();
-                
-                if (selection.rangeCount > 0) {
-                    const selectedText = selection.toString().trim();
-                    
-                    if (selectedText) {
-                        // PREVENT the actual deletion
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
-                        console.log("✅ Deletion prevented:", selectedText.substring(0, 50));
-                        
-                        const range = selection.getRangeAt(0);
-                        
-                        // Create strikethrough span
-                        const span = document.createElement('span');
-                        span.className = 'track-change-delete';
-                        span.setAttribute('data-change-type', 'delete');
-                        span.setAttribute('data-change-id', 'change_' + Date.now());
-                        span.setAttribute('data-change-author', currentUserName || 'User');
-                        span.setAttribute('data-change-date', new Date().toISOString());
-                        
-                        // Apply inline styles (CRITICAL)
-                        span.style.cssText = `
+
+            console.log("✅ Attaching track changes beforeinput listener...");
+
+            // Remove any existing listener by cloning (clean slate)
+            const newContent = contractContent.cloneNode(true);
+            contractContent.parentNode.replaceChild(newContent, contractContent);
+
+            // Reattach the ID
+            newContent.id = 'contractContent';
+
+            // Attach the WORKING beforeinput listener
+            newContent.addEventListener('beforeinput', function (e) {
+                // Only process if track changes is enabled
+                if (!trackChangesEnabled) {
+                    return; // Normal editing
+                }
+
+                console.log("🔥 Track Changes - beforeinput fired:", e.inputType);
+
+                const inputType = e.inputType;
+
+                // Handle DELETIONS
+                if (inputType === 'deleteContentBackward' ||
+                    inputType === 'deleteContentForward' ||
+                    inputType === 'deleteByCut') {
+
+                    const selection = window.getSelection();
+
+                    if (selection.rangeCount > 0) {
+                        const selectedText = selection.toString().trim();
+
+                        if (selectedText) {
+                            // PREVENT the actual deletion
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            console.log("✅ Deletion prevented:", selectedText.substring(0, 50));
+
+                            const range = selection.getRangeAt(0);
+
+                            // Create strikethrough span
+                            const span = document.createElement('span');
+                            span.className = 'track-change-delete';
+                            span.setAttribute('data-change-type', 'delete');
+                            span.setAttribute('data-change-id', 'change_' + Date.now());
+                            span.setAttribute('data-change-author', currentUserName || 'User');
+                            span.setAttribute('data-change-date', new Date().toISOString());
+
+                            // Apply inline styles (CRITICAL)
+                            span.style.cssText = `
                             text-decoration: line-through;
                             text-decoration-color: #dc3545;
                             text-decoration-thickness: 2px;
@@ -16667,475 +16799,475 @@ Generated by CALIM 360 Smart CLM
                             cursor: pointer;
                             display: inline;
                         `;
-                        
-                        span.textContent = selectedText;
-                        span.title = `Deleted by ${currentUserName || 'User'} - Click to Accept/Reject`;
-                        
-                        // Add click handler for Accept/Reject
-                        span.onclick = function(evt) {
-                            evt.stopPropagation();
-                            
-                            const action = confirm(
-                                `Deleted by ${this.getAttribute('data-change-author')}\n\n` +
-                                `"${this.textContent.substring(0, 50)}..."\n\n` +
-                                `Click OK to ACCEPT (remove text)\n` +
-                                `Click Cancel to REJECT (restore text)`
-                            );
-                            
-                            if (action) {
-                                // Accept - remove the element
-                                console.log("✅ Deletion accepted");
-                                this.remove();
-                                saveAsDraft();
-                            } else {
-                                // Reject - restore text
-                                console.log("✅ Deletion rejected - restoring text");
-                                const text = this.textContent;
-                                this.replaceWith(document.createTextNode(text));
-                                saveAsDraft();
+
+                            span.textContent = selectedText;
+                            span.title = `Deleted by ${currentUserName || 'User'} - Click to Accept/Reject`;
+
+                            // Add click handler for Accept/Reject
+                            span.onclick = function (evt) {
+                                evt.stopPropagation();
+
+                                const action = confirm(
+                                    `Deleted by ${this.getAttribute('data-change-author')}\n\n` +
+                                    `"${this.textContent.substring(0, 50)}..."\n\n` +
+                                    `Click OK to ACCEPT (remove text)\n` +
+                                    `Click Cancel to REJECT (restore text)`
+                                );
+
+                                if (action) {
+                                    // Accept - remove the element
+                                    console.log("✅ Deletion accepted");
+                                    this.remove();
+                                    saveAsDraft();
+                                } else {
+                                    // Reject - restore text
+                                    console.log("✅ Deletion rejected - restoring text");
+                                    const text = this.textContent;
+                                    this.replaceWith(document.createTextNode(text));
+                                    saveAsDraft();
+                                }
+                            };
+
+                            // Insert the strikethrough span
+                            range.deleteContents();
+                            range.insertNode(span);
+
+                            // Clear selection
+                            selection.removeAllRanges();
+
+                            // Track the change
+                            if (typeof trackedChanges !== 'undefined') {
+                                trackedChanges.push({
+                                    id: span.getAttribute('data-change-id'),
+                                    type: 'delete',
+                                    text: selectedText,
+                                    author: currentUserName || 'User',
+                                    date: new Date().toISOString()
+                                });
                             }
-                        };
-                        
-                        // Insert the strikethrough span
-                        range.deleteContents();
-                        range.insertNode(span);
-                        
-                        // Clear selection
-                        selection.removeAllRanges();
-                        
-                        // Track the change
-                        if (typeof trackedChanges !== 'undefined') {
-                            trackedChanges.push({
-                                id: span.getAttribute('data-change-id'),
-                                type: 'delete',
-                                text: selectedText,
-                                author: currentUserName || 'User',
-                                date: new Date().toISOString()
-                            });
-                        }
-                        
-                        console.log("✅ RED STRIKETHROUGH CREATED!");
-                        
-                        // Show notification
-                        if (typeof showNotification === 'function') {
-                            showNotification('Text marked for deletion', 'info');
+
+                            console.log("✅ RED STRIKETHROUGH CREATED!");
+
+                            // Show notification
+                            if (typeof showNotification === 'function') {
+                                showNotification('Text marked for deletion', 'info');
+                            }
                         }
                     }
                 }
-            }
-            
-            // Handle INSERTIONS (optional - for green underline)
-            else if (inputType === 'insertText' || 
-                     inputType === 'insertFromPaste' ||
-                     inputType === 'insertParagraph') {
-                
-                // Let insertion happen normally for now
-                // You can add green underline tracking here later
-                console.log("ℹ️ Text insertion:", e.data);
-            }
-        }, true); // Use capture phase
-        
-        console.log("✅ Track changes listener attached successfully!");
-    }
-    
-    // Initialize when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initTrackChangesListener);
-    } else {
-        initTrackChangesListener();
-    }
-})();
 
-// =====================================================
-// ENHANCED TOGGLE FUNCTION (replaces existing one)
-// =====================================================
-// Find your existing toggleTrackChanges() function and replace it with this:
+                // Handle INSERTIONS (optional - for green underline)
+                else if (inputType === 'insertText' ||
+                    inputType === 'insertFromPaste' ||
+                    inputType === 'insertParagraph') {
 
-async function toggleTrackChanges() {
-    trackChangesEnabled = !trackChangesEnabled;
-    const btn = document.getElementById('trackChangesBtn');
+                    // Let insertion happen normally for now
+                    // You can add green underline tracking here later
+                    console.log("ℹ️ Text insertion:", e.data);
+                }
+            }, true); // Use capture phase
 
-    if (trackChangesEnabled) {
-        btn.classList.add('active');
-        btn.style.background = 'var(--primary-color)';
-        btn.style.color = 'white';
-
-        // Store current content as baseline
-        originalContent = document.getElementById('contractContent').innerHTML;
-        
-        // Show track changes panel
-        showTrackChangesPanel();
-
-        console.log("✅ Track changes ENABLED");
-        console.log("   Now delete text - it should show RED STRIKETHROUGH");
-
-        // Enable track changes on backend
-        try {
-            const response = await fetch(`/api/contracts/track-changes/${contractId}?action=enable`, {
-                method: 'POST'
-            });
-            const data = await response.json();
-            if (data.success) {
-                showNotification('Track changes enabled - deletions will show strikethrough', 'success');
-            }
-        } catch (error) {
-            console.error('Error enabling track changes:', error);
+            console.log("✅ Track changes listener attached successfully!");
         }
-    } else {
-        btn.classList.remove('active');
-        btn.style.background = '';
-        btn.style.color = '';
-        
-        // Hide track changes panel
-        hideTrackChangesPanel();
 
-        console.log("❌ Track changes DISABLED");
-
-        // Ask user what to do with tracked changes
-        const action = confirm('Accept all tracked changes?') ? 'accept_all' : 'reject_all';
-        
-        if (action === 'accept_all') {
-            acceptAllChanges();
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTrackChangesListener);
         } else {
-            rejectAllChanges();
+            initTrackChangesListener();
         }
-
-        try {
-            const response = await fetch(`/api/contracts/track-changes/${contractId}?action=${action}`, {
-                method: 'POST'
-            });
-            await response.json();
-        } catch (error) {
-            console.error('Error disabling track changes:', error);
-        }
-
-        showNotification('Track changes disabled', 'info');
-    }
-
-
+    })();
 
     // =====================================================
-// WORKING FIX - Paste this ENTIRE thing in console
-// If this works, I'll show you where to add it permanently
-// =====================================================
+    // ENHANCED TOGGLE FUNCTION (replaces existing one)
+    // =====================================================
+    // Find your existing toggleTrackChanges() function and replace it with this:
 
-console.log("🔧 APPLYING WORKING TRACK CHANGES FIX...\n");
+    async function toggleTrackChanges() {
+        trackChangesEnabled = !trackChangesEnabled;
+        const btn = document.getElementById('trackChangesBtn');
 
-// Get the contract content element
-const contractContent = document.getElementById('contractContent');
+        if (trackChangesEnabled) {
+            btn.classList.add('active');
+            btn.style.background = 'var(--primary-color)';
+            btn.style.color = 'white';
 
-if (!contractContent) {
-    console.error("❌ Contract content not found!");
-} else {
-    console.log("✅ Found contract content element");
-    
-    // Remove ALL existing beforeinput listeners by replacing the element
-    console.log("🧹 Removing any existing listeners...");
-    const newContent = contractContent.cloneNode(true);
-    contractContent.parentNode.replaceChild(newContent, contractContent);
-    
-    // Make sure ID is set
-    newContent.id = 'contractContent';
-    newContent.contentEditable = 'true';
-    
-    console.log("✅ Element refreshed");
-    
-    // Now attach our listener to the NEW element
-    console.log("📎 Attaching working beforeinput listener...");
-    
-    newContent.addEventListener('beforeinput', function(e) {
-        console.log("🔥 beforeinput FIRED:", e.inputType);
-        
-        // Check if track changes is enabled
-        if (typeof trackChangesEnabled === 'undefined' || !trackChangesEnabled) {
-            console.log("⚠️  Track changes is OFF - letting deletion happen normally");
-            return;
-        }
-        
-        console.log("✅ Track changes is ON - processing deletion...");
-        
-        const inputType = e.inputType;
-        
-        // Handle deletions
-        if (inputType === 'deleteContentBackward' || 
-            inputType === 'deleteContentForward' || 
-            inputType === 'deleteByCut') {
-            
-            console.log("🎯 Delete event detected!");
-            
-            const selection = window.getSelection();
-            
-            if (selection.rangeCount > 0) {
-                const selectedText = selection.toString().trim();
-                
-                if (selectedText) {
-                    console.log("📝 Selected text:", selectedText.substring(0, 50));
-                    
-                    // PREVENT DELETION
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    
-                    console.log("🛑 DELETION PREVENTED!");
-                    
-                    const range = selection.getRangeAt(0);
-                    
-                    // Create strikethrough span
-                    const span = document.createElement('span');
-                    span.className = 'track-change-delete';
-                    
-                    // INLINE STYLES (critical!)
-                    span.style.textDecoration = 'line-through';
-                    span.style.textDecorationColor = '#dc3545';
-                    span.style.textDecorationThickness = '2px';
-                    span.style.background = 'rgba(220, 53, 69, 0.15)';
-                    span.style.color = '#dc3545';
-                    span.style.padding = '2px 4px';
-                    span.style.borderRadius = '3px';
-                    span.style.cursor = 'pointer';
-                    span.style.display = 'inline';
-                    
-                    span.textContent = selectedText;
-                    span.title = 'Click to Accept/Reject';
-                    
-                    // Add click handler
-                    span.onclick = function(evt) {
-                        evt.stopPropagation();
-                        const accept = confirm('Accept deletion? (Click OK to remove, Cancel to restore)');
-                        if (accept) {
-                            this.remove();
-                        } else {
-                            this.replaceWith(document.createTextNode(this.textContent));
-                        }
-                    };
-                    
-                    // Insert the span
-                    range.deleteContents();
-                    range.insertNode(span);
-                    
-                    // Clear selection
-                    selection.removeAllRanges();
-                    
-                    console.log("✅ RED STRIKETHROUGH CREATED!");
-                    console.log("   Look at the text - you should see it!");
-                    
-                } else {
-                    console.log("⚠️  No text selected");
+            // Store current content as baseline
+            originalContent = document.getElementById('contractContent').innerHTML;
+
+            // Show track changes panel
+            showTrackChangesPanel();
+
+            console.log("✅ Track changes ENABLED");
+            console.log("   Now delete text - it should show RED STRIKETHROUGH");
+
+            // Enable track changes on backend
+            try {
+                const response = await fetch(`/api/contracts/track-changes/${contractId}?action=enable`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showNotification('Track changes enabled - deletions will show strikethrough', 'success');
                 }
-            } else {
-                console.log("⚠️  No selection range");
+            } catch (error) {
+                console.error('Error enabling track changes:', error);
             }
         } else {
-            console.log("ℹ️  Other input type:", inputType);
-        }
-    }, true); // Use capture phase!
-    
-    console.log("\n✅ LISTENER ATTACHED!\n");
-    console.log("🎯 NOW TEST:");
-    console.log("1. Make sure track changes is ON (green button)");
-    console.log("2. Select some text");
-    console.log("3. Press DELETE or BACKSPACE");
-    console.log("4. Watch console for messages");
-    console.log("5. Text should show RED STRIKETHROUGH!\n");
-}
+            btn.classList.remove('active');
+            btn.style.background = '';
+            btn.style.color = '';
 
-// Also make sure track changes is enabled
-if (typeof trackChangesEnabled !== 'undefined' && !trackChangesEnabled) {
-    console.log("⚠️  Track changes is currently OFF");
-    console.log("   Click the Track Changes button to enable it");
-} else if (typeof trackChangesEnabled !== 'undefined' && trackChangesEnabled) {
-    console.log("✅ Track changes is ON - you're ready to test!");
-}
-}
+            // Hide track changes panel
+            hideTrackChangesPanel();
 
-(function() {
-    function initWorkingTrackChanges() {
-        const contractContent = document.getElementById('contractContent');
-        if (!contractContent) return;
-        
-        console.log("📎 Initializing working track changes listener...");
-        
-        contractContent.addEventListener('beforeinput', function(e) {
-            if (!trackChangesEnabled) return;
-            
-            if (e.inputType === 'deleteContentBackward' || 
-                e.inputType === 'deleteContentForward' || 
-                e.inputType === 'deleteByCut') {
-                
-                const selection = window.getSelection();
-                if (selection.rangeCount > 0) {
-                    const selectedText = selection.toString().trim();
-                    if (selectedText) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
-                        const range = selection.getRangeAt(0);
-                        const span = document.createElement('span');
-                        span.className = 'track-change-delete';
-                        span.style.textDecoration = 'line-through';
-                        span.style.textDecorationColor = '#dc3545';
-                        span.style.textDecorationThickness = '2px';
-                        span.style.background = 'rgba(220, 53, 69, 0.15)';
-                        span.style.color = '#dc3545';
-                        span.style.padding = '2px 4px';
-                        span.style.borderRadius = '3px';
-                        span.style.cursor = 'pointer';
-                        span.textContent = selectedText;
-                        span.title = 'Click to Accept/Reject';
-                        
-                        span.onclick = function(evt) {
-                            evt.stopPropagation();
-                            const accept = confirm('Accept deletion?');
-                            if (accept) {
-                                this.remove();
-                                saveAsDraft();
-                            } else {
-                                this.replaceWith(document.createTextNode(this.textContent));
-                                saveAsDraft();
-                            }
-                        };
-                        
-                        range.deleteContents();
-                        range.insertNode(span);
-                        selection.removeAllRanges();
-                    }
-                }
+            console.log("❌ Track changes DISABLED");
+
+            // Ask user what to do with tracked changes
+            const action = confirm('Accept all tracked changes?') ? 'accept_all' : 'reject_all';
+
+            if (action === 'accept_all') {
+                acceptAllChanges();
+            } else {
+                rejectAllChanges();
             }
-        }, true);
-        
-        console.log("✅ Track changes listener ready!");
-    }
-    
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initWorkingTrackChanges);
-    } else {
-        initWorkingTrackChanges();
-    }
-})();
+
+            try {
+                const response = await fetch(`/api/contracts/track-changes/${contractId}?action=${action}`, {
+                    method: 'POST'
+                });
+                await response.json();
+            } catch (error) {
+                console.error('Error disabling track changes:', error);
+            }
+
+            showNotification('Track changes disabled', 'info');
+        }
 
 
-// Wait for everything to load, then attach the working listener
-window.addEventListener('load', function() {
-    console.log("🔧 Initializing permanent track changes fix...");
-    
-    // Wait a bit more to ensure everything is ready
-    setTimeout(function() {
+
+        // =====================================================
+        // WORKING FIX - Paste this ENTIRE thing in console
+        // If this works, I'll show you where to add it permanently
+        // =====================================================
+
+        console.log("🔧 APPLYING WORKING TRACK CHANGES FIX...\n");
+
+        // Get the contract content element
         const contractContent = document.getElementById('contractContent');
-        
+
         if (!contractContent) {
             console.error("❌ Contract content not found!");
-            return;
+        } else {
+            console.log("✅ Found contract content element");
+
+            // Remove ALL existing beforeinput listeners by replacing the element
+            console.log("🧹 Removing any existing listeners...");
+            const newContent = contractContent.cloneNode(true);
+            contractContent.parentNode.replaceChild(newContent, contractContent);
+
+            // Make sure ID is set
+            newContent.id = 'contractContent';
+            newContent.contentEditable = 'true';
+
+            console.log("✅ Element refreshed");
+
+            // Now attach our listener to the NEW element
+            console.log("📎 Attaching working beforeinput listener...");
+
+            newContent.addEventListener('beforeinput', function (e) {
+                console.log("🔥 beforeinput FIRED:", e.inputType);
+
+                // Check if track changes is enabled
+                if (typeof trackChangesEnabled === 'undefined' || !trackChangesEnabled) {
+                    console.log("⚠️  Track changes is OFF - letting deletion happen normally");
+                    return;
+                }
+
+                console.log("✅ Track changes is ON - processing deletion...");
+
+                const inputType = e.inputType;
+
+                // Handle deletions
+                if (inputType === 'deleteContentBackward' ||
+                    inputType === 'deleteContentForward' ||
+                    inputType === 'deleteByCut') {
+
+                    console.log("🎯 Delete event detected!");
+
+                    const selection = window.getSelection();
+
+                    if (selection.rangeCount > 0) {
+                        const selectedText = selection.toString().trim();
+
+                        if (selectedText) {
+                            console.log("📝 Selected text:", selectedText.substring(0, 50));
+
+                            // PREVENT DELETION
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.stopImmediatePropagation();
+
+                            console.log("🛑 DELETION PREVENTED!");
+
+                            const range = selection.getRangeAt(0);
+
+                            // Create strikethrough span
+                            const span = document.createElement('span');
+                            span.className = 'track-change-delete';
+
+                            // INLINE STYLES (critical!)
+                            span.style.textDecoration = 'line-through';
+                            span.style.textDecorationColor = '#dc3545';
+                            span.style.textDecorationThickness = '2px';
+                            span.style.background = 'rgba(220, 53, 69, 0.15)';
+                            span.style.color = '#dc3545';
+                            span.style.padding = '2px 4px';
+                            span.style.borderRadius = '3px';
+                            span.style.cursor = 'pointer';
+                            span.style.display = 'inline';
+
+                            span.textContent = selectedText;
+                            span.title = 'Click to Accept/Reject';
+
+                            // Add click handler
+                            span.onclick = function (evt) {
+                                evt.stopPropagation();
+                                const accept = confirm('Accept deletion? (Click OK to remove, Cancel to restore)');
+                                if (accept) {
+                                    this.remove();
+                                } else {
+                                    this.replaceWith(document.createTextNode(this.textContent));
+                                }
+                            };
+
+                            // Insert the span
+                            range.deleteContents();
+                            range.insertNode(span);
+
+                            // Clear selection
+                            selection.removeAllRanges();
+
+                            console.log("✅ RED STRIKETHROUGH CREATED!");
+                            console.log("   Look at the text - you should see it!");
+
+                        } else {
+                            console.log("⚠️  No text selected");
+                        }
+                    } else {
+                        console.log("⚠️  No selection range");
+                    }
+                } else {
+                    console.log("ℹ️  Other input type:", inputType);
+                }
+            }, true); // Use capture phase!
+
+            console.log("\n✅ LISTENER ATTACHED!\n");
+            console.log("🎯 NOW TEST:");
+            console.log("1. Make sure track changes is ON (green button)");
+            console.log("2. Select some text");
+            console.log("3. Press DELETE or BACKSPACE");
+            console.log("4. Watch console for messages");
+            console.log("5. Text should show RED STRIKETHROUGH!\n");
         }
-        
-        console.log("✅ Contract content found, attaching listener...");
-        
-        // Remove existing listeners by cloning
-        const newContent = contractContent.cloneNode(true);
-        contractContent.parentNode.replaceChild(newContent, contractContent);
-        newContent.id = 'contractContent';
-        newContent.contentEditable = 'true';
-        
-        // Attach the working beforeinput listener
-        newContent.addEventListener('beforeinput', function(e) {
-            // Only process if track changes is enabled
-            if (typeof trackChangesEnabled === 'undefined' || !trackChangesEnabled) {
-                return; // Normal editing
-            }
-            
-            const inputType = e.inputType;
-            
-            // Handle deletions
-            if (inputType === 'deleteContentBackward' || 
-                inputType === 'deleteContentForward' || 
-                inputType === 'deleteByCut') {
-                
-                const selection = window.getSelection();
-                
-                if (selection.rangeCount > 0) {
-                    const selectedText = selection.toString().trim();
-                    
-                    if (selectedText) {
-                        console.log("🔥 Track changes: preventing deletion of:", selectedText.substring(0, 30));
-                        
-                        // PREVENT DELETION
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                        
-                        const range = selection.getRangeAt(0);
-                        
-                        // Create strikethrough span
-                        const span = document.createElement('span');
-                        span.className = 'track-change-delete';
-                        span.setAttribute('data-change-type', 'delete');
-                        span.setAttribute('data-change-author', currentUserName || 'User');
-                        span.setAttribute('data-change-date', new Date().toISOString());
-                        
-                        // INLINE STYLES (critical!)
-                        span.style.textDecoration = 'line-through';
-                        span.style.textDecorationColor = '#dc3545';
-                        span.style.textDecorationThickness = '2px';
-                        span.style.background = 'rgba(220, 53, 69, 0.15)';
-                        span.style.color = '#dc3545';
-                        span.style.padding = '2px 4px';
-                        span.style.borderRadius = '3px';
-                        span.style.cursor = 'pointer';
-                        span.style.display = 'inline';
-                        
-                        span.textContent = selectedText;
-                        span.title = 'Deleted by ' + (currentUserName || 'User') + ' - Click to Accept/Reject';
-                        
-                        // Add click handler for Accept/Reject
-                        span.onclick = function(evt) {
-                            evt.stopPropagation();
-                            const accept = confirm(
-                                'Deleted by ' + this.getAttribute('data-change-author') + '\n\n' +
-                                '"' + this.textContent.substring(0, 100) + '..."\n\n' +
-                                'Click OK to ACCEPT (remove text)\n' +
-                                'Click Cancel to REJECT (restore text)'
-                            );
-                            
-                            if (accept) {
-                                console.log("✅ Deletion accepted");
-                                this.remove();
-                                if (typeof saveAsDraft === 'function') saveAsDraft();
-                            } else {
-                                console.log("✅ Deletion rejected - restoring text");
-                                const text = this.textContent;
-                                this.replaceWith(document.createTextNode(text));
-                                if (typeof saveAsDraft === 'function') saveAsDraft();
-                            }
-                        };
-                        
-                        // Insert the strikethrough span
-                        range.deleteContents();
-                        range.insertNode(span);
-                        
-                        // Clear selection
-                        selection.removeAllRanges();
-                        
-                        console.log("✅ RED STRIKETHROUGH CREATED!");
-                        
-                        // Track the change
-                        if (typeof trackedChanges !== 'undefined') {
-                            trackedChanges.push({
-                                id: 'change_' + Date.now(),
-                                type: 'delete',
-                                text: selectedText,
-                                author: currentUserName || 'User',
-                                date: new Date().toISOString()
-                            });
+
+        // Also make sure track changes is enabled
+        if (typeof trackChangesEnabled !== 'undefined' && !trackChangesEnabled) {
+            console.log("⚠️  Track changes is currently OFF");
+            console.log("   Click the Track Changes button to enable it");
+        } else if (typeof trackChangesEnabled !== 'undefined' && trackChangesEnabled) {
+            console.log("✅ Track changes is ON - you're ready to test!");
+        }
+    }
+
+    (function () {
+        function initWorkingTrackChanges() {
+            const contractContent = document.getElementById('contractContent');
+            if (!contractContent) return;
+
+            console.log("📎 Initializing working track changes listener...");
+
+            contractContent.addEventListener('beforeinput', function (e) {
+                if (!trackChangesEnabled) return;
+
+                if (e.inputType === 'deleteContentBackward' ||
+                    e.inputType === 'deleteContentForward' ||
+                    e.inputType === 'deleteByCut') {
+
+                    const selection = window.getSelection();
+                    if (selection.rangeCount > 0) {
+                        const selectedText = selection.toString().trim();
+                        if (selectedText) {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            const range = selection.getRangeAt(0);
+                            const span = document.createElement('span');
+                            span.className = 'track-change-delete';
+                            span.style.textDecoration = 'line-through';
+                            span.style.textDecorationColor = '#dc3545';
+                            span.style.textDecorationThickness = '2px';
+                            span.style.background = 'rgba(220, 53, 69, 0.15)';
+                            span.style.color = '#dc3545';
+                            span.style.padding = '2px 4px';
+                            span.style.borderRadius = '3px';
+                            span.style.cursor = 'pointer';
+                            span.textContent = selectedText;
+                            span.title = 'Click to Accept/Reject';
+
+                            span.onclick = function (evt) {
+                                evt.stopPropagation();
+                                const accept = confirm('Accept deletion?');
+                                if (accept) {
+                                    this.remove();
+                                    saveAsDraft();
+                                } else {
+                                    this.replaceWith(document.createTextNode(this.textContent));
+                                    saveAsDraft();
+                                }
+                            };
+
+                            range.deleteContents();
+                            range.insertNode(span);
+                            selection.removeAllRanges();
                         }
                     }
                 }
+            }, true);
+
+            console.log("✅ Track changes listener ready!");
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initWorkingTrackChanges);
+        } else {
+            initWorkingTrackChanges();
+        }
+    })();
+
+
+    // Wait for everything to load, then attach the working listener
+    window.addEventListener('load', function () {
+        console.log("🔧 Initializing permanent track changes fix...");
+
+        // Wait a bit more to ensure everything is ready
+        setTimeout(function () {
+            const contractContent = document.getElementById('contractContent');
+
+            if (!contractContent) {
+                console.error("❌ Contract content not found!");
+                return;
             }
-        }, true); // Use capture phase
-        
-        console.log("✅ PERMANENT track changes listener attached!");
-        console.log("   Track changes will work after refresh!");
-        
-    }, 1000); // Wait 1 second for everything to load
-});
+
+            console.log("✅ Contract content found, attaching listener...");
+
+            // Remove existing listeners by cloning
+            const newContent = contractContent.cloneNode(true);
+            contractContent.parentNode.replaceChild(newContent, contractContent);
+            newContent.id = 'contractContent';
+            newContent.contentEditable = 'true';
+
+            // Attach the working beforeinput listener
+            newContent.addEventListener('beforeinput', function (e) {
+                // Only process if track changes is enabled
+                if (typeof trackChangesEnabled === 'undefined' || !trackChangesEnabled) {
+                    return; // Normal editing
+                }
+
+                const inputType = e.inputType;
+
+                // Handle deletions
+                if (inputType === 'deleteContentBackward' ||
+                    inputType === 'deleteContentForward' ||
+                    inputType === 'deleteByCut') {
+
+                    const selection = window.getSelection();
+
+                    if (selection.rangeCount > 0) {
+                        const selectedText = selection.toString().trim();
+
+                        if (selectedText) {
+                            console.log("🔥 Track changes: preventing deletion of:", selectedText.substring(0, 30));
+
+                            // PREVENT DELETION
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.stopImmediatePropagation();
+
+                            const range = selection.getRangeAt(0);
+
+                            // Create strikethrough span
+                            const span = document.createElement('span');
+                            span.className = 'track-change-delete';
+                            span.setAttribute('data-change-type', 'delete');
+                            span.setAttribute('data-change-author', currentUserName || 'User');
+                            span.setAttribute('data-change-date', new Date().toISOString());
+
+                            // INLINE STYLES (critical!)
+                            span.style.textDecoration = 'line-through';
+                            span.style.textDecorationColor = '#dc3545';
+                            span.style.textDecorationThickness = '2px';
+                            span.style.background = 'rgba(220, 53, 69, 0.15)';
+                            span.style.color = '#dc3545';
+                            span.style.padding = '2px 4px';
+                            span.style.borderRadius = '3px';
+                            span.style.cursor = 'pointer';
+                            span.style.display = 'inline';
+
+                            span.textContent = selectedText;
+                            span.title = 'Deleted by ' + (currentUserName || 'User') + ' - Click to Accept/Reject';
+
+                            // Add click handler for Accept/Reject
+                            span.onclick = function (evt) {
+                                evt.stopPropagation();
+                                const accept = confirm(
+                                    'Deleted by ' + this.getAttribute('data-change-author') + '\n\n' +
+                                    '"' + this.textContent.substring(0, 100) + '..."\n\n' +
+                                    'Click OK to ACCEPT (remove text)\n' +
+                                    'Click Cancel to REJECT (restore text)'
+                                );
+
+                                if (accept) {
+                                    console.log("✅ Deletion accepted");
+                                    this.remove();
+                                    if (typeof saveAsDraft === 'function') saveAsDraft();
+                                } else {
+                                    console.log("✅ Deletion rejected - restoring text");
+                                    const text = this.textContent;
+                                    this.replaceWith(document.createTextNode(text));
+                                    if (typeof saveAsDraft === 'function') saveAsDraft();
+                                }
+                            };
+
+                            // Insert the strikethrough span
+                            range.deleteContents();
+                            range.insertNode(span);
+
+                            // Clear selection
+                            selection.removeAllRanges();
+
+                            console.log("✅ RED STRIKETHROUGH CREATED!");
+
+                            // Track the change
+                            if (typeof trackedChanges !== 'undefined') {
+                                trackedChanges.push({
+                                    id: 'change_' + Date.now(),
+                                    type: 'delete',
+                                    text: selectedText,
+                                    author: currentUserName || 'User',
+                                    date: new Date().toISOString()
+                                });
+                            }
+                        }
+                    }
+                }
+            }, true); // Use capture phase
+
+            console.log("✅ PERMANENT track changes listener attached!");
+            console.log("   Track changes will work after refresh!");
+
+        }, 1000); // Wait 1 second for everything to load
+    });
 </script>
 
 
