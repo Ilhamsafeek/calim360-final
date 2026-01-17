@@ -4,6 +4,7 @@
 
 {% block head %}
 <link rel="stylesheet" href="/app/static/css/contract-edit.css">
+<link rel="stylesheet" href="/static/css/bubble-comments.css">
 <style>
     .modal-header {
         background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
@@ -333,78 +334,6 @@
         color: var(--success-color);
     }
 
-    /* Track Changes Styles */
-    .track-change-insert {
-        background: rgba(40, 167, 69, 0.1);
-        border-bottom: 2px solid var(--success-color);
-        position: relative;
-    }
-
-    .track-change-delete {
-        background: rgba(220, 53, 69, 0.1);
-        text-decoration: line-through;
-        color: var(--danger-color);
-    }
-
-    .track-change-comment {
-        background: rgba(255, 193, 7, 0.1);
-        border-left: 3px solid var(--warning-color);
-        padding-left: 0.5rem;
-        margin-left: -0.5rem;
-    }
-
-    .change-indicator {
-        position: absolute;
-        right: -30px;
-        top: 0;
-        width: 25px;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.75rem;
-        color: white;
-        font-weight: bold;
-    }
-
-    .change-indicator.insert {
-        background: var(--success-color);
-    }
-
-    .change-indicator.delete {
-        background: var(--danger-color);
-    }
-
-    /* Comment Bubble */
-    /* .comment-bubble {
-        position: absolute;
-        right: -200px;
-        background: white;
-        border: 1px solid var(--warning-color);
-        border-radius: 8px;
-        padding: 0.5rem;
-        width: 180px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        font-size: 0.8rem;
-        z-index: 100;
-    } */
-
-
-    .comment-author {
-        font-weight: 600;
-        color: var(--primary-color);
-        margin-bottom: 0.25rem;
-    }
-
-    .comment-text {
-        color: var(--text-color);
-    }
-
-    .comment-time {
-        color: var(--text-muted);
-        font-size: 0.7rem;
-        margin-top: 0.25rem;
-    }
 
     /* Simple Signature Styles */
     .signature-btn {
@@ -4756,368 +4685,7 @@
     [dir="rtl"] {
         font-family: 'Segoe UI', 'Tahoma', 'Arial', sans-serif;
     }
-</style>
 
-
-<style>
-    /* Floating Comments Sidebar - Right Side */
-    .comments-sidebar {
-        position: fixed;
-        right: -420px;
-        top: 60px;
-        width: 400px;
-        height: calc(100vh - 60px);
-        background: white;
-        border-left: 3px solid #ffc107;
-        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
-        transition: right 0.3s ease;
-        z-index: 999;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .comments-sidebar.active {
-        right: 0;
-    }
-
-    .comments-sidebar-header {
-        padding: 20px;
-        background: linear-gradient(135deg, #ffc107, #ff9800);
-        color: white;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .comments-sidebar-title {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 18px;
-        font-weight: 600;
-    }
-
-    .close-sidebar-btn {
-        background: rgba(255, 255, 255, 0.2);
-        border: none;
-        color: white;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .close-sidebar-btn:hover {
-        background: rgba(255, 255, 255, 0.3);
-    }
-
-    .comments-sidebar-body {
-        flex: 1;
-        overflow-y: auto;
-        padding: 16px;
-        background: #f8f9fa;
-    }
-
-    /* Comment Card */
-    .comment-card {
-        background: white;
-        border-radius: 8px;
-        padding: 16px;
-        margin-bottom: 12px;
-        border-left: 4px solid #ffc107;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        cursor: pointer;
-    }
-
-    .comment-card:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-    }
-
-    .comment-author {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 8px;
-    }
-
-    .comment-avatar {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #2762cb, #73b4e0);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        font-size: 14px;
-    }
-
-    .comment-info {
-        flex: 1;
-    }
-
-    .comment-name {
-        font-weight: 600;
-        font-size: 14px;
-    }
-
-    .comment-time {
-        font-size: 12px;
-        color: #666;
-    }
-
-    .comment-text {
-        font-size: 14px;
-        color: #333;
-        margin-bottom: 8px;
-        line-height: 1.5;
-    }
-
-    .comment-selected {
-        background: rgba(255, 193, 7, 0.1);
-        border-left: 3px solid #ffc107;
-        padding: 8px;
-        border-radius: 4px;
-        font-size: 13px;
-        color: #666;
-        font-style: italic;
-        margin-bottom: 8px;
-    }
-
-    .comment-actions {
-        display: flex;
-        gap: 8px;
-    }
-
-    .comment-btn {
-        background: #f0f0f0;
-        border: none;
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-size: 12px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-
-    .comment-btn:hover {
-        background: #e0e0e0;
-    }
-
-    .comment-btn.delete {
-        background: #fee;
-        color: #dc3545;
-    }
-
-    .comment-btn.delete:hover {
-        background: #fdd;
-    }
-
-    /* Toggle Button */
-    .comments-toggle {
-        position: fixed;
-        right: 20px;
-        bottom: 20px;
-        width: 56px;
-        height: 56px;
-        background: linear-gradient(135deg, #ffc107, #ff9800);
-        border-radius: 50%;
-        border: none;
-        cursor: pointer;
-        box-shadow: 0 4px 16px rgba(255, 193, 7, 0.4);
-        z-index: 998;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .comments-toggle:hover {
-        transform: scale(1.1);
-    }
-
-    .comments-toggle i {
-        font-size: 24px;
-        color: white;
-    }
-
-    .comments-badge {
-        position: absolute;
-        top: -4px;
-        right: -4px;
-        background: #dc3545;
-        color: white;
-        border-radius: 50%;
-        width: 24px;
-        height: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        font-weight: 700;
-        border: 2px solid white;
-    }
-
-    /* Comment Highlight in Document */
-    .track-change-comment {
-        background: rgba(255, 193, 7, 0.25);
-        border-bottom: 2px solid #ffc107;
-        cursor: pointer;
-        padding: 2px 0;
-    }
-
-    .track-change-comment:hover {
-        background: rgba(255, 193, 7, 0.4);
-    }
-
-    /* Strikethrough for Changes */
-    .track-change-delete {
-        text-decoration: line-through;
-        text-decoration-color: #dc3545;
-        text-decoration-thickness: 2px;
-        background: rgba(220, 53, 69, 0.15);
-        color: #dc3545;
-        padding: 2px 4px;
-        border-radius: 3px;
-        cursor: pointer;
-        position: relative;
-    }
-
-    .track-change-insert {
-        background: rgba(40, 167, 69, 0.15);
-        border-bottom: 2px solid #28a745;
-        color: #155724;
-        padding: 2px 4px;
-        border-radius: 3px;
-        cursor: pointer;
-        position: relative;
-    }
-
-    .track-change-delete:hover,
-    .track-change-insert:hover {
-        box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Track Changes Toolbar */
-    .track-changes-toolbar {
-        position: fixed;
-        top: 60px;
-        right: 20px;
-        background: white;
-        border: 2px solid #e0e0e0;
-        border-radius: 12px;
-        padding: 12px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-        z-index: 997;
-        display: none;
-    }
-
-    .track-changes-toolbar.active {
-        display: block;
-    }
-
-    .track-changes-toggle {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 8px 12px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        margin-bottom: 8px;
-    }
-
-    .track-changes-toggle label {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-        font-weight: 600;
-        font-size: 14px;
-    }
-
-    .track-changes-toggle input[type="checkbox"] {
-        width: 18px;
-        height: 18px;
-        cursor: pointer;
-    }
-
-    .track-changes-actions {
-        display: flex;
-        gap: 6px;
-        flex-direction: column;
-    }
-
-    .track-btn {
-        background: #f0f0f0;
-        border: none;
-        padding: 8px 12px;
-        border-radius: 6px;
-        font-size: 13px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        transition: all 0.2s;
-    }
-
-    .track-btn:hover {
-        background: #e0e0e0;
-    }
-
-    .track-btn.accept {
-        background: #d4edda;
-        color: #155724;
-    }
-
-    .track-btn.accept:hover {
-        background: #c3e6cb;
-    }
-
-    .track-btn.reject {
-        background: #f8d7da;
-        color: #721c24;
-    }
-
-    .track-btn.reject:hover {
-        background: #f5c6cb;
-    }
-
-    /* Track Changes Badge */
-    .track-changes-badge {
-        position: fixed;
-        top: 70px;
-        right: 430px;
-        background: linear-gradient(135deg, #28a745, #20c997);
-        color: white;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 13px;
-        font-weight: 600;
-        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
-        display: none;
-        align-items: center;
-        gap: 6px;
-        z-index: 996;
-    }
-
-    .track-changes-badge.active {
-        display: flex;
-    }
-
-    .comments-empty {
-        text-align: center;
-        padding: 40px 20px;
-        color: #999;
-    }
-
-    .comments-empty i {
-        font-size: 48px;
-        margin-bottom: 12px;
-    }
 
     /* Hide chatbot button on this page */
     .chatbot-button,
@@ -5127,10 +4695,6 @@
         pointer-events: none !important;
     }
 </style>
-
-
-
-
 
 
 <!-- MOD-021: Risk Assessment Modal -->
@@ -5327,25 +4891,6 @@
     </div>
 </div>
 
-<!-- Add Comment Modal -->
-<div class="modal" id="commentModal">
-    <div class="modal-content" style="max-width: 400px;">
-        <div class="modal-header">
-            <h3 class="modal-title">Add Comment</h3>
-            <button class="modal-close" onclick="closeModal('commentModal')">
-                <i class="ti ti-x"></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <textarea id="commentText" placeholder="Enter your comment..."
-                style="width: 100%; min-height: 100px; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; resize: vertical;"></textarea>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-outline-secondary" onclick="closeModal('commentModal')">Cancel</button>
-            <button class="btn btn-primary" onclick="insertComment()">Add Comment</button>
-        </div>
-    </div>
-</div>
 
 
 <!-- MOD-030: Send to Counter-Party Modal -->
@@ -5679,608 +5224,91 @@
 </div>
 
 
-<!-- Comments Toggle Button -->
-<button class="comments-toggle" onclick="toggleCommentsSidebar()">
-    <i class="ti ti-message-circle"></i>
-    <span class="comments-badge" style="display:none">0</span>
-</button>
-
-<!-- Track Changes Toolbar -->
-<div class="track-changes-toolbar" id="trackChangesToolbar">
-    <div class="track-changes-toggle">
-        <label>
-            <input type="checkbox" id="trackChangesEnabled" onchange="toggleTrackChanges(this.checked)">
-            <i class="ti ti-edit"></i>
-            <span>Track Changes</span>
-        </label>
-    </div>
-    <div class="track-changes-actions" id="trackChangesActions" style="display:none;">
-        <button class="track-btn accept" onclick="acceptAllChanges()">
-            <i class="ti ti-check-circle"></i> Accept All
-        </button>
-        <button class="track-btn reject" onclick="rejectAllChanges()">
-            <i class="ti ti-circle-x"></i> Reject All
-        </button>
-    </div>
-</div>
-
-<!-- Track Changes Badge -->
-<div class="track-changes-badge" id="trackChangesBadge">
-    <i class="ti ti-edit"></i>
-    <span>Track Changes ON</span>
-</div>
-
-<!-- Comments Sidebar -->
-<div class="comments-sidebar">
-    <div class="comments-sidebar-header">
-        <div class="comments-sidebar-title">
-            <i class="ti ti-message-circle"></i>
-            <span>Comments</span>
-            <span class="comments-count">0</span>
+<!-- Comments Panel -->
+<div class="comments-panel" id="commentsPanel">
+    <div class="comments-panel-header">
+        <div class="comments-panel-title">
+            <i class="ti ti-messages"></i>
+            Comments
         </div>
-        <button class="close-sidebar-btn" onclick="closeCommentsSidebar()">
-            <i class="ti ti-x"></i>
-        </button>
+        <button class="comments-panel-close" onclick="toggleCommentsPanel()">×</button>
     </div>
-    <div class="comments-sidebar-body">
+    <div class="comments-panel-body" id="commentsPanelBody">
         <div class="comments-empty">
-            <i class="ti ti-message-circle-off"></i>
+            <i class="ti ti-message-off"></i>
             <p>No comments yet</p>
         </div>
     </div>
 </div>
 
-
-
-
-<script>
-    let currentUserId = null;
-    let currentUserName = null;
-    let allComments = [];
-    let changeCounter = 0;
-
-    // Load current user
-    async function loadCurrentUser() {
-        try {
-            const res = await fetch('/api/users/debug/current-user');
-            const data = await res.json();
-            if (data.status === 'authenticated' && data.user) {
-                currentUserId = data.user.id;
-                currentUserName = `${data.user.first_name} ${data.user.last_name}`;
-            }
-        } catch (e) {
-            console.error('Error loading user:', e);
-        }
-    }
-
-    // Load all comments
-    async function loadComments() {
-        try {
-            const res = await fetch(`/api/contracts/comments/${contractId}`);
-            const data = await res.json();
-            if (data.success) {
-                allComments = data.comments || [];
-                renderCommentsSidebar();
-                updateCommentsCount();
-                highlightCommentsInDoc();
-            }
-        } catch (e) {
-            console.error('Error loading comments:', e);
-        }
-    }
-
-    // Render comments sidebar
-    function renderCommentsSidebar() {
-        const body = document.querySelector('.comments-sidebar-body');
-        if (!body) return;
-
-        if (allComments.length === 0) {
-            body.innerHTML = `
-            <div class="comments-empty">
-                <i class="ti ti-message-circle-off"></i>
-                <p>No comments yet</p>
-            </div>`;
-            return;
-        }
-
-        let html = '';
-        allComments.forEach(c => {
-            const isOwn = c.user_id === currentUserId;
-            const initials = (c.author || 'U').split(' ').map(n => n[0]).join('').toUpperCase();
-            const time = formatTime(c.created_at);
-            const isResolved = c.resolved || document.querySelector(`[data-comment-id="${c.id}"][data-resolved="true"]`);
-
-            html += `
-        <div class="comment-card" onclick="scrollToComment(${c.id})">
-            <div class="comment-author">
-                <div class="comment-avatar">${initials}</div>
-                <div class="comment-info">
-                    <div class="comment-name">${c.author || 'Unknown'}</div>
-                    <div class="comment-time">${time}</div>
+<!-- Add Comment Modal -->
+<div class="modal" id="commentModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="ti ti-message-plus"></i>
+                Add Comment
+            </div>
+            <button class="modal-close" onclick="closeModal('commentModal')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">Your Comment</label>
+                <textarea id="commentText" class="form-control" rows="4" placeholder="Enter your comment..."></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Selected Text</label>
+                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; font-size: 14px; color: #666;">
+                    <em id="selectedTextPreview">No text selected</em>
                 </div>
             </div>
-            <div class="comment-text">${escapeHtml(c.comment_text)}</div>
-            ${c.selected_text ? `<div class="comment-selected">"${escapeHtml(c.selected_text.substring(0, 80))}..."</div>` : ''}
-            ${isResolved ? `<div style="color: #28a745; font-size: 12px; font-weight: 600; margin-top: 8px;">
-                <i class="ti ti-check-circle"></i> Resolved
-            </div>` : ''}
-            <div class="comment-actions">
-                ${isOwn ? `<button class="comment-btn delete" onclick="event.stopPropagation(); deleteComment(${c.id})">
-                    <i class="ti ti-trash"></i> Delete
-                </button>` : ''}
-                ${!isResolved ? `<button class="comment-btn" onclick="event.stopPropagation(); resolveComment(${c.id})">
-                    <i class="ti ti-check"></i> Resolve
-                </button>` : ''}
-            </div>
-        </div>`;
-        });
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('commentModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="submitComment()">Add Comment</button>
+        </div>
+    </div>
+</div>
 
-        body.innerHTML = html;
-    }
+<!-- Toggle Button -->
+<button class="comments-toggle-btn" onclick="toggleCommentsPanel()">
+    <i class="ti ti-message-circle"></i>
+    <span class="comment-badge" id="commentsBadge" style="display: none;">0</span>
+</button>
 
-    // Update count
-    function updateCommentsCount() {
-        const badge = document.querySelector('.comments-badge');
-        const count = document.querySelector('.comments-count');
-        if (badge) {
-            badge.textContent = allComments.length;
-            badge.style.display = allComments.length > 0 ? 'flex' : 'none';
-        }
-        if (count) count.textContent = allComments.length;
-    }
-
-    // Highlight in document
-    function highlightCommentsInDoc() {
-        allComments.forEach(c => {
-            if (c.selected_text) {
-                const marker = document.querySelector(`[data-comment-id="${c.id}"]`);
-                if (!marker) {
-                    createCommentMarker(c);
-                } else {
-                    // Check if already resolved (has strikethrough class)
-                    if (marker.classList.contains('track-change-delete')) {
-                        c.resolved = true;
-                    }
-                }
-            }
-        });
-    }
-
-    // Create marker
-    function createCommentMarker(comment) {
-        const content = document.getElementById('contractContent');
-        if (!content || !comment.selected_text) return;
-
-        const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
-        let node;
-        while (node = walker.nextNode()) {
-            const idx = node.textContent.indexOf(comment.selected_text.trim());
-            if (idx !== -1) {
-                try {
-                    const range = document.createRange();
-                    range.setStart(node, idx);
-                    range.setEnd(node, idx + comment.selected_text.trim().length);
-                    const span = document.createElement('span');
-                    span.className = 'track-change-comment';
-                    span.setAttribute('data-comment-id', comment.id);
-                    span.onclick = () => scrollToComment(comment.id);
-                    range.surroundContents(span);
-                    return;
-                } catch (e) { }
-            }
-        }
-    }
-
-    // Scroll to comment
-    function scrollToComment(commentId) {
-        const marker = document.querySelector(`[data-comment-id="${commentId}"]`);
-        if (marker) {
-            marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            marker.style.background = 'rgba(255,193,7,0.6)';
-            setTimeout(() => marker.style.background = 'rgba(255,193,7,0.25)', 600);
-        }
-    }
-
-    // Delete comment - WITH OWNERSHIP CHECK
-    async function deleteComment(commentId) {
-        const comment = allComments.find(c => c.id === commentId);
-        if (!comment) return;
-
-        // CHECK OWNERSHIP
-        if (comment.user_id !== currentUserId) {
-            showNotification('You can only delete your own comments', 'warning');
-            return;
-        }
-
-        if (!confirm('Delete this comment?')) return;
-
-        try {
-            const res = await fetch(`/api/contracts/comments/${commentId}`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' }
-            });
-
-            const data = await res.json();
-            if (data.success) {
-                // Remove from array
-                allComments = allComments.filter(c => c.id !== commentId);
-
-                // Remove marker
-                const marker = document.querySelector(`[data-comment-id="${commentId}"]`);
-                if (marker) {
-                    const text = marker.textContent;
-                    marker.replaceWith(document.createTextNode(text));
-                }
-
-                renderCommentsSidebar();
-                updateCommentsCount();
-                await saveAsDraft();
-                showNotification('Comment deleted', 'success');
-            }
-        } catch (e) {
-            showNotification('Failed to delete comment', 'error');
-        }
-    }
-
-    // Resolve comment (apply strikethrough)
-    async function resolveComment(commentId) {
-        if (!confirm('Mark as resolved? Text will be struck through.')) return;
-
-        const marker = document.querySelector(`[data-comment-id="${commentId}"]`);
-        if (marker) {
-            marker.className = 'track-change-delete';
-            marker.setAttribute('data-resolved', 'true');
-
-            // Mark comment as resolved in array
-            const comment = allComments.find(c => c.id === commentId);
-            if (comment) comment.resolved = true;
-
-            // Re-render to hide resolve button
-            renderCommentsSidebar();
-
-            await saveAsDraft();
-            showNotification('Comment resolved', 'success');
-        }
-    }
-
-    // Toggle sidebar
-    function toggleCommentsSidebar() {
-        const sidebar = document.querySelector('.comments-sidebar');
-        if (sidebar) {
-            sidebar.classList.toggle('active');
-            if (sidebar.classList.contains('active')) loadComments();
-        }
-    }
-
-    function closeCommentsSidebar() {
-        document.querySelector('.comments-sidebar')?.classList.remove('active');
-    }
-
-    // Enhanced add comment
-    async function insertComment() {
-        const text = document.getElementById('commentText').value.trim();
-        if (!text || !commentSelection) {
-            showNotification('Please enter a comment', 'warning');
-            return;
-        }
-
-        try {
-            const res = await fetch('/api/contracts/comments/add', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contract_id: parseInt(contractId),
-                    comment_text: text,
-                    selected_text: commentSelection.text
-                })
-            });
-
-            const data = await res.json();
-            if (data.success) {
-                allComments.push(data.comment);
-
-                // Create marker
-                const range = commentSelection.range;
-                const span = document.createElement('span');
-                span.className = 'track-change-comment';
-                span.setAttribute('data-comment-id', data.comment_id);
-                span.onclick = () => scrollToComment(data.comment_id);
-                try { range.surroundContents(span); } catch (e) { }
-
-                renderCommentsSidebar();
-                updateCommentsCount();
-                await saveAsDraft();
-                closeModal('commentModal');
-                document.getElementById('commentText').value = '';
-
-                // Open sidebar
-                document.querySelector('.comments-sidebar')?.classList.add('active');
-                showNotification('Comment added', 'success');
-            }
-        } catch (e) {
-            showNotification('Failed to add comment', 'error');
-        }
-    }
-
-    // Utility functions
-    function formatTime(date) {
-        if (!date) return '';
-        const d = new Date(date);
-        const now = new Date();
-        const diff = (now - d) / 60000;
-        if (diff < 1) return 'Just now';
-        if (diff < 60) return `${Math.floor(diff)}m ago`;
-        if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
-        return d.toLocaleDateString();
-    }
-
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
+<!-- Bubble Comments JavaScript -->
+<script>
     // Initialize
-    document.addEventListener('DOMContentLoaded', async () => {
-        await loadCurrentUser();
-        if (contractId) await loadComments();
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const contractId = urlParams.get('id');
 
-        // Load track changes preference
-        const trackEnabled = localStorage.getItem('trackChangesEnabled') === 'true';
-        const checkbox = document.getElementById('trackChangesEnabled');
-        if (checkbox) checkbox.checked = trackEnabled;
-        if (trackEnabled) toggleTrackChanges(true);
-
-        // Setup content editing listener for track changes
-        const content = document.getElementById('contractContent');
-        if (content) {
-            content.addEventListener('input', handleContentChange);
-            content.addEventListener('keydown', handleKeyDown);
+        if (contractId) {
+            currentContractId = contractId;
+            loadComments();
         }
+
+        // Update preview when modal opens
+        document.getElementById('addCommentBtn')?.addEventListener('click', () => {
+            if (window.commentSelection) {
+                document.getElementById('selectedTextPreview').textContent =
+                    window.commentSelection.text;
+            }
+        });
     });
 
-    // =====================================================
-    // TRACK CHANGES FUNCTIONALITY
-    // =====================================================
-
-    function toggleTrackChanges(enabled) {
-        trackChangesEnabled = enabled;
-        localStorage.setItem('trackChangesEnabled', enabled);
-
-        const toolbar = document.getElementById('trackChangesToolbar');
-        const badge = document.getElementById('trackChangesBadge');
-        const actions = document.getElementById('trackChangesActions');
-
-        if (enabled) {
-            if (toolbar) toolbar.classList.add('active');
-            if (badge) badge.classList.add('active');
-            if (actions) actions.style.display = 'flex';
-            showNotification('Track changes enabled', 'success');
-        } else {
-            if (toolbar) toolbar.classList.remove('active');
-            if (badge) badge.classList.remove('active');
-            if (actions) actions.style.display = 'none';
-            showNotification('Track changes disabled', 'info');
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'm') {
+            e.preventDefault();
+            openAddCommentModal();
         }
-    }
-
-    let lastContent = '';
-    let isProcessingChange = false;
-
-    function handleContentChange(e) {
-        if (!trackChangesEnabled || isProcessingChange) return;
-
-        const content = document.getElementById('contractContent');
-        if (!content) return;
-
-        const currentContent = content.innerHTML;
-        if (lastContent && lastContent !== currentContent) {
-            // Content changed - this is simplified
-            // In production, use proper diff algorithm
-            console.log('Content changed - tracking');
+        if (e.key === 'Escape') {
+            closeBubble();
+            closeModal('commentModal');
         }
-        lastContent = currentContent;
-    }
-
-    function handleKeyDown(e) {
-        if (!trackChangesEnabled) return;
-
-        const content = document.getElementById('contractContent');
-        if (!content) return;
-
-        // Track deletions (Backspace or Delete key)
-        if (e.key === 'Backspace' || e.key === 'Delete') {
-            const selection = window.getSelection();
-            if (selection.rangeCount > 0 && selection.toString()) {
-                e.preventDefault();
-                markTextAsDeleted(selection);
-            }
-        }
-    }
-
-    function markTextAsDeleted(selection) {
-        try {
-            isProcessingChange = true;
-
-            const range = selection.getRangeAt(0);
-            const selectedText = selection.toString();
-
-            // Create deletion marker
-            const span = document.createElement('span');
-            span.className = 'track-change-delete';
-            span.setAttribute('data-change-id', 'change_' + (++changeCounter));
-            span.setAttribute('data-change-type', 'delete');
-            span.setAttribute('data-change-author', currentUserName);
-            span.setAttribute('data-change-date', new Date().toISOString());
-            span.textContent = selectedText;
-            span.title = `Deleted by ${currentUserName}`;
-
-            // Add click handler for accept/reject
-            span.onclick = (e) => {
-                e.stopPropagation();
-                showChangeOptions(span);
-            };
-
-            // Replace selected text with deletion marker
-            range.deleteContents();
-            range.insertNode(span);
-
-            // Track the change
-            trackedChanges.push({
-                id: span.getAttribute('data-change-id'),
-                type: 'delete',
-                text: selectedText,
-                author: currentUserName,
-                date: new Date().toISOString()
-            });
-
-            // Clear selection
-            selection.removeAllRanges();
-
-            isProcessingChange = false;
-
-        } catch (e) {
-            console.error('Error marking deletion:', e);
-            isProcessingChange = false;
-        }
-    }
-
-    function showChangeOptions(changeElement) {
-        const changeId = changeElement.getAttribute('data-change-id');
-        const changeType = changeElement.getAttribute('data-change-type');
-        const author = changeElement.getAttribute('data-change-author');
-
-        const options = confirm(
-            `${changeType.toUpperCase()} by ${author}\n\n` +
-            `Accept this change?`
-        );
-
-        if (options) {
-            acceptChange(changeElement);
-        } else {
-            if (confirm('Reject this change?')) {
-                rejectChange(changeElement);
-            }
-        }
-    }
-
-    function acceptChange(changeElement) {
-        const changeType = changeElement.getAttribute('data-change-type');
-
-        if (changeType === 'delete') {
-            // Accept deletion - remove the text completely
-            changeElement.remove();
-        } else if (changeType === 'insert') {
-            // Accept insertion - remove markup, keep text
-            const text = changeElement.textContent;
-            changeElement.replaceWith(document.createTextNode(text));
-        }
-
-        // Remove from tracked changes
-        const changeId = changeElement.getAttribute('data-change-id');
-        trackedChanges = trackedChanges.filter(c => c.id !== changeId);
-
-        showNotification('Change accepted', 'success');
-        saveAsDraft();
-    }
-
-    function rejectChange(changeElement) {
-        const changeType = changeElement.getAttribute('data-change-type');
-
-        if (changeType === 'delete') {
-            // Reject deletion - restore text without markup
-            const text = changeElement.textContent;
-            changeElement.replaceWith(document.createTextNode(text));
-        } else if (changeType === 'insert') {
-            // Reject insertion - remove completely
-            changeElement.remove();
-        }
-
-        // Remove from tracked changes
-        const changeId = changeElement.getAttribute('data-change-id');
-        trackedChanges = trackedChanges.filter(c => c.id !== changeId);
-
-        showNotification('Change rejected', 'success');
-        saveAsDraft();
-    }
-
-    function acceptAllChanges() {
-        if (!confirm('Accept all tracked changes?')) return;
-
-        const content = document.getElementById('contractContent');
-        if (!content) return;
-
-        // Accept all deletions - remove them
-        content.querySelectorAll('.track-change-delete').forEach(el => {
-            if (el.getAttribute('data-change-type') === 'delete') {
-                el.remove();
-            }
-        });
-
-        // Accept all insertions - remove markup
-        content.querySelectorAll('.track-change-insert').forEach(el => {
-            const text = el.textContent;
-            el.replaceWith(document.createTextNode(text));
-        });
-
-        trackedChanges = [];
-        showNotification('All changes accepted', 'success');
-        saveAsDraft();
-    }
-
-    function rejectAllChanges() {
-        if (!confirm('Reject all tracked changes?')) return;
-
-        const content = document.getElementById('contractContent');
-        if (!content) return;
-
-        // Reject all deletions - restore text
-        content.querySelectorAll('.track-change-delete').forEach(el => {
-            if (el.getAttribute('data-change-type') === 'delete') {
-                const text = el.textContent;
-                el.replaceWith(document.createTextNode(text));
-            }
-        });
-
-        // Reject all insertions - remove them
-        content.querySelectorAll('.track-change-insert').forEach(el => {
-            el.remove();
-        });
-
-        trackedChanges = [];
-        showNotification('All changes rejected', 'success');
-        saveAsDraft();
-    }
-
-    // Mark new text as insertion
-    function markTextAsInserted(text, range) {
-        const span = document.createElement('span');
-        span.className = 'track-change-insert';
-        span.setAttribute('data-change-id', 'change_' + (++changeCounter));
-        span.setAttribute('data-change-type', 'insert');
-        span.setAttribute('data-change-author', currentUserName);
-        span.setAttribute('data-change-date', new Date().toISOString());
-        span.textContent = text;
-        span.title = `Inserted by ${currentUserName}`;
-
-        span.onclick = (e) => {
-            e.stopPropagation();
-            showChangeOptions(span);
-        };
-
-        range.insertNode(span);
-
-        trackedChanges.push({
-            id: span.getAttribute('data-change-id'),
-            type: 'insert',
-            text: text,
-            author: currentUserName,
-            date: new Date().toISOString()
-        });
-    }
-
+    });
 </script>
-
 
 
 <script>
@@ -6312,9 +5340,7 @@
     let contractWorkflowStepCount = 1;
     let canvas, ctx, isDrawing = false;
     let currentSignatureField = null;
-    let trackChangesEnabled = false;
     let originalContent = '';
-    let trackedChanges = [];
     let autoSaveInterval = null;
     let currentClauseText = '';
     let riskAnalysisData = null;
@@ -6335,9 +5361,6 @@
         await ensureWorkflowInstance();
         await checkWorkflowAvailability();
         await loadContractData();
-
-        //  LOAD EXISTING COMMENTS AFTER CONTRACT DATA IS LOADED
-        await loadExistingComments();
 
         await saveAsDraft();
     });
@@ -7242,12 +6265,14 @@ ${contract.content && contract.content.trim() !== '' ?
             </div>
             
             <div class="toolbar-group">
-                <button class="toolbar-btn ${trackChangesEnabled ? 'active' : ''}" onclick="toggleTrackChanges()" title="Track Changes" id="trackChangesBtn">
-                    <i class="ti ti-git-compare"></i>
-                </button>
-                <button class="toolbar-btn" onclick="addComment()" title="Add Comment">
-                    <i class="ti ti-message-plus"></i>
-                </button>
+              <button class="toolbar-btn primary" id="addCommentBtn">
+            <i class="ti ti-message-plus"></i>
+        </button>
+
+         <button class="toolbar-btn" id="toggleCommentsBtn">
+            <i class="ti ti-message-circle"></i>
+            <span class="comment-badge" id="commentsBadge" style="display: none;">0</span>
+        </button>
                 <button class="toolbar-btn" onclick="findReplace()" title="Find & Replace">
                     <i class="ti ti-search"></i>
                 </button>
@@ -10111,514 +9136,8 @@ ${contract.content && contract.content.trim() !== '' ?
         saveAsDraft();
     }
 
-    function highlightText(text, caseSensitive) {
-        const content = document.getElementById('contractContent');
-        const flags = caseSensitive ? 'g' : 'gi';
-        const regex = new RegExp(`(${text})`, flags);
-
-        content.innerHTML = content.innerHTML.replace(regex, '<mark style="background: yellow;">$1</mark>');
-
-        // Scroll to first match
-        const firstMatch = content.querySelector('mark');
-        if (firstMatch) {
-            firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }
-
-
-    let commentSelection = null;
-    let activeCommentBubble = null;
-
-    // Enhanced addComment function
-    function addComment() {
-        const selection = window.getSelection();
-        if (selection.toString().trim()) {
-            // Store the selection details
-            commentSelection = {
-                text: selection.toString(),
-                range: selection.getRangeAt(0).cloneRange()
-            };
-            openModal('commentModal');
-        } else {
-            showNotification('Please select text to add a comment', 'warning');
-        }
-    }
-
-    // Enhanced insertComment function with database persistence
-    async function insertComment() {
-        const commentText = document.getElementById('commentText').value.trim();
-
-        if (!commentText) {
-            showNotification('Please enter a comment', 'warning');
-            return;
-        }
-
-        if (!commentSelection || !commentSelection.text) {
-            showNotification('Please select text first', 'warning');
-            return;
-        }
-
-        try {
-            // Show loading state
-            const submitBtn = document.querySelector('#commentModal .btn-primary');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="ti ti-loader-2"></i> Saving...';
-            submitBtn.disabled = true;
-
-            // Save comment to database
-            const response = await fetch('/api/contracts/comments/add', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    contract_id: parseInt(contractId),
-                    comment_text: commentText,
-                    selected_text: commentSelection.text
-                })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.detail || 'Failed to save comment');
-            }
-
-            if (data.success) {
-                // Add visual comment indicator to the editor
-                addVisualCommentMarker(data.comment, commentSelection.range);
-
-                // Close modal and reset
-                closeModal('commentModal');
-                document.getElementById('commentText').value = '';
-                commentSelection = null;
-
-                showNotification('Comment added successfully', 'success');
-
-                // Auto-save the contract
-                saveAsDraft();
-            } else {
-                throw new Error(data.message || 'Failed to save comment');
-            }
-
-        } catch (error) {
-            console.error(' Error adding comment:', error);
-            showNotification('Failed to add comment: ' + error.message, 'error');
-        } finally {
-            // Restore button state
-            const submitBtn = document.querySelector('#commentModal .btn-primary');
-            if (submitBtn) {
-                submitBtn.innerHTML = 'Add Comment';
-                submitBtn.disabled = false;
-            }
-        }
-    }
-
-    // =====================================================
-    // IMPROVED: Add Visual Comment Marker
-    // =====================================================
-    function addVisualCommentMarker(comment, range) {
-        try {
-            const span = document.createElement('span');
-            span.className = 'track-change-comment';
-            span.style.cssText = `
-            background: rgba(255, 193, 7, 0.2);
-            border-bottom: 2px dotted #ffc107;
-            cursor: pointer;
-            position: relative;
-            padding: 2px 0;
-        `;
-
-            const commentId = 'comment_' + comment.id;
-            span.setAttribute('data-comment-id', commentId);
-            span.setAttribute('data-comment-db-id', comment.id);
-            span.setAttribute('title', 'Click to view/hide comment');
-
-            // Wrap the selected text
-            try {
-                range.surroundContents(span);
-            } catch (e) {
-                console.warn('Could not wrap text, inserting marker instead');
-                const marker = document.createElement('span');
-                marker.className = 'comment-marker';
-                marker.innerHTML = `<i class="ti ti-message-circle" style="color: #ffc107; font-size: 16px; vertical-align: middle;"></i>`;
-                marker.setAttribute('data-comment-id', commentId);
-                marker.setAttribute('data-comment-db-id', comment.id);
-                marker.title = comment.comment_text;
-                range.insertNode(marker);
-                span = marker; // Use marker as span reference
-            }
-
-            // Create comment bubble
-            createCommentBubble(span, comment);
-
-        } catch (visualError) {
-            console.error('Error adding visual comment:', visualError);
-            showNotification('Comment saved but visual indicator failed', 'warning');
-        }
-    }
-
-    // =====================================================
-    // IMPROVED: Create Comment Bubble with Delete Button
-    // =====================================================
-    function createCommentBubble(parentElement, comment) {
-        const commentId = 'comment_' + comment.id;
-
-        // Remove old bubble if exists
-        const oldBubble = document.getElementById(commentId);
-        if (oldBubble) oldBubble.remove();
-
-        const bubble = document.createElement('div');
-        bubble.className = 'comment-bubble';
-        bubble.id = commentId;
-        bubble.style.cssText = `
-        position: absolute;
-        background: white;
-        border: 1px solid #ddd;
-        border-radius: 12px;
-        padding: 12px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-        min-width: 280px;
-        max-width: 400px;
-        z-index: 10000;
-        display: none;
-        margin-top: 8px;
-    `;
-
-        bubble.innerHTML = `
-        <div style="display: flex; align-items: flex-start;">
-            <i class="ti ti-user-circle" style="font-size: 24px; color: var(--primary-color); flex-shrink: 0;"></i>
-            <div style="flex: 1;">
-                <div style="font-weight: 600; font-size: 14px; color: #333; margin-bottom: 2px;">
-                    ${comment.user_name}
-                </div>
-                <div style="font-size: 11px; color: #999;">
-                    ${new Date(comment.created_at).toLocaleString()}
-                </div>
-            </div>
-            <button 
-                onclick="deleteComment(${comment.id}, '${commentId}')" 
-                class="comment-delete-btn"
-                style="
-                    background: #dc3545;
-                    color: white;
-                    border: none;
-                    border-radius: 6px;
-                    padding: 6px 10px;
-                    cursor: pointer;
-                    font-size: 12px;
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
-                    transition: all 0.2s;
-                "
-                onmouseover="this.style.background='#c82333'"
-                onmouseout="this.style.background='#dc3545'"
-                title="Delete comment"
-            >
-                <i class="ti ti-trash" style="font-size: 14px;"></i>
-               
-            </button>
-        </div>
-        <div style="font-size: 14px; color: #444; line-height: 1.6; padding: 8px 12px; background: #f8f9fa; border-radius: 8px;">
-            ${comment.comment_text}
-        </div>
-       
-    `;
-
-        // Add bubble to parent element
-        parentElement.appendChild(bubble);
-
-        //  IMPROVED: Better click handler with proper positioning
-        parentElement.addEventListener('click', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            // Close other bubbles
-            closeAllCommentBubbles();
-
-            // Toggle this bubble
-            const isHidden = bubble.style.display === 'none';
-            bubble.style.display = isHidden ? 'block' : 'none';
-
-            if (isHidden) {
-                // Position bubble properly
-                positionCommentBubble(bubble, parentElement);
-                activeCommentBubble = bubble;
-
-                // Highlight the comment
-                parentElement.classList.add('active');
-            } else {
-                parentElement.classList.remove('active');
-                activeCommentBubble = null;
-            }
-        });
-    }
-
-    // =====================================================
-    // IMPROVED: Position Comment Bubble Properly
-    // =====================================================
-    function positionCommentBubble(bubble, parentElement) {
-        // Get parent position
-        const rect = parentElement.getBoundingClientRect();
-        const containerRect = document.getElementById('contractContent').getBoundingClientRect();
-
-        // Reset position
-        bubble.style.top = '';
-        bubble.style.bottom = '';
-        bubble.style.left = '';
-        bubble.style.right = '';
-
-        // Calculate available space
-        const spaceBelow = window.innerHeight - rect.bottom;
-        const spaceAbove = rect.top;
-
-        // Position bubble
-        if (spaceBelow > 250 || spaceBelow > spaceAbove) {
-            // Show below
-            bubble.style.top = '100%';
-            bubble.style.bottom = 'auto';
-        } else {
-            // Show above
-            bubble.style.bottom = '100%';
-            bubble.style.top = 'auto';
-            bubble.style.marginBottom = '8px';
-            bubble.style.marginTop = '0';
-        }
-
-        // Horizontal positioning
-        bubble.style.left = '0';
-
-        // Ensure bubble is visible within viewport
-        setTimeout(() => {
-            const bubbleRect = bubble.getBoundingClientRect();
-
-            // Adjust if going off right edge
-            if (bubbleRect.right > window.innerWidth - 20) {
-                bubble.style.left = 'auto';
-                bubble.style.right = '0';
-            }
-
-            // Adjust if going off left edge
-            if (bubbleRect.left < 20) {
-                bubble.style.left = '20px';
-            }
-        }, 10);
-    }
-
-    // =====================================================
-    // Close All Comment Bubbles
-    // =====================================================
-    function closeAllCommentBubbles() {
-        document.querySelectorAll('.comment-bubble').forEach(bubble => {
-            bubble.style.display = 'none';
-        });
-        document.querySelectorAll('.track-change-comment, .comment-marker').forEach(marker => {
-            marker.classList.remove('active');
-        });
-        activeCommentBubble = null;
-    }
-
-    // =====================================================
-    // DELETE COMMENT FUNCTION - WITH AUTO-SAVE
-    // =====================================================
-    async function deleteComment(commentId, bubbleId) {
-        if (!confirm('Are you sure you want to delete this comment?')) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`/api/contracts/comments/${commentId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.detail || 'Failed to delete comment');
-            }
-
-            if (data.success) {
-                console.log('✅ Comment deleted from database, removing UI elements...');
-
-                // STEP 1: Remove the bubble FIRST (it's inside the span)
-                const bubble = document.getElementById(bubbleId);
-                if (bubble) {
-                    bubble.remove();
-                    console.log('✅ Comment bubble removed:', bubbleId);
-                } else {
-                    console.warn('⚠️ Bubble not found:', bubbleId);
-                }
-
-                // STEP 2: Find and remove the comment highlight element
-                const commentElement = document.querySelector(`[data-comment-db-id="${commentId}"]`);
-
-                if (commentElement) {
-                    console.log('Found comment element:', commentElement);
-
-                    // If it's a span wrapper with highlight
-                    if (commentElement.tagName === 'SPAN' && commentElement.classList.contains('track-change-comment')) {
-                        // Get the text content
-                        const textContent = commentElement.textContent || commentElement.innerText;
-
-                        // Create a text node with the content
-                        const textNode = document.createTextNode(textContent);
-
-                        // Replace the span with the text node
-                        commentElement.parentNode.replaceChild(textNode, commentElement);
-
-                        console.log('✅ Highlight removed, text preserved:', textContent);
-
-                    } else if (commentElement.classList.contains('comment-marker')) {
-                        // If it's a marker icon, just remove it
-                        commentElement.remove();
-                        console.log('✅ Comment marker removed');
-                    }
-                } else {
-                    console.warn('⚠️ Comment element not found in DOM with ID:', commentId);
-                }
-
-                showNotification('Comment deleted successfully', 'success');
-
-                // STEP 3: CRITICAL - Save the modified content to database
-                // This ensures the highlight removal is persisted
-                console.log('💾 Saving contract content without highlight...');
-                await saveAsDraft();
-
-                console.log('💬 Comment deletion and save complete');
-
-            } else {
-                throw new Error(data.message || 'Failed to delete comment');
-            }
-
-        } catch (error) {
-            console.error('❌ Error deleting comment:', error);
-            showNotification('Failed to delete comment: ' + error.message, 'error');
-        }
-    }
-
-    // =====================================================
-    // Global Click Handler - Close Bubbles When Clicking Outside
-    // =====================================================
-    document.addEventListener('click', function (e) {
-        // Don't close if clicking inside a comment or bubble
-        if (!e.target.closest('.track-change-comment') &&
-            !e.target.closest('.comment-marker') &&
-            !e.target.closest('.comment-bubble')) {
-            closeAllCommentBubbles();
-        }
-    });
-
-    // =====================================================
-    // Load Existing Comments When Page Loads
-    // =====================================================
-    async function loadExistingComments() {
-        try {
-            console.log(' Loading comments for contract:', contractId);
-
-            const response = await fetch(`/api/contracts/comments/${contractId}`);
-            const data = await response.json();
-
-            if (!data.success || !data.comments.length) {
-                console.log('No comments to load');
-                return;
-            }
-
-            console.log(` Found ${data.comments.length} comments`);
-
-            // For each comment, find or create marker and attach bubble
-            data.comments.forEach(comment => {
-                let marker = document.querySelector(`[data-comment-db-id="${comment.id}"]`);
-
-                if (!marker) {
-                    // Marker doesn't exist, try to recreate
-                    marker = findAndWrapText(comment.selected_text, comment.id);
-                }
-
-                if (marker) {
-                    // Attach bubble to marker
-                    createCommentBubble(marker, {
-                        id: comment.id,
-                        user_name: comment.author,
-                        comment_text: comment.comment_text,
-                        selected_text: comment.selected_text,
-                        created_at: comment.created_at
-                    });
-                }
-            });
-
-
-        } catch (error) {
-            console.error(' Error loading comments:', error);
-        }
-    }
-
-
-
-    function findAndWrapText(searchText, commentId) {
-        if (!searchText) return null;
-
-        const content = document.getElementById('contractContent');
-        if (!content) return null;
-
-        const text = searchText.trim();
-        const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
-
-        let node;
-        while (node = walker.nextNode()) {
-            const index = node.textContent.indexOf(text);
-
-            if (index !== -1) {
-                try {
-                    const range = document.createRange();
-                    range.setStart(node, index);
-                    range.setEnd(node, index + text.length);
-
-                    const span = document.createElement('span');
-                    span.className = 'track-change-comment';
-                    span.setAttribute('data-comment-db-id', commentId);
-                    span.setAttribute('data-comment-id', 'comment_' + commentId);
-                    span.style.cssText = `
-                    background: rgba(255, 193, 7, 0.25);
-                    border-bottom: 2px solid #ffc107;
-                    cursor: pointer;
-                    position: relative;
-                    padding: 2px 0;
-                `;
-
-                    range.surroundContents(span);
-                    console.log(` Recreated marker for comment ${commentId}`);
-                    return span;
-
-                } catch (e) {
-                    console.warn('Could not wrap text:', e);
-                }
-            }
-        }
-
-        return null;
-    }
-
-
-
-    // Also try on window load (as backup)
-    window.addEventListener('load', function () {
-        const markers = document.querySelectorAll('[data-comment-db-id]');
-        const bubbles = document.querySelectorAll('.comment-bubble');
-
-        if (markers.length > 0 && bubbles.length === 0) {
-            console.log('🔄 Found markers but no bubbles, reloading...');
-            loadExistingComments();
-        }
-    });
-
-    // =====================================================
-    // Initialize When Document is Ready
-    // =====================================================
-
+ 
+   
 
     // Auto-save functionality
     function startAutoSave() {
@@ -12273,10 +10792,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
 
 
             if (typeof contractId !== 'undefined' && contractId) {
-                // Wait a bit for content to load
-                setTimeout(() => {
-                    loadExistingComments();
-                }, 500);
+              
             }
         }
     });
@@ -12288,8 +10804,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
         // Remove old bubbles
         document.querySelectorAll('.comment-bubble').forEach(b => b.remove());
 
-        // Reload
-        loadExistingComments();
+       
     };
 
     // Wrapper function for verify button
@@ -14163,75 +12678,75 @@ Generated by CALIM 360 Smart CLM
 
 
     async function submitInitiateNegotiation() {
-    // Get the button
-    const negotiationBtn = document.querySelector('button[onclick="submitInitiateNegotiation()"]');
-    const originalButtonHTML = '<i class="ti ti-send"></i> Initiate Negotiation';
+        // Get the button
+        const negotiationBtn = document.querySelector('button[onclick="submitInitiateNegotiation()"]');
+        const originalButtonHTML = '<i class="ti ti-send"></i> Initiate Negotiation';
 
-    try {
-        console.log('🚀 Starting negotiation initiation...');
+        try {
+            console.log('🚀 Starting negotiation initiation...');
 
-        // Show loader overlay
-        showLoader('Initiating negotiation...');
+            // Show loader overlay
+            showLoader('Initiating negotiation...');
 
-        // 🔥 DISABLE BUTTON AND SHOW LOADING STATE
-        if (negotiationBtn) {
-            negotiationBtn.disabled = true;
-            negotiationBtn.innerHTML = '<i class="ti ti-loader"></i> Initiating...';
+            // 🔥 DISABLE BUTTON AND SHOW LOADING STATE
+            if (negotiationBtn) {
+                negotiationBtn.disabled = true;
+                negotiationBtn.innerHTML = '<i class="ti ti-loader"></i> Initiating...';
+            }
+
+            const response = await fetch('/api/v1/workflow/initiate-negotiation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contract_id: contractId,
+                    comments: null
+                })
+            });
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to initiate negotiation');
+            }
+
+            const result = await response.json();
+            console.log('✅ Negotiation initiated:', result);
+
+            // Hide loader
+            hideLoader();
+
+            // 🔥 RE-ENABLE BUTTON AND RESTORE TEXT
+            if (negotiationBtn) {
+                negotiationBtn.disabled = false;
+                negotiationBtn.innerHTML = originalButtonHTML;
+            }
+
+            closeModal('negotiationConfirmationModal');
+
+            // Show success message
+            showNotification(result.message || 'Negotiation initiated successfully! Redirecting...', 'success');
+
+            // Redirect or refresh page after delay
+            setTimeout(() => {
+                window.location.reload(); // Or redirect to specific page
+            }, 1500);
+
+        } catch (error) {
+            console.error('❌ Error initiating negotiation:', error);
+
+            // Hide loader
+            hideLoader();
+
+            // 🔥 RE-ENABLE BUTTON AND RESTORE TEXT ON ERROR
+            if (negotiationBtn) {
+                negotiationBtn.disabled = false;
+                negotiationBtn.innerHTML = originalButtonHTML;
+            }
+
+            // Show error message
+            showNotification(error.message || 'Failed to initiate negotiation. Please try again.', 'error');
         }
-
-        const response = await fetch('/api/v1/workflow/initiate-negotiation', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                contract_id: contractId,
-                comments: null
-            })
-        });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Failed to initiate negotiation');
-        }
-
-        const result = await response.json();
-        console.log('✅ Negotiation initiated:', result);
-
-        // Hide loader
-        hideLoader();
-
-        // 🔥 RE-ENABLE BUTTON AND RESTORE TEXT
-        if (negotiationBtn) {
-            negotiationBtn.disabled = false;
-            negotiationBtn.innerHTML = originalButtonHTML;
-        }
-
-         closeModal('negotiationConfirmationModal');
-
-        // Show success message
-        showNotification(result.message || 'Negotiation initiated successfully! Redirecting...', 'success');
-
-        // Redirect or refresh page after delay
-        setTimeout(() => {
-            window.location.reload(); // Or redirect to specific page
-        }, 1500);
-
-    } catch (error) {
-        console.error('❌ Error initiating negotiation:', error);
-
-        // Hide loader
-        hideLoader();
-
-        // 🔥 RE-ENABLE BUTTON AND RESTORE TEXT ON ERROR
-        if (negotiationBtn) {
-            negotiationBtn.disabled = false;
-            negotiationBtn.innerHTML = originalButtonHTML;
-        }
-
-        // Show error message
-        showNotification(error.message || 'Failed to initiate negotiation. Please try again.', 'error');
     }
-}
 
 
 
@@ -15803,9 +14318,7 @@ Generated by CALIM 360 Smart CLM
                 renderContractEditor(data);
                 await checkWorkflowAvailability();
                 await checkIfAIGenerated();
-                if (typeof loadExistingComments === 'function') {
-                    await loadExistingComments();
-                }
+               
 
                 // ✅ UPDATE SIGNATURE FIELDS AFTER RENDERING
                 if (data.certificate) {
@@ -16743,14 +15256,6 @@ Generated by CALIM 360 Smart CLM
 
 
 
-    if (!document.getElementById('trackChangesStyles')) {
-        const style = document.createElement('div');
-        style.id = 'trackChangesStyles';
-        style.innerHTML = trackChangesCSS;
-        document.head.appendChild(style);
-    }
-
-
 
     // =====================================================
     // PERMANENT FIX FOR TRACK CHANGES
@@ -17301,6 +15806,9 @@ Generated by CALIM 360 Smart CLM
 
         }, 1000); // Wait 1 second for everything to load
     });
+
+
+    
 </script>
 
 
@@ -17311,4 +15819,5 @@ Generated by CALIM 360 Smart CLM
 {% block extra_js %}
 <script src="/app/static/js/negotiation.js"></script>
 <script src="/app/static/js/contract-edit.js"></script>
+<script src="/app/static/js/bubble-comments.js"></script>
 {% endblock %}

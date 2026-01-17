@@ -35,6 +35,7 @@ from app.api.api_v1.users import license as license_router
 
 from app.api.api_v1.experts.unified_chat import router as unified_chat_router
 from app.api.api_v1.approvals import router as approvals_router
+from app.api.api_v1.contracts import comments
 
 # Configure logging FIRST
 logging.basicConfig(level=logging.INFO)
@@ -365,6 +366,8 @@ app.include_router(
     tags=["workflow"]
 )
 app.include_router(search.router, prefix="/api/search", tags=["search"])
+app.include_router(comments.router, prefix="/api/contracts", tags=["Comments"])
+
 
 # Activity Logs
 app.include_router(

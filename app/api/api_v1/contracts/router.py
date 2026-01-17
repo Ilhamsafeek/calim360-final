@@ -21,6 +21,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
 from app.utils.document_parser import DocumentParser
+from app.api.api_v1.contracts import comments
 
 from app.api.api_v1.contracts.schemas import (
     ContractCreateRequest, ContractUpdateRequest, ContractResponse,
