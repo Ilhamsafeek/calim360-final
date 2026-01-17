@@ -1,8 +1,8 @@
 /* =====================================================
-   BUBBLE COMMENTS - SIMPLIFIED STYLING
+   BUBBLE COMMENTS - SIMPLIFIED STYLING WITH PROTECTION
    ===================================================== */
 
-/* Comment Highlights in Text */
+/* Comment Highlights in Text - PROTECTED */
 .comment-highlight {
     background: rgba(255, 193, 7, 0.25);
     border-bottom: 2px solid #ffc107;
@@ -10,13 +10,31 @@
     padding: 2px 0;
     position: relative;
     transition: all 0.2s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
 }
 
 .comment-highlight:hover {
     background: rgba(255, 193, 7, 0.4);
 }
 
-/* Track Changes - Insertions */
+/* Add lock icon indicator */
+.comment-highlight::after {
+    content: '🔒';
+    position: absolute;
+    top: -8px;
+    right: -12px;
+    font-size: 10px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.comment-highlight:hover::after {
+    opacity: 0.6;
+}
+
+/* Track Changes - Insertions - PROTECTED */
 .track-insert {
     background: rgba(40, 167, 69, 0.15);
     border-bottom: 2px solid #28a745;
@@ -24,13 +42,30 @@
     padding: 2px 0;
     cursor: pointer;
     position: relative;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
 }
 
 .track-insert:hover {
     background: rgba(40, 167, 69, 0.25);
 }
 
-/* Track Changes - Deletions */
+.track-insert::after {
+    content: '🔒';
+    position: absolute;
+    top: -8px;
+    right: -12px;
+    font-size: 10px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.track-insert:hover::after {
+    opacity: 0.6;
+}
+
+/* Track Changes - Deletions - PROTECTED */
 .track-delete {
     text-decoration: line-through;
     text-decoration-color: #dc3545;
@@ -41,10 +76,67 @@
     border-radius: 3px;
     cursor: pointer;
     position: relative;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
 }
 
 .track-delete:hover {
     background: rgba(220, 53, 69, 0.25);
+}
+
+.track-delete::after {
+    content: '🔒';
+    position: absolute;
+    top: -8px;
+    right: -12px;
+    font-size: 10px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.track-delete:hover::after {
+    opacity: 0.6;
+}
+
+/* Flash animation when trying to edit protected text */
+@keyframes protectedFlash {
+    0%, 100% {
+        box-shadow: none;
+    }
+    50% {
+        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.4);
+        transform: scale(1.02);
+    }
+}
+
+/* Protection warning overlay */
+.protection-warning {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    border-left: 4px solid #dc3545;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
 /* Bubble Tooltip */

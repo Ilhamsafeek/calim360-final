@@ -2873,6 +2873,31 @@
 </style>
 
 
+<style>
+.modal-body label[style*="cursor"] {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.modal-body label[style*="cursor"]:hover {
+    border-color: #0066cc;
+    background: #f8f9fa;
+}
+
+.modal-body label input[type="radio"]:checked + i {
+    transform: scale(1.2);
+}
+
+.modal-body label:has(input[type="radio"]:checked) {
+    border-color: #0066cc;
+    background: rgba(0, 102, 204, 0.05);
+}
+</style>
+
 
 {% endblock %}
 
@@ -5241,34 +5266,103 @@
     </div>
 </div>
 
-<!-- Add Comment Modal -->
-<div class="modal" id="commentModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <div class="modal-title">
+
+<!-- Enhanced Add Comment Modal with Track Changes -->
+<div class="modal" id="commentModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
+    <div class="modal-content" style="background: white; border-radius: 12px; width: 550px; max-width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
+        <div class="modal-header" style="padding: 20px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
+            <div class="modal-title" style="font-size: 18px; font-weight: 600; color: #2c3e50; display: flex; align-items: center; gap: 10px;">
                 <i class="ti ti-message-plus"></i>
-                Add Comment
+                <span id="modalTitle">Add Comment</span>
             </div>
-            <button class="modal-close" onclick="closeModal('commentModal')">×</button>
+            <button class="modal-close" onclick="closeModal('commentModal')" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #7f8c8d; padding: 4px;">×</button>
         </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label class="form-label">Your Comment</label>
-                <textarea id="commentText" class="form-control" rows="4" placeholder="Enter your comment..."></textarea>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Selected Text</label>
-                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; font-size: 14px; color: #666;">
-                    <em id="selectedTextPreview">No text selected</em>
+        
+        <div class="modal-body" style="padding: 20px;">
+            <!-- Change Type Selection -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 14px; font-weight: 600; color: #495057; margin-bottom: 10px;">
+                    <i class="ti ti-edit"></i> Action Type
+                </label>
+                <div style="display: flex; gap: 10px;">
+                    <label style="flex: 1; cursor: pointer;">
+                        <input type="radio" name="changeType" value="comment" checked onchange="updateChangeType(this.value)" style="margin-right: 6px;">
+                        <i class="ti ti-message-circle" style="color: #ffc107;"></i>
+                        <span style="font-size: 14px;">Comment</span>
+                    </label>
+                    <label style="flex: 1; cursor: pointer;">
+                        <input type="radio" name="changeType" value="delete" onchange="updateChangeType(this.value)" style="margin-right: 6px;">
+                        <i class="ti ti-trash" style="color: #dc3545;"></i>
+                        <span style="font-size: 14px;">Delete Text</span>
+                    </label>
+                    <label style="flex: 1; cursor: pointer;">
+                        <input type="radio" name="changeType" value="insert" onchange="updateChangeType(this.value)" style="margin-right: 6px;">
+                        <i class="ti ti-pencil" style="color: #28a745;"></i>
+                        <span style="font-size: 14px;">Modify Text</span>
+                    </label>
                 </div>
             </div>
+            
+            <!-- Comment/Reason Text -->
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" style="display: block; font-size: 14px; font-weight: 600; color: #495057; margin-bottom: 8px;">
+                    <span id="commentLabel">Your Comment</span>
+                </label>
+                <textarea 
+                    id="commentText" 
+                    class="form-control" 
+                    rows="3" 
+                    placeholder="Enter your comment..."
+                    style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 14px; font-family: inherit; resize: vertical;"
+                ></textarea>
+            </div>
+            
+            <!-- New Text (for modifications) -->
+            <div class="form-group" id="newTextGroup" style="margin-bottom: 15px; display: none;">
+                <label class="form-label" style="display: block; font-size: 14px; font-weight: 600; color: #495057; margin-bottom: 8px;">
+                    <i class="ti ti-pencil"></i> New Text (Replacement)
+                </label>
+                <textarea 
+                    id="newText" 
+                    class="form-control" 
+                    rows="2" 
+                    placeholder="Enter the new text..."
+                    style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 14px; font-family: inherit; resize: vertical;"
+                ></textarea>
+            </div>
+            
+            <!-- Selected Text Preview -->
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="display: block; font-size: 14px; font-weight: 600; color: #495057; margin-bottom: 8px;">
+                    <i class="ti ti-quote"></i> <span id="selectedLabel">Selected Text</span>
+                </label>
+                <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; font-size: 14px; border-left: 3px solid #0066cc;">
+                    <em id="selectedTextPreview" style="color: #666;">No text selected</em>
+                </div>
+            </div>
+            
+            <!-- Preview Section -->
+            <div id="changePreview" style="display: none; margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 6px; border-left: 3px solid #ffc107;">
+                <div style="font-size: 13px; font-weight: 600; color: #495057; margin-bottom: 8px;">
+                    <i class="ti ti-eye"></i> Preview:
+                </div>
+                <div id="previewContent" style="font-size: 13px; color: #333;"></div>
+            </div>
         </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('commentModal')">Cancel</button>
-            <button class="btn btn-primary" onclick="submitComment()">Add Comment</button>
+        
+        <div class="modal-footer" style="padding: 15px 20px; border-top: 1px solid #e0e0e0; display: flex; justify-content: flex-end; gap: 10px;">
+            <button class="btn btn-secondary" onclick="closeModal('commentModal')" style="padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; background: #6c757d; color: white;">
+                Cancel
+            </button>
+            <button class="btn btn-primary" onclick="submitComment()" style="padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; background: #0066cc; color: white;">
+                <span id="submitBtnText">Add Comment</span>
+            </button>
         </div>
     </div>
 </div>
+
+
+
 
 <!-- Toggle Button -->
 <button class="comments-toggle-btn" onclick="toggleCommentsPanel()">
@@ -15808,9 +15902,328 @@ Generated by CALIM 360 Smart CLM
     });
 
 
+    // =====================================================
+// BULLETPROOF COMMENT BUTTON FIX
+// Add this to SCR_016_contract_editor.html AFTER bubble-comments.js
+// This will FORCE the button to work no matter what
+// =====================================================
+
+(function() {
+    'use strict';
+    
+    console.log('🛡️ BULLETPROOF COMMENT BUTTON FIX LOADING...');
+    
+    let buttonFixed = false;
+    let retryCount = 0;
+    const MAX_RETRIES = 10;
+    
+    // =====================================================
+    // MAIN FIX FUNCTION
+    // =====================================================
+    function forceFixCommentButton() {
+        retryCount++;
+        console.log(`🔧 Attempt ${retryCount}: Fixing comment button...`);
+        
+        const addBtn = document.getElementById('addCommentBtn');
+        
+        if (!addBtn) {
+            console.warn('⚠️ Button not found yet, will retry...');
+            if (retryCount < MAX_RETRIES) {
+                setTimeout(forceFixCommentButton, 500);
+            }
+            return;
+        }
+        
+        console.log('✅ Found button:', addBtn);
+        
+        // METHOD 1: Remove ALL event listeners by replacing element
+        const newBtn = addBtn.cloneNode(true);
+        addBtn.parentNode.replaceChild(newBtn, addBtn);
+        
+        // METHOD 2: Add click handler directly to element
+        newBtn.onclick = function(e) {
+            console.log('🖱️ BUTTON CLICKED (onclick)');
+            e.preventDefault();
+            e.stopPropagation();
+            handleCommentButtonClick(e);
+        };
+        
+        // METHOD 3: Add addEventListener as backup
+        newBtn.addEventListener('click', function(e) {
+            console.log('🖱️ BUTTON CLICKED (addEventListener)');
+            e.preventDefault();
+            e.stopPropagation();
+            handleCommentButtonClick(e);
+        }, true); // Use capture phase
+        
+        // METHOD 4: Prevent any future listener removal
+        Object.defineProperty(newBtn, 'onclick', {
+            set: function(val) {
+                console.log('⚠️ Someone tried to change onclick!');
+            },
+            get: function() {
+                return function(e) {
+                    handleCommentButtonClick(e);
+                };
+            }
+        });
+        
+        console.log('✅ Button fixed with multiple methods!');
+        buttonFixed = true;
+        
+        // Also fix toggle button
+        fixToggleButton();
+    }
+    
+    // =====================================================
+    // FIX TOGGLE PANEL BUTTON
+    // =====================================================
+    function fixToggleButton() {
+        const toggleBtn = document.getElementById('toggleCommentsBtn');
+        
+        if (toggleBtn) {
+            const newToggle = toggleBtn.cloneNode(true);
+            toggleBtn.parentNode.replaceChild(newToggle, toggleBtn);
+            
+            newToggle.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof toggleCommentsPanel === 'function') {
+                    toggleCommentsPanel();
+                }
+            };
+            
+            console.log('✅ Toggle button fixed');
+        }
+    }
+    
+    // =====================================================
+    // HANDLE BUTTON CLICK
+    // =====================================================
+    function handleCommentButtonClick(e) {
+        console.log('📝 Processing comment button click...');
+        
+        // Check if openAddCommentModal exists
+        if (typeof openAddCommentModal === 'function') {
+            console.log('✅ Using openAddCommentModal()');
+            openAddCommentModal();
+            return;
+        }
+        
+        // Fallback: Manual implementation
+        console.log('⚠️ openAddCommentModal not found, using fallback');
+        openCommentModalManually();
+    }
+    
+    // =====================================================
+    // FALLBACK: MANUAL MODAL OPENING
+    // =====================================================
+    function openCommentModalManually() {
+        const selection = window.getSelection();
+        
+        if (!selection.rangeCount || selection.toString().trim() === '') {
+            showNotificationFallback('Please select text to comment on', 'warning');
+            return;
+        }
+        
+        const selectedText = selection.toString().trim();
+        console.log('✅ Selected text:', selectedText);
+        
+        // Store selection
+        window.commentSelection = {
+            text: selectedText,
+            range: selection.getRangeAt(0)
+        };
+        
+        // Show modal
+        const modal = document.getElementById('commentModal');
+        if (!modal) {
+            alert('Comment modal not found! Please refresh the page.');
+            return;
+        }
+        
+        modal.style.display = 'flex';
+        
+        // Clear textarea
+        const textarea = document.getElementById('commentText');
+        if (textarea) {
+            textarea.value = '';
+            setTimeout(() => textarea.focus(), 100);
+        }
+        
+        // Update preview
+        const preview = document.getElementById('selectedTextPreview');
+        if (preview) {
+            preview.textContent = selectedText;
+        }
+        
+        console.log('✅ Modal opened manually');
+    }
+    
+    // =====================================================
+    // FALLBACK NOTIFICATION
+    // =====================================================
+    function showNotificationFallback(message, type) {
+        // Try to use existing notification function
+        if (typeof showNotification === 'function') {
+            showNotification(message, type);
+            return;
+        }
+        
+        // Fallback: alert
+        alert(message);
+    }
+    
+    // =====================================================
+    // MUTATION OBSERVER - Watch for button changes
+    // =====================================================
+    function setupMutationObserver() {
+        const observer = new MutationObserver(function(mutations) {
+            if (!buttonFixed) {
+                console.log('🔍 DOM changed, checking button...');
+                forceFixCommentButton();
+            }
+        });
+        
+        // Watch the entire document for changes
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+        
+        console.log('👁️ Mutation observer started');
+    }
+    
+    // =====================================================
+    // INITIALIZATION - Multiple triggers
+    // =====================================================
+    
+    // Trigger 1: Immediate
+    console.log('🚀 Trigger 1: Immediate execution');
+    setTimeout(forceFixCommentButton, 100);
+    
+    // Trigger 2: DOM Ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Trigger 2: DOMContentLoaded');
+            forceFixCommentButton();
+        });
+    } else {
+        console.log('🚀 Trigger 2: DOM already loaded');
+        forceFixCommentButton();
+    }
+    
+    // Trigger 3: Window Load
+    window.addEventListener('load', function() {
+        console.log('🚀 Trigger 3: Window load');
+        forceFixCommentButton();
+    });
+    
+    // Trigger 4: Delayed (for dynamically loaded content)
+    setTimeout(function() {
+        console.log('🚀 Trigger 4: Delayed (1 second)');
+        forceFixCommentButton();
+    }, 1000);
+    
+    // Trigger 5: Watch for DOM changes
+    if (typeof MutationObserver !== 'undefined') {
+        setupMutationObserver();
+    }
+    
+    // =====================================================
+    // EXPOSE FUNCTIONS GLOBALLY
+    // =====================================================
+    window.forceFixCommentButton = forceFixCommentButton;
+    window.handleCommentButtonClick = handleCommentButtonClick;
+    
+    console.log('🛡️ Bulletproof fix installed!');
+    console.log('💡 Manual fix: forceFixCommentButton()');
+    
+})();
     
 </script>
 
+
+
+<script>
+// Update modal based on change type
+function updateChangeType(type) {
+    console.log('📝 Change type:', type);
+    
+    const modalTitle = document.getElementById('modalTitle');
+    const commentLabel = document.getElementById('commentLabel');
+    const selectedLabel = document.getElementById('selectedLabel');
+    const newTextGroup = document.getElementById('newTextGroup');
+    const changePreview = document.getElementById('changePreview');
+    const submitBtnText = document.getElementById('submitBtnText');
+    const commentText = document.getElementById('commentText');
+    
+    if (type === 'comment') {
+        // Regular comment
+        modalTitle.innerHTML = '<i class="ti ti-message-plus"></i> Add Comment';
+        commentLabel.textContent = 'Your Comment';
+        selectedLabel.textContent = 'Selected Text';
+        newTextGroup.style.display = 'none';
+        changePreview.style.display = 'none';
+        submitBtnText.textContent = 'Add Comment';
+        commentText.placeholder = 'Enter your comment...';
+        
+    } else if (type === 'delete') {
+        // Delete text
+        modalTitle.innerHTML = '<i class="ti ti-trash"></i> Mark for Deletion';
+        commentLabel.textContent = 'Reason for Deletion';
+        selectedLabel.textContent = 'Text to Delete';
+        newTextGroup.style.display = 'none';
+        submitBtnText.textContent = 'Mark as Deleted';
+        commentText.placeholder = 'Why is this text being removed?';
+        
+        // Show preview
+        changePreview.style.display = 'block';
+        const selectedText = document.getElementById('selectedTextPreview').textContent;
+        document.getElementById('previewContent').innerHTML = `
+            <div style="text-decoration: line-through; color: #dc3545; background: rgba(220, 53, 69, 0.1); padding: 8px; border-radius: 4px;">
+                ${selectedText}
+            </div>
+        `;
+        
+    } else if (type === 'insert') {
+        // Modify/replace text
+        modalTitle.innerHTML = '<i class="ti ti-pencil"></i> Modify Text';
+        commentLabel.textContent = 'Reason for Change';
+        selectedLabel.textContent = 'Original Text';
+        newTextGroup.style.display = 'block';
+        submitBtnText.textContent = 'Track Change';
+        commentText.placeholder = 'Why is this change being made?';
+        
+        // Update preview when new text changes
+        document.getElementById('newText').addEventListener('input', function() {
+            const originalText = document.getElementById('selectedTextPreview').textContent;
+            const newText = this.value;
+            
+            changePreview.style.display = 'block';
+            document.getElementById('previewContent').innerHTML = `
+                <div style="margin-bottom: 8px;">
+                    <strong style="color: #dc3545;">Before:</strong>
+                    <div style="text-decoration: line-through; color: #dc3545; background: rgba(220, 53, 69, 0.1); padding: 6px; border-radius: 4px; margin-top: 4px;">
+                        ${originalText}
+                    </div>
+                </div>
+                <div>
+                    <strong style="color: #28a745;">After:</strong>
+                    <div style="color: #28a745; background: rgba(40, 167, 69, 0.1); padding: 6px; border-radius: 4px; margin-top: 4px; border-left: 3px solid #28a745;">
+                        ${newText || '(enter new text above)'}
+                    </div>
+                </div>
+            `;
+        });
+    }
+}
+
+// Initialize on first load
+document.addEventListener('DOMContentLoaded', () => {
+    updateChangeType('comment');
+});
+</script>
 
 
 
