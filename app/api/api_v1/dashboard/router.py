@@ -90,9 +90,9 @@ async def get_dashboard_statistics(
             text("""
                 SELECT COUNT(*) as count
                 FROM contracts
-                WHERE action_person_id = :user_id
+                WHERE action_person_id = :user_id OR party_esignature_authority_id = :user_id OR counterparty_esignature_authority_id = :user_id
                 AND (company_id = :company_id OR party_b_id = :company_id)
-                AND status IN ('approval', 'signature', 'review','draft','review_completed','counterparty_internal_review')
+                AND status IN ('approval', 'signature', 'review','draft','review_completed','counterparty_internal_review','counterparty_review_completed')
             """),
             {"company_id": company_id, "user_id": user_id}
         ).fetchone()
@@ -644,7 +644,7 @@ async def get_pending_actions(
                     ELSE 'Action required on this contract'
                 END as description
             FROM contracts c
-            WHERE c.action_person_id = :user_id
+            WHERE c.action_person_id = :user_id OR c.party_esignature_authority_id = :user_id OR c.counterparty_esignature_authority_id = :user_id
             ORDER BY c.updated_at DESC
         """)
         

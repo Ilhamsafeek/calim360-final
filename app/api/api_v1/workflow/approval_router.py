@@ -514,7 +514,6 @@ async def approve_reject_workflow(
         logger.info("🔄 Transaction rolled back")
         raise HTTPException(status_code=500, detail=str(e))
              
-
 @router.post("/initiate-negotiation")
 async def initiate_negotiation(
     request: NegotiationInitiationRequest,
@@ -541,16 +540,44 @@ async def initiate_negotiation(
                 detail="Contract not found or access denied"
             )
         
-        # Update contract status to negotiation
+        # Get master workflow for this company
+        workflow_query = text("""
+            SELECT id, workflow_name
+            FROM workflows
+            WHERE company_id = :company_id
+            AND is_master = 1
+            AND is_active = 1
+            LIMIT 1
+        """)
+        workflow = db.execute(workflow_query, {"company_id": company_id}).fetchone()
+        
+        # Get the first person in the master workflow
+        first_step_user_id = None
+        if workflow:
+            first_step_query = text("""
+                SELECT assignee_user_id
+                FROM workflow_steps
+                WHERE workflow_id = :workflow_id
+                AND assignee_user_id IS NOT NULL
+                ORDER BY step_number ASC
+                LIMIT 1
+            """)
+            first_step = db.execute(first_step_query, {"workflow_id": workflow.id}).fetchone()
+            if first_step:
+                first_step_user_id = first_step.assignee_user_id
+        
+        # Update contract status to negotiation AND set action_person_id to first workflow user
         update_contract = text("""
             UPDATE contracts
             SET approval_status = 'negotiation',
                 status = 'negotiation',
+                action_person_id = :action_person_id,
                 updated_at = NOW()
             WHERE id = :contract_id 
         """)
         db.execute(update_contract, {
-            "contract_id": request.contract_id
+            "contract_id": request.contract_id,
+            "action_person_id": first_step_user_id
         })
         
         # OPTIONAL: Create audit trail entry (only if table exists)
@@ -563,7 +590,11 @@ async def initiate_negotiation(
             db.execute(audit_entry, {
                 "user_id": user_id,
                 "contract_id": request.contract_id,
-                "details": json.dumps({"action": "negotiation_initiated", "initiated_by": user_id})
+                "details": json.dumps({
+                    "action": "negotiation_initiated", 
+                    "initiated_by": user_id,
+                    "action_person_id": first_step_user_id
+                })
             })
         except Exception as audit_error:
             logger.warning(f"⚠️ Audit trail logging failed: {str(audit_error)}")
@@ -572,7 +603,8 @@ async def initiate_negotiation(
         # CRITICAL: Commit the transaction
         db.commit()
         
-        logger.info(f" Negotiation initiated for contract {request.contract_id} by user {user_id}")
+        logger.info(f"🎯 Negotiation initiated for contract {request.contract_id} by user {user_id}")
+        logger.info(f"👤 Action assigned to first workflow user: {first_step_user_id}")
         
         # =====================================================
         # SEND EMAIL NOTIFICATIONS TO MASTER WORKFLOW USERS
@@ -587,17 +619,6 @@ async def initiate_negotiation(
                 WHERE id = :user_id
             """)
             current_user_data = db.execute(user_query, {"user_id": user_id}).fetchone()
-            
-            # Get master workflow for this company
-            workflow_query = text("""
-                SELECT id, workflow_name
-                FROM workflows
-                WHERE company_id = :company_id
-                AND is_master = 1
-                AND is_active = 1
-                LIMIT 1
-            """)
-            workflow = db.execute(workflow_query, {"company_id": company_id}).fetchone()
             
             if workflow:
                 # Get all users from master workflow
@@ -636,7 +657,7 @@ async def initiate_negotiation(
                     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
                         <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
                             <div style="background: linear-gradient(135deg, #2762cb 0%, #73B4E0 100%); padding: 20px; border-radius: 8px 8px 0 0; margin: -20px -20px 20px -20px;">
-                                <h2 style="color: white; margin: 0;"> Internal Team Negotiation Started</h2>
+                                <h2 style="color: white; margin: 0;">🤝 Internal Team Negotiation Started</h2>
                             </div>
                             
                             <p>Hi <strong>{user.full_name}</strong>,</p>
@@ -723,7 +744,7 @@ async def initiate_negotiation(
         logger.error("="*80)
         logger.info("🔄 Transaction rolled back")
         raise HTTPException(status_code=500, detail=str(e))
-
+        
 
 @router.get("/workflow-history/{contract_id}")
 async def get_workflow_history(

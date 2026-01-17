@@ -1992,7 +1992,7 @@ async def apply_signature(
         }).fetchone()
         
         # ✅ FIX: Initialize all_signed BEFORE using it in log_contract_action
-        all_signed = (signature_status.signed_count >= signature_status.total_signatories)
+        all_signed = (signature_status.signed_count >= 2) #signature_status.total_signatories
         
         logger.info(f"📊 Signature status: {signature_status.signed_count}/{signature_status.total_signatories}")
         
@@ -2938,7 +2938,108 @@ async def submit_for_internal_review(
             raise HTTPException(status_code=404, detail="Contract not found")
         
         party_b_id = contract_result.party_b_id if hasattr(contract_result, 'party_b_id') else contract_result[0]
+
+        # Handle masterWorkflow and customWorkflow review types
+        if review_type == 'masterWorkflow':
+            # Deactivate all custom workflows (is_master=0) for this contract and company
+            deactivate_custom_query = text("""
+                UPDATE workflows 
+                SET is_active = 0
+                WHERE id IN (
+                    SELECT DISTINCT workflow_id 
+                    FROM workflow_instances 
+                    WHERE contract_id = :contract_id
+                )
+                AND company_id = :company_id
+                AND is_master = 0
+            """)
+            db.execute(deactivate_custom_query, {
+                "contract_id": contract_id,
+                "company_id": current_user.company_id
+            })
+            logger.info(f"Custom workflows deactivated for contract {contract_id} (masterWorkflow selected)")
+            
+            # Check if master workflow instances exist for this contract
+            check_master_instances = text("""
+                SELECT COUNT(*) as count
+                FROM workflow_instances wi
+                INNER JOIN workflows w ON wi.workflow_id = w.id
+                WHERE wi.contract_id = :contract_id
+                AND w.company_id = :company_id
+                AND w.is_master = 1
+            """)
+            master_count_result = db.execute(check_master_instances, {
+                "contract_id": contract_id,
+                "company_id": current_user.company_id
+            }).fetchone()
+            
+            master_count = master_count_result[0] if master_count_result else 0
+            
+            # If no master workflow instances exist, create them
+            if master_count == 0:
+                # Get all active master workflows for the company
+                get_master_workflows = text("""
+                    SELECT id, workflow_name
+                    FROM workflows
+                    WHERE company_id = :company_id
+                    AND is_master = 1
+                    AND is_active = 1
+                """)
+                master_workflows = db.execute(get_master_workflows, {
+                    "company_id": current_user.company_id
+                }).fetchall()
+                
+                # Create workflow instances for each master workflow
+                for workflow in master_workflows:
+                    workflow_id = workflow[0]
+                    workflow_name = workflow[1]
+                    
+                    insert_instance = text("""
+                        INSERT INTO workflow_instances 
+                        (contract_id, workflow_id, status, current_step)
+                        VALUES (:contract_id, :workflow_id, 'pending', 1)
+                    """)
+                    db.execute(insert_instance, {
+                        "contract_id": contract_id,
+                        "workflow_id": workflow_id
+                    })
+                    logger.info(f"Created master workflow instance for workflow '{workflow_name}' (ID: {workflow_id}) and contract {contract_id}")
+            else:
+                logger.info(f"Master workflow instances already exist for contract {contract_id} (count: {master_count})")
+            
+        elif review_type == 'customWorkflow':
+            # Activate all custom workflows (is_master=0) for this contract and company
+            activate_custom_query = text("""
+                UPDATE workflows 
+                SET is_active = 1
+                WHERE id IN (
+                    SELECT DISTINCT workflow_id 
+                    FROM workflow_instances 
+                    WHERE contract_id = :contract_id
+                )
+                AND company_id = :company_id
+                AND is_master = 0
+            """)
+            db.execute(activate_custom_query, {
+                "contract_id": contract_id,
+                "company_id": current_user.company_id
+            })
+            logger.info(f"Custom workflows activated for contract {contract_id} (customWorkflow selected)")
         
+        # Activate workflow instances for ALL users (including counterparties)
+        activate_workflow_query = text("""
+            UPDATE workflow_instances 
+            SET status = 'active',
+                started_at = NOW()
+            WHERE contract_id = :contract_id
+            AND status IN ('pending', 'in_progress')
+        """)
+        db.execute(activate_workflow_query, {
+            "contract_id": contract_id
+        })
+        logger.info(f"Workflow instances activated for contract {contract_id}")
+
+
         # Check if current user is the counterparty (Party B)
         is_counterparty = party_b_id == current_user.company_id
         
@@ -2961,7 +3062,24 @@ async def submit_for_internal_review(
                 """)
                 db.execute(update_query, {"contract_id": contract_id})
                 logger.info(f"Contract {contract_id} status updated to 'review' by user {current_user.id}")
-                
+
+                # Update workflow instance status to 'in_progress'
+                activate_workflow_query = text("""
+                    UPDATE workflow_instances wi
+                    INNER JOIN workflows w ON wi.workflow_id = w.id
+                    SET wi.status = 'in_progress', 
+                        wi.current_step = 1,
+                        wi.started_at = NOW()
+                    WHERE wi.contract_id = :contract_id
+                    AND w.company_id = :company_id
+                """)
+                db.execute(activate_workflow_query, {
+                    "contract_id": contract_id,
+                    "company_id": current_user.company_id
+                })
+
+                logger.info(f"✅ Internal review workflow status updated to 'in_progress'")
+
                 # Get first reviewer in the workflow for action_person_id
                 logger.info(f"🔍 Finding first reviewer in internal review workflow...")
                 first_reviewer_query = text("""
@@ -2973,7 +3091,8 @@ async def submit_for_internal_review(
                     WHERE wi.contract_id = :contract_id
                     AND w.company_id = :company_id
                     AND ws.step_number = 1
-                    AND ws.step_type <> 'e_sign_authority'
+                    AND w.is_active=1
+                    ORDER BY is_master ASC
                     LIMIT 1
                 """)
                 first_reviewer = db.execute(first_reviewer_query, {
@@ -2998,22 +3117,7 @@ async def submit_for_internal_review(
                 
                 logger.info(f"✅ Contract {contract_id} action_person_id set to: {first_reviewer_id}")
                 
-                # Update workflow instance status to 'in_progress'
-                activate_workflow_query = text("""
-                    UPDATE workflow_instances wi
-                    INNER JOIN workflows w ON wi.workflow_id = w.id
-                    SET wi.status = 'in_progress', 
-                        wi.current_step = 1,
-                        wi.started_at = NOW()
-                    WHERE wi.contract_id = :contract_id
-                    AND w.company_id = :company_id
-                """)
-                db.execute(activate_workflow_query, {
-                    "contract_id": contract_id,
-                    "company_id": current_user.company_id
-                })
 
-                logger.info(f"✅ Internal review workflow status updated to 'in_progress'")
 
             # =====================================================
             # HANDLE APPROVAL
@@ -3139,107 +3243,68 @@ async def submit_for_internal_review(
         else:
             # Log that counterparty submitted review (status not updated)
             logger.info(f"Counterparty (Party B) user {current_user.id} submitted review for contract {contract_id} (contract status not updated)")
-        
-        # Handle masterWorkflow and customWorkflow review types
-        if review_type == 'masterWorkflow':
-            # Deactivate all custom workflows (is_master=0) for this contract and company
-            deactivate_custom_query = text("""
-                UPDATE workflows 
-                SET is_active = 0
-                WHERE id IN (
-                    SELECT DISTINCT workflow_id 
-                    FROM workflow_instances 
-                    WHERE contract_id = :contract_id
-                )
-                AND company_id = :company_id
-                AND is_master = 0
-            """)
-            db.execute(deactivate_custom_query, {
-                "contract_id": contract_id,
-                "company_id": current_user.company_id
-            })
-            logger.info(f"Custom workflows deactivated for contract {contract_id} (masterWorkflow selected)")
-            
-            # Check if master workflow instances exist for this contract
-            check_master_instances = text("""
-                SELECT COUNT(*) as count
-                FROM workflow_instances wi
-                INNER JOIN workflows w ON wi.workflow_id = w.id
-                WHERE wi.contract_id = :contract_id
-                AND w.company_id = :company_id
-                AND w.is_master = 1
-            """)
-            master_count_result = db.execute(check_master_instances, {
-                "contract_id": contract_id,
-                "company_id": current_user.company_id
-            }).fetchone()
-            
-            master_count = master_count_result[0] if master_count_result else 0
-            
-            # If no master workflow instances exist, create them
-            if master_count == 0:
-                # Get all active master workflows for the company
-                get_master_workflows = text("""
-                    SELECT id, workflow_name
-                    FROM workflows
-                    WHERE company_id = :company_id
-                    AND is_master = 1
-                    AND is_active = 1
+
+            # =====================================================
+            # HANDLE INTERNAL REVIEW
+            # =====================================================
+            if request_type == 'internal_review':
+                logger.info(f"🔍 Processing Counterparty INTERNAL REVIEW for contract {contract_id}")
+
+                # # Update workflow instance status to 'in_progress'
+                # activate_workflow_query = text("""
+                #     UPDATE workflow_instances wi
+                #     INNER JOIN workflows w ON wi.workflow_id = w.id
+                #     SET wi.status = 'in_progress', 
+                #         wi.current_step = 1,
+                #         wi.started_at = NOW()
+                #     WHERE wi.contract_id = :contract_id
+                #     AND w.company_id = :company_id
+                # """)
+                # db.execute(activate_workflow_query, {
+                #     "contract_id": contract_id,
+                #     "company_id": current_user.company_id
+                # })
+
+                # logger.info(f"✅ Internal review workflow status updated to 'in_progress'")
+
+                # Get first reviewer in the workflow for action_person_id
+                logger.info(f"🔍 Finding first reviewer in internal review workflow...")
+                first_reviewer_query = text("""
+                    SELECT u.id
+                    FROM workflow_instances wi
+                    INNER JOIN workflows w ON wi.workflow_id = w.id
+                    INNER JOIN workflow_steps ws ON w.id = ws.workflow_id
+                    INNER JOIN users u ON ws.assignee_user_id = u.id
+                    WHERE wi.contract_id = :contract_id
+                    AND w.company_id = :company_id
+                    AND ws.step_number = 1
+                    AND w.is_active=1
+                    ORDER BY is_master ASC
+                    LIMIT 1
                 """)
-                master_workflows = db.execute(get_master_workflows, {
+                first_reviewer = db.execute(first_reviewer_query, {
+                    "contract_id": contract_id,
                     "company_id": current_user.company_id
-                }).fetchall()
+                }).first()
                 
-                # Create workflow instances for each master workflow
-                for workflow in master_workflows:
-                    workflow_id = workflow[0]
-                    workflow_name = workflow[1]
-                    
-                    insert_instance = text("""
-                        INSERT INTO workflow_instances 
-                        (contract_id, workflow_id, status, current_step)
-                        VALUES (:contract_id, :workflow_id, 'pending', 1)
-                    """)
-                    db.execute(insert_instance, {
-                        "contract_id": contract_id,
-                        "workflow_id": workflow_id
-                    })
-                    logger.info(f"Created master workflow instance for workflow '{workflow_name}' (ID: {workflow_id}) and contract {contract_id}")
-            else:
-                logger.info(f"Master workflow instances already exist for contract {contract_id} (count: {master_count})")
-            
-        elif review_type == 'customWorkflow':
-            # Activate all custom workflows (is_master=0) for this contract and company
-            activate_custom_query = text("""
-                UPDATE workflows 
-                SET is_active = 1
-                WHERE id IN (
-                    SELECT DISTINCT workflow_id 
-                    FROM workflow_instances 
-                    WHERE contract_id = :contract_id
-                )
-                AND company_id = :company_id
-                AND is_master = 0
-            """)
-            db.execute(activate_custom_query, {
-                "contract_id": contract_id,
-                "company_id": current_user.company_id
-            })
-            logger.info(f"Custom workflows activated for contract {contract_id} (customWorkflow selected)")
-        
-        # Activate workflow instances for ALL users (including counterparties)
-        activate_workflow_query = text("""
-            UPDATE workflow_instances 
-            SET status = 'active',
-                started_at = NOW()
-            WHERE contract_id = :contract_id
-            AND status IN ('pending', 'in_progress')
-        """)
-        db.execute(activate_workflow_query, {
-            "contract_id": contract_id
-        })
-        logger.info(f"Workflow instances activated for contract {contract_id}")
-        
+                first_reviewer_id = first_reviewer.id if first_reviewer else None
+                logger.info(f"✅ First reviewer ID: {first_reviewer_id}")
+                
+                # Update contract with action_person_id
+                update_contract_query = text("""
+                    UPDATE contracts
+                    SET action_person_id = :action_person_id,
+                        updated_at = NOW()
+                    WHERE id = :contract_id
+                """)
+                db.execute(update_contract_query, {
+                    "action_person_id": first_reviewer_id,
+                    "contract_id": contract_id
+                })
+                
+                logger.info(f"✅ Contract {contract_id} action_person_id set to: {first_reviewer_id}")
+                
+
         # Send notifications to specific personnel (allowed for all users including counterparties)
         if review_type == 'specific' and personnel_emails:
             for email in personnel_emails:
@@ -4795,6 +4860,7 @@ async def send_to_counterparty(
         logger.error(f" Error sending to counter-party: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.post("/quick-approve")
 async def quick_approve_contract(
     request: Request,
@@ -4814,11 +4880,14 @@ async def quick_approve_contract(
         # Get initiator's company_id from the contract
         initiator_company_id = contract.company_id
         
-        # Update contract status to negotiation_completed
+        # Update contract status to negotiation_completed AND set action_person_id to contract initiator
         contract.status = 'negotiation_completed'
+        contract.action_person_id = contract.created_by  # Set to contract initiator
         contract.updated_at = datetime.now()
         
-        #  STEP 1: Mark current user's (counter-party) workflow instance as 'completed'
+        logger.info(f"👤 Action assigned to contract initiator: {contract.created_by}")
+        
+        # 🔄 STEP 1: Mark current user's (counter-party) workflow instance as 'completed'
         complete_counterparty_workflow = text("""
             UPDATE workflow_instances wi
             INNER JOIN workflows w ON wi.workflow_id = w.id
@@ -4828,15 +4897,13 @@ async def quick_approve_contract(
             AND w.company_id = :counterparty_company_id
             AND wi.status IN ('pending', 'in_progress', 'active')
         """)
-        
         db.execute(complete_counterparty_workflow, {
             "contract_id": contract_id,
             "counterparty_company_id": current_user.company_id
         })
+        logger.info(f"✅ Completed counter-party workflow for company {current_user.company_id}")
         
-        logger.info(f" Completed counter-party workflow for company {current_user.company_id}")
-        
-        #  STEP 2: Activate initiator's workflow instance to 'active'
+        # 🔄 STEP 2: Activate initiator's workflow instance to 'active'
         activate_initiator_workflow = text("""
             UPDATE workflow_instances wi
             INNER JOIN workflows w ON wi.workflow_id = w.id
@@ -4846,13 +4913,11 @@ async def quick_approve_contract(
             AND w.company_id = :initiator_company_id
             AND wi.status IN ('pending', 'in_progress')
         """)
-        
         db.execute(activate_initiator_workflow, {
             "contract_id": contract_id,
             "initiator_company_id": initiator_company_id
         })
-        
-        logger.info(f" Activated initiator workflow for company {initiator_company_id}")
+        logger.info(f"✅ Activated initiator workflow for company {initiator_company_id}")
         
         # Create activity log
         try:
@@ -4871,8 +4936,7 @@ async def quick_approve_contract(
             logger.warning(f"Could not create activity log: {str(activity_err)}")
         
         db.commit()
-        
-        logger.info(f" Contract {contract_id} quick approved by user {current_user.id}")
+        logger.info(f"✅ Contract {contract_id} quick approved by user {current_user.id}")
         
         # TODO: Send notification to initiator
         # send_notification_to_initiator(contract)
@@ -4887,9 +4951,8 @@ async def quick_approve_contract(
         raise he
     except Exception as e:
         db.rollback()
-        logger.error(f" Error approving contract: {str(e)}")
+        logger.error(f"❌ Error approving contract: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 @router.post("/{contract_id}/complete-counterparty-review")
