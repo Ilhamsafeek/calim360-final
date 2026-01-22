@@ -2873,28 +2873,28 @@
 
 
 <style>
-.modal-body label[style*="cursor"] {
-    display: flex;
-    align-items: center;
-    padding: 10px;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    transition: all 0.2s;
-}
+    .modal-body label[style*="cursor"] {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
 
-.modal-body label[style*="cursor"]:hover {
-    border-color: #0066cc;
-    background: #f8f9fa;
-}
+    .modal-body label[style*="cursor"]:hover {
+        border-color: #0066cc;
+        background: #f8f9fa;
+    }
 
-.modal-body label input[type="radio"]:checked + i {
-    transform: scale(1.2);
-}
+    .modal-body label input[type="radio"]:checked+i {
+        transform: scale(1.2);
+    }
 
-.modal-body label:has(input[type="radio"]:checked) {
-    border-color: #0066cc;
-    background: rgba(0, 102, 204, 0.05);
-}
+    .modal-body label:has(input[type="radio"]:checked) {
+        border-color: #0066cc;
+        background: rgba(0, 102, 204, 0.05);
+    }
 </style>
 
 
@@ -4012,7 +4012,7 @@
                 </div>
             </div>
 
-        
+
             <!-- Info Box -->
             <div
                 style="padding: 1rem; background: rgba(59, 130, 246, 0.05); border-left: 3px solid var(--primary-color); border-radius: 6px; margin-top: 1.5rem;">
@@ -5202,18 +5202,22 @@
 
 <!-- Comments Panel -->
 <!-- Comments Side Panel -->
-<div id="commentsPanel" class="comments-panel" style="display: none; position: fixed; top: 0; right: 0; width: 450px; height: 100vh; background: white; box-shadow: -4px 0 20px rgba(0,0,0,0.15); z-index: 9999; flex-direction: column;">
-    <div style="padding: 20px; border-bottom: 2px solid #e0e0e0; background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); display: flex; align-items: center; justify-content: space-between;">
+<div id="commentsPanel" class="comments-panel"
+    style="display: none; position: fixed; top: 0; right: 0; width: 450px; height: 100vh; background: white; box-shadow: -4px 0 20px rgba(0,0,0,0.15); z-index: 9999; flex-direction: column;">
+    <div
+        style="padding: 20px; border-bottom: 2px solid #e0e0e0; background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); display: flex; align-items: center; justify-content: space-between;">
         <div style="display: flex; align-items: center; gap: 10px;">
             <i class="ti ti-message-circle" style="font-size: 24px; color: #0066cc;"></i>
             <h3 style="margin: 0; font-size: 18px; font-weight: 600;">Comments</h3>
-            <span id="commentsBadge" style="display: none; background: #0066cc; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">0</span>
+            <span id="commentsBadge"
+                style="display: none; background: #0066cc; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">0</span>
         </div>
-        <button onclick="toggleCommentsPanel()" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 50%;">
+        <button onclick="toggleCommentsPanel()"
+            style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 50%;">
             <i class="ti ti-x" style="font-size: 20px; color: #666;"></i>
         </button>
     </div>
-    
+
     <div id="commentsListContainer" style="flex: 1; overflow-y: auto; background: #fafbfc;">
         <div style="padding: 40px 20px; text-align: center; color: #888;">
             <i class="ti ti-loader" style="font-size: 48px; opacity: 0.5;"></i>
@@ -5224,93 +5228,100 @@
 
 
 <!-- Enhanced Add Comment Modal with Track Changes -->
-<div class="modal" id="commentModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
-    <div class="modal-content" style="background: white; border-radius: 12px; width: 550px; max-width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
-        <div class="modal-header" style="padding: 20px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
-            <div class="modal-title" style="font-size: 18px; font-weight: 600; color: #2c3e50; display: flex; align-items: center; gap: 10px;">
-                
+<div class="modal" id="commentModal"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
+    <div class="modal-content"
+        style="background: white; border-radius: 12px; width: 550px; max-width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
+        <div class="modal-header"
+            style="padding: 20px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
+            <div class="modal-title"
+                style="font-size: 18px; font-weight: 600; color: #2c3e50; display: flex; align-items: center; gap: 10px;">
+
                 <span id="modalTitle">Add Comment</span>
             </div>
-            <button class="modal-close" onclick="closeModal('commentModal')" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #7f8c8d; padding: 4px;">×</button>
+            <button class="modal-close" onclick="closeModal('commentModal')"
+                style="background: none; border: none; font-size: 24px; cursor: pointer; color: #7f8c8d; padding: 4px;">×</button>
         </div>
-        
+
         <div class="modal-body" style="padding: 20px;">
             <!-- Change Type Selection -->
             <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 14px; font-weight: 600; color: #495057; margin-bottom: 10px;">
+                <label class="form-label"
+                    style="display: block; font-size: 14px; font-weight: 600; color: #495057; margin-bottom: 10px;">
                     <i class="ti ti-edit"></i> Action Type
                 </label>
                 <div style="display: flex; gap: 10px;">
                     <label style="flex: 1; cursor: pointer;">
-                        <input type="radio" name="changeType" value="comment" checked onchange="updateChangeType(this.value)" style="margin-right: 6px;">
+                        <input type="radio" name="changeType" value="comment" checked
+                            onchange="updateChangeType(this.value)" style="margin-right: 6px;">
                         <i class="ti ti-message-circle" style="color: #ffc107;"></i>
                         <span style="font-size: 14px;">Comment</span>
                     </label>
                     <label style="flex: 1; cursor: pointer;">
-                        <input type="radio" name="changeType" value="delete" onchange="updateChangeType(this.value)" style="margin-right: 6px;">
+                        <input type="radio" name="changeType" value="delete" onchange="updateChangeType(this.value)"
+                            style="margin-right: 6px;">
                         <i class="ti ti-trash" style="color: #dc3545;"></i>
                         <span style="font-size: 14px;">Delete Text</span>
                     </label>
                     <label style="flex: 1; cursor: pointer;">
-                        <input type="radio" name="changeType" value="insert" onchange="updateChangeType(this.value)" style="margin-right: 6px;">
+                        <input type="radio" name="changeType" value="insert" onchange="updateChangeType(this.value)"
+                            style="margin-right: 6px;">
                         <i class="ti ti-pencil" style="color: #28a745;"></i>
                         <span style="font-size: 14px;">Modify Text</span>
                     </label>
                 </div>
             </div>
-            
+
             <!-- Comment/Reason Text -->
             <div class="form-group" style="margin-bottom: 15px;">
-                <label class="form-label" style="display: block; font-size: 14px; font-weight: 600; color: #495057; margin-bottom: 8px;">
+                <label class="form-label"
+                    style="display: block; font-size: 14px; font-weight: 600; color: #495057; margin-bottom: 8px;">
                     <span id="commentLabel">Your Comment</span>
                 </label>
-                <textarea 
-                    id="commentText" 
-                    class="form-control" 
-                    rows="3" 
-                    placeholder="Enter your comment..."
-                    style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 14px; font-family: inherit; resize: vertical;"
-                ></textarea>
+                <textarea id="commentText" class="form-control" rows="3" placeholder="Enter your comment..."
+                    style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
             </div>
-            
+
             <!-- New Text (for modifications) -->
             <div class="form-group" id="newTextGroup" style="margin-bottom: 15px; display: none;">
-                <label class="form-label" style="display: block; font-size: 14px; font-weight: 600; color: #495057; margin-bottom: 8px;">
+                <label class="form-label"
+                    style="display: block; font-size: 14px; font-weight: 600; color: #495057; margin-bottom: 8px;">
                     <i class="ti ti-pencil"></i> New Text (Replacement)
                 </label>
-                <textarea 
-                    id="newText" 
-                    class="form-control" 
-                    rows="2" 
-                    placeholder="Enter the new text..."
-                    style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 14px; font-family: inherit; resize: vertical;"
-                ></textarea>
+                <textarea id="newText" class="form-control" rows="2" placeholder="Enter the new text..."
+                    style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
             </div>
-            
+
             <!-- Selected Text Preview -->
             <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" style="display: block; font-size: 14px; font-weight: 600; color: #495057; margin-bottom: 8px;">
+                <label class="form-label"
+                    style="display: block; font-size: 14px; font-weight: 600; color: #495057; margin-bottom: 8px;">
                     <i class="ti ti-quote"></i> <span id="selectedLabel">Selected Text</span>
                 </label>
-                <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; font-size: 14px; border-left: 3px solid #0066cc;">
+                <div
+                    style="background: #f8f9fa; padding: 12px; border-radius: 6px; font-size: 14px; border-left: 3px solid #0066cc;">
                     <em id="selectedTextPreview" style="color: #666;">No text selected</em>
                 </div>
             </div>
-            
+
             <!-- Preview Section -->
-            <div id="changePreview" style="display: none; margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 6px; border-left: 3px solid #ffc107;">
+            <div id="changePreview"
+                style="display: none; margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 6px; border-left: 3px solid #ffc107;">
                 <div style="font-size: 13px; font-weight: 600; color: #495057; margin-bottom: 8px;">
                     <i class="ti ti-eye"></i> Preview:
                 </div>
                 <div id="previewContent" style="font-size: 13px; color: #333;"></div>
             </div>
         </div>
-        
-        <div class="modal-footer" style="padding: 15px 20px; border-top: 1px solid #e0e0e0; display: flex; justify-content: flex-end; gap: 10px;">
-            <button class="btn btn-secondary" onclick="closeModal('commentModal')" style="padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; background: #6c757d; color: white;">
+
+        <div class="modal-footer"
+            style="padding: 15px 20px; border-top: 1px solid #e0e0e0; display: flex; justify-content: flex-end; gap: 10px;">
+            <button class="btn btn-secondary" onclick="closeModal('commentModal')"
+                style="padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; background: #6c757d; color: white;">
                 Cancel
             </button>
-            <button class="btn btn-primary" onclick="submitComment()" style="padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; background: #0066cc; color: white;">
+            <button class="btn btn-primary" onclick="submitComment()"
+                style="padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; background: #0066cc; color: white;">
                 <span id="submitBtnText">Add Comment</span>
             </button>
         </div>
@@ -5321,9 +5332,11 @@
 
 
 <!-- Toggle Button -->
-<button class="comments-toggle-btn" onclick="toggleCommentsPanel()" style="position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #0066cc, #0052a3); color: white; border: none; box-shadow: 0 4px 12px rgba(0,102,204,0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 9998; transition: all 0.3s;">
+<button class="comments-toggle-btn" onclick="toggleCommentsPanel()"
+    style="position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #0066cc, #0052a3); color: white; border: none; box-shadow: 0 4px 12px rgba(0,102,204,0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 9998; transition: all 0.3s;">
     <i class="ti ti-message-circle" style="font-size: 24px; color:white"></i>
-    <span id="commentsBadge2" style="display: none; position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; width: 20px; height: 20px; border-radius: 50%; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; border: 2px solid white;">0</span>
+    <span id="commentsBadge2"
+        style="display: none; position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; width: 20px; height: 20px; border-radius: 50%; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; border: 2px solid white;">0</span>
 </button>
 
 <!-- In your contract editor template -->
@@ -8151,82 +8164,82 @@ ${contract.content && contract.content.trim() !== '' ?
     }
 
     async function executeExport() {
-    const formatInput = document.querySelector('input[name="exportFormat"]:checked');
-    const format = formatInput ? formatInput.value : 'pdf';
+        const formatInput = document.querySelector('input[name="exportFormat"]:checked');
+        const format = formatInput ? formatInput.value : 'pdf';
 
-    console.log('📤 Export requested:', format, 'for contract:', contractId);
+        console.log('📤 Export requested:', format, 'for contract:', contractId);
 
-    showLoader();
-    showNotification(`Preparing ${format.toUpperCase()} export...`, 'info');
+        showLoader();
+        showNotification(`Preparing ${format.toUpperCase()} export...`, 'info');
 
-    try {
-        // Build API URL
-        const params = new URLSearchParams({
-            format: format === 'word' ? 'docx' : format, // Convert 'word' to 'docx'
-            include_signatures: 'true'
-        });
+        try {
+            // Build API URL
+            const params = new URLSearchParams({
+                format: format === 'word' ? 'docx' : format, // Convert 'word' to 'docx'
+                include_signatures: 'true'
+            });
 
-        const apiUrl = `/api/contracts/export/${contractId}?${params.toString()}`;
-        console.log('🔗 Calling API:', apiUrl);
+            const apiUrl = `/api/contracts/export/${contractId}?${params.toString()}`;
+            console.log('🔗 Calling API:', apiUrl);
 
-        // Call backend API
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
+            // Call backend API
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('📥 Response status:', response.status);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Error response:', errorText);
+                throw new Error(`Export failed with status ${response.status}`);
             }
-        });
 
-        console.log('📥 Response status:', response.status);
+            // Get filename from Content-Disposition header
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = `contract_${contractId}.${format}`;
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Error response:', errorText);
-            throw new Error(`Export failed with status ${response.status}`);
-        }
-
-        // Get filename from Content-Disposition header
-        const contentDisposition = response.headers.get('Content-Disposition');
-        let filename = `contract_${contractId}.${format}`;
-        
-        if (contentDisposition) {
-            const matches = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-            if (matches && matches[1]) {
-                filename = matches[1].replace(/['"]/g, '');
+            if (contentDisposition) {
+                const matches = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                if (matches && matches[1]) {
+                    filename = matches[1].replace(/['"]/g, '');
+                }
             }
+
+            console.log('📦 Downloading as:', filename);
+
+            // Download the file
+            const blob = await response.blob();
+            console.log('📦 Blob size:', blob.size, 'bytes');
+
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+
+            // Cleanup
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 100);
+
+            closeModal('exportModal');
+            hideLoader();
+            showNotification(`Document exported successfully as ${format.toUpperCase()}`, 'success');
+            console.log('✅ Export completed successfully');
+
+        } catch (error) {
+            console.error('❌ Export error:', error);
+            hideLoader();
+            showNotification(`Export failed: ${error.message}`, 'error');
         }
-
-        console.log('📦 Downloading as:', filename);
-
-        // Download the file
-        const blob = await response.blob();
-        console.log('📦 Blob size:', blob.size, 'bytes');
-        
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        
-        // Cleanup
-        setTimeout(() => {
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        }, 100);
-
-        closeModal('exportModal');
-        hideLoader();
-        showNotification(`Document exported successfully as ${format.toUpperCase()}`, 'success');
-        console.log('✅ Export completed successfully');
-
-    } catch (error) {
-        console.error('❌ Export error:', error);
-        hideLoader();
-        showNotification(`Export failed: ${error.message}`, 'error');
     }
-}
 
 
 
@@ -9163,8 +9176,8 @@ ${contract.content && contract.content.trim() !== '' ?
         saveAsDraft();
     }
 
- 
-   
+
+
 
     // Auto-save functionality
     function startAutoSave() {
@@ -10745,67 +10758,67 @@ ${(riskAnalysisData.risk_items || []).map(item => `
     // Download Certificate
 
     async function downloadCertificate() {
-    showLoader();
-    try {
-        const response = await fetch(`/api/contracts/execution-certificate/${contractId}`);
-        const data = await response.json();
+        showLoader();
+        try {
+            const response = await fetch(`/api/contracts/execution-certificate/${contractId}`);
+            const data = await response.json();
 
-        if (data.success) {
-            const certificateData = data.certificate;
-            
-            // Generate PDF certificate
-            await generateCertificatePDF(certificateData);
-            
-            showNotification('Certificate downloaded successfully', 'success');
-        } else {
+            if (data.success) {
+                const certificateData = data.certificate;
+
+                // Generate PDF certificate
+                await generateCertificatePDF(certificateData);
+
+                showNotification('Certificate downloaded successfully', 'success');
+            } else {
+                showNotification('Failed to download certificate', 'error');
+            }
+        } catch (error) {
+            console.error('Error downloading certificate:', error);
             showNotification('Failed to download certificate', 'error');
+        } finally {
+            hideLoader();
         }
-    } catch (error) {
-        console.error('Error downloading certificate:', error);
-        showNotification('Failed to download certificate', 'error');
-    } finally {
-        hideLoader();
     }
-}
 
 
-// New function to generate PDF certificate
-// REPLACE generateCertificatePDF() function - OPTIMIZED FOR SINGLE A4 PAGE
+    // New function to generate PDF certificate
+    // REPLACE generateCertificatePDF() function - OPTIMIZED FOR SINGLE A4 PAGE
 
-async function generateCertificatePDF(certificateData) {
-    // Format dates
-    const executionDate = certificateData.execution_date ? 
-        new Date(certificateData.execution_date).toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        }) : 'N/A';
-    
-    const signedDate = certificateData.signed_date ? 
-        new Date(certificateData.signed_date).toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        }) : 'N/A';
+    async function generateCertificatePDF(certificateData) {
+        // Format dates
+        const executionDate = certificateData.execution_date ?
+            new Date(certificateData.execution_date).toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }) : 'N/A';
 
-    // Certificate ID
-    const certificateId = `CERT-${certificateData.contract_id}-${Date.now()}`;
+        const signedDate = certificateData.signed_date ?
+            new Date(certificateData.signed_date).toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }) : 'N/A';
 
-    // Create a temporary div optimized for A4 size (210mm x 297mm = ~794px x 1123px at 96dpi)
-    const certificateDiv = document.createElement('div');
-    certificateDiv.style.position = 'absolute';
-    certificateDiv.style.left = '-9999px';
-    certificateDiv.style.width = '794px';  // A4 width in pixels
-    certificateDiv.style.height = '1123px'; // A4 height in pixels
-    certificateDiv.style.padding = '30px';
-    certificateDiv.style.backgroundColor = '#ffffff';
-    certificateDiv.style.fontFamily = 'Arial, sans-serif';
-    certificateDiv.style.boxSizing = 'border-box';
-    certificateDiv.style.overflow = 'hidden';
+        // Certificate ID
+        const certificateId = `CERT-${certificateData.contract_id}-${Date.now()}`;
 
-    certificateDiv.innerHTML = `
+        // Create a temporary div optimized for A4 size (210mm x 297mm = ~794px x 1123px at 96dpi)
+        const certificateDiv = document.createElement('div');
+        certificateDiv.style.position = 'absolute';
+        certificateDiv.style.left = '-9999px';
+        certificateDiv.style.width = '794px';  // A4 width in pixels
+        certificateDiv.style.height = '1123px'; // A4 height in pixels
+        certificateDiv.style.padding = '30px';
+        certificateDiv.style.backgroundColor = '#ffffff';
+        certificateDiv.style.fontFamily = 'Arial, sans-serif';
+        certificateDiv.style.boxSizing = 'border-box';
+        certificateDiv.style.overflow = 'hidden';
+
+        certificateDiv.innerHTML = `
         <div style="border: 5px solid #2563eb; padding: 20px; background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%); height: 100%; box-sizing: border-box; display: flex; flex-direction: column;">
             
             <!-- Header -->
@@ -10894,12 +10907,12 @@ async function generateCertificatePDF(certificateData) {
                     </p>
                     <p style="margin: 3px 0 0 0; font-size: 8px; color: #94a3b8;">
                         Generated: ${new Date().toLocaleString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        })}
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        })}
                     </p>
                 </div>
                 <p style="margin: 8px 0 0 0; font-size: 8px; color: #94a3b8; font-style: italic;">
@@ -10909,54 +10922,54 @@ async function generateCertificatePDF(certificateData) {
         </div>
     `;
 
-    // Append to body temporarily
-    document.body.appendChild(certificateDiv);
+        // Append to body temporarily
+        document.body.appendChild(certificateDiv);
 
-    try {
-        // Wait for rendering
-        await new Promise(resolve => setTimeout(resolve, 100));
+        try {
+            // Wait for rendering
+            await new Promise(resolve => setTimeout(resolve, 100));
 
-        // Use html2canvas with exact A4 dimensions
-        const canvas = await html2canvas(certificateDiv, {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            backgroundColor: '#ffffff',
-            width: 794,
-            height: 1123,
-            windowWidth: 794,
-            windowHeight: 1123
-        });
+            // Use html2canvas with exact A4 dimensions
+            const canvas = await html2canvas(certificateDiv, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff',
+                width: 794,
+                height: 1123,
+                windowWidth: 794,
+                windowHeight: 1123
+            });
 
-        // Get the jsPDF library
-        const { jsPDF } = window.jspdf;
-        
-        // Create PDF with A4 dimensions
-        const pdf = new jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4'
-        });
+            // Get the jsPDF library
+            const { jsPDF } = window.jspdf;
 
-        // Add image to fit exactly on A4 (210mm x 297mm)
-        const imgData = canvas.toDataURL('image/png');
-        pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+            // Create PDF with A4 dimensions
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
 
-        // Save the PDF
-        const fileName = `Certificate_of_Completion_${certificateData.contract_number || certificateData.contract_id}.pdf`;
-        pdf.save(fileName);
+            // Add image to fit exactly on A4 (210mm x 297mm)
+            const imgData = canvas.toDataURL('image/png');
+            pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
 
-        console.log('✅ Single-page PDF generated successfully:', fileName);
+            // Save the PDF
+            const fileName = `Certificate_of_Completion_${certificateData.contract_number || certificateData.contract_id}.pdf`;
+            pdf.save(fileName);
 
-    } catch (error) {
-        console.error('❌ Error generating PDF:', error);
-        throw error;
-    } finally {
-        // Remove temporary div
-        document.body.removeChild(certificateDiv);
+            console.log('✅ Single-page PDF generated successfully:', fileName);
+
+        } catch (error) {
+            console.error('❌ Error generating PDF:', error);
+            throw error;
+        } finally {
+            // Remove temporary div
+            document.body.removeChild(certificateDiv);
+        }
     }
-}
-  
+
     // View Certificate - Can be called anytime for executed contracts
     async function viewExecutionCertificate() {
         showLoader();
@@ -11005,7 +11018,7 @@ async function generateCertificatePDF(certificateData) {
 
 
             if (typeof contractId !== 'undefined' && contractId) {
-              
+
             }
         }
     });
@@ -11017,7 +11030,7 @@ async function generateCertificatePDF(certificateData) {
         // Remove old bubbles
         document.querySelectorAll('.comment-bubble').forEach(b => b.remove());
 
-       
+
     };
 
     // Wrapper function for verify button
@@ -13600,7 +13613,7 @@ Generated by CALIM 360 Smart CLM
 
     console.log('🆔 Contract ID from URL:', contractId);
     console.log('🆔 Current Contract ID set to:', currentContractId);
-    currentContractId=contractId;
+    currentContractId = contractId;
 
 
     let isAIGenerated = false;
@@ -14038,14 +14051,22 @@ Generated by CALIM 360 Smart CLM
     }
 
 
+    let aiStreamingInProgress = false;  // ADD THIS LINE
+
+
+
     async function startAIStreaming() {
         console.log('🚀 Starting AI streaming...');
+
+        // Set global flag to prevent other scripts from interfering
+        aiStreamingInProgress = true;
 
         const editor = document.getElementById('contractContent');
 
         if (!editor) {
             console.error('❌ Contract editor element not found');
             showNotification('Contract editor not found. Please refresh the page.', 'error');
+            aiStreamingInProgress = false;
             return;
         }
 
@@ -14064,16 +14085,16 @@ Generated by CALIM 360 Smart CLM
 
         // Show loading state in editor
         editor.innerHTML = `
-        <div style="text-align: center; padding: 4rem 2rem; color: #666;">
-            <div style="width: 3rem; height: 3rem; border: 4px solid #f3f3f3; border-top: 4px solid #2762CB; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1.5rem;"></div>
-            <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">AI is Generating Your Contract</h3>
-            <p style="font-size: 1rem; max-width: 500px; margin: 0 auto;">
-                This may take 30-90 seconds. The contract will appear here as it's being written...
-            </p>
-            <div id="streamProgress" style="margin-top: 1.5rem; font-size: 0.875rem; color: #888;">
-                <i class="ti ti-dots"></i> Preparing...
-            </div>
+    <div style="text-align: center; padding: 4rem 2rem; color: #666;">
+        <div style="width: 3rem; height: 3rem; border: 4px solid #f3f3f3; border-top: 4px solid #2762CB; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1.5rem;"></div>
+        <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">AI is Generating Your Contract</h3>
+        <p style="font-size: 1rem; max-width: 500px; margin: 0 auto;">
+            This may take a while. The contract will appear here as it's being written...
+        </p>
+        <div id="streamProgress" style="margin-top: 1.5rem; font-size: 0.875rem; color: #888;">
+            <i class="ti ti-dots"></i> Preparing...
         </div>
+    </div>
     `;
 
         try {
@@ -14096,8 +14117,23 @@ Generated by CALIM 360 Smart CLM
             const decoder = new TextDecoder();
             let accumulatedContent = '';
 
-            editor.innerHTML = '<div class="contract-document" id="streamingContent" style="min-height: 500px;"></div>';
-            const contentDiv = document.getElementById('streamingContent');
+            // ✅ FIX: Create streaming container and verify it exists
+            function ensureStreamingContainer() {
+                let contentDiv = document.getElementById('streamingContent');
+                if (!contentDiv) {
+                    console.log('📦 Creating streamingContent container...');
+                    const editor = document.getElementById('contractContent');
+                    if (editor) {
+                        editor.innerHTML = '<div class="contract-document" id="streamingContent" style="min-height: 500px;"></div>';
+                        contentDiv = document.getElementById('streamingContent');
+                    }
+                }
+                return contentDiv;
+            }
+
+            // Create the initial container
+            ensureStreamingContainer();
+            console.log('📦 Initial streamingContent container created');
 
             // Setup scroll detection AFTER content div is created
             setTimeout(() => {
@@ -14109,6 +14145,7 @@ Generated by CALIM 360 Smart CLM
 
                 if (done) {
                     console.log('✅ Streaming complete');
+                    aiStreamingInProgress = false;  // ✅ Clear flag
 
                     // Final scroll if at bottom and auto-scroll enabled
                     if (autoScrollEnabled && !userIsScrolling) {
@@ -14133,13 +14170,19 @@ Generated by CALIM 360 Smart CLM
 
                             if (jsonData.type === 'start') {
                                 updateProgress('📝 Generating contract content...');
+                                // ✅ FIX: Ensure container exists when streaming starts
+                                ensureStreamingContainer();
 
                             } else if (jsonData.type === 'content') {
                                 accumulatedContent += jsonData.text;
 
-                                // if (contentDiv) {
+                                // ✅ FIX: Always ensure container exists before updating
+                                const contentDiv = ensureStreamingContainer();
+                                if (contentDiv) {
                                     contentDiv.innerHTML = accumulatedContent;
-                                // }
+                                } else {
+                                    console.error('❌ Failed to create streamingContent container');
+                                }
 
                                 const wordCount = accumulatedContent.split(/\s+/).filter(w => w.length > 0).length;
                                 if (wordCount % 50 === 0) {
@@ -14153,6 +14196,7 @@ Generated by CALIM 360 Smart CLM
 
                             } else if (jsonData.type === 'done') {
                                 updateProgress(`✅ Complete! (${jsonData.word_count} words)`);
+                                aiStreamingInProgress = false;  // ✅ Clear flag
 
                                 setTimeout(() => {
                                     const progress = document.getElementById('streamProgress');
@@ -14163,8 +14207,6 @@ Generated by CALIM 360 Smart CLM
 
                                 // Hide banner when complete
                                 hideAIBanner();
-
-
 
                                 // Final scroll if at bottom and auto-scroll enabled
                                 if (autoScrollEnabled && !userIsScrolling) {
@@ -14179,11 +14221,15 @@ Generated by CALIM 360 Smart CLM
                                 setTimeout(async () => await refreshContractData(), 1500);
 
                             } else if (jsonData.type === 'error') {
+                                aiStreamingInProgress = false;  // ✅ Clear flag
                                 cleanupScrollDetection();
                                 throw new Error(jsonData.message);
                             }
                         } catch (parseError) {
-                            console.warn('JSON parse error:', parseError);
+                            // Only log non-JSON parse errors
+                            if (parseError.name !== 'SyntaxError') {
+                                console.warn('Streaming error:', parseError);
+                            }
                         }
                     }
                 }
@@ -14191,24 +14237,25 @@ Generated by CALIM 360 Smart CLM
 
         } catch (error) {
             console.error('❌ Streaming error:', error);
+            aiStreamingInProgress = false;  // ✅ Clear flag on error
 
             // Hide banner on error
             hideAIBanner();
             cleanupScrollDetection();
 
             editor.innerHTML = `
-            <div style="text-align: center; padding: 3rem; color: #dc3545;">
-                <i class="ti ti-alert-circle" style="font-size: 3rem;"></i>
-                <h3>Generation Failed</h3>
-                <p>${error.message}</p>
-                <button class="btn btn-primary mt-3" onclick="refreshContractData()">
-                    <i class="ti ti-refresh"></i> Try Again
-                </button>
-            </div>
+        <div style="text-align: center; padding: 3rem; color: #dc3545;">
+            <i class="ti ti-alert-circle" style="font-size: 3rem;"></i>
+            <h3>Generation Failed</h3>
+            <p>${error.message}</p>
+            <button class="btn btn-primary" onclick="startAIStreaming()">
+                <i class="ti ti-refresh"></i> Try Again
+            </button>
+        </div>
         `;
-            showNotification('Failed to generate contract: ' + error.message, 'error');
         }
     }
+
 
 
 
@@ -14440,7 +14487,7 @@ Generated by CALIM 360 Smart CLM
                     <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">Regenerating Your Contract</h3>
                     <p style="font-size: 1rem; max-width: 500px; margin: 0 auto;">
                         AI is regenerating your contract with updated parameters and selected clauses. 
-                        This may take 30-90 seconds...
+                        This may take a while...
                     </p>
                     <div id="streamProgress" style="margin-top: 1.5rem; font-size: 0.875rem; color: var(--primary-color);"></div>
                 </div>
@@ -14532,7 +14579,7 @@ Generated by CALIM 360 Smart CLM
                 renderContractEditor(data);
                 await checkWorkflowAvailability();
                 await checkIfAIGenerated();
-               
+
 
                 // ✅ UPDATE SIGNATURE FIELDS AFTER RENDERING
                 if (data.certificate) {
@@ -15902,12 +15949,19 @@ Generated by CALIM 360 Smart CLM
     window.addEventListener('load', function () {
         console.log("🔧 Initializing permanent track changes fix...");
 
-        // Wait a bit more to ensure everything is ready
         setTimeout(function () {
             const contractContent = document.getElementById('contractContent');
 
             if (!contractContent) {
                 console.error("❌ Contract content not found!");
+                return;
+            }
+
+            // ✅ ADD THIS CHECK - Don't attach if AI streaming is in progress
+            if (typeof aiStreamingInProgress !== 'undefined' && aiStreamingInProgress) {
+                console.log("⏳ AI streaming in progress, delaying track changes setup...");
+                // Retry after streaming might be done
+                setTimeout(arguments.callee, 2000);
                 return;
             }
 
@@ -16023,305 +16077,305 @@ Generated by CALIM 360 Smart CLM
 
 
     // =====================================================
-// BULLETPROOF COMMENT BUTTON FIX
-// Add this to SCR_016_contract_editor.html AFTER bubble-comments.js
-// This will FORCE the button to work no matter what
-// =====================================================
+    // BULLETPROOF COMMENT BUTTON FIX
+    // Add this to SCR_016_contract_editor.html AFTER bubble-comments.js
+    // This will FORCE the button to work no matter what
+    // =====================================================
 
-(function() {
-    'use strict';
-    
-    console.log('🛡️ BULLETPROOF COMMENT BUTTON FIX LOADING...');
-    
-    let buttonFixed = false;
-    let retryCount = 0;
-    const MAX_RETRIES = 10;
-    
-    // =====================================================
-    // MAIN FIX FUNCTION
-    // =====================================================
-    function forceFixCommentButton() {
-        retryCount++;
-        console.log(`🔧 Attempt ${retryCount}: Fixing comment button...`);
-        
-        const addBtn = document.getElementById('addCommentBtn');
-        
-        if (!addBtn) {
-            console.warn('⚠️ Button not found yet, will retry...');
-            if (retryCount < MAX_RETRIES) {
-                setTimeout(forceFixCommentButton, 500);
+    (function () {
+        'use strict';
+
+        console.log('🛡️ BULLETPROOF COMMENT BUTTON FIX LOADING...');
+
+        let buttonFixed = false;
+        let retryCount = 0;
+        const MAX_RETRIES = 10;
+
+        // =====================================================
+        // MAIN FIX FUNCTION
+        // =====================================================
+        function forceFixCommentButton() {
+            retryCount++;
+            console.log(`🔧 Attempt ${retryCount}: Fixing comment button...`);
+
+            const addBtn = document.getElementById('addCommentBtn');
+
+            if (!addBtn) {
+                console.warn('⚠️ Button not found yet, will retry...');
+                if (retryCount < MAX_RETRIES) {
+                    setTimeout(forceFixCommentButton, 500);
+                }
+                return;
             }
-            return;
-        }
-        
-        console.log('✅ Found button:', addBtn);
-        
-        // METHOD 1: Remove ALL event listeners by replacing element
-        const newBtn = addBtn.cloneNode(true);
-        addBtn.parentNode.replaceChild(newBtn, addBtn);
-        
-        // METHOD 2: Add click handler directly to element
-        newBtn.onclick = function(e) {
-            console.log('🖱️ BUTTON CLICKED (onclick)');
-            e.preventDefault();
-            e.stopPropagation();
-            handleCommentButtonClick(e);
-        };
-        
-        // METHOD 3: Add addEventListener as backup
-        newBtn.addEventListener('click', function(e) {
-            console.log('🖱️ BUTTON CLICKED (addEventListener)');
-            e.preventDefault();
-            e.stopPropagation();
-            handleCommentButtonClick(e);
-        }, true); // Use capture phase
-        
-        // METHOD 4: Prevent any future listener removal
-        Object.defineProperty(newBtn, 'onclick', {
-            set: function(val) {
-                console.log('⚠️ Someone tried to change onclick!');
-            },
-            get: function() {
-                return function(e) {
-                    handleCommentButtonClick(e);
-                };
-            }
-        });
-        
-        console.log('✅ Button fixed with multiple methods!');
-        buttonFixed = true;
-        
-        // Also fix toggle button
-        fixToggleButton();
-    }
-    
-    // =====================================================
-    // FIX TOGGLE PANEL BUTTON
-    // =====================================================
-    function fixToggleButton() {
-        const toggleBtn = document.getElementById('toggleCommentsBtn');
-        
-        if (toggleBtn) {
-            const newToggle = toggleBtn.cloneNode(true);
-            toggleBtn.parentNode.replaceChild(newToggle, toggleBtn);
-            
-            newToggle.onclick = function(e) {
+
+            console.log('✅ Found button:', addBtn);
+
+            // METHOD 1: Remove ALL event listeners by replacing element
+            const newBtn = addBtn.cloneNode(true);
+            addBtn.parentNode.replaceChild(newBtn, addBtn);
+
+            // METHOD 2: Add click handler directly to element
+            newBtn.onclick = function (e) {
+                console.log('🖱️ BUTTON CLICKED (onclick)');
                 e.preventDefault();
                 e.stopPropagation();
-                if (typeof toggleCommentsPanel === 'function') {
-                    toggleCommentsPanel();
-                }
+                handleCommentButtonClick(e);
             };
-            
-            console.log('✅ Toggle button fixed');
+
+            // METHOD 3: Add addEventListener as backup
+            newBtn.addEventListener('click', function (e) {
+                console.log('🖱️ BUTTON CLICKED (addEventListener)');
+                e.preventDefault();
+                e.stopPropagation();
+                handleCommentButtonClick(e);
+            }, true); // Use capture phase
+
+            // METHOD 4: Prevent any future listener removal
+            Object.defineProperty(newBtn, 'onclick', {
+                set: function (val) {
+                    console.log('⚠️ Someone tried to change onclick!');
+                },
+                get: function () {
+                    return function (e) {
+                        handleCommentButtonClick(e);
+                    };
+                }
+            });
+
+            console.log('✅ Button fixed with multiple methods!');
+            buttonFixed = true;
+
+            // Also fix toggle button
+            fixToggleButton();
         }
-    }
-    
-    // =====================================================
-    // HANDLE BUTTON CLICK
-    // =====================================================
-    function handleCommentButtonClick(e) {
-        console.log('📝 Processing comment button click...');
-        
-        // Check if openAddCommentModal exists
-        if (typeof openAddCommentModal === 'function') {
-            console.log('✅ Using openAddCommentModal()');
-            openAddCommentModal();
-            return;
-        }
-        
-        // Fallback: Manual implementation
-        console.log('⚠️ openAddCommentModal not found, using fallback');
-        openCommentModalManually();
-    }
-    
-    // =====================================================
-    // FALLBACK: MANUAL MODAL OPENING
-    // =====================================================
-    function openCommentModalManually() {
-        const selection = window.getSelection();
-        
-        if (!selection.rangeCount || selection.toString().trim() === '') {
-            showNotificationFallback('Please select text to comment on', 'warning');
-            return;
-        }
-        
-        const selectedText = selection.toString().trim();
-        console.log('✅ Selected text:', selectedText);
-        
-        // Store selection
-        window.commentSelection = {
-            text: selectedText,
-            range: selection.getRangeAt(0)
-        };
-        
-        // Show modal
-        const modal = document.getElementById('commentModal');
-        if (!modal) {
-            alert('Comment modal not found! Please refresh the page.');
-            return;
-        }
-        
-        modal.style.display = 'flex';
-        
-        // Clear textarea
-        const textarea = document.getElementById('commentText');
-        if (textarea) {
-            textarea.value = '';
-            setTimeout(() => textarea.focus(), 100);
-        }
-        
-        // Update preview
-        const preview = document.getElementById('selectedTextPreview');
-        if (preview) {
-            preview.textContent = selectedText;
-        }
-        
-        console.log('✅ Modal opened manually');
-    }
-    
-    // =====================================================
-    // FALLBACK NOTIFICATION
-    // =====================================================
-    function showNotificationFallback(message, type) {
-        // Try to use existing notification function
-        if (typeof showNotification === 'function') {
-            showNotification(message, type);
-            return;
-        }
-        
-        // Fallback: alert
-        alert(message);
-    }
-    
-    // =====================================================
-    // MUTATION OBSERVER - Watch for button changes
-    // =====================================================
-    function setupMutationObserver() {
-        const observer = new MutationObserver(function(mutations) {
-            if (!buttonFixed) {
-                console.log('🔍 DOM changed, checking button...');
-                forceFixCommentButton();
+
+        // =====================================================
+        // FIX TOGGLE PANEL BUTTON
+        // =====================================================
+        function fixToggleButton() {
+            const toggleBtn = document.getElementById('toggleCommentsBtn');
+
+            if (toggleBtn) {
+                const newToggle = toggleBtn.cloneNode(true);
+                toggleBtn.parentNode.replaceChild(newToggle, toggleBtn);
+
+                newToggle.onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof toggleCommentsPanel === 'function') {
+                        toggleCommentsPanel();
+                    }
+                };
+
+                console.log('✅ Toggle button fixed');
             }
-        });
-        
-        // Watch the entire document for changes
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-        
-        console.log('👁️ Mutation observer started');
-    }
-    
-    // =====================================================
-    // INITIALIZATION - Multiple triggers
-    // =====================================================
-    
-    // Trigger 1: Immediate
-    console.log('🚀 Trigger 1: Immediate execution');
-    setTimeout(forceFixCommentButton, 100);
-    
-    // Trigger 2: DOM Ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Trigger 2: DOMContentLoaded');
+        }
+
+        // =====================================================
+        // HANDLE BUTTON CLICK
+        // =====================================================
+        function handleCommentButtonClick(e) {
+            console.log('📝 Processing comment button click...');
+
+            // Check if openAddCommentModal exists
+            if (typeof openAddCommentModal === 'function') {
+                console.log('✅ Using openAddCommentModal()');
+                openAddCommentModal();
+                return;
+            }
+
+            // Fallback: Manual implementation
+            console.log('⚠️ openAddCommentModal not found, using fallback');
+            openCommentModalManually();
+        }
+
+        // =====================================================
+        // FALLBACK: MANUAL MODAL OPENING
+        // =====================================================
+        function openCommentModalManually() {
+            const selection = window.getSelection();
+
+            if (!selection.rangeCount || selection.toString().trim() === '') {
+                showNotificationFallback('Please select text to comment on', 'warning');
+                return;
+            }
+
+            const selectedText = selection.toString().trim();
+            console.log('✅ Selected text:', selectedText);
+
+            // Store selection
+            window.commentSelection = {
+                text: selectedText,
+                range: selection.getRangeAt(0)
+            };
+
+            // Show modal
+            const modal = document.getElementById('commentModal');
+            if (!modal) {
+                alert('Comment modal not found! Please refresh the page.');
+                return;
+            }
+
+            modal.style.display = 'flex';
+
+            // Clear textarea
+            const textarea = document.getElementById('commentText');
+            if (textarea) {
+                textarea.value = '';
+                setTimeout(() => textarea.focus(), 100);
+            }
+
+            // Update preview
+            const preview = document.getElementById('selectedTextPreview');
+            if (preview) {
+                preview.textContent = selectedText;
+            }
+
+            console.log('✅ Modal opened manually');
+        }
+
+        // =====================================================
+        // FALLBACK NOTIFICATION
+        // =====================================================
+        function showNotificationFallback(message, type) {
+            // Try to use existing notification function
+            if (typeof showNotification === 'function') {
+                showNotification(message, type);
+                return;
+            }
+
+            // Fallback: alert
+            alert(message);
+        }
+
+        // =====================================================
+        // MUTATION OBSERVER - Watch for button changes
+        // =====================================================
+        function setupMutationObserver() {
+            const observer = new MutationObserver(function (mutations) {
+                if (!buttonFixed) {
+                    console.log('🔍 DOM changed, checking button...');
+                    forceFixCommentButton();
+                }
+            });
+
+            // Watch the entire document for changes
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+
+            console.log('👁️ Mutation observer started');
+        }
+
+        // =====================================================
+        // INITIALIZATION - Multiple triggers
+        // =====================================================
+
+        // Trigger 1: Immediate
+        console.log('🚀 Trigger 1: Immediate execution');
+        setTimeout(forceFixCommentButton, 100);
+
+        // Trigger 2: DOM Ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function () {
+                console.log('🚀 Trigger 2: DOMContentLoaded');
+                forceFixCommentButton();
+            });
+        } else {
+            console.log('🚀 Trigger 2: DOM already loaded');
+            forceFixCommentButton();
+        }
+
+        // Trigger 3: Window Load
+        window.addEventListener('load', function () {
+            console.log('🚀 Trigger 3: Window load');
             forceFixCommentButton();
         });
-    } else {
-        console.log('🚀 Trigger 2: DOM already loaded');
-        forceFixCommentButton();
-    }
-    
-    // Trigger 3: Window Load
-    window.addEventListener('load', function() {
-        console.log('🚀 Trigger 3: Window load');
-        forceFixCommentButton();
-    });
-    
-    // Trigger 4: Delayed (for dynamically loaded content)
-    setTimeout(function() {
-        console.log('🚀 Trigger 4: Delayed (1 second)');
-        forceFixCommentButton();
-    }, 1000);
-    
-    // Trigger 5: Watch for DOM changes
-    if (typeof MutationObserver !== 'undefined') {
-        setupMutationObserver();
-    }
-    
-    // =====================================================
-    // EXPOSE FUNCTIONS GLOBALLY
-    // =====================================================
-    window.forceFixCommentButton = forceFixCommentButton;
-    window.handleCommentButtonClick = handleCommentButtonClick;
-    
-    console.log('🛡️ Bulletproof fix installed!');
-    console.log('💡 Manual fix: forceFixCommentButton()');
-    
-})();
-    
+
+        // Trigger 4: Delayed (for dynamically loaded content)
+        setTimeout(function () {
+            console.log('🚀 Trigger 4: Delayed (1 second)');
+            forceFixCommentButton();
+        }, 1000);
+
+        // Trigger 5: Watch for DOM changes
+        if (typeof MutationObserver !== 'undefined') {
+            setupMutationObserver();
+        }
+
+        // =====================================================
+        // EXPOSE FUNCTIONS GLOBALLY
+        // =====================================================
+        window.forceFixCommentButton = forceFixCommentButton;
+        window.handleCommentButtonClick = handleCommentButtonClick;
+
+        console.log('🛡️ Bulletproof fix installed!');
+        console.log('💡 Manual fix: forceFixCommentButton()');
+
+    })();
+
 </script>
 
 
 
 <script>
-// Update modal based on change type
-function updateChangeType(type) {
-    console.log('📝 Change type:', type);
-    
-    const modalTitle = document.getElementById('modalTitle');
-    const commentLabel = document.getElementById('commentLabel');
-    const selectedLabel = document.getElementById('selectedLabel');
-    const newTextGroup = document.getElementById('newTextGroup');
-    const changePreview = document.getElementById('changePreview');
-    const submitBtnText = document.getElementById('submitBtnText');
-    const commentText = document.getElementById('commentText');
-    
-    if (type === 'comment') {
-        // Regular comment
-        modalTitle.innerHTML = '<i class="ti ti-message-plus"></i> Add Comment';
-        commentLabel.textContent = 'Your Comment';
-        selectedLabel.textContent = 'Selected Text';
-        newTextGroup.style.display = 'none';
-        changePreview.style.display = 'none';
-        submitBtnText.textContent = 'Add Comment';
-        commentText.placeholder = 'Enter your comment...';
-        
-    } else if (type === 'delete') {
-        // Delete text
-        modalTitle.innerHTML = '<i class="ti ti-trash"></i> Mark for Deletion';
-        commentLabel.textContent = 'Reason for Deletion';
-        selectedLabel.textContent = 'Text to Delete';
-        newTextGroup.style.display = 'none';
-        submitBtnText.textContent = 'Mark as Deleted';
-        commentText.placeholder = 'Why is this text being removed?';
-        
-        // Show preview
-        changePreview.style.display = 'block';
-        const selectedText = document.getElementById('selectedTextPreview').textContent;
-        document.getElementById('previewContent').innerHTML = `
+    // Update modal based on change type
+    function updateChangeType(type) {
+        console.log('📝 Change type:', type);
+
+        const modalTitle = document.getElementById('modalTitle');
+        const commentLabel = document.getElementById('commentLabel');
+        const selectedLabel = document.getElementById('selectedLabel');
+        const newTextGroup = document.getElementById('newTextGroup');
+        const changePreview = document.getElementById('changePreview');
+        const submitBtnText = document.getElementById('submitBtnText');
+        const commentText = document.getElementById('commentText');
+
+        if (type === 'comment') {
+            // Regular comment
+            modalTitle.innerHTML = '<i class="ti ti-message-plus"></i> Add Comment';
+            commentLabel.textContent = 'Your Comment';
+            selectedLabel.textContent = 'Selected Text';
+            newTextGroup.style.display = 'none';
+            changePreview.style.display = 'none';
+            submitBtnText.textContent = 'Add Comment';
+            commentText.placeholder = 'Enter your comment...';
+
+        } else if (type === 'delete') {
+            // Delete text
+            modalTitle.innerHTML = '<i class="ti ti-trash"></i> Mark for Deletion';
+            commentLabel.textContent = 'Reason for Deletion';
+            selectedLabel.textContent = 'Text to Delete';
+            newTextGroup.style.display = 'none';
+            submitBtnText.textContent = 'Mark as Deleted';
+            commentText.placeholder = 'Why is this text being removed?';
+
+            // Show preview
+            changePreview.style.display = 'block';
+            const selectedText = document.getElementById('selectedTextPreview').textContent;
+            document.getElementById('previewContent').innerHTML = `
             <div style="text-decoration: line-through; color: #dc3545; background: rgba(220, 53, 69, 0.1); padding: 8px; border-radius: 4px;">
                 ${selectedText}
             </div>
         `;
-        
-    } else if (type === 'insert') {
-        // Modify/replace text
-        modalTitle.innerHTML = '<i class="ti ti-pencil"></i> Modify Text';
-        commentLabel.textContent = 'Reason for Change';
-        selectedLabel.textContent = 'Original Text';
-        newTextGroup.style.display = 'block';
-        submitBtnText.textContent = 'Track Change';
-        commentText.placeholder = 'Why is this change being made?';
-        
-        // Update preview when new text changes
-        document.getElementById('newText').addEventListener('input', function() {
-            const originalText = document.getElementById('selectedTextPreview').textContent;
-            const newText = this.value;
-            
-            changePreview.style.display = 'block';
-            document.getElementById('previewContent').innerHTML = `
+
+        } else if (type === 'insert') {
+            // Modify/replace text
+            modalTitle.innerHTML = '<i class="ti ti-pencil"></i> Modify Text';
+            commentLabel.textContent = 'Reason for Change';
+            selectedLabel.textContent = 'Original Text';
+            newTextGroup.style.display = 'block';
+            submitBtnText.textContent = 'Track Change';
+            commentText.placeholder = 'Why is this change being made?';
+
+            // Update preview when new text changes
+            document.getElementById('newText').addEventListener('input', function () {
+                const originalText = document.getElementById('selectedTextPreview').textContent;
+                const newText = this.value;
+
+                changePreview.style.display = 'block';
+                document.getElementById('previewContent').innerHTML = `
                 <div style="margin-bottom: 8px;">
                     <strong style="color: #dc3545;">Before:</strong>
                     <div style="text-decoration: line-through; color: #dc3545; background: rgba(220, 53, 69, 0.1); padding: 6px; border-radius: 4px; margin-top: 4px;">
@@ -16335,76 +16389,76 @@ function updateChangeType(type) {
                     </div>
                 </div>
             `;
-        });
+            });
+        }
     }
-}
 
-// Initialize on first load
-document.addEventListener('DOMContentLoaded', () => {
-    updateChangeType('comment');
-});
+    // Initialize on first load
+    document.addEventListener('DOMContentLoaded', () => {
+        updateChangeType('comment');
+    });
 
-// Add to bubble-comments.js or in <script> tag
+    // Add to bubble-comments.js or in <script> tag
 
-function manualTrackChange() {
-    // Get the comment ID from the highlighted text that's selected
-    const selection = window.getSelection();
-    if (!selection.rangeCount) {
-        alert('Please click on the commented text first');
-        return;
+    function manualTrackChange() {
+        // Get the comment ID from the highlighted text that's selected
+        const selection = window.getSelection();
+        if (!selection.rangeCount) {
+            alert('Please click on the commented text first');
+            return;
+        }
+
+        // Find the comment element
+        let element = selection.anchorNode;
+        if (element.nodeType === 3) element = element.parentElement;
+
+        const commentEl = element.closest('[data-comment-id]');
+        if (!commentEl) {
+            alert('Please click on highlighted commented text');
+            return;
+        }
+
+        const commentId = parseInt(commentEl.dataset.commentId);
+        const comment = window.bcAllComments.find(c => c.id === commentId);
+
+        if (!comment) {
+            alert('Comment not found');
+            return;
+        }
+
+        // Get current text
+        const icon = commentEl.querySelector('.comment-icon');
+        let currentText = commentEl.textContent;
+        if (icon) currentText = currentText.replace('💬', '').trim();
+
+        // Get original
+        const originalText = comment.original_text || comment.selected_text;
+
+        if (currentText === originalText) {
+            alert('No change detected');
+            return;
+        }
+
+        // Show confirmation
+        if (confirm('Track this change?\n\nBEFORE: ' + originalText + '\nAFTER: ' + currentText)) {
+            // Update via API
+            fetch(`/api/contracts/comments/${commentId}/track-change`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    original_text: originalText,
+                    new_text: currentText,
+                    change_type: 'insert'
+                })
+            }).then(r => r.json()).then(data => {
+                if (data.success) {
+                    alert('✅ Change tracked!');
+                    loadComments();
+                }
+            });
+        }
     }
-    
-    // Find the comment element
-    let element = selection.anchorNode;
-    if (element.nodeType === 3) element = element.parentElement;
-    
-    const commentEl = element.closest('[data-comment-id]');
-    if (!commentEl) {
-        alert('Please click on highlighted commented text');
-        return;
-    }
-    
-    const commentId = parseInt(commentEl.dataset.commentId);
-    const comment = window.bcAllComments.find(c => c.id === commentId);
-    
-    if (!comment) {
-        alert('Comment not found');
-        return;
-    }
-    
-    // Get current text
-    const icon = commentEl.querySelector('.comment-icon');
-    let currentText = commentEl.textContent;
-    if (icon) currentText = currentText.replace('💬', '').trim();
-    
-    // Get original
-    const originalText = comment.original_text || comment.selected_text;
-    
-    if (currentText === originalText) {
-        alert('No change detected');
-        return;
-    }
-    
-    // Show confirmation
-    if (confirm('Track this change?\n\nBEFORE: ' + originalText + '\nAFTER: ' + currentText)) {
-        // Update via API
-        fetch(`/api/contracts/comments/${commentId}/track-change`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({
-                original_text: originalText,
-                new_text: currentText,
-                change_type: 'insert'
-            })
-        }).then(r => r.json()).then(data => {
-            if (data.success) {
-                alert('✅ Change tracked!');
-                loadComments();
-            }
-        });
-    }
-}
 
 </script>
 

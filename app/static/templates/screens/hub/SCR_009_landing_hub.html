@@ -392,12 +392,12 @@
             letter-spacing: 0.5px;
         }
 
-        /* Tooltip Styles - Default (appears above) */
+        /* Tooltip Styles - Side Positioned with Connecting Line */
+        /* Tooltip Styles - Side Positioned with Connecting Line */
         .tooltip {
             position: absolute;
-            bottom: calc(100% + 20px);
-            left: 50%;
-            transform: translateX(-50%) translateY(-10px);
+            top: 50%;
+            transform: translateY(-50%) translateX(-20px);
             background: linear-gradient(135deg, rgba(26, 39, 68, 0.98), rgba(39, 98, 203, 0.98));
             backdrop-filter: blur(20px);
             color: white;
@@ -405,8 +405,8 @@
             border-radius: 16px;
             font-size: 0.85rem;
             white-space: normal;
-            max-width: 280px;
-            width: max-content;
+            /* max-width: 280px; */
+            min-width: 240px;
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
@@ -415,42 +415,107 @@
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4),
                 0 0 0 1px rgba(255, 255, 255, 0.2);
             line-height: 1.5;
-            text-align: center;
+            text-align: left;
         }
 
+        /* Tooltip arrow/pointer */
         .tooltip::before {
             content: '';
             position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 8px solid transparent;
-            border-top-color: rgba(39, 98, 203, 0.98);
+            top: 50%;
+            transform: translateY(-50%);
+            border: 10px solid transparent;
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
         }
 
-        /* Tooltip for top positioned apps (appears below) */
-        .app.top .tooltip,
+        /* Tooltip connecting glow line */
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 2px;
+            background: linear-gradient(90deg,
+                    rgba(255, 255, 255, 0.6),
+                    rgba(255, 255, 255, 0.1));
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        /* Left positioned apps - tooltip on LEFT */
+        .app.left .tooltip,
         .app.top-left .tooltip,
-        .app.top-right .tooltip {
-            bottom: auto;
-            top: calc(100% + 20px);
-            transform: translateX(-50%) translateY(10px);
+        .app.bottom-left .tooltip {
+            right: calc(100% + 30px);
+            left: auto;
+        }
+
+        .app.left .tooltip::before,
+        .app.top-left .tooltip::before,
+        .app.bottom-left .tooltip::before {
+            right: -20px;
+            left: auto;
+            border-left-color: rgba(39, 98, 203, 0.98);
+        }
+
+        .app.left .tooltip::after,
+        .app.top-left .tooltip::after,
+        .app.bottom-left .tooltip::after {
+            right: -20px;
+            left: auto;
+            background: linear-gradient(90deg,
+                    rgba(255, 255, 255, 0.1),
+                    rgba(255, 255, 255, 0.6));
+        }
+
+        /* Right positioned apps - tooltip on RIGHT */
+        .app.right .tooltip,
+        .app.top-right .tooltip,
+        .app.bottom-right .tooltip {
+            left: calc(100% + 30px);
+            right: auto;
+        }
+
+        .app.right .tooltip::before,
+        .app.top-right .tooltip::before,
+        .app.bottom-right .tooltip::before {
+            left: -20px;
+            right: auto;
+            border-right-color: rgba(39, 98, 203, 0.98);
+        }
+
+        .app.right .tooltip::after,
+        .app.top-right .tooltip::after,
+        .app.bottom-right .tooltip::after {
+            left: -20px;
+            right: auto;
+        }
+
+        /* Top and Bottom center apps - tooltip on RIGHT */
+        .app.top .tooltip,
+        .app.bottom .tooltip {
+            left: calc(100% + 30px);
+            right: auto;
         }
 
         .app.top .tooltip::before,
-        .app.top-left .tooltip::before,
-        .app.top-right .tooltip::before {
-            top: auto;
-            bottom: 100%;
-            border-top-color: transparent;
-            border-bottom-color: rgba(39, 98, 203, 0.98);
+        .app.bottom .tooltip::before {
+            left: -20px;
+            right: auto;
+            border-right-color: rgba(39, 98, 203, 0.98);
         }
 
+        .app.top .tooltip::after,
+        .app.bottom .tooltip::after {
+            left: -20px;
+            right: auto;
+        }
+
+        /* Hover states */
         .app:hover .tooltip {
             opacity: 1;
             visibility: visible;
-            transform: translateX(-50%) translateY(0);
+            transform: translateY(-50%) translateX(0);
         }
 
         .tooltip-title {
@@ -463,7 +528,7 @@
         .tooltip-description {
             font-size: 0.8rem;
             color: rgba(255, 255, 255, 0.9);
-            line-height: 1.4;
+            line-height: 1.5;
         }
 
         .tooltip-status {
@@ -564,9 +629,18 @@
             }
 
             .tooltip {
-                max-width: 240px;
+                max-width: 220px;
+                min-width: 200px;
                 font-size: 0.8rem;
                 padding: 0.875rem 1rem;
+            }
+
+            .tooltip-title {
+                font-size: 0.9rem;
+            }
+
+            .tooltip-description {
+                font-size: 0.75rem;
             }
         }
 
@@ -623,7 +697,8 @@
             }
 
             .tooltip {
-                max-width: 200px;
+                max-width: 180px;
+                min-width: 160px;
                 font-size: 0.75rem;
                 padding: 0.75rem 0.875rem;
             }
@@ -681,9 +756,7 @@
             }
 
             .tooltip {
-                max-width: 180px;
-                font-size: 0.7rem;
-                padding: 0.625rem 0.75rem;
+                display: none !important;
             }
         }
 
@@ -705,8 +778,6 @@
         }
     </style>
 </head>
-
-
 
 <body>
     <!-- Background Pattern -->
@@ -768,7 +839,7 @@
                     <g class="connection-group">
                         <line class="connection-line" x1="294" y1="406" x2="215" y2="485" />
                         <circle cx="215" cy="485" r="5" fill="white" opacity="0.8" filter="url(#glow)" />
-                        <circle cx="215" cy="485" r="10" fill="none" stroke="white" stroke-width="1" opacity="0.4" />
+                        <circle cx="215" cy="215" r="10" fill="none" stroke="white" stroke-width="1" opacity="0.4" />
                     </g>
 
                     <g class="connection-group">
@@ -803,7 +874,8 @@
                     <div class="tooltip">
                         <div class="tooltip-title">Tender Management</div>
                         <div class="tooltip-description">
-                            Streamline tender creation, submission tracking, and vendor management for construction projects.
+                            Streamline tender creation, submission tracking, and vendor management for construction
+                            projects.
                         </div>
                         <div class="tooltip-status">Coming Soon</div>
                     </div>
@@ -819,7 +891,8 @@
                     <div class="tooltip">
                         <div class="tooltip-title">Bid Management</div>
                         <div class="tooltip-description">
-                            Manage competitive bidding processes, evaluate proposals, and track bid submissions efficiently.
+                            Manage competitive bidding processes, evaluate proposals, and track bid submissions
+                            efficiently.
                         </div>
                         <div class="tooltip-status">Coming Soon</div>
                     </div>
@@ -834,7 +907,8 @@
                     <div class="tooltip">
                         <div class="tooltip-title">Correspondence Management</div>
                         <div class="tooltip-description">
-                            Centralize all project communications, track letters, and maintain audit trails for compliance.
+                            Centralize all project communications, track letters, and maintain audit trails for
+                            compliance.
                         </div>
                     </div>
                 </a>
@@ -849,7 +923,8 @@
                     <div class="tooltip">
                         <div class="tooltip-title">Variation Orders</div>
                         <div class="tooltip-description">
-                            Track and manage contract variations, scope changes, and cost impacts with full documentation.
+                            Track and manage contract variations, scope changes, and cost impacts with full
+                            documentation.
                         </div>
                         <div class="tooltip-status">Coming Soon</div>
                     </div>
@@ -865,7 +940,8 @@
                     <div class="tooltip">
                         <div class="tooltip-title">Claims Management</div>
                         <div class="tooltip-description">
-                            Handle contract claims, disputes, and resolutions with comprehensive documentation and timeline tracking.
+                            Handle contract claims, disputes, and resolutions with comprehensive documentation and
+                            timeline tracking.
                         </div>
                         <div class="tooltip-status">Coming Soon</div>
                     </div>
@@ -880,7 +956,9 @@
                     <div class="tooltip">
                         <div class="tooltip-title">Contract Lifecycle Management</div>
                         <div class="tooltip-description">
-                            Complete contract management from creation to closure with AI-powered analysis and compliance tracking.
+                            Complete contract management from creation to closure with AI-powered analysis and
+                            compliance tracking.
+                            
                         </div>
                     </div>
                 </a>
@@ -895,7 +973,8 @@
                     <div class="tooltip">
                         <div class="tooltip-title">Project Management</div>
                         <div class="tooltip-description">
-                            Manage project closeout procedures, final documentation, handover processes, and warranty tracking.
+                            Manage project closeout procedures, final documentation, handover processes, and warranty
+                            tracking.
                         </div>
                         <div class="tooltip-status">Coming Soon</div>
                     </div>
@@ -911,7 +990,8 @@
                     <div class="tooltip">
                         <div class="tooltip-title">Daily Progress Report</div>
                         <div class="tooltip-description">
-                            Create and track daily site progress reports with photos, weather conditions, and workforce details.
+                            Create and track daily site progress reports with photos, weather conditions, and workforce
+                            details.
                         </div>
                         <div class="tooltip-status">Coming Soon</div>
                     </div>
