@@ -23,7 +23,10 @@ import uuid
 import traceback
 from app.utils.datetime_helpers import format_datetime_to_iso
 from app.services.audit_service import log_contract_action
-
+from weasyprint import HTML
+import pypandoc
+import tempfile
+from app.services.workflow_email_service import WorkflowEmailService
 
 # Add these 4 lines
 import hashlib
@@ -48,6 +51,21 @@ from app.models.contract import Contract, ContractVersion
 
 from app.services.claude_service import ClaudeService, claude_service
 from app.services.blockchain_service import blockchain_service
+
+
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib.enums import TA_JUSTIFY, TA_LEFT, TA_CENTER
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle, PageBreak, HRFlowable
+from reportlab.lib import colors
+from docx import Document
+from docx.shared import Inches, Pt
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from io import BytesIO
+import base64
+from bs4 import BeautifulSoup
+
 
 
 logger = logging.getLogger(__name__)
@@ -3124,7 +3142,65 @@ async def submit_for_internal_review(
                 })
                 
                 logger.info(f"✅ Contract {contract_id} action_person_id set to: {first_reviewer_id}")
-                
+# 📧 EMAIL NOTIFICATION: Internal review request
+                try:
+                    logger.info("📧 Preparing to send internal review notification emails...")
+                    
+                    reviewer_emails = []
+                    
+                    if review_type == 'specific':
+                        # Get email addresses from request
+                        reviewer_emails = personnel_emails if personnel_emails else []
+                        logger.info(f"📋 Specific personnel review: {len(reviewer_emails)} reviewers")
+                        
+                    elif review_type == 'masterWorkflow':
+                        # Get emails from master workflow users
+                        master_users_query = text("""
+                            SELECT DISTINCT
+                                u.email,
+                                CONCAT(u.first_name, ' ', u.last_name) as full_name
+                            FROM workflow_steps ws
+                            INNER JOIN users u ON ws.assignee_user_id = u.id
+                            INNER JOIN workflows w ON ws.workflow_id = w.id
+                            WHERE w.is_master = 1
+                            AND w.company_id = :company_id
+                            AND u.is_active = 1
+                            AND u.email IS NOT NULL
+                            AND u.id != :current_user_id
+                        """)
+                        master_users = db.execute(master_users_query, {
+                            "company_id": current_user.company_id,
+                            "current_user_id": current_user.id
+                        }).fetchall()
+                        
+                        reviewer_emails = [user.email for user in master_users]
+                        logger.info(f"📋 Master workflow review: {len(reviewer_emails)} reviewers")
+                    
+                    if reviewer_emails:
+                        # Get contract details
+                        contract_query = text("""
+                            SELECT contract_number, contract_title
+                            FROM contracts WHERE id = :contract_id
+                        """)
+                        contract_info = db.execute(contract_query, {"contract_id": contract_id}).fetchone()
+                        
+                        initiator_name = f"{current_user.first_name} {current_user.last_name}"
+                        
+                        # Send emails to all reviewers
+                        WorkflowEmailService.send_internal_review_request(
+                            db=db,
+                            contract_id=contract_id,
+                            contract_number=contract_info.contract_number,
+                            contract_title=contract_info.contract_title,
+                            reviewer_emails=reviewer_emails,
+                            initiator_name=initiator_name
+                        )
+                        logger.info(f"✉️ Internal review emails sent to {len(reviewer_emails)} reviewers")
+                    else:
+                        logger.warning("⚠️ No reviewer emails found to send notifications")
+                        
+                except Exception as email_error:
+                    logger.error(f"❌ Error sending internal review emails: {str(email_error)}")
 
 
             # =====================================================
@@ -3162,6 +3238,61 @@ async def submit_for_internal_review(
                 
                 logger.info(f"✅ Contract {contract_id} status updated to 'approval'")
                 logger.info(f"✅ action_person_id set to: {first_approver_id}")
+# 📧 EMAIL NOTIFICATION: Approval workflow initiated
+                try:
+                    if first_approver_id:
+                        logger.info(f"📧 Sending approval workflow notification to first approver ID: {first_approver_id}")
+                        
+                        # Get first approver details
+                        approver_query = text("""
+                            SELECT 
+                                u.email,
+                                CONCAT(u.first_name, ' ', u.last_name) as full_name,
+                                ws.step_name,
+                                ws.step_type,
+                                w.workflow_name
+                            FROM users u
+                            INNER JOIN workflow_steps ws ON ws.assignee_user_id = u.id
+                            INNER JOIN workflows w ON ws.workflow_id = w.id
+                            INNER JOIN workflow_instances wi ON wi.workflow_id = w.id
+                            WHERE u.id = :user_id
+                            AND wi.contract_id = :contract_id
+                            AND ws.step_number = 1
+                            AND w.company_id = :company_id
+                            LIMIT 1
+                        """)
+                        approver_info = db.execute(approver_query, {
+                            "user_id": first_approver_id,
+                            "contract_id": contract_id,
+                            "company_id": current_user.company_id
+                        }).fetchone()
+                        
+                        if approver_info:
+                            # Get contract details
+                            contract_query = text("""
+                                SELECT contract_number, contract_title
+                                FROM contracts WHERE id = :contract_id
+                            """)
+                            contract_info = db.execute(contract_query, {"contract_id": contract_id}).fetchone()
+                            
+                            WorkflowEmailService.send_workflow_step_notification(
+                                db=db,
+                                contract_id=contract_id,
+                                contract_number=contract_info.contract_number,
+                                contract_title=contract_info.contract_title,
+                                assignee_email=approver_info.email,
+                                assignee_name=approver_info.full_name,
+                                step_name=approver_info.step_name,
+                                step_type=approver_info.step_type,
+                                workflow_name=approver_info.workflow_name
+                            )
+                            logger.info(f"✉️ Approval workflow notification sent to {approver_info.email}")
+                        else:
+                            logger.warning("⚠️ First approver details not found for email notification")
+                            
+                except Exception as email_error:
+                    logger.error(f"❌ Error sending approval workflow email: {str(email_error)}")
+
                 
                 # Update workflow instance status from 'active' to 'in_progress'
                 activate_workflow_query = text("""
@@ -3229,7 +3360,54 @@ async def submit_for_internal_review(
                 
                 logger.info(f"✅ Contract {contract_id} status updated to 'signature'")
                 logger.info(f"✅ action_person_id set to e-sign authority: {esign_step.assignee_user_id}")
-                
+
+# 📧 EMAIL NOTIFICATION: Contract sent for signature
+                try:
+                    if esign_step and esign_step.assignee_user_id:
+                        logger.info(f"📧 Sending e-signature notification to user ID: {esign_step.assignee_user_id}")
+                        
+                        # Get e-sign authority details
+                        esign_query = text("""
+                            SELECT 
+                                u.email,
+                                CONCAT(u.first_name, ' ', u.last_name) as full_name
+                            FROM users u
+                            WHERE u.id = :user_id
+                        """)
+                        esign_info = db.execute(esign_query, {"user_id": esign_step.assignee_user_id}).fetchone()
+                        
+                        if esign_info:
+                            # Get contract details including e-sign authorities
+                            contract_query = text("""
+                                SELECT 
+                                    contract_number, 
+                                    contract_title,
+                                    party_esignature_authority_id,
+                                    counterparty_esignature_authority_id
+                                FROM contracts 
+                                WHERE id = :contract_id
+                            """)
+                            contract_info = db.execute(contract_query, {"contract_id": contract_id}).fetchone()
+                            
+                            # Determine party type
+                            party_type = "Party A (Initiator)" if esign_step.assignee_user_id == contract_info.party_esignature_authority_id else "Party B (Counter-Party)"
+                            
+                            WorkflowEmailService.send_contract_sent_for_signature(
+                                db=db,
+                                contract_id=contract_id,
+                                contract_number=contract_info.contract_number,
+                                contract_title=contract_info.contract_title,
+                                esign_authority_email=esign_info.email,
+                                esign_authority_name=esign_info.full_name,
+                                party_type=party_type
+                            )
+                            logger.info(f"✉️ E-signature notification sent to {esign_info.email} ({party_type})")
+                        else:
+                            logger.warning("⚠️ E-sign authority details not found for email notification")
+                            
+                except Exception as email_error:
+                    logger.error(f"❌ Error sending e-signature email: {str(email_error)}")
+
                 # Update workflow instance status from 'active' to 'in_progress'
                 activate_workflow_query = text("""
                     UPDATE workflow_instances wi
@@ -3311,6 +3489,65 @@ async def submit_for_internal_review(
                 })
                 
                 logger.info(f"✅ Contract {contract_id} action_person_id set to: {first_reviewer_id}")
+
+# 📧 EMAIL NOTIFICATION: Internal review request
+                try:
+                    logger.info("📧 Preparing to send internal review notification emails...")
+                    reviewer_emails = []
+                    
+                    if review_type == 'specific':
+                        # Get email addresses from request
+                        reviewer_emails = personnel_emails if personnel_emails else []
+                        logger.info(f"📋 Specific personnel review: {len(reviewer_emails)} reviewers")
+                        
+                    elif review_type == 'masterWorkflow':
+                        # Get emails from master workflow users
+                        master_users_query = text("""
+                            SELECT DISTINCT
+                                u.email,
+                                CONCAT(u.first_name, ' ', u.last_name) as full_name
+                            FROM workflow_steps ws
+                            INNER JOIN users u ON ws.assignee_user_id = u.id
+                            INNER JOIN workflows w ON ws.workflow_id = w.id
+                            WHERE w.is_master = 1
+                            AND w.company_id = :company_id
+                            AND u.is_active = 1
+                            AND u.email IS NOT NULL
+                            AND u.id != :current_user_id
+                        """)
+                        master_users = db.execute(master_users_query, {
+                            "company_id": current_user.company_id,
+                            "current_user_id": current_user.id
+                        }).fetchall()
+                        
+                        reviewer_emails = [user.email for user in master_users]
+                        logger.info(f"📋 Master workflow review: {len(reviewer_emails)} reviewers")
+                    
+                    if reviewer_emails:
+                        # Get contract details
+                        contract_query = text("""
+                            SELECT contract_number, contract_title
+                            FROM contracts WHERE id = :contract_id
+                        """)
+                        contract_info = db.execute(contract_query, {"contract_id": contract_id}).fetchone()
+                        
+                        initiator_name = f"{current_user.first_name} {current_user.last_name}"
+                        
+                        # Send emails to all reviewers
+                        WorkflowEmailService.send_internal_review_request(
+                            db=db,
+                            contract_id=contract_id,
+                            contract_number=contract_info.contract_number,
+                            contract_title=contract_info.contract_title,
+                            reviewer_emails=reviewer_emails,
+                            initiator_name=initiator_name
+                        )
+                        logger.info(f"✉️ Internal review emails sent to {len(reviewer_emails)} reviewers")
+                    else:
+                        logger.warning("⚠️ No reviewer emails found to send notifications")
+                        
+                except Exception as email_error:
+                    logger.error(f"❌ Error sending internal review emails: {str(email_error)}")
                 
 
         # Send notifications to specific personnel (allowed for all users including counterparties)
@@ -4468,24 +4705,29 @@ async def compare_versions(
 # =====================================================
 # EXPORT ENDPOINTS
 # =====================================================
-
 @router.post("/export/{contract_id}")
-async def export_contract(
+async def export_contract_improved(
     contract_id: int,
     format: str = Query("pdf"),
-    include_tracked_changes: bool = Query(True),
-    include_comments: bool = Query(True),
+    include_signatures: bool = Query(True),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Export contract in various formats"""
+    """
+    Export contract with proper formatting and signatures
+    Supports: PDF, DOCX, HTML
+    """
     try:
         # Get contract data
         query = text("""
             SELECT 
+                c.id,
                 c.contract_number,
                 c.contract_title,
-                cv.contract_content
+                c.status,
+                cv.contract_content,
+                c.created_at,
+                c.effective_date
             FROM contracts c
             LEFT JOIN contract_versions cv ON c.id = cv.contract_id
             WHERE c.id = :contract_id
@@ -4498,115 +4740,442 @@ async def export_contract(
         if not result:
             raise HTTPException(status_code=404, detail="Contract not found")
         
-        content = result.contract_content or "No content available"
+        # Get signatories if requested
+        signatories = []
+        if include_signatures:
+            sig_query = text("""
+                SELECT 
+                    s.signer_type,
+                    s.has_signed,
+                    s.signed_at,
+                    s.signature_data,
+                    s.signature_method,
+                    u.first_name,
+                    u.last_name
+                FROM signatories s
+                LEFT JOIN users u ON s.user_id = u.id
+                WHERE s.contract_id = :contract_id
+                ORDER BY s.signing_order
+            """)
+            signatories = db.execute(sig_query, {"contract_id": contract_id}).fetchall()
         
+        # Export based on format
         if format == "pdf":
-            # Generate simple PDF
-            from io import BytesIO
-            from reportlab.lib.pagesizes import letter
-            from reportlab.pdfgen import canvas
-            
-            pdf_buffer = BytesIO()
-            c = canvas.Canvas(pdf_buffer, pagesize=letter)
-            
-            # Title
-            c.setFont("Helvetica-Bold", 16)
-            c.drawString(100, 750, result.contract_title or "Contract")
-            
-            # Contract number
-            c.setFont("Helvetica", 12)
-            c.drawString(100, 730, f"Contract Number: {result.contract_number}")
-            
-            # Content (simplified - remove HTML tags)
-            import re
-            clean_content = re.sub('<.*?>', '', content)
-            
-            y_position = 700
-            lines = clean_content.split('\n')
-            for line in lines[:40]:  # First 40 lines
-                if y_position < 100:
-                    c.showPage()
-                    y_position = 750
-                c.drawString(100, y_position, line[:80])
-                y_position -= 15
-            
-            c.save()
-            pdf_buffer.seek(0)
-            
-            from fastapi.responses import StreamingResponse
-            return StreamingResponse(
-                pdf_buffer,
-                media_type="application/pdf",
-                headers={
-                    "Content-Disposition": f"attachment; filename={result.contract_number}.pdf"
-                }
-            )
-            
-        elif format == "word":
-            # Generate Word document
-            try:
-                from docx import Document
-                from io import BytesIO
-                
-                doc = Document()
-                doc.add_heading(result.contract_title or "Contract", 0)
-                doc.add_paragraph(f"Contract Number: {result.contract_number}")
-                
-                # Clean content
-                import re
-                clean_content = re.sub('<.*?>', '', content)
-                doc.add_paragraph(clean_content)
-                
-                docx_buffer = BytesIO()
-                doc.save(docx_buffer)
-                docx_buffer.seek(0)
-                
-                from fastapi.responses import StreamingResponse
-                return StreamingResponse(
-                    docx_buffer,
-                    media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    headers={
-                        "Content-Disposition": f"attachment; filename={result.contract_number}.docx"
-                    }
-                )
-            except ImportError:
-                raise HTTPException(status_code=500, detail="Word export not available")
-                
+            return export_as_pdf(result, signatories)
+        elif format == "word" or format == "docx":
+            return export_as_word(result, signatories)
         elif format == "html":
-            # Return HTML
-            html_content = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>{result.contract_title}</title>
-                <style>
-                    body {{ font-family: Arial, sans-serif; margin: 40px; }}
-                    h1 {{ color: #333; }}
-                </style>
-            </head>
-            <body>
-                <h1>{result.contract_title or "Contract"}</h1>
-                <p>Contract Number: {result.contract_number}</p>
-                <div>{content}</div>
-            </body>
-            </html>
-            """
-            
-            from fastapi import Response
-            return Response(
-                content=html_content,
-                media_type="text/html",
-                headers={
-                    "Content-Disposition": f"attachment; filename={result.contract_number}.html"
-                }
-            )
-        
+            return export_as_html(result, signatories)
         else:
-            raise HTTPException(status_code=400, detail="Invalid export format")
+            raise HTTPException(status_code=400, detail="Unsupported format")
             
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error exporting contract: {str(e)}")
+        logger.error(f"Export error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# =====================================================
+# FIXED MULTI-PAGE PDF EXPORT
+# Replace the export_as_pdf() function in contracts.py
+# =====================================================
+def export_as_pdf(contract, signatories):
+    """
+    Simple: Take HTML from database and convert directly to PDF
+    No parsing, no reconstruction - just direct conversion
+    """
+    
+    # Get HTML content directly from database
+    content_html = contract.contract_content or "<p>No content available</p>"
+    
+    
+    # Wrap in a complete HTML document with basic styling
+    complete_html = f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            @page {{
+                size: A4;
+                margin: 20mm;
+            }}
+            
+            body {{
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: 11pt;
+                line-height: 1.6;
+                color: #000;
+            }}
+            
+            /* Just basic styling - content already has its own styles */
+            .header {{
+                border-bottom: 2px solid #2563eb;
+                padding-bottom: 15px;
+                margin-bottom: 20px;
+            }}
+            
+            .header h1 {{
+                margin: 0;
+                font-size: 18pt;
+                text-align: center;
+            }}
+            
+            .header p {{
+                margin: 5px 0;
+                font-size: 10pt;
+                color: #666;
+            }}
+            
+            /* Let the contract content keep its own styling */
+            .contract-content {{
+                /* Content already has inline styles from editor */
+            }}
+            
+            /* Signature styling */
+            .signatures {{
+                margin-top: 40px;
+                page-break-inside: avoid;
+            }}
+        </style>
+    </head>
+    <body>
+        
+        <!-- Contract Content - DIRECTLY FROM DATABASE -->
+        <div class="contract-content">
+            {content_html}
+        </div>
+        
+       
+    </body>
+    </html>
+    '''
+    
+    # Convert HTML to PDF using WeasyPrint
+    pdf_bytes = HTML(string=complete_html).write_pdf()
+    
+    buffer = BytesIO(pdf_bytes)
+    buffer.seek(0)
+    
+    filename = f"{contract.contract_number or 'Contract'}_{datetime.now().strftime('%Y%m%d')}.pdf"
+    
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}"
+        }
+    )
+
+
+# =====================================================
+# DOCX EXPORT WITH FULL STYLING PRESERVED
+# Uses Word's HTML format to preserve all styling
+# Replace export_as_word() in contracts.py
+# =====================================================
+# =====================================================
+# PROPER DOCX EXPORT USING PANDOC
+# Install: sudo apt-get install pandoc && pip install pypandoc
+# Replace export_as_word() in contracts.py
+# =====================================================
+
+import pypandoc
+import tempfile
+import os
+
+def export_as_word(contract, signatories):
+    """
+    Generate proper .docx file using pandoc
+    Pandoc creates true Word documents with styling preserved
+    """
+    
+    # Get HTML content from database
+    content_html = contract.contract_content or "<p>No content available</p>"
+    
+    # Build signature section HTML
+    signature_html = ""
+    if signatories:
+        signature_html = '<div style="page-break-before: always; margin-top: 30px;">'
+        signature_html += '<h2 style="color: #1e293b; border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-top: 20px;">Signatures</h2>'
+        
+        for sig in signatories:
+            signer_name = f"{sig.first_name} {sig.last_name}" if sig.first_name else "Pending"
+            status = "✓ Signed" if sig.has_signed else "Pending"
+            signed_date = sig.signed_at.strftime('%B %d, %Y %H:%M') if sig.signed_at else "N/A"
+            
+            signature_html += f'''
+            <div style="border: 2px solid #cbd5e0; border-radius: 8px; padding: 15px; margin: 15px 0; background-color: #f8fafc;">
+                <p style="margin: 5px 0; font-size: 12pt;"><strong>{sig.signer_type.capitalize()}:</strong> {signer_name}</p>
+                <p style="margin: 5px 0; font-size: 11pt; color: #64748b;"><strong>Status:</strong> {status}</p>
+                <p style="margin: 5px 0; font-size: 11pt; color: #64748b;"><strong>Date:</strong> {signed_date}</p>
+            '''
+            
+            # Add signature image
+            if sig.signature_data and sig.signature_data.startswith('data:image'):
+                signature_html += f'''
+                <div style="margin-top: 10px;">
+                    <img src="{sig.signature_data}" style="max-width: 200px; max-height: 80px;" alt="Signature" />
+                </div>
+                '''
+            
+            signature_html += '</div>'
+        
+        signature_html += '</div>'
+    
+    # Build complete HTML document
+    complete_html = f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>{contract.contract_title or "Contract"}</title>
+        <style>
+            body {{
+                font-family: Arial, Calibri, sans-serif;
+                font-size: 11pt;
+                line-height: 1.6;
+                color: #000000;
+                margin: 0;
+                padding: 0;
+            }}
+            
+            .document-header {{
+                border-bottom: 3px solid #2563eb;
+                padding-bottom: 15px;
+                margin-bottom: 20px;
+            }}
+            
+            .document-title {{
+                font-size: 20pt;
+                font-weight: bold;
+                color: #1e293b;
+                text-align: center;
+                margin: 0 0 10px 0;
+            }}
+            
+            .document-metadata {{
+                font-size: 10pt;
+                color: #64748b;
+            }}
+            
+            h1 {{ font-size: 18pt; font-weight: bold; color: #1e293b; margin: 20px 0 10px 0; }}
+            h2 {{ font-size: 14pt; font-weight: bold; color: #1e293b; margin: 15px 0 10px 0; }}
+            h3 {{ font-size: 12pt; font-weight: bold; color: #334155; margin: 12px 0 8px 0; }}
+            
+            p {{ margin: 10px 0; text-align: justify; }}
+            
+            strong, b {{ font-weight: bold; }}
+            em, i {{ font-style: italic; }}
+            u {{ text-decoration: underline; }}
+            
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin: 15px 0;
+            }}
+            table, th, td {{ border: 1px solid #cbd5e0; }}
+            th {{ background-color: #f1f5f9; font-weight: bold; padding: 8px; }}
+            td {{ padding: 8px; }}
+            
+            ul, ol {{ margin: 10px 0; padding-left: 30px; }}
+            li {{ margin: 5px 0; }}
+            
+            img {{ max-width: 100%; height: auto; }}
+        </style>
+    </head>
+    <body>
+        <!-- Document Header -->
+        <div class="document-header">
+            <h1 class="document-title">{contract.contract_title or "Contract Document"}</h1>
+            <div class="document-metadata">
+                <p><strong>Contract Number:</strong> {contract.contract_number or 'N/A'}</p>
+                <p><strong>Date:</strong> {datetime.now().strftime('%B %d, %Y')}</p>
+                <p><strong>Status:</strong> {contract.status.upper() if contract.status else 'N/A'}</p>
+            </div>
+        </div>
+        
+        <!-- Contract Content -->
+        <div class="contract-content">
+            {content_html}
+        </div>
+        
+      
+    </body>
+    </html>
+    '''
+    
+    try:
+        # Create temporary file for HTML
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as temp_html:
+            temp_html.write(complete_html)
+            temp_html_path = temp_html.name
+        
+        # Create temporary file for DOCX output
+        temp_docx = tempfile.NamedTemporaryFile(suffix='.docx', delete=False)
+        temp_docx_path = temp_docx.name
+        temp_docx.close()
+        
+        # Convert HTML to DOCX using pandoc
+        pypandoc.convert_file(
+            temp_html_path,
+            'docx',
+            outputfile=temp_docx_path,
+            extra_args=['--standalone']
+        )
+        
+        # Read the generated DOCX file
+        with open(temp_docx_path, 'rb') as f:
+            docx_bytes = f.read()
+        
+        # Clean up temporary files
+        os.unlink(temp_html_path)
+        os.unlink(temp_docx_path)
+        
+        # Create buffer
+        buffer = BytesIO(docx_bytes)
+        buffer.seek(0)
+        
+        filename = f"{contract.contract_number or 'Contract'}_{datetime.now().strftime('%Y%m%d')}.docx"
+        
+        return StreamingResponse(
+            buffer,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Pandoc DOCX generation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"DOCX generation failed: {str(e)}")
+
+# =====================================================
+# ALTERNATIVE: Use pypandoc for better conversion
+# Install: pip install pypandoc
+# Also install pandoc system tool: sudo apt-get install pandoc
+# =====================================================
+
+def export_as_word_with_pandoc(contract, signatories):
+    """
+    Alternative: Use pandoc for perfect HTML to DOCX conversion
+    Pandoc preserves almost all HTML/CSS styling
+    """
+    
+    import pypandoc
+    
+    # Build HTML
+    content_html = contract.contract_content or "<p>No content available</p>"
+    
+    signature_html = ""
+    if signatories:
+        # Build signature HTML (same as above)
+        pass
+    
+    complete_html = f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body {{ font-family: Arial; font-size: 11pt; line-height: 1.6; }}
+            /* Add more styles */
+        </style>
+    </head>
+    <body>
+        <h1>{contract.contract_title}</h1>
+        {content_html}
+        {signature_html}
+    </body>
+    </html>
+    '''
+    
+    # Convert using pandoc
+    try:
+        docx_bytes = pypandoc.convert_text(
+            complete_html,
+            'docx',
+            format='html',
+            extra_args=['--standalone']
+        )
+        
+        buffer = BytesIO(docx_bytes)
+        buffer.seek(0)
+        
+        filename = f"{contract.contract_number or 'Contract'}_{datetime.now().strftime('%Y%m%d')}.docx"
+        
+        return StreamingResponse(
+            buffer,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except Exception as e:
+        logger.error(f"Pandoc conversion error: {e}")
+        raise HTTPException(status_code=500, detail="DOCX generation failed")
+
+
+
+def export_as_html(contract, signatories):
+    """Generate clean HTML export"""
+    
+    content = contract.contract_content or "No content available"
+    
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>{contract.contract_title or 'Contract'}</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; }}
+            h1 {{ color: #1e293b; border-bottom: 3px solid #2563eb; padding-bottom: 10px; }}
+            .metadata {{ color: #64748b; margin-bottom: 20px; }}
+            .content {{ line-height: 1.6; text-align: justify; }}
+            .signatures {{ margin-top: 40px; }}
+            .signature-block {{ border: 2px solid #cbd5e0; padding: 15px; margin: 10px 0; border-radius: 8px; }}
+            img {{ max-width: 200px; max-height: 80px; }}
+        </style>
+    </head>
+    <body>
+        <h1>{contract.contract_title or 'Contract'}</h1>
+        <div class="metadata">
+            <p><strong>Contract Number:</strong> {contract.contract_number or 'N/A'}</p>
+            <p><strong>Date:</strong> {datetime.now().strftime('%B %d, %Y')}</p>
+            <p><strong>Status:</strong> {contract.status.upper() if contract.status else 'N/A'}</p>
+        </div>
+        <hr/>
+        <div class="content">
+            {content}
+        </div>
+    """
+    
+    if signatories:
+        html += '<div class="signatures"><h2>Signatures</h2>'
+        for sig in signatories:
+            signer_name = f"{sig.first_name} {sig.last_name}" if sig.first_name else "Pending"
+            status = "✓ Signed" if sig.has_signed else "Pending"
+            html += f'''
+            <div class="signature-block">
+                <p><strong>{sig.signer_type.capitalize()}:</strong> {signer_name}</p>
+                <p><strong>Status:</strong> {status}</p>
+            '''
+            if sig.signature_data and sig.signature_data.startswith('data:image'):
+                html += f'<img src="{sig.signature_data}" alt="Signature"/>'
+            html += '</div>'
+        html += '</div>'
+    
+    html += '</body></html>'
+    
+    filename = f"{contract.contract_number or 'Contract'}_{datetime.now().strftime('%Y%m%d')}.html"
+    
+    return StreamingResponse(
+        io.BytesIO(html.encode('utf-8')),
+        media_type="text/html",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}"
+        }
+    )
+
 
 # =====================================================
 # TRACK CHANGES ENDPOINTS

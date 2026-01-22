@@ -4009,58 +4009,10 @@
                         </div>
                     </label>
 
-                    <!-- HTML Option -->
-                    <label class="export-option-label"
-                        style="display: flex; align-items: center; padding: 1rem; background: var(--background-light); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.3s ease;">
-                        <input type="radio" name="exportFormat" value="html"
-                            style="margin-right: 1rem; width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary-color);">
-                        <div style="display: flex; align-items: center; gap: 1rem; flex: 1;">
-                            <i class="ti ti-file-code" style="font-size: 2rem; color: #f59e0b;"></i>
-                            <div>
-                                <div style="font-weight: 600; font-size: 0.95rem;">HTML Document</div>
-                                <div style="font-size: 0.85rem; color: var(--text-muted);">
-                                    Web-ready format
-                                </div>
-                            </div>
-                        </div>
-                    </label>
                 </div>
             </div>
 
-            <!-- Export Options -->
-            <div style="margin-bottom: 1rem;">
-                <label
-                    style="display: block; font-weight: 600; font-size: 0.95rem; color: var(--text-color); margin-bottom: 0.875rem;">
-                    Export Options:
-                </label>
-
-                <!-- Include Tracked Changes -->
-                <label class="checkbox-option-label"
-                    style="display: flex; align-items: flex-start; padding: 0.875rem; background: var(--background-light); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; margin-bottom: 0.75rem; transition: all 0.3s ease;">
-                    <input type="checkbox" id="includeTrackedChanges" checked
-                        style="margin-right: 0.875rem; margin-top: 2px; width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary-color); flex-shrink: 0;">
-                    <div>
-                        <div style="font-weight: 500; font-size: 0.9rem;">Include Tracked Changes</div>
-                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
-                            Show all modifications and edits in the exported document
-                        </div>
-                    </div>
-                </label>
-
-                <!-- Include Comments -->
-                <label class="checkbox-option-label"
-                    style="display: flex; align-items: flex-start; padding: 0.875rem; background: var(--background-light); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.3s ease;">
-                    <input type="checkbox" id="includeComments" checked
-                        style="margin-right: 0.875rem; margin-top: 2px; width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary-color); flex-shrink: 0;">
-                    <div>
-                        <div style="font-weight: 500; font-size: 0.9rem;">Include Comments</div>
-                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
-                            Export with all annotations and review comments
-                        </div>
-                    </div>
-                </label>
-            </div>
-
+        
             <!-- Info Box -->
             <div
                 style="padding: 1rem; background: rgba(59, 130, 246, 0.05); border-left: 3px solid var(--primary-color); border-radius: 6px; margin-top: 1.5rem;">
@@ -5249,18 +5201,23 @@
 
 
 <!-- Comments Panel -->
-<div class="comments-panel" id="commentsPanel">
-    <div class="comments-panel-header">
-        <div class="comments-panel-title">
-            <i class="ti ti-messages"></i>
-            Comments
+<!-- Comments Side Panel -->
+<div id="commentsPanel" class="comments-panel" style="display: none; position: fixed; top: 0; right: 0; width: 450px; height: 100vh; background: white; box-shadow: -4px 0 20px rgba(0,0,0,0.15); z-index: 9999; flex-direction: column;">
+    <div style="padding: 20px; border-bottom: 2px solid #e0e0e0; background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="ti ti-message-circle" style="font-size: 24px; color: #0066cc;"></i>
+            <h3 style="margin: 0; font-size: 18px; font-weight: 600;">Comments</h3>
+            <span id="commentsBadge" style="display: none; background: #0066cc; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">0</span>
         </div>
-        <button class="comments-panel-close" onclick="toggleCommentsPanel()">×</button>
+        <button onclick="toggleCommentsPanel()" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 50%;">
+            <i class="ti ti-x" style="font-size: 20px; color: #666;"></i>
+        </button>
     </div>
-    <div class="comments-panel-body" id="commentsPanelBody">
-        <div class="comments-empty">
-            <i class="ti ti-message-off"></i>
-            <p>No comments yet</p>
+    
+    <div id="commentsListContainer" style="flex: 1; overflow-y: auto; background: #fafbfc;">
+        <div style="padding: 40px 20px; text-align: center; color: #888;">
+            <i class="ti ti-loader" style="font-size: 48px; opacity: 0.5;"></i>
+            <p style="margin-top: 15px;">Loading comments...</p>
         </div>
     </div>
 </div>
@@ -5364,9 +5321,9 @@
 
 
 <!-- Toggle Button -->
-<button class="comments-toggle-btn" onclick="toggleCommentsPanel()">
-    <i class="ti ti-message-circle"></i>
-    <span class="comment-badge" id="commentsBadge" style="display: none;">0</span>
+<button class="comments-toggle-btn" onclick="toggleCommentsPanel()" style="position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #0066cc, #0052a3); color: white; border: none; box-shadow: 0 4px 12px rgba(0,102,204,0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 9998; transition: all 0.3s;">
+    <i class="ti ti-message-circle" style="font-size: 24px; color:white"></i>
+    <span id="commentsBadge2" style="display: none; position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; width: 20px; height: 20px; border-radius: 50%; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; border: 2px solid white;">0</span>
 </button>
 
 <!-- In your contract editor template -->
@@ -5728,7 +5685,7 @@
                ${renderSignature(clientSignatory)}
            </div>
            <div style="font-size: 0.875rem; color: #28a745; font-weight: 600; text-align: center;">
-               <strong>&#10003; Signed</strong><br>
+              
                <span style="font-size: 0.75rem;">
                    ${clientSignatory.signed_at ? new Date(clientSignatory.signed_at).toLocaleString() : 'N/A'}
                </span>
@@ -5750,7 +5707,7 @@
                ${renderSignature(companySignatory)}
            </div>
            <div style="font-size: 0.875rem; color: #28a745; font-weight: 600; text-align: center;">
-               <strong>&#10003; Signed</strong><br>
+               
                <span style="font-size: 0.75rem;">
                    ${companySignatory.signed_at ? new Date(companySignatory.signed_at).toLocaleString() : 'N/A'}
                </span>
@@ -6151,7 +6108,7 @@ ${contract.content && contract.content.trim() !== '' ?
                 clientField.innerHTML = `
                 <div style="margin-bottom: 0.75rem;">${renderSignature(clientSig)}</div>
                 <div style="font-size: 0.875rem; color: #28a745; font-weight: 600; text-align: center;">
-                    <strong>&#10003; Signed</strong><br>
+                   
                     <span style="font-size: 0.75rem;">${clientSig.signed_at ? new Date(clientSig.signed_at).toLocaleString() : 'N/A'}</span>
                 </div>
             `;
@@ -6176,7 +6133,7 @@ ${contract.content && contract.content.trim() !== '' ?
                 companyField.innerHTML = `
                 <div style="margin-bottom: 0.75rem;">${renderSignature(companySig)}</div>
                 <div style="font-size: 0.875rem; color: #28a745; font-weight: 600; text-align: center;">
-                    <strong>&#10003; Signed</strong><br>
+                    
                     <span style="font-size: 0.75rem;">${companySig.signed_at ? new Date(companySig.signed_at).toLocaleString() : 'N/A'}</span>
                 </div>
             `;
@@ -6365,10 +6322,7 @@ ${contract.content && contract.content.trim() !== '' ?
             <i class="ti ti-message-plus"></i>
         </button>
 
-         <button class="toolbar-btn" id="toggleCommentsBtn">
-            <i class="ti ti-message-circle"></i>
-            <span class="comment-badge" id="commentsBadge" style="display: none;">0</span>
-        </button>
+       
                 <button class="toolbar-btn" onclick="findReplace()" title="Find & Replace">
                     <i class="ti ti-search"></i>
                 </button>
@@ -6378,6 +6332,7 @@ ${contract.content && contract.content.trim() !== '' ?
              <button id="saveDraftBtn" class="btn signature-btn" onclick="saveAsDraft()">
                 <i class="ti ti-device-floppy"></i> Save Contract
             </button>
+
 
             <!-- MAXIMIZE BUTTON - ADD THIS -->
         <div class="toolbar-group" style="margin-left: auto; border-right: none;">
@@ -6398,15 +6353,13 @@ ${contract.content && contract.content.trim() !== '' ?
         return `
         <div class="document-info">
             <div class="document-title">
-                <span class="document-name">${contract.title || 'Untitled'} - Version ${latestVersion ? latestVersion.version : contract.current_version || '1'}</span>
+                <span class="document-name">${contract.title || 'Untitled'}</span>
                 <span class="document-status saved" id="saveStatus">
                     <i class="ti ti-circle-check"></i> Loaded
                 </span>
             </div>
             <div class="document-actions">
-                <button class="btn btn-sm btn-outline-secondary" onclick="showVersionHistory()">
-                    <i class="ti ti-history"></i> Version History
-                </button>
+               
                 <button class="btn btn-sm btn-outline-secondary" onclick="exportDocument()">
                     <i class="ti ti-download"></i> Export
                 </button>
@@ -8198,105 +8151,83 @@ ${contract.content && contract.content.trim() !== '' ?
     }
 
     async function executeExport() {
-        // Get selected format
-        const formatInput = document.querySelector('input[name="exportFormat"]:checked');
-        const format = formatInput ? formatInput.value : 'pdf';
+    const formatInput = document.querySelector('input[name="exportFormat"]:checked');
+    const format = formatInput ? formatInput.value : 'pdf';
 
-        // Get export options
-        const includeTracked = document.getElementById('includeTrackedChanges')?.checked || false;
-        const includeComments = document.getElementById('includeComments')?.checked || false;
+    console.log('📤 Export requested:', format, 'for contract:', contractId);
 
-        console.log(' Export requested:', { format, includeTracked, includeComments, contractId });
+    showLoader();
+    showNotification(`Preparing ${format.toUpperCase()} export...`, 'info');
 
-        // Show loading state
-        showLoader();
-        showNotification(`Preparing ${format.toUpperCase()} export...`, 'info');
+    try {
+        // Build API URL
+        const params = new URLSearchParams({
+            format: format === 'word' ? 'docx' : format, // Convert 'word' to 'docx'
+            include_signatures: 'true'
+        });
 
-        try {
-            // Build API URL with query parameters
-            const params = new URLSearchParams({
-                format: format,
-                include_tracked_changes: includeTracked.toString(),
-                include_comments: includeComments.toString()
-            });
+        const apiUrl = `/api/contracts/export/${contractId}?${params.toString()}`;
+        console.log('🔗 Calling API:', apiUrl);
 
-            const apiUrl = `/api/contracts/export/${contractId}?${params.toString()}`;
-            console.log('🔗 API URL:', apiUrl);
-
-            // Make POST request to export endpoint
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            console.log('📥 Response status:', response.status);
-
-            // Check if request was successful
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({
-                    detail: `Export failed with status ${response.status}`
-                }));
-                throw new Error(errorData.detail || `Export failed with status ${response.status}`);
+        // Call backend API
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
             }
+        });
 
-            // Get filename from Content-Disposition header or create default
-            const contentDisposition = response.headers.get('Content-Disposition');
-            let filename = `contract_${contractId}`;
+        console.log('📥 Response status:', response.status);
 
-            if (contentDisposition) {
-                const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-                if (filenameMatch && filenameMatch[1]) {
-                    filename = filenameMatch[1].replace(/['"]/g, '');
-                }
-            } else {
-                // Add appropriate extension if not in filename
-                const extensions = {
-                    'pdf': 'pdf',
-                    'word': 'docx',
-                    'html': 'html',
-                    'txt': 'txt'
-                };
-                filename += `.${extensions[format] || 'pdf'}`;
-            }
-
-            console.log(' Downloading as:', filename);
-
-            // Get the blob
-            const blob = await response.blob();
-            console.log('📦 Blob received:', blob.type, blob.size, 'bytes');
-
-            // Create download link
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = filename;
-
-            // Trigger download
-            document.body.appendChild(a);
-            a.click();
-
-            // Cleanup
-            setTimeout(() => {
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-            }, 100);
-
-            // Close modal and show success
-            closeModal('exportModal');
-            hideLoader();
-            showNotification(`Document exported successfully as ${format.toUpperCase()}`, 'success');
-
-            console.log(' Export completed successfully');
-
-        } catch (error) {
-            console.error(' Export error:', error);
-            hideLoader();
-            showNotification(`Export failed: ${error.message}`, 'error');
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Error response:', errorText);
+            throw new Error(`Export failed with status ${response.status}`);
         }
+
+        // Get filename from Content-Disposition header
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = `contract_${contractId}.${format}`;
+        
+        if (contentDisposition) {
+            const matches = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+            if (matches && matches[1]) {
+                filename = matches[1].replace(/['"]/g, '');
+            }
+        }
+
+        console.log('📦 Downloading as:', filename);
+
+        // Download the file
+        const blob = await response.blob();
+        console.log('📦 Blob size:', blob.size, 'bytes');
+        
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        
+        // Cleanup
+        setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 100);
+
+        closeModal('exportModal');
+        hideLoader();
+        showNotification(`Document exported successfully as ${format.toUpperCase()}`, 'success');
+        console.log('✅ Export completed successfully');
+
+    } catch (error) {
+        console.error('❌ Export error:', error);
+        hideLoader();
+        showNotification(`Export failed: ${error.message}`, 'error');
     }
+}
+
 
 
     // =====================================================
@@ -10812,34 +10743,220 @@ ${(riskAnalysisData.risk_items || []).map(item => `
     }
 
     // Download Certificate
+
     async function downloadCertificate() {
-        try {
-            const response = await fetch(`/api/contracts/execution-certificate/${contractId}`);
-            const data = await response.json();
+    showLoader();
+    try {
+        const response = await fetch(`/api/contracts/execution-certificate/${contractId}`);
+        const data = await response.json();
 
-            if (data.success) {
-                // Generate PDF or download certificate
-                const certificateJson = JSON.stringify(data.certificate, null, 2);
-                const blob = new Blob([certificateJson], { type: 'application/json' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `Certificate_of_Completion_${contractId}.json`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-
-                showNotification('Certificate downloaded successfully', 'success');
-            } else {
-                showNotification('Failed to download certificate', 'error');
-            }
-        } catch (error) {
-            console.error('Error downloading certificate:', error);
+        if (data.success) {
+            const certificateData = data.certificate;
+            
+            // Generate PDF certificate
+            await generateCertificatePDF(certificateData);
+            
+            showNotification('Certificate downloaded successfully', 'success');
+        } else {
             showNotification('Failed to download certificate', 'error');
         }
+    } catch (error) {
+        console.error('Error downloading certificate:', error);
+        showNotification('Failed to download certificate', 'error');
+    } finally {
+        hideLoader();
     }
+}
 
+
+// New function to generate PDF certificate
+// REPLACE generateCertificatePDF() function - OPTIMIZED FOR SINGLE A4 PAGE
+
+async function generateCertificatePDF(certificateData) {
+    // Format dates
+    const executionDate = certificateData.execution_date ? 
+        new Date(certificateData.execution_date).toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        }) : 'N/A';
+    
+    const signedDate = certificateData.signed_date ? 
+        new Date(certificateData.signed_date).toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        }) : 'N/A';
+
+    // Certificate ID
+    const certificateId = `CERT-${certificateData.contract_id}-${Date.now()}`;
+
+    // Create a temporary div optimized for A4 size (210mm x 297mm = ~794px x 1123px at 96dpi)
+    const certificateDiv = document.createElement('div');
+    certificateDiv.style.position = 'absolute';
+    certificateDiv.style.left = '-9999px';
+    certificateDiv.style.width = '794px';  // A4 width in pixels
+    certificateDiv.style.height = '1123px'; // A4 height in pixels
+    certificateDiv.style.padding = '30px';
+    certificateDiv.style.backgroundColor = '#ffffff';
+    certificateDiv.style.fontFamily = 'Arial, sans-serif';
+    certificateDiv.style.boxSizing = 'border-box';
+    certificateDiv.style.overflow = 'hidden';
+
+    certificateDiv.innerHTML = `
+        <div style="border: 5px solid #2563eb; padding: 20px; background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%); height: 100%; box-sizing: border-box; display: flex; flex-direction: column;">
+            
+            <!-- Header -->
+            <div style="text-align: center; margin-bottom: 15px; border-bottom: 2px solid #2563eb; padding-bottom: 15px;">
+                <div style="width: 60px; height: 60px; margin: 0 auto 10px; background: linear-gradient(135deg, #2563eb, #1d4ed8); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <svg width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                        <path d="M9 12l2 2 4-4m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <h1 style="margin: 0; font-size: 28px; color: #1e293b; font-weight: 700; letter-spacing: 1px;">
+                    CERTIFICATE OF COMPLETION
+                </h1>
+                <p style="margin: 8px 0 0 0; font-size: 11px; color: #64748b; font-style: italic;">
+                    Contract Lifecycle Management System - CALIM 360
+                </p>
+            </div>
+
+            <!-- Contract Details -->
+            <div style="background: white; border: 2px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <h3 style="margin: 0 0 10px 0; color: #1e293b; font-size: 14px; font-weight: 600; border-bottom: 2px solid #2563eb; padding-bottom: 6px;">
+                    Contract Information
+                </h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 7px 0; font-weight: 600; color: #475569; width: 38%; font-size: 11px;">Contract Number:</td>
+                        <td style="padding: 7px 0; color: #1e293b; font-weight: 500; font-size: 11px;">${certificateData.contract_number || 'N/A'}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 7px 0; font-weight: 600; color: #475569; font-size: 11px;">Contract Title:</td>
+                        <td style="padding: 7px 0; color: #1e293b; font-weight: 500; font-size: 11px;">${certificateData.contract_title || 'Untitled Contract'}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 7px 0; font-weight: 600; color: #475569; font-size: 11px;">Execution Date:</td>
+                        <td style="padding: 7px 0; color: #059669; font-weight: 600; font-size: 11px;">${executionDate}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 7px 0; font-weight: 600; color: #475569; font-size: 11px;">Signed Date:</td>
+                        <td style="padding: 7px 0; color: #1e293b; font-weight: 500; font-size: 11px;">${signedDate}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Authorized Signatories -->
+            <div style="background: white; border: 2px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); flex: 1; overflow: hidden;">
+                <h3 style="margin: 0 0 10px 0; color: #1e293b; font-size: 14px; font-weight: 600; border-bottom: 2px solid #2563eb; padding-bottom: 6px;">
+                    Authorized Signatories
+                </h3>
+                <div style="max-height: 200px; overflow-y: auto;">
+                    ${certificateData.signatories.map((sig, index) => `
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; align-items: center;">
+                            <div style="width: 30px; height: 30px; background: linear-gradient(135deg, #2563eb, #1d4ed8); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px; margin-right: 10px; flex-shrink: 0;">
+                                ${index + 1}
+                            </div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-weight: 600; font-size: 12px; color: #1e293b; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${sig.name}</div>
+                                <div style="font-size: 10px; color: #64748b;">
+                                    <span style="text-transform: capitalize; font-weight: 500;">${sig.signer_type}</span> • 
+                                    ${sig.signed_at ? new Date(sig.signed_at).toLocaleDateString() : 'Pending'}
+                                </div>
+                                ${sig.ip_address ? `<div style="font-size: 9px; color: #94a3b8; margin-top: 2px;">IP: ${sig.ip_address}</div>` : ''}
+                            </div>
+                            <div style="color: #059669; font-size: 22px; margin-left: 8px; flex-shrink: 0;">✓</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <!-- Verification Statement -->
+            <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-left: 3px solid #059669; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                <p style="margin: 0; font-size: 10px; line-height: 1.5; color: #065f46; font-weight: 500;">
+                    <strong style="font-size: 11px;">CERTIFICATION:</strong> This certifies that the above-referenced contract has been executed by all authorized parties and is legally binding. All signatures verified and contract active as of execution date.
+                </p>
+            </div>
+
+            <!-- Footer -->
+            <div style="text-align: center; padding-top: 12px; border-top: 2px solid #e2e8f0;">
+                <div style="margin-bottom: 8px;">
+                    <p style="margin: 0; font-size: 10px; color: #64748b;">
+                        <strong style="color: #1e293b;">Executed by:</strong> ${certificateData.executed_by || 'System'}
+                    </p>
+                    ${certificateData.executed_by_email ? `<p style="margin: 3px 0 0 0; font-size: 9px; color: #94a3b8;">${certificateData.executed_by_email}</p>` : ''}
+                </div>
+                <div style="padding: 8px; background: #f8fafc; border-radius: 6px;">
+                    <p style="margin: 0; font-size: 9px; color: #64748b; font-weight: 600;">
+                        Certificate ID: ${certificateId}
+                    </p>
+                    <p style="margin: 3px 0 0 0; font-size: 8px; color: #94a3b8;">
+                        Generated: ${new Date().toLocaleString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })}
+                    </p>
+                </div>
+                <p style="margin: 8px 0 0 0; font-size: 8px; color: #94a3b8; font-style: italic;">
+                    CALIM 360 Smart Contract Lifecycle Management Platform
+                </p>
+            </div>
+        </div>
+    `;
+
+    // Append to body temporarily
+    document.body.appendChild(certificateDiv);
+
+    try {
+        // Wait for rendering
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Use html2canvas with exact A4 dimensions
+        const canvas = await html2canvas(certificateDiv, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff',
+            width: 794,
+            height: 1123,
+            windowWidth: 794,
+            windowHeight: 1123
+        });
+
+        // Get the jsPDF library
+        const { jsPDF } = window.jspdf;
+        
+        // Create PDF with A4 dimensions
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        // Add image to fit exactly on A4 (210mm x 297mm)
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+
+        // Save the PDF
+        const fileName = `Certificate_of_Completion_${certificateData.contract_number || certificateData.contract_id}.pdf`;
+        pdf.save(fileName);
+
+        console.log('✅ Single-page PDF generated successfully:', fileName);
+
+    } catch (error) {
+        console.error('❌ Error generating PDF:', error);
+        throw error;
+    } finally {
+        // Remove temporary div
+        document.body.removeChild(certificateDiv);
+    }
+}
+  
     // View Certificate - Can be called anytime for executed contracts
     async function viewExecutionCertificate() {
         showLoader();
@@ -14020,9 +14137,9 @@ Generated by CALIM 360 Smart CLM
                             } else if (jsonData.type === 'content') {
                                 accumulatedContent += jsonData.text;
 
-                                if (contentDiv) {
+                                // if (contentDiv) {
                                     contentDiv.innerHTML = accumulatedContent;
-                                }
+                                // }
 
                                 const wordCount = accumulatedContent.split(/\s+/).filter(w => w.length > 0).length;
                                 if (wordCount % 50 === 0) {
@@ -16226,13 +16343,78 @@ function updateChangeType(type) {
 document.addEventListener('DOMContentLoaded', () => {
     updateChangeType('comment');
 });
+
+// Add to bubble-comments.js or in <script> tag
+
+function manualTrackChange() {
+    // Get the comment ID from the highlighted text that's selected
+    const selection = window.getSelection();
+    if (!selection.rangeCount) {
+        alert('Please click on the commented text first');
+        return;
+    }
+    
+    // Find the comment element
+    let element = selection.anchorNode;
+    if (element.nodeType === 3) element = element.parentElement;
+    
+    const commentEl = element.closest('[data-comment-id]');
+    if (!commentEl) {
+        alert('Please click on highlighted commented text');
+        return;
+    }
+    
+    const commentId = parseInt(commentEl.dataset.commentId);
+    const comment = window.bcAllComments.find(c => c.id === commentId);
+    
+    if (!comment) {
+        alert('Comment not found');
+        return;
+    }
+    
+    // Get current text
+    const icon = commentEl.querySelector('.comment-icon');
+    let currentText = commentEl.textContent;
+    if (icon) currentText = currentText.replace('💬', '').trim();
+    
+    // Get original
+    const originalText = comment.original_text || comment.selected_text;
+    
+    if (currentText === originalText) {
+        alert('No change detected');
+        return;
+    }
+    
+    // Show confirmation
+    if (confirm('Track this change?\n\nBEFORE: ' + originalText + '\nAFTER: ' + currentText)) {
+        // Update via API
+        fetch(`/api/contracts/comments/${commentId}/track-change`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                original_text: originalText,
+                new_text: currentText,
+                change_type: 'insert'
+            })
+        }).then(r => r.json()).then(data => {
+            if (data.success) {
+                alert('✅ Change tracked!');
+                loadComments();
+            }
+        });
+    }
+}
+
 </script>
 
 
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="/app/static/js/negotiation.js"></script>
 <script src="/app/static/js/contract-edit.js"></script>
-<script src="/app/static/js/bubble-comments.js?v=2"></script>
+<script src="/app/static/js/bubble-comments.js?v=6"></script>
 {% endblock %}

@@ -51,6 +51,12 @@ class CommentResponse(BaseModel):
     can_delete: bool
 
 
+class TrackChangeUpdate(BaseModel):
+    original_text: str
+    new_text: str
+    change_type: str = 'insert'
+
+
 @router.post("/comments/add")
 async def add_comment(
     data: CommentCreate,
@@ -279,5 +285,56 @@ async def update_comment(
         raise
     except Exception as e:
         logger.error(f"❌ Error updating comment: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+# =====================================================
+# Add this to app/api/api_v1/contracts/comments.py
+# API endpoint to track changes automatically
+# =====================================================
+
+@router.put("/comments/{comment_id}/track-change")
+async def track_comment_change(
+    comment_id: int,
+    data: TrackChangeUpdate,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Track when commented text is edited"""
+    try:
+        # Get existing comment
+        check_query = text("SELECT position_info FROM contract_comments WHERE id = :id")
+        result = db.execute(check_query, {'id': comment_id}).fetchone()
+        
+        if not result:
+            raise HTTPException(status_code=404, detail="Comment not found")
+        
+        # Parse existing position_info
+        pos_info = {}
+        if result[0]:
+            try:
+                pos_info = json.loads(result[0]) if isinstance(result[0], str) else result[0]
+            except:
+                pass
+        
+        # Update with change tracking
+        pos_info['change_type'] = data.change_type
+        pos_info['original_text'] = data.original_text
+        pos_info['new_text'] = data.new_text
+        
+        # Save
+        update_query = text("""
+            UPDATE contract_comments 
+            SET position_info = :pos_info, updated_at = NOW()
+            WHERE id = :id
+        """)
+        db.execute(update_query, {'id': comment_id, 'pos_info': json.dumps(pos_info)})
+        db.commit()
+        
+        return {'success': True, 'message': 'Change tracked'}
+        
+    except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))

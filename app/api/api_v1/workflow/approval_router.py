@@ -8,6 +8,8 @@ from app.core.dependencies import get_current_user
 import logging
 import json
 from datetime import datetime, timedelta
+from app.services.workflow_email_service import WorkflowEmailService
+
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -167,6 +169,37 @@ async def approve_reject_workflow(
                     db.execute(update_contract, {"contract_id": request.contract_id, "action_person_id": contract_creator_id})
                     logger.info("✅ Contract status updated: review_completed, action_person_id cleared")
                     message = "Internal review fully Completed!"
+# 📧 EMAIL: Internal review completed notification
+                    try:
+                        creator_query = text("""
+                            SELECT 
+                                u.email,
+                                CONCAT(u.first_name, ' ', u.last_name) as full_name
+                            FROM users u
+                            INNER JOIN contracts c ON c.created_by = u.id
+                            WHERE c.id = :contract_id
+                        """)
+                        creator_info = db.execute(creator_query, {"contract_id": request.contract_id}).fetchone()
+                        
+                        if creator_info:
+                            contract_query = text("""
+                                SELECT contract_number, contract_title
+                                FROM contracts WHERE id = :contract_id
+                            """)
+                            contract_info = db.execute(contract_query, {"contract_id": request.contract_id}).fetchone()
+                            
+                            WorkflowEmailService.send_internal_review_completed(
+                                db=db,
+                                contract_id=request.contract_id,
+                                contract_number=contract_info.contract_number,
+                                contract_title=contract_info.contract_title,
+                                creator_email=creator_info.email,
+                                creator_name=creator_info.full_name
+                            )
+                            logger.info(f"✉️ Review completion email sent to {creator_info.email}")
+                    except Exception as email_error:
+                        logger.error(f"❌ Review completion email error: {str(email_error)}")
+
                     
                 elif request.request_type == "counterparty_internal_review":
                     logger.info("🔄 Counterparty Review completed - updating contract status...")
@@ -180,6 +213,38 @@ async def approve_reject_workflow(
                     db.execute(update_contract, {"contract_id": request.contract_id, "action_person_id": party_b_lead_id})
                     logger.info("✅ Contract status updated: counterparty_review_completed, action_person_id cleared")
                     message = "Counter-Party review fully Completed!"
+
+# 📧 EMAIL: Counterparty review completed notification
+                    try:
+                        party_b_query = text("""
+                            SELECT 
+                                u.email,
+                                CONCAT(u.first_name, ' ', u.last_name) as full_name
+                            FROM users u
+                            INNER JOIN contracts c ON c.party_b_lead_id = u.id
+                            WHERE c.id = :contract_id
+                        """)
+                        party_b_info = db.execute(party_b_query, {"contract_id": request.contract_id}).fetchone()
+                        
+                        if party_b_info:
+                            contract_query = text("""
+                                SELECT contract_number, contract_title
+                                FROM contracts WHERE id = :contract_id
+                            """)
+                            contract_info = db.execute(contract_query, {"contract_id": request.contract_id}).fetchone()
+                            
+                            WorkflowEmailService.send_counterparty_review_completed(
+                                db=db,
+                                contract_id=request.contract_id,
+                                contract_number=contract_info.contract_number,
+                                contract_title=contract_info.contract_title,
+                                party_b_lead_email=party_b_info.email,
+                                party_b_lead_name=party_b_info.full_name
+                            )
+                            logger.info(f"✉️ CP review completion email sent to {party_b_info.email}")
+                    except Exception as email_error:
+                        logger.error(f"❌ CP review completion email error: {str(email_error)}")
+
                     
                 elif request.request_type == "approval":
                     logger.info("🔄 Final Approval completed - updating contract status...")
@@ -193,6 +258,38 @@ async def approve_reject_workflow(
                     db.execute(update_contract, {"contract_id": request.contract_id, "action_person_id": contract_creator_id})
                     logger.info("✅ Contract status updated: approved, action_person_id cleared")
                     message = "Approval fully Completed!"
+
+# 📧 EMAIL: Approval workflow completed notification
+                    try:
+                        creator_query = text("""
+                            SELECT 
+                                u.email,
+                                CONCAT(u.first_name, ' ', u.last_name) as full_name
+                            FROM users u
+                            INNER JOIN contracts c ON c.created_by = u.id
+                            WHERE c.id = :contract_id
+                        """)
+                        creator_info = db.execute(creator_query, {"contract_id": request.contract_id}).fetchone()
+                        
+                        if creator_info:
+                            contract_query = text("""
+                                SELECT contract_number, contract_title
+                                FROM contracts WHERE id = :contract_id
+                            """)
+                            contract_info = db.execute(contract_query, {"contract_id": request.contract_id}).fetchone()
+                            
+                            WorkflowEmailService.send_approval_completed_notification(
+                                db=db,
+                                contract_id=request.contract_id,
+                                contract_number=contract_info.contract_number,
+                                contract_title=contract_info.contract_title,
+                                creator_email=creator_info.email,
+                                creator_name=creator_info.full_name
+                            )
+                            logger.info(f"✉️ Approval completion email sent to {creator_info.email}")
+                    except Exception as email_error:
+                        logger.error(f"❌ Approval completion email error: {str(email_error)}")
+
                 else:
                     logger.warning(f"⚠️ Unknown request type: {request.request_type}")
                 
@@ -271,6 +368,56 @@ async def approve_reject_workflow(
                         "contract_id": request.contract_id
                     })
                     logger.info(f"✅ Contract action_person_id updated to {next_approver.id}")
+# 📧 EMAIL NOTIFICATION: Next person in workflow
+                try:
+                    # Get next person's details for email
+                    next_user_query = text("""
+                        SELECT 
+                            u.email,
+                            CONCAT(u.first_name, ' ', u.last_name) as full_name,
+                            ws.step_name,
+                            ws.step_type,
+                            w.workflow_name
+                        FROM users u
+                        INNER JOIN workflow_steps ws ON ws.assignee_user_id = u.id
+                        INNER JOIN workflows w ON ws.workflow_id = w.id
+                        WHERE u.id = :user_id
+                        AND ws.workflow_id = :workflow_id
+                        AND ws.step_number = :step_number
+                        LIMIT 1
+                    """)
+                    next_user = db.execute(next_user_query, {
+                        "user_id": next_approver.id,
+                        "workflow_id": workflow.workflow_id,
+                        "step_number": next_step
+                    }).fetchone()
+                    
+                    if next_user:
+                        # Get contract details
+                        contract_query = text("""
+                            SELECT contract_number, contract_title
+                            FROM contracts WHERE id = :contract_id
+                        """)
+                        contract_info = db.execute(contract_query, {"contract_id": request.contract_id}).fetchone()
+                        
+                        current_approver_name = f"{current_user.first_name} {current_user.last_name}"
+                        
+                        WorkflowEmailService.send_workflow_step_notification(
+                            db=db,
+                            contract_id=request.contract_id,
+                            contract_number=contract_info.contract_number,
+                            contract_title=contract_info.contract_title,
+                            assignee_email=next_user.email,
+                            assignee_name=next_user.full_name,
+                            step_name=next_user.step_name,
+                            step_type=next_user.step_type,
+                            workflow_name=next_user.workflow_name,
+                            previous_approver_name=current_approver_name
+                        )
+                        logger.info(f"✉️ Workflow notification sent to {next_user.email}")
+                except Exception as email_error:
+                    logger.error(f"❌ Email notification error: {str(email_error)}")
+
                 else:
                     logger.warning(f"⚠️ No approver found for step {next_step}")
                 
@@ -382,6 +529,74 @@ async def approve_reject_workflow(
             })
             logger.info(f"✅ Audit log created: {audit_details}")
 
+# 📧 EMAIL: Rejection notification
+            try:
+                recipient_email = None
+                recipient_name = None
+                
+                # Determine recipient based on request type
+                if request.request_type == "internal_review":
+                    # Notify contract creator
+                    creator_query = text("""
+                        SELECT u.email, CONCAT(u.first_name, ' ', u.last_name) as full_name
+                        FROM users u
+                        INNER JOIN contracts c ON c.created_by = u.id
+                        WHERE c.id = :contract_id
+                    """)
+                    creator_info = db.execute(creator_query, {"contract_id": request.contract_id}).fetchone()
+                    if creator_info:
+                        recipient_email = creator_info.email
+                        recipient_name = creator_info.full_name
+                        
+                elif request.request_type == "counterparty_internal_review":
+                    # Notify Party B Lead
+                    party_b_query = text("""
+                        SELECT u.email, CONCAT(u.first_name, ' ', u.last_name) as full_name
+                        FROM users u
+                        INNER JOIN contracts c ON c.party_b_lead_id = u.id
+                        WHERE c.id = :contract_id
+                    """)
+                    party_b_info = db.execute(party_b_query, {"contract_id": request.contract_id}).fetchone()
+                    if party_b_info:
+                        recipient_email = party_b_info.email
+                        recipient_name = party_b_info.full_name
+                        
+                elif request.request_type == "approval":
+                    # Notify contract creator
+                    creator_query = text("""
+                        SELECT u.email, CONCAT(u.first_name, ' ', u.last_name) as full_name
+                        FROM users u
+                        INNER JOIN contracts c ON c.created_by = u.id
+                        WHERE c.id = :contract_id
+                    """)
+                    creator_info = db.execute(creator_query, {"contract_id": request.contract_id}).fetchone()
+                    if creator_info:
+                        recipient_email = creator_info.email
+                        recipient_name = creator_info.full_name
+                
+                if recipient_email:
+                    contract_query = text("""
+                        SELECT contract_number, contract_title
+                        FROM contracts WHERE id = :contract_id
+                    """)
+                    contract_info = db.execute(contract_query, {"contract_id": request.contract_id}).fetchone()
+                    
+                    rejector_name = f"{current_user.first_name} {current_user.last_name}"
+                    
+                    WorkflowEmailService.send_approval_rejection_notification(
+                        db=db,
+                        contract_id=request.contract_id,
+                        contract_number=contract_info.contract_number,
+                        contract_title=contract_info.contract_title,
+                        recipient_email=recipient_email,
+                        recipient_name=recipient_name,
+                        rejector_name=rejector_name,
+                        rejection_reason=request.comments or "No reason provided",
+                        request_type=request.request_type
+                    )
+                    logger.info(f"✉️ Rejection notification sent to {recipient_email}")
+            except Exception as email_error:
+                logger.error(f"❌ Rejection email error: {str(email_error)}")
 
             # Handle rejection for both initiator and counterparty internal reviews
             if request.request_type == "internal_review":
