@@ -13,7 +13,8 @@ import logging
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
-from app.models.consultation import ExpertSessionMessage, ExpertSession
+from app.models.consultation import ExpertSessionMessage, ExpertSession, ExpertQuery
+from fastapi.responses import StreamingResponse
 
 # Import the chatbot-specific Claude service
 from app.services.chatbot_claude_service import chatbot_claude_service
@@ -153,6 +154,12 @@ async def process_chatbot_query(
             detail=f"Failed to process query: {str(e)}"
         )
 
+
+# =====================================================
+# REPLACE THE create_chat_session ENDPOINT
+# in app/api/api_v1/chatbot/routes.py
+# =====================================================
+
 @router.post("/sessions", response_model=ChatSessionResponse)
 async def create_chat_session(
     request: ChatSessionCreate,
@@ -160,75 +167,73 @@ async def create_chat_session(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Create a new chatbot conversation session
-    
-    - Generates unique session code
-    - Links to contract if contract_id provided
-    - Sends welcome message
-    - Stores in expert_sessions table
+    Create a new chatbot session with proper query_id
     """
     try:
-        # Generate unique session code
-        session_code = f"CHAT-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{current_user.id}"
+        # Generate unique codes
+        timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        query_code = f"QUERY-{timestamp}-{current_user.id}"
+        session_code = f"CHAT-{timestamp}-{current_user.id}"
         
         logger.info(f"Creating chat session for user {current_user.id}: {session_code}")
         
-        # Create session in database - REMOVED 'subject' field
-        session = ExpertSession(
-            session_code=session_code,
-            user_id=current_user.id,
-            session_type="ai_chatbot",
-            status="active",
+        # STEP 1: Create the query first (required for session)
+        new_query = ExpertQuery(
+            query_code=query_code,
             contract_id=request.contract_id,
-            query_text=request.subject or "AI Chatbot Consultation"  #  Use query_text instead
+            user_id=current_user.id,
+            query_type="chatbot",
+            subject=request.subject or "AI Chatbot Consultation",
+            question=request.subject or "General contract management assistance",
+            expertise_areas=["general"],
+            priority="normal",
+            status="open",
+            preferred_language=request.language or "en",
+            session_type="chat"
         )
         
-        db.add(session)
-        db.commit()
-        db.refresh(session)
+        db.add(new_query)
+        db.flush()  # Get the query ID
         
-        # Add welcome message
-        welcome_text = f"""👋 Hello {current_user.first_name}! I'm your CALIM360 AI Assistant.
-
-I'm here to help you with:
-- Contract questions and analysis
-- Risk assessment and compliance
-- Workflow and approval guidance
-- CLM system features
-- Legal and contractual guidance
-
-How can I assist you today?"""
+        logger.info(f"✓ Query created: {query_code}")
         
-        welcome_message = ExpertSessionMessage(
-            session_id=session.id,
-            sender_id=current_user.id,
-            sender_type="system",
-            message_type="text",
-            message_content=welcome_text,
-            is_ai_generated=True,
-            ai_confidence=1.0
+        # STEP 2: Now create the session with the query_id
+        new_session = ExpertSession(
+            query_id=new_query.id,  # THIS IS REQUIRED
+            contract_id=request.contract_id,
+            user_id=current_user.id,
+            expert_id=None,  # AI chatbot has no human expert
+            session_code=session_code,
+            session_type="ai_chatbot",
+            query_text=request.subject or "AI Chatbot Consultation",
+            selected_tone=request.tone or "formal",
+            status="active",
+            start_time=datetime.utcnow()
         )
         
-        db.add(welcome_message)
+        db.add(new_session)
         db.commit()
+        db.refresh(new_session)
         
-        logger.info(f" Chat session created: {session.id}")
+        logger.info(f"✓ Session created successfully: {session_code}")
         
         return ChatSessionResponse(
             success=True,
-            session_id=session.id,
-            session_code=session.session_code,
             message="Chat session created successfully",
-            welcome_message=welcome_text
+            session_id=new_session.id,
+            session_code=session_code,
+            query_id=new_query.id,
+            query_code=query_code
         )
         
     except Exception as e:
         db.rollback()
-        logger.error(f" Session creation error: {str(e)}")
+        logger.error(f"❌ Session creation error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create session: {str(e)}"
         )
+
 
         
 
@@ -501,3 +506,100 @@ def _get_contract_context(db: Session, contract_id: str) -> dict:
             }
         ]
     }
+
+
+
+@router.post("/query/stream")
+async def process_chatbot_query_stream(
+    request: ChatQueryRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Process chatbot query with streaming response
+    Returns Server-Sent Events (SSE) for real-time text streaming
+    """
+    try:
+        logger.info(f"Processing streaming query from user {current_user.id}: {request.query[:50]}...")
+        
+        # Build conversation history
+        conversation_history = []
+        if request.conversation_history:
+            conversation_history = request.conversation_history
+        
+        # Get contract context if provided
+        contract_context = None
+        if request.contract_id:
+            contract_context = _get_contract_context(db, request.contract_id)
+        
+        # Generate streaming response
+        async def generate():
+            try:
+                full_response = ""
+                async for chunk in chatbot_claude_service.generate_chat_response_stream(
+                    user_message=request.query,
+                    conversation_history=conversation_history,
+                    tone=request.tone,
+                    language=request.language,
+                    contract_context=contract_context,
+                    user_role=current_user.user_type
+                ):
+                    full_response += chunk
+                    # Send as SSE format
+                    yield f"data: {chunk}\n\n"
+                
+                # Send completion signal
+                yield "data: [DONE]\n\n"
+                
+                # Save to database if session exists
+                if request.session_id and full_response:
+                    try:
+                        # Save user message
+                        user_msg = ExpertSessionMessage(
+                            session_id=request.session_id,
+                            sender_id=current_user.id,
+                            sender_type="user",
+                            message_type="text",
+                            message_content=request.query,
+                            is_ai_generated=False
+                        )
+                        db.add(user_msg)
+                        
+                        # Save AI response
+                        ai_msg = ExpertSessionMessage(
+                            session_id=request.session_id,
+                            sender_id=current_user.id,
+                            sender_type="assistant",
+                            message_type="text",
+                            message_content=full_response,
+                            is_ai_generated=True
+                        )
+                        db.add(ai_msg)
+                        db.commit()
+                        
+                    except Exception as e:
+                        logger.error(f"Failed to save streaming messages: {e}")
+                        db.rollback()
+                        
+            except Exception as e:
+                logger.error(f"Streaming generation error: {str(e)}")
+                yield f"data: ❌ Error: {str(e)}\n\n"
+                yield "data: [DONE]\n\n"
+        
+        return StreamingResponse(
+            generate(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no"  # Disable nginx buffering
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Streaming endpoint error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+

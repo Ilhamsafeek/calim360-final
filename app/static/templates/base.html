@@ -920,7 +920,7 @@
             position: fixed;
             bottom: 6rem;
             right: 2rem;
-            width: 380px;
+            width: 500px;
             height: 600px;
             background: white;
             border-radius: 16px;
@@ -1199,6 +1199,104 @@
         .chatbot-input-btn:hover {
             background: var(--background-light);
             color: var(--primary-color);
+        }
+
+        /* ============================================
+   CONTRACT DRAFTING ASSISTANCE STYLES
+   ============================================ */
+        .message-text .response-header {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0.75rem 0 0.5rem 0;
+            padding-bottom: 0.25rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .info-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin: 0.5rem 0;
+        }
+
+        .info-badge i {
+            font-size: 1rem;
+        }
+
+        .info-badge.important {
+            background: #dbeafe;
+            color: #1e40af;
+            border-left: 3px solid #3b82f6;
+        }
+
+        .info-badge.warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 3px solid #f59e0b;
+        }
+
+        .info-badge.success {
+            background: #dcfce7;
+            color: #166534;
+            border-left: 3px solid #10b981;
+        }
+
+        .formatted-list {
+            margin: 0.75rem 0;
+            padding-left: 1.5rem;
+            list-style: none;
+        }
+
+        .bullet-item {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+
+        .bullet-item::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .formatted-numbered-list {
+            margin: 0.75rem 0;
+            padding-left: 1.5rem;
+            counter-reset: item;
+            list-style: none;
+        }
+
+        .numbered-item {
+            position: relative;
+            padding-left: 2rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+            counter-increment: item;
+        }
+
+        .numbered-item::before {
+            content: counter(item) ".";
+            position: absolute;
+            left: 0;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .quick-action-chip i {
+            font-size: 1rem;
+        }
+
+        .quick-action-chip:hover {
+            transform: translateY(-2px);
         }
 
         .chatbot-send-btn {
@@ -1556,6 +1654,96 @@
         }
 
 
+        /* =====================================================
+   ADD/UPDATE THESE CSS RULES in base.html <style> section
+   These make the chatbot responses more compact
+   ===================================================== */
+
+        /* Compact message text styling */
+        .message-text {
+            font-size: 0.925rem;
+            line-height: 1.5;
+        }
+
+        .message-text p {
+            margin: 0.5rem 0;
+        }
+
+        .message-text p:first-child {
+            margin-top: 0;
+        }
+
+        .message-text p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Remove excessive spacing in headers */
+        .message-text .response-header {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 1rem 0 0.5rem 0;
+            padding-bottom: 0.25rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .message-text .response-header:first-child {
+            margin-top: 0;
+        }
+
+        /* Compact info badges */
+        .info-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.7rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 0.5rem 0;
+        }
+
+        /* Compact lists */
+        .formatted-list {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+            list-style: none;
+        }
+
+        .bullet-item {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.4rem;
+            line-height: 1.5;
+        }
+
+        .formatted-numbered-list {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+            counter-reset: item;
+            list-style: none;
+        }
+
+        .numbered-item {
+            position: relative;
+            padding-left: 2rem;
+            margin-bottom: 0.4rem;
+            line-height: 1.5;
+            counter-increment: item;
+        }
+
+        /* Compact strong/bold text */
+        .message-text strong {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        /* Remove excessive line breaks */
+        .message-text br+br+br {
+            display: none;
+        }
+
+
         /* Prevent ALL modals from closing on outside click */
         /* .modal,
         .project-modal,
@@ -1659,12 +1847,12 @@
                 {% if 'expert' in subscriptions %}
                 <!-- Expert & Support -->
                 <div class="nav-section">
-    <div class="nav-section-title">Expert Consultation</div>
-    <a href="/ask-expert-unified" class="nav-link" id="nav-experts">
-        <i class="ti ti-user-question nav-icon"></i>
-        <span class="nav-text">Ask an Expert</span>
-    </a>
-</div>
+                    <div class="nav-section-title">Expert Consultation</div>
+                    <a href="/ask-expert-unified" class="nav-link" id="nav-experts">
+                        <i class="ti ti-user-question nav-icon"></i>
+                        <span class="nav-text">Ask an Expert</span>
+                    </a>
+                </div>
                 {% endif %}
 
                 <!-- Add this in the sidebar navigation, under Settings section -->
@@ -2082,34 +2270,116 @@
             const avatar = sender === 'user' ? 'U' : 'AI';
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-            // Add confidence badge for AI responses
+            // Format the message content
+            let formattedText = formatDraftingResponse(text);
+
+            // Add confidence badge
             let confidenceBadge = '';
             if (metadata.confidence && sender === 'ai') {
                 const confidencePercent = Math.round(metadata.confidence * 100);
                 const confidenceColor = confidencePercent >= 90 ? '#10b981' :
                     confidencePercent >= 70 ? '#f59e0b' : '#ef4444';
                 confidenceBadge = `
-                <div style="display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; font-size: 11px;">
-                    <i class="ti ti-brain" style="color: ${confidenceColor}; font-size: 14px;"></i>
-                    <span style="color: ${confidenceColor}; font-weight: 600;">${confidencePercent}%</span>
-                </div>
-            `;
+            <div style="display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; font-size: 11px;">
+                <i class="ti ti-brain" style="color: ${confidenceColor}; font-size: 14px;"></i>
+                <span style="color: ${confidenceColor}; font-weight: 600;">${confidencePercent}%</span>
+            </div>
+        `;
             }
 
             messageDiv.innerHTML = `
-            <div class="message-avatar">${avatar}</div>
-            <div class="message-content">
-                <div class="message-text">${text}</div>
-                <div class="message-time">
-                    ${time}
-                    ${confidenceBadge}
-                </div>
+        <div class="message-avatar">${avatar}</div>
+        <div class="message-content">
+            <div class="message-text">${formattedText}</div>
+            <div class="message-time">
+                ${time}
+                ${confidenceBadge}
             </div>
-        `;
+        </div>
+    `;
 
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
+
+        // =====================================================
+        // REPLACE formatDraftingResponse function in base.html
+        // Around line 1550 (after addMessage function)
+        // =====================================================
+
+        function formatDraftingResponse(text) {
+            if (!text) return '';
+
+            // Remove excessive line breaks first (more than 2 consecutive)
+            text = text.replace(/\n{3,}/g, '\n\n');
+
+            // Convert ## headers to HTML headers
+            text = text.replace(/^## (.*$)/gim, '<h3 class="response-header">$1</h3>');
+
+            // Convert **bold text** to <strong> (including multi-word)
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+            // Format emoji badges with icons
+            text = text.replace(/📌 (.*?):/g, '<div class="info-badge important"><i class="ti ti-pin"></i> $1:</div>');
+            text = text.replace(/⚠️ (.*?):/g, '<div class="info-badge warning"><i class="ti ti-alert-triangle"></i> $1:</div>');
+            text = text.replace(/✅ (.*?):/g, '<div class="info-badge success"><i class="ti ti-check"></i> $1:</div>');
+            text = text.replace(/⚖️ (.*?):/g, '<div class="info-badge legal"><i class="ti ti-gavel"></i> $1:</div>');
+
+            // Convert bullet points • to styled list items
+            text = text.replace(/^• (.*$)/gim, '<li class="bullet-item">$1</li>');
+            // Wrap consecutive list items in <ul>
+            text = text.replace(/(<li class="bullet-item">.*?<\/li>\s*)+/gs, match => {
+                return '<ul class="formatted-list">' + match + '</ul>';
+            });
+
+            // Convert numbered lists (1. 2. 3. etc)
+            text = text.replace(/^\d+\.\s+(.*$)/gim, '<li class="numbered-item">$1</li>');
+            // Wrap consecutive numbered items in <ol>
+            text = text.replace(/(<li class="numbered-item">.*?<\/li>\s*)+/gs, match => {
+                return '<ol class="formatted-numbered-list">' + match + '</ol>';
+            });
+
+            // Convert double line breaks to paragraph breaks (but not excessive)
+            text = text.replace(/\n\n/g, '</p><p>');
+
+            // Convert single line breaks to <br> only within paragraphs
+            text = text.replace(/\n/g, '<br>');
+
+            // Wrap in paragraph tags
+            text = '<p>' + text + '</p>';
+
+            // Clean up empty paragraphs
+            text = text.replace(/<p>\s*<\/p>/g, '');
+            text = text.replace(/<p>\s*<br>\s*<\/p>/g, '');
+
+            // Remove excessive <br> tags (more than 2 consecutive)
+            text = text.replace(/(<br>\s*){3,}/g, '<br><br>');
+
+            return text;
+        }
+
+
+        function initializeDraftingQuickActions() {
+            const quickActionsDiv = document.getElementById('quickActions');
+            if (quickActionsDiv) {
+                quickActionsDiv.innerHTML = `
+            <div class="quick-action-chip" onclick="sendQuickMessage('Help me draft a construction contract compliant with Qatar law')">
+                <i class="ti ti-building"></i> Construction Contract
+            </div>
+            <div class="quick-action-chip" onclick="sendQuickMessage('What are the mandatory elements for Qatar contracts?')">
+                <i class="ti ti-checklist"></i> Mandatory Elements
+            </div>
+            <div class="quick-action-chip" onclick="sendQuickMessage('Explain FIDIC Red Book requirements')">
+                <i class="ti ti-book"></i> FIDIC Guidelines
+            </div>
+            <div class="quick-action-chip" onclick="sendQuickMessage('Review my draft for Qatar compliance')">
+                <i class="ti ti-shield-check"></i> Compliance Check
+            </div>
+        `;
+            }
+        }
+
+
 
         function showTypingIndicator() {
             const messagesContainer = document.getElementById('chatbotMessages');
@@ -2153,8 +2423,8 @@
 
         // Initialize chatbot on page load
         document.addEventListener('DOMContentLoaded', () => {
-            // Chatbot initialization happens on first toggle
             console.log(' Chatbot ready');
+            initializeDraftingQuickActions();
         });
 
         // ============================================
@@ -2238,8 +2508,8 @@
                 window.location.href = '/login';
             }
         }
-        
-        
+
+
         // ============================================
         // TOAST NOTIFICATIONS
         // ============================================
@@ -2726,30 +2996,30 @@
             }
         });
 
-        document.addEventListener('DOMContentLoaded', function() {
-    // Get current page
-    const currentPath = window.location.pathname;
-    
-    // Set active state for unified expert page
-    if (currentPath === '/ask-expert-unified') {
-        document.getElementById('nav-experts')?.classList.add('active');
-    }
-    
-    // Remove active from all nav links first
-    document.querySelectorAll('.nav-link').forEach(link => {
-        if (link.getAttribute('href') === currentPath) {
-            link.classList.add('active');
-        }
-    });
-});
+        document.addEventListener('DOMContentLoaded', function () {
+            // Get current page
+            const currentPath = window.location.pathname;
+
+            // Set active state for unified expert page
+            if (currentPath === '/ask-expert-unified') {
+                document.getElementById('nav-experts')?.classList.add('active');
+            }
+
+            // Remove active from all nav links first
+            document.querySelectorAll('.nav-link').forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                }
+            });
+        });
 
 
     </script>
 
 
-<!-- Global Search Script - MUST BE OUTSIDE BLOCK -->
+    <!-- Global Search Script - MUST BE OUTSIDE BLOCK -->
     <script src="/static/js/global_search.js?v=4"></script>
-    
+
     <!-- Page Specific Scripts -->
     {% block extra_js %}
     <script src="/static/js/common/auth.js"></script>

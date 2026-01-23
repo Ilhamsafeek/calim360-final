@@ -1464,6 +1464,8 @@ async def save_contract_draft(
         
         result = db.execute(version_check, {"contract_id": contract_id}).fetchone()
         next_version = (result.max_version if result and result.max_version else 0) + 1
+        # next_version = 1
+
         
         # Create new version
         version_query = text("""
@@ -1481,12 +1483,19 @@ async def save_contract_draft(
         })
         
         # Update contract timestamp
-        update_contract = text("""
-            UPDATE contracts 
-            SET updated_at = NOW()
-            WHERE id = :contract_id
-        """)
-        
+        if is_internal:
+            update_contract = text("""
+                UPDATE contracts 
+                SET updated_at = NOW(), status = 'tampered'
+                WHERE id = :contract_id
+            """)
+        else:
+            update_contract = text("""
+                UPDATE contracts 
+                SET updated_at = NOW()
+                WHERE id = :contract_id
+            """)
+
         db.execute(update_contract, {"contract_id": contract_id})
         db.commit()
 

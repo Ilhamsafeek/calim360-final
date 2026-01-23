@@ -173,14 +173,7 @@ function showTamperAlert(contractId, verificationResult) {
                     
                     <!-- Footer with Actions -->
                     <div class="modal-footer" style="border-top: 1px solid #e2e8f0; padding: 20px 30px; gap: 10px; display: flex; justify-content: flex-end;">
-                        <button 
-                            onclick="viewAuditLog(${contractId})" 
-                            class="btn btn-outline-secondary"
-                            style="border: 2px solid #cbd5e0; color: #4a5568;">
-                            <i class="ti ti-history"></i> View Audit Log
-                        </button>
-                        
-                       
+                    
                         
                         <button 
                             onclick="closeTamperAlert()" 

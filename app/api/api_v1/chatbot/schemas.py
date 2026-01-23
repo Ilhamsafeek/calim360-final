@@ -107,8 +107,10 @@ class ChatQueryResponse(BaseModel):
 
 class ChatSessionCreate(BaseModel):
     """Request schema for creating a chat session"""
+    subject: Optional[str] = "AI Chatbot Consultation"
     contract_id: Optional[str] = None
-    subject: Optional[str] = None
+    tone: Optional[str] = "formal"
+    language: Optional[str] = "en"
     
     class Config:
         json_schema_extra = {
@@ -126,17 +128,12 @@ class ChatSessionResponse(BaseModel):
     session_id: str
     session_code: str
     created_at: datetime
+    query_id: str 
+    query_code: str 
+    created_at: Optional[datetime] = None 
     
     class Config:
-        json_schema_extra = {
-            "example": {
-                "success": True,
-                "message": "Chat session created successfully",
-                "session_id": "session-uuid",
-                "session_code": "CHAT-20250130103000-123",
-                "created_at": "2025-01-30T10:30:00"
-            }
-        }
+        from_attributes = True
 
 
 class ChatMessage(BaseModel):

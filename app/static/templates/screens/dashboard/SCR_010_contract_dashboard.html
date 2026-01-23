@@ -251,7 +251,7 @@
         display: flex;
         gap: 1rem;
         padding: 0 1.5rem;
-        overflow-x: auto;
+        /* overflow-x: auto; */
     }
 
     .sub-tab {
@@ -617,6 +617,11 @@
         color: var(--secondary-color);
     }
 
+     .status-tampered {
+        background: rgba(255, 21, 0, 1);
+        color: white;
+    }
+
     /* Quick Actions */
     .quick-actions {
         display: flex;
@@ -737,10 +742,7 @@
         color: var(--text-muted);
     }
 
-    .status-review {
-        background: var(--info-bg);
-        color: var(--info-color);
-    }
+
 
     .status-approved {
         background: var(--success-bg);
@@ -3755,7 +3757,8 @@ End of Report
             negotiation: 'In Negotiation',
             pending: 'Pending',
             signed: 'Signed',
-            expired: 'Expired'
+            expired: 'Expired',
+            tampered: 'Tampered'
         };
         return labels[status] || status;
     }
