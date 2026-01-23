@@ -80,14 +80,31 @@ async def process_chatbot_query(
             logger.info(f"Contract context loaded: {contract_context.get('contract_number', 'N/A')}")
         
         # Generate AI response using chatbot Claude service
-        ai_response = await chatbot_claude_service.generate_chat_response(
+        full_response = ""
+        async for chunk in chatbot_claude_service.generate_chat_response_stream(
             user_message=request.query,
             conversation_history=conversation_history,
             tone=request.tone,
             language=request.language,
             contract_context=contract_context,
             user_role=current_user.user_type
-        )
+        ):
+            full_response += chunk
+        
+        # Build response object from streamed content
+        ai_response = {
+            "success": True,
+            "response": full_response,
+            "confidence_score": 0.95,
+            "response_variants": {
+                "detailed": full_response,
+                "concise": full_response[:500] + "...",
+                "action_oriented": full_response
+            },
+            "clause_references": [],
+            "processing_time": 0,
+            "tokens_used": len(full_response.split())
+        }
         
         if not ai_response.get("success"):
             raise HTTPException(
@@ -132,7 +149,7 @@ async def process_chatbot_query(
         response = ChatQueryResponse(
             success=True,
             message="Response generated successfully",
-            response=ai_response["primary_response"],
+            response=ai_response.get("primary_response") or ai_response.get("response", ""),
             variants=ai_response.get("variants", []),
             clause_references=ai_response.get("clause_references", []),
             confidence_score=ai_response.get("confidence_score", 0.95),

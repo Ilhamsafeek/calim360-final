@@ -5418,18 +5418,28 @@
     // =====================================================
     // PAGE INITIALIZATION
     // =====================================================
-    // =====================================================
-    // PAGE INITIALIZATION
-    // =====================================================
-    document.addEventListener('DOMContentLoaded', async function () {
-        console.log('Loading contract ID:', contractId);
-
-        await ensureWorkflowInstance();
-        await checkWorkflowAvailability();
-        await loadContractData();
-
-        // await saveAsDraft();
+document.addEventListener('DOMContentLoaded', async function () {
+    console.log('Loading contract ID:', contractId);
+    await ensureWorkflowInstance();
+    await checkWorkflowAvailability();
+    await loadContractData();
+    
+    // Save as draft only if user is not internal and contract is not tampered
+    const token = localStorage.getItem('token');
+    const userResponse = await fetch('/api/users/me', {
+        headers: { 'Authorization': `Bearer ${token}` }
     });
+    const userData = await userResponse.json();
+    
+    const contractResponse = await fetch(`/api/contracts/${contractId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const contractData = await contractResponse.json();
+    
+    if (userData.user_type !== 'internal' && contractData.status !== 'tampered') {
+        await saveAsDraft();
+    }
+});
 
 
 
@@ -6277,7 +6287,8 @@ ${contract.content && contract.content.trim() !== '' ?
                 status: status === 'executed' ? 'completed' :
                     status === 'signed' ? 'pending' :
                         'pending'
-            }
+            },
+            
         ];
 
 
