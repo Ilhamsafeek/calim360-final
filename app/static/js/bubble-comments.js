@@ -1,15 +1,13 @@
 // =====================================================
-// BUBBLE COMMENTS - WITH DUPLICATE TEXT SUPPORT
-// Handles same text appearing multiple times
+// BUBBLE COMMENTS - CLEANED VERSION
 // =====================================================
 
 window.bcAllComments = [];
 window.bcCurrentBubble = null;
 window.bcContractId = null;
 window.bcUserId = null;
-window.bcLoaded = false;
-window.bcHighlighted = false;
 window.bcIsHighlighting = false;
+window.bcOriginalTexts = {}; // Track original texts for change detection
 
 // =====================================================
 // INITIALIZE
@@ -17,7 +15,7 @@ window.bcIsHighlighting = false;
 document.addEventListener('DOMContentLoaded', function () {
     console.log('🚀 Bubble comments initializing...');
 
-    window.bcContractId = getContractId();
+    window.bcContractId = contractId;
     window.bcUserId = getUserId();
 
     if (window.bcContractId) loadComments();
@@ -25,20 +23,20 @@ document.addEventListener('DOMContentLoaded', function () {
     setTimeout(function () {
         if (!window.bcContractId) {
             window.bcContractId = getContractId();
-            if (window.bcContractId && !window.bcLoaded) loadComments();
+            if (window.bcContractId) loadComments();
         }
     }, 1500);
 
     waitForContractContent();
 
+    // Close bubble when clicking outside
     document.addEventListener('click', function (e) {
         if (e.target.closest('.comment-icon')) return;
-        if (e.target.closest('.comment-bubble')) return;
-        if (e.target.closest('#commentBubble')) return;
+        if (e.target.closest('.comment-bubble, #commentBubble')) return;
         if (window.bcCurrentBubble) closeBubble();
     }, true);
 
-    setupStrongIconProtection();
+    setupIconProtection();
 });
 
 function waitForContractContent() {
@@ -46,48 +44,56 @@ function waitForContractContent() {
         var content = document.getElementById('contractContent');
         if (content && content.innerHTML.length > 100) {
             clearInterval(checkInterval);
-            if (window.bcAllComments.length > 0 && !window.bcHighlighted) {
-                setTimeout(highlightCommentsInDocument, 500);
+            if (window.bcAllComments.length > 0) {
+                highlightCommentsInDocument();
             }
         }
     }, 500);
     setTimeout(function () { clearInterval(checkInterval); }, 30000);
 }
 
+function getUserId() {
+    var el = document.getElementById('currentUserId');
+    if (el) return parseInt(el.value || el.dataset.userId || 0);
+    if (window.currentUserId) return window.currentUserId;
+    return null;
+}
+
 // =====================================================
 // ICON PROTECTION
 // =====================================================
-function setupStrongIconProtection() {
+function setupIconProtection() {
     var content = document.getElementById('contractContent');
-    if (!content) { setTimeout(setupStrongIconProtection, 500); return; }
+    if (!content) { setTimeout(setupIconProtection, 500); return; }
 
     function protectAllIcons() {
         content.querySelectorAll('.comment-icon').forEach(function (icon) {
             icon.setAttribute('contenteditable', 'false');
             icon.style.userSelect = 'none';
-            icon.setAttribute('data-protected', 'true');
         });
     }
     protectAllIcons();
 
+    // Prevent deletion of comment icons
     content.addEventListener('keydown', function (e) {
         if (e.key !== 'Backspace' && e.key !== 'Delete') return;
+        
         var sel = window.getSelection();
         if (!sel.rangeCount) return;
         var range = sel.getRangeAt(0);
 
+        // Check if selection contains comment icon
         if (!range.collapsed) {
             var container = document.createElement('div');
             container.appendChild(range.cloneContents());
             if (container.querySelector('.comment-icon')) {
                 e.preventDefault();
-                e.stopImmediatePropagation();
-                showNotification('⚠️ Cannot delete comment icon.', 'warning');
-                range.collapse(false);
+                showNotification('Cannot delete comment icon', 'warning');
                 return false;
             }
         }
 
+        // Check adjacent nodes
         var node = range.startContainer;
         var offset = range.startOffset;
 
@@ -96,15 +102,6 @@ function setupStrongIconProtection() {
                 var prev = node.previousSibling;
                 if (prev && prev.classList && prev.classList.contains('comment-icon')) {
                     e.preventDefault();
-                    e.stopImmediatePropagation();
-                    return false;
-                }
-            }
-            if (node.nodeType === 1 && offset > 0) {
-                var prevChild = node.childNodes[offset - 1];
-                if (prevChild && prevChild.classList && prevChild.classList.contains('comment-icon')) {
-                    e.preventDefault();
-                    e.stopImmediatePropagation();
                     return false;
                 }
             }
@@ -115,33 +112,13 @@ function setupStrongIconProtection() {
                 var next = node.nextSibling;
                 if (next && next.classList && next.classList.contains('comment-icon')) {
                     e.preventDefault();
-                    e.stopImmediatePropagation();
-                    return false;
-                }
-            }
-            if (node.nodeType === 1 && offset < node.childNodes.length) {
-                var nextChild = node.childNodes[offset];
-                if (nextChild && nextChild.classList && nextChild.classList.contains('comment-icon')) {
-                    e.preventDefault();
-                    e.stopImmediatePropagation();
                     return false;
                 }
             }
         }
     }, true);
 
-    content.addEventListener('cut', function (e) {
-        var sel = window.getSelection();
-        if (sel.rangeCount) {
-            var container = document.createElement('div');
-            container.appendChild(sel.getRangeAt(0).cloneContents());
-            if (container.querySelector('.comment-icon')) {
-                e.preventDefault();
-                showNotification('⚠️ Cannot cut comment icons.', 'warning');
-            }
-        }
-    }, true);
-
+    // Monitor for removed icons and re-highlight
     var observer = new MutationObserver(function (mutations) {
         if (window.bcIsHighlighting) return;
         var iconRemoved = false;
@@ -156,30 +133,6 @@ function setupStrongIconProtection() {
         }
     });
     observer.observe(content, { childList: true, subtree: true });
-    setInterval(protectAllIcons, 5000);
-}
-
-// =====================================================
-// GET IDS
-// =====================================================
-function getContractId() {
-    var urlParams = new URLSearchParams(window.location.search);
-    var id = urlParams.get('id');
-    if (id) return id;
-    var match = window.location.pathname.match(/\/contract\/edit\/(\d+)/);
-    if (match) return match[1];
-    if (typeof contractId !== 'undefined' && contractId) return contractId;
-    if (window.contractId) return window.contractId;
-    var input = document.getElementById('contractId');
-    if (input && input.value) return input.value;
-    return null;
-}
-
-function getUserId() {
-    var el = document.getElementById('currentUserId');
-    if (el) return parseInt(el.value || el.dataset.userId || 0);
-    if (window.currentUserId) return window.currentUserId;
-    return null;
 }
 
 // =====================================================
@@ -194,105 +147,224 @@ function loadComments() {
         .then(function (data) {
             if (data.success) {
                 window.bcAllComments = data.comments || [];
-                window.bcLoaded = true;
                 if (data.current_user_id) window.bcUserId = data.current_user_id;
                 console.log('📥 Loaded', window.bcAllComments.length, 'comments');
 
                 var content = document.getElementById('contractContent');
                 if (content && content.innerHTML.length > 100) {
-                    setTimeout(highlightCommentsInDocument, 300);
+                    highlightCommentsInDocument();
                 }
                 updateCommentsPanel();
                 updateCommentBadge();
             }
+            
+            // Store original texts for tracking
+            window.bcAllComments.forEach(function(c) {
+                if (!window.bcOriginalTexts[c.id]) {
+                    window.bcOriginalTexts[c.id] = c.original_text || c.selected_text;
+                }
+            });
         })
         .catch(function (err) { console.error('Load error:', err); });
 }
 
 // =====================================================
-// HIGHLIGHT COMMENTS - Process from end to start
+// HIGHLIGHT COMMENTS
 // =====================================================
 function highlightCommentsInDocument() {
     var content = document.getElementById('contractContent');
-    if (!content || content.innerHTML.length < 100) {
-        setTimeout(highlightCommentsInDocument, 500);
-        return;
-    }
+    if (!content || content.innerHTML.length < 100) return;
 
     window.bcIsHighlighting = true;
     console.log('🎨 Highlighting', window.bcAllComments.length, 'comments...');
 
     // Remove existing highlights
-    content.querySelectorAll('.comment-highlight, .track-insert, .track-delete').forEach(function (el) {
-        var icon = el.querySelector('.comment-icon');
-        if (icon) icon.remove();
-        var parent = el.parentNode;
-        while (el.firstChild) parent.insertBefore(el.firstChild, el);
-        parent.removeChild(el);
+    content.querySelectorAll('.comment-highlight, .track-insert, .track-delete, .comment-icon').forEach(function (el) {
+        if (el.classList.contains('comment-icon')) {
+            el.remove();
+        } else {
+            var parent = el.parentNode;
+            while (el.firstChild) parent.insertBefore(el.firstChild, el);
+            parent.removeChild(el);
+        }
     });
-    content.querySelectorAll('.comment-icon').forEach(function (i) { i.remove(); });
     content.normalize();
 
-    // Sort by position DESCENDING - process from end to start
-    // This prevents position shifts from affecting earlier comments
+    // Sort by position descending (process from end to start)
     var sortedComments = window.bcAllComments.slice().sort(function (a, b) {
         return (b.position_start || 0) - (a.position_start || 0);
     });
 
     var successCount = 0;
     sortedComments.forEach(function (comment) {
-        if (applyHighlight(content, comment)) successCount++;
+        if (highlightComment(content, comment)) successCount++;
     });
 
     console.log('✅ Highlighted', successCount, '/', window.bcAllComments.length, 'comments');
-    window.bcHighlighted = true;
-
-    content.querySelectorAll('.comment-icon').forEach(function (icon) {
-        icon.setAttribute('contenteditable', 'false');
-        icon.style.userSelect = 'none';
-        icon.setAttribute('data-protected', 'true');
-    });
 
     setTimeout(function () { window.bcIsHighlighting = false; }, 300);
 }
 
-function applyHighlight(container, comment) {
-    var className = comment.change_type === 'insert' ? 'track-insert' : comment.change_type === 'delete' ? 'track-delete' : 'comment-highlight';
+/**
+ * NEW: Highlight comment using robust anchor
+ * Highlight persists even if text changes - only removed when comment deleted
+ */
+function highlightCommentByAnchor(container, comment, className) {
+    if (!comment.anchor) {
+        // Fallback to old method for legacy comments
+        console.log('⚠️ No anchor, using fallback');
+        return highlightComment(container, comment);
+    }
+    
+    // Find position using anchor (ALWAYS finds something)
+    var result = window.PositionTracker.findFromAnchor(container, comment.anchor);
+    
+    if (!result || !result.range) {
+        console.log('❌ Could not find comment', comment.id, 'from anchor (should be rare)');
+        return false;
+    }
+    
+    try {
+        var wrapper = document.createElement('span');
+        wrapper.className = className || 'comment-highlight';
+        wrapper.dataset.commentId = comment.id;
+        
+        // If text was modified, add visual indicator
+        if (result.modified) {
+            wrapper.classList.add('comment-modified');
+            wrapper.title = 'Comment text has been edited. Original: "' + comment.anchor.text + '"';
+            console.log('🔄 Comment', comment.id, 'text modified - highlighting current text');
+        }
+        
+        var contents = result.range.extractContents();
+        wrapper.appendChild(contents);
+        wrapper.appendChild(createCommentIcon(comment.id));
+        result.range.insertNode(wrapper);
+        
+        // Update comment with current text if modified
+        if (result.modified && result.currentText) {
+            comment._currentText = result.currentText;
+        }
+        
+        return true;
+    } catch (e) {
+        console.error('Error wrapping comment:', e);
+        return false;
+    }
+}
+
+/**
+ * Check if commented text still exists at the exact position
+ * Returns: true if valid, 'search_new' if should search by new text, 'skip' if skip
+ */
+function isCommentStillValid(container, comment) {
+    if (!comment.position_start || !comment.selected_text) return true;
+    
+    // Get current full text
+    var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+    var fullText = '';
+    var node;
+    
+    while (node = walker.nextNode()) {
+        var parent = node.parentElement;
+        if (parent && (
+            parent.classList.contains('comment-highlight') ||
+            parent.classList.contains('track-insert') ||
+            parent.classList.contains('track-delete') ||
+            parent.classList.contains('comment-icon')
+        )) continue;
+        fullText += node.textContent;
+    }
+    
+    // Check if text at recorded position matches the ORIGINAL text
+    var textAtPosition = fullText.substring(
+        comment.position_start, 
+        comment.position_start + comment.selected_text.length
+    );
+    
+    if (textAtPosition === comment.selected_text) {
+        return true; // Original text still there - highlight normally
+    }
+    
+    // Text at position doesn't match original
+    console.log('⚠️ Position text changed for comment', comment.id);
+    
+    // If this is a tracked change with new_text, search for the NEW text
+    if (comment.change_type === 'insert' && comment.new_text) {
+        console.log('   → Has new_text, searching for:', comment.new_text);
+        return 'search_new';
+    }
+    
+    // Check if new text exists in document (user edited but not saved yet)
+    var newTextAtPosition = fullText.substring(
+        comment.position_start,
+        comment.position_start + textAtPosition.length
+    );
+    
+    if (newTextAtPosition && newTextAtPosition.length > 0) {
+        console.log('   → Found edited text at position:', newTextAtPosition);
+        // Temporarily store for highlighting
+        comment._tempNewText = newTextAtPosition;
+        return 'search_temp';
+    }
+    
+    // For duplicate text scenarios - only skip if it's truly a different occurrence
+    var allOccurrences = fullText.split(comment.selected_text).length - 1;
+    if (allOccurrences > 1) {
+        console.log('   → Duplicate text exists, checking if this is wrong occurrence');
+        return 'skip'; // Skip to avoid highlighting wrong duplicate
+    }
+    
+    return true; // Fall back to normal search
+}
+
+function highlightComment(container, comment) {
+    var className = comment.change_type === 'insert' ? 'track-insert' : 
+                    comment.change_type === 'delete' ? 'track-delete' : 'comment-highlight';
     var text = comment.selected_text;
     if (!text) return false;
 
+    // Already highlighted?
     if (container.querySelector('[data-comment-id="' + comment.id + '"]')) return true;
 
-    return findAndWrapText(container, text, comment.id, className, comment.position_start);
-}
-
-// =====================================================
-// FIND AND WRAP TEXT - With position-based matching
-// =====================================================
-function findAndWrapText(container, searchText, commentId, className, positionStart) {
-    if (!searchText || !container) return false;
-    if (container.querySelector('[data-comment-id="' + commentId + '"]')) return true;
-
-    // Primary: Position-based search for accurate matching
-    if (typeof positionStart === 'number' && positionStart >= 0) {
-        var found = findAndWrapByPosition(container, searchText, commentId, className, positionStart);
-        if (found) return true;
+    // **NEW: Try anchor-based highlighting first**
+    if (comment.anchor) {
+        return highlightCommentByAnchor(container, comment, className);
     }
 
-    // Fallback: Single-node search
-    var found = findAndWrapSingleNode(container, searchText, commentId, className);
-    if (found) return true;
+    // **FALLBACK: Old validation for legacy comments**
+    var validStatus = isCommentStillValid(container, comment);
+    
+    if (validStatus === 'search_new') {
+        // Text was tracked as changed - search for the NEW text
+        console.log('🔍 Highlighting new text:', comment.new_text);
+        return findAndWrapByText(container, comment.new_text, comment.id, className);
+    }
+    
+    if (validStatus === 'search_temp') {
+        // Text was edited but not saved - highlight at position
+        console.log('🔍 Highlighting temporarily edited text');
+        return findAndWrapByPosition(container, comment._tempNewText, comment.id, className, comment.position_start);
+    }
+    
+    if (validStatus === 'skip') {
+        console.log('⏭️ Skipping duplicate text comment', comment.id);
+        return false;
+    }
 
-    // Fallback: Multi-node search
-    found = findAndWrapMultiNode(container, searchText, commentId, className);
-    if (found) return true;
+    // Try position-based search
+    if (typeof comment.position_start === 'number' && comment.position_start >= 0) {
+        if (findAndWrapByPosition(container, text, comment.id, className, comment.position_start)) {
+            return true;
+        }
+    }
 
-    console.warn('⚠️ Could not highlight comment', commentId);
-    return false;
+    // Last resort: text-based search
+    return findAndWrapByText(container, text, comment.id, className);
 }
 
 // =====================================================
-// POSITION-BASED SEARCH - For duplicate text
+// POSITION-BASED SEARCH
 // =====================================================
 function findAndWrapByPosition(container, searchText, commentId, className, targetPosition) {
     var textNodes = [];
@@ -300,6 +372,7 @@ function findAndWrapByPosition(container, searchText, commentId, className, targ
     var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
     var node;
 
+    // Build text nodes array
     while (node = walker.nextNode()) {
         var parent = node.parentElement;
         if (parent && (
@@ -313,58 +386,26 @@ function findAndWrapByPosition(container, searchText, commentId, className, targ
         fullText += node.textContent;
     }
 
-    // Find ALL occurrences
-    var occurrences = [];
-    var idx = 0;
-    while ((idx = fullText.indexOf(searchText, idx)) !== -1) {
-        occurrences.push(idx);
-        idx++;
+    // Verify text at position
+    var expectedText = fullText.substring(targetPosition, targetPosition + searchText.length);
+    if (expectedText !== searchText) {
+        console.log('⚠️ Position mismatch for comment', commentId);
+        return false;
     }
 
-    // Try normalized search if no matches
-    if (occurrences.length === 0) {
-        var normFull = fullText.replace(/\s+/g, ' ');
-        var normSearch = searchText.replace(/\s+/g, ' ');
-        idx = 0;
-        while ((idx = normFull.indexOf(normSearch, idx)) !== -1) {
-            occurrences.push(idx);
-            idx++;
-        }
-    }
-
-    if (occurrences.length === 0) return false;
-
-    // Find closest occurrence to target position
-    var bestMatch = occurrences[0];
-    var bestDiff = Math.abs(occurrences[0] - targetPosition);
-
-    for (var i = 1; i < occurrences.length; i++) {
-        var diff = Math.abs(occurrences[i] - targetPosition);
-        if (diff < bestDiff) {
-            bestDiff = diff;
-            bestMatch = occurrences[i];
-        }
-    }
-
-    console.log('📍 Comment', commentId, '- Target:', targetPosition, 'Found:', bestMatch, 'Diff:', bestDiff, 'Occurrences:', occurrences.length);
-
-    var matchEnd = bestMatch + searchText.length;
+    // Find nodes containing the target range
+    var matchEnd = targetPosition + searchText.length;
     var startNode = null, startOffset = 0, endNode = null, endOffset = 0;
 
     for (var i = 0; i < textNodes.length; i++) {
         var tn = textNodes[i];
-        if (!startNode && bestMatch >= tn.start && bestMatch < tn.end) {
+        if (!startNode && targetPosition >= tn.start && targetPosition < tn.end) {
             startNode = tn.node;
-            startOffset = bestMatch - tn.start;
+            startOffset = targetPosition - tn.start;
         }
         if (matchEnd > tn.start && matchEnd <= tn.end) {
             endNode = tn.node;
             endOffset = matchEnd - tn.start;
-            break;
-        }
-        if (matchEnd === tn.end) {
-            endNode = tn.node;
-            endOffset = tn.node.textContent.length;
             break;
         }
     }
@@ -386,12 +427,15 @@ function findAndWrapByPosition(container, searchText, commentId, className, targ
         range.insertNode(wrapper);
         return true;
     } catch (e) {
-        console.error('Position wrap error:', e);
+        console.error('Wrap error:', e);
         return false;
     }
 }
 
-function findAndWrapSingleNode(container, searchText, commentId, className) {
+// =====================================================
+// TEXT-BASED SEARCH (FALLBACK)
+// =====================================================
+function findAndWrapByText(container, searchText, commentId, className) {
     var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
     var node;
 
@@ -400,8 +444,7 @@ function findAndWrapSingleNode(container, searchText, commentId, className) {
         if (parent && (
             parent.classList.contains('comment-highlight') ||
             parent.classList.contains('track-insert') ||
-            parent.classList.contains('track-delete') ||
-            parent.classList.contains('comment-icon')
+            parent.classList.contains('track-delete')
         )) continue;
 
         var idx = node.textContent.indexOf(searchText);
@@ -420,72 +463,12 @@ function findAndWrapSingleNode(container, searchText, commentId, className) {
                 wrapper.appendChild(createCommentIcon(commentId));
                 range.insertNode(wrapper);
                 return true;
-            } catch (e) { continue; }
+            } catch (e) { 
+                continue; 
+            }
         }
     }
     return false;
-}
-
-function findAndWrapMultiNode(container, searchText, commentId, className) {
-    var textNodes = [];
-    var fullText = '';
-    var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
-    var node;
-
-    while (node = walker.nextNode()) {
-        var parent = node.parentElement;
-        if (parent && (
-            parent.classList.contains('comment-highlight') ||
-            parent.classList.contains('track-insert') ||
-            parent.classList.contains('track-delete') ||
-            parent.classList.contains('comment-icon')
-        )) continue;
-
-        textNodes.push({ node: node, start: fullText.length, end: fullText.length + node.textContent.length });
-        fullText += node.textContent;
-    }
-
-    var searchIdx = fullText.indexOf(searchText);
-    if (searchIdx === -1) {
-        var normFull = fullText.replace(/\s+/g, ' ');
-        var normSearch = searchText.replace(/\s+/g, ' ');
-        searchIdx = normFull.indexOf(normSearch);
-    }
-    if (searchIdx === -1) return false;
-
-    var searchEnd = searchIdx + searchText.length;
-    var startNode = null, startOffset = 0, endNode = null, endOffset = 0;
-
-    for (var i = 0; i < textNodes.length; i++) {
-        var tn = textNodes[i];
-        if (!startNode && searchIdx >= tn.start && searchIdx < tn.end) {
-            startNode = tn.node;
-            startOffset = searchIdx - tn.start;
-        }
-        if (searchEnd > tn.start && searchEnd <= tn.end) {
-            endNode = tn.node;
-            endOffset = searchEnd - tn.start;
-            break;
-        }
-    }
-
-    if (!startNode || !endNode) return false;
-
-    try {
-        var range = document.createRange();
-        range.setStart(startNode, startOffset);
-        range.setEnd(endNode, endOffset);
-
-        var wrapper = document.createElement('span');
-        wrapper.className = className;
-        wrapper.dataset.commentId = commentId;
-
-        var contents = range.extractContents();
-        wrapper.appendChild(contents);
-        wrapper.appendChild(createCommentIcon(commentId));
-        range.insertNode(wrapper);
-        return true;
-    } catch (e) { return false; }
 }
 
 // =====================================================
@@ -499,14 +482,15 @@ function createCommentIcon(commentId) {
     icon.title = 'Click to view comment';
     icon.contentEditable = 'false';
     icon.setAttribute('contenteditable', 'false');
-    icon.setAttribute('data-protected', 'true');
-    icon.style.cssText = 'display:inline-flex !important;align-items:center;justify-content:center;width:18px;height:18px;margin-left:2px;background:linear-gradient(135deg,#ffc107,#ff9800);color:#000;border-radius:50%;font-size:10px;cursor:pointer;vertical-align:middle;user-select:none !important;-webkit-user-select:none !important;box-shadow:0 2px 4px rgba(0,0,0,0.2);z-index:100;pointer-events:auto;';
+    icon.style.cssText = 'display:inline-flex !important;align-items:center;justify-content:center;width:18px;height:18px;margin-left:2px;background:linear-gradient(135deg,#ffc107,#ff9800);color:#000;border-radius:50%;font-size:10px;cursor:pointer;vertical-align:middle;user-select:none !important;box-shadow:0 2px 4px rgba(0,0,0,0.2);z-index:100;';
 
-    var cid = parseInt(commentId);
-    icon.onclick = function (e) { e.preventDefault(); e.stopPropagation(); showBubble(cid, e); return false; };
-    icon.onkeydown = function (e) { e.preventDefault(); return false; };
-    icon.onselectstart = function (e) { e.preventDefault(); return false; };
-    icon.ondragstart = function (e) { e.preventDefault(); return false; };
+    icon.onclick = function (e) { 
+        e.preventDefault(); 
+        e.stopPropagation(); 
+        showBubble(parseInt(commentId), e); 
+        return false; 
+    };
+    
     return icon;
 }
 
@@ -524,24 +508,27 @@ function openAddCommentModal() {
     var range = sel.getRangeAt(0);
     var content = document.getElementById('contractContent');
 
-    var start = 0;
-    if (content) {
-        try {
-            var pre = document.createRange();
-            pre.selectNodeContents(content);
-            pre.setEnd(range.startContainer, range.startOffset);
-            start = pre.toString().length;
-        } catch (e) { }
-    }
+    // **NEW: Create robust anchor instead of fragile position**
+    var anchor = window.PositionTracker.createAnchor(content, range);
+    
+    console.log('📍 Created anchor:', anchor.fingerprint);
 
-    window.commentSelection = { text: text, absoluteStart: start, absoluteEnd: start + text.length };
-    console.log('📝 Selected at position:', start, '-', start + text.length);
+    window.commentSelection = { 
+        text: text,
+        anchor: anchor,  // ← NEW: Store anchor
+        // Keep old format for backward compatibility
+        absoluteStart: anchor.absolutePos, 
+        absoluteEnd: anchor.absolutePos + text.length 
+    };
 
     var modal = document.getElementById('commentModal');
     if (modal) {
         modal.style.display = 'flex';
         var ta = document.getElementById('commentText');
-        if (ta) { ta.value = ''; setTimeout(function () { ta.focus(); }, 100); }
+        if (ta) { 
+            ta.value = ''; 
+            setTimeout(function () { ta.focus(); }, 100); 
+        }
         var prev = document.getElementById('selectedTextPreview');
         if (prev) prev.textContent = text.length > 200 ? text.substring(0, 200) + '...' : text;
         var newTextEl = document.getElementById('newText');
@@ -553,29 +540,32 @@ function submitComment() {
     var ta = document.getElementById('commentText');
     var commentText = ta ? ta.value.trim() : '';
 
-    if (!commentText) { showNotification('Enter a comment', 'warning'); return; }
-    if (!window.commentSelection || !window.commentSelection.text) { showNotification('No text selected', 'warning'); return; }
+    if (!commentText) { 
+        showNotification('Enter a comment', 'warning'); 
+        return; 
+    }
+    if (!window.commentSelection || !window.commentSelection.text) { 
+        showNotification('No text selected', 'warning'); 
+        return; 
+    }
     if (!window.bcContractId) window.bcContractId = getContractId();
-    if (!window.bcContractId) { showNotification('No contract ID', 'error'); return; }
+    if (!window.bcContractId) { 
+        showNotification('No contract ID', 'error'); 
+        return; 
+    }
 
     var typeEl = document.querySelector('input[name="changeType"]:checked');
     var changeType = typeEl ? typeEl.value : 'comment';
     var newEl = document.getElementById('newText');
     var newText = newEl ? newEl.value.trim() : null;
 
-    // Debug logging
-    console.log('🔍 Change Type:', changeType);
-    console.log('🔍 Original Text:', selectedText);
-    console.log('🔍 New Text:', newText);
-
     if (changeType === 'insert' && !newText) {
         showNotification('Enter new text for modification', 'warning');
         return;
     }
-    var selectedText = window.commentSelection.text;
-    var posStart = window.commentSelection.absoluteStart;
 
-    console.log('📤 Submitting at position:', posStart);
+    var selectedText = window.commentSelection.text;
+    var anchor = window.commentSelection.anchor;  // ← NEW
 
     fetch('/api/contracts/comments/add', {
         method: 'POST',
@@ -585,43 +575,51 @@ function submitComment() {
             contract_id: parseInt(window.bcContractId),
             comment_text: commentText,
             selected_text: selectedText,
-            position_start: posStart,
-            position_end: window.commentSelection.absoluteEnd || 0,
+            anchor: anchor,  // ← NEW: Send anchor instead of just position
+            position_start: anchor ? anchor.absolutePos : 0,  // Backward compatibility
+            position_end: anchor ? (anchor.absolutePos + selectedText.length) : 0,
             start_xpath: '',
             change_type: changeType,
             original_text: selectedText,
             new_text: newText
         })
     })
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-            if (d.success && d.comment) {
-                var newComment = d.comment;
-                newComment.position_start = posStart;
-                newComment.position_end = window.commentSelection.absoluteEnd;
-                window.bcAllComments.push(newComment);
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        if (d.success && d.comment) {
+            var newComment = d.comment;
+            newComment.anchor = anchor;  // ← Store anchor locally
+            newComment.position_start = anchor ? anchor.absolutePos : 0;
+            newComment.position_end = anchor ? (anchor.absolutePos + selectedText.length) : 0;
+            window.bcAllComments.push(newComment);
 
-                closeModal('commentModal');
-                window.getSelection().removeAllRanges();
+            closeModal('commentModal');
+            window.getSelection().removeAllRanges();
 
-                window.bcIsHighlighting = true;
-                var content = document.getElementById('contractContent');
-                var className = changeType === 'insert' ? 'track-insert' : changeType === 'delete' ? 'track-delete' : 'comment-highlight';
+            // Highlight the new comment
+            var content = document.getElementById('contractContent');
+            var className = changeType === 'insert' ? 'track-insert' : 
+                          changeType === 'delete' ? 'track-delete' : 'comment-highlight';
 
-                var success = findAndWrapText(content, selectedText, newComment.id, className, posStart);
-                console.log('🎨 Highlight:', success ? 'success' : 'failed');
+            window.bcIsHighlighting = true;
+            highlightCommentByAnchor(content, newComment, className);  // ← NEW function
+            setTimeout(function () { window.bcIsHighlighting = false; }, 300);
 
-                setTimeout(function () { window.bcIsHighlighting = false; }, 300);
-
-                updateCommentsPanel();
-                updateCommentBadge();
-                showNotification('Comment added', 'success');
-                window.commentSelection = null;
-            } else {
-                showNotification('Failed to add comment', 'error');
-            }
-        })
-        .catch(function (e) { console.error('Submit error:', e); showNotification('Error adding comment', 'error'); });
+            updateCommentsPanel();
+            updateCommentBadge();
+            showNotification('Comment added', 'success');
+            window.commentSelection = null;
+            
+            // Store original text for change tracking
+            window.bcOriginalTexts[newComment.id] = selectedText;
+        } else {
+            showNotification('Failed to add comment', 'error');
+        }
+    })
+    .catch(function (e) { 
+        console.error('Submit error:', e); 
+        showNotification('Error adding comment', 'error'); 
+    });
 }
 
 // =====================================================
@@ -654,21 +652,31 @@ function showBubble(commentId, event) {
     }
 
     var details = '';
+    
+    // Show if text has been modified
+    var modifiedWarning = '';
+    if (comment._currentText && comment._currentText !== comment.selected_text) {
+        modifiedWarning = '<div style="margin-top:10px;padding:10px;background:#fff3cd;border-left:3px solid #ff9800;border-radius:6px;"><div style="color:#ff9800;font-weight:600;font-size:12px;margin-bottom:6px;">⚠️ Text Modified</div><div style="font-size:12px;color:#856404;">The commented text has been edited. This comment is highlighting the current text at this location.</div></div>';
+    }
+    
     if (comment.change_type === 'delete') {
         details = '<div style="margin-top:10px;padding:10px;background:#f8f9fa;border-radius:8px;"><div style="color:#dc3545;font-weight:600;font-size:12px;margin-bottom:6px;">🗑️ Delete:</div><div style="padding:8px;background:#fee2e2;border-radius:6px;color:#991b1b;text-decoration:line-through;max-height:100px;overflow:auto;">' + escapeHtml(comment.selected_text) + '</div></div>';
     } else if (comment.change_type === 'insert') {
         details = '<div style="margin-top:10px;padding:10px;background:#f8f9fa;border-radius:8px;"><div style="color:#6c757d;font-weight:600;font-size:12px;margin-bottom:6px;">✏️ Change:</div><div style="padding:8px;background:#fee2e2;border-radius:6px;color:#991b1b;text-decoration:line-through;margin-bottom:6px;max-height:60px;overflow:auto;">' + escapeHtml(comment.original_text || comment.selected_text) + '</div><div style="text-align:center;">↓</div><div style="padding:8px;background:#d1fae5;border-radius:6px;color:#166534;max-height:60px;overflow:auto;">' + escapeHtml(comment.new_text) + '</div></div>';
     }
 
-    var badge = comment.change_type === 'delete' ? 'background:#fee2e2;color:#991b1b' : comment.change_type === 'insert' ? 'background:#d1fae5;color:#166534' : 'background:#fff3cd;color:#856404';
-    var label = comment.change_type === 'delete' ? '🗑️ Deletion' : comment.change_type === 'insert' ? '✏️ Modification' : '💬 Comment';
+    var badge = comment.change_type === 'delete' ? 'background:#fee2e2;color:#991b1b' : 
+                comment.change_type === 'insert' ? 'background:#d1fae5;color:#166534' : 
+                'background:#fff3cd;color:#856404';
+    var label = comment.change_type === 'delete' ? '🗑️ Deletion' : 
+                comment.change_type === 'insert' ? '✏️ Modification' : '💬 Comment';
 
     bubble.innerHTML =
         '<div style="padding:12px;background:linear-gradient(135deg,#fff9e6,#fff3cd);border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center;">' +
         '<div style="display:flex;align-items:center;gap:10px;"><div style="width:36px;height:36px;background:linear-gradient(135deg,#ffc107,#ff9800);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;">' + initials + '</div><div style="font-weight:600;">' + escapeHtml(name) + '</div></div>' +
         '<div style="display:flex;gap:4px;">' + actions + '</div>' +
         '</div>' +
-        '<div style="padding:15px;max-height:300px;overflow:auto;"><div style="color:#333;line-height:1.6;">' + escapeHtml(comment.comment_text) + '</div>' + details + '</div>' +
+        '<div style="padding:15px;max-height:300px;overflow:auto;"><div style="color:#333;line-height:1.6;">' + escapeHtml(comment.comment_text) + '</div>' + modifiedWarning + details + '</div>' +
         '<div style="padding:10px 15px;background:#f8f9fa;border-radius:0 0 10px 10px;display:flex;gap:10px;">' +
         '<span style="font-size:11px;padding:4px 10px;border-radius:20px;' + badge + ';font-weight:600;">' + label + '</span>' +
         (isOwner ? '<span style="font-size:11px;padding:4px 10px;border-radius:20px;background:#e0e7ff;color:#4338ca;">Your comment</span>' : '') +
@@ -677,6 +685,7 @@ function showBubble(commentId, event) {
     document.body.appendChild(bubble);
     window.bcCurrentBubble = bubble;
 
+    // Position bubble
     var rect = event && event.target ? event.target.getBoundingClientRect() : { bottom: 200, left: 200, top: 180 };
     var top = rect.bottom + 10, left = rect.left;
     if (left + 350 > window.innerWidth) left = window.innerWidth - 370;
@@ -687,7 +696,10 @@ function showBubble(commentId, event) {
 }
 
 function closeBubble() {
-    if (window.bcCurrentBubble) { window.bcCurrentBubble.remove(); window.bcCurrentBubble = null; }
+    if (window.bcCurrentBubble) { 
+        window.bcCurrentBubble.remove(); 
+        window.bcCurrentBubble = null; 
+    }
     document.querySelectorAll('#commentBubble').forEach(function (b) { b.remove(); });
 }
 
@@ -697,8 +709,12 @@ function closeBubble() {
 function deleteComment(id) {
     var c = findComment(id);
     if (!c) return;
-    if (c.user_id != window.bcUserId) { showNotification('You can only delete your own comments', 'warning'); return; }
+    if (c.user_id != window.bcUserId) { 
+        showNotification('You can only delete your own comments', 'warning'); 
+        return; 
+    }
     if (!confirm('Delete this comment?')) return;
+    
     removeHighlight(id);
     deleteFromDB(id);
     showNotification('Comment deleted', 'success');
@@ -707,21 +723,31 @@ function deleteComment(id) {
 function acceptChange(id) {
     var c = findComment(id);
     if (!c) return;
-    if (c.user_id == window.bcUserId) { showNotification('Cannot accept your own change', 'warning'); return; }
+    if (c.user_id == window.bcUserId) { 
+        showNotification('Cannot accept your own change', 'warning'); 
+        return; 
+    }
     if (!confirm('Accept this change?')) return;
 
     window.bcIsHighlighting = true;
-    var el = document.querySelector('[data-comment-id="' + id + '"].comment-highlight, [data-comment-id="' + id + '"].track-insert, [data-comment-id="' + id + '"].track-delete');
-    if (el) {
+    var el = document.querySelector('[data-comment-id="' + id + '"]');
+    if (el && !el.classList.contains('comment-icon')) {
         var p = el.parentNode;
         var icon = el.querySelector('.comment-icon');
         if (icon) icon.remove();
-        if (c.change_type === 'delete') p.removeChild(el);
-        else if (c.change_type === 'insert' && c.new_text) p.replaceChild(document.createTextNode(c.new_text), el);
-        else { while (el.firstChild) p.insertBefore(el.firstChild, el); p.removeChild(el); }
+        
+        if (c.change_type === 'delete') {
+            p.removeChild(el);
+        } else if (c.change_type === 'insert' && c.new_text) {
+            p.replaceChild(document.createTextNode(c.new_text), el);
+        } else {
+            while (el.firstChild) p.insertBefore(el.firstChild, el);
+            p.removeChild(el);
+        }
         p.normalize();
     }
     setTimeout(function () { window.bcIsHighlighting = false; }, 200);
+    
     deleteFromDB(id);
     if (typeof saveAsDraft === 'function') saveAsDraft();
     showNotification('Change accepted', 'success');
@@ -730,8 +756,12 @@ function acceptChange(id) {
 function rejectChange(id) {
     var c = findComment(id);
     if (!c) return;
-    if (c.user_id == window.bcUserId) { showNotification('Cannot reject your own change', 'warning'); return; }
+    if (c.user_id == window.bcUserId) { 
+        showNotification('Cannot reject your own change', 'warning'); 
+        return; 
+    }
     if (!confirm('Reject this change?')) return;
+    
     removeHighlight(id);
     deleteFromDB(id);
     showNotification('Change rejected', 'info');
@@ -740,8 +770,12 @@ function rejectChange(id) {
 function resolveComment(id) {
     var c = findComment(id);
     if (!c) return;
-    if (c.user_id == window.bcUserId) { showNotification('Cannot resolve your own comment', 'warning'); return; }
+    if (c.user_id == window.bcUserId) { 
+        showNotification('Cannot resolve your own comment', 'warning'); 
+        return; 
+    }
     if (!confirm('Mark as resolved?')) return;
+    
     removeHighlight(id);
     deleteFromDB(id);
     showNotification('Comment resolved', 'success');
@@ -750,7 +784,9 @@ function resolveComment(id) {
 function removeHighlight(id) {
     window.bcIsHighlighting = true;
     var el = document.querySelector('[data-comment-id="' + id + '"]');
-    if (el && el.classList.contains('comment-icon')) el = el.closest('.comment-highlight, .track-insert, .track-delete');
+    if (el && el.classList.contains('comment-icon')) {
+        el = el.closest('.comment-highlight, .track-insert, .track-delete');
+    }
     if (el) {
         var p = el.parentNode;
         var icon = el.querySelector('.comment-icon');
@@ -763,16 +799,21 @@ function removeHighlight(id) {
 }
 
 function deleteFromDB(id) {
-    fetch('/api/contracts/comments/' + id, { method: 'DELETE', credentials: 'include' })
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-            if (d.success) {
-                window.bcAllComments = window.bcAllComments.filter(function (c) { return c.id != id; });
-                closeBubble();
-                updateCommentsPanel();
-                updateCommentBadge();
-            }
-        });
+    fetch('/api/contracts/comments/' + id, { 
+        method: 'DELETE', 
+        credentials: 'include' 
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        if (d.success) {
+            window.bcAllComments = window.bcAllComments.filter(function (c) { 
+                return c.id != id; 
+            });
+            closeBubble();
+            updateCommentsPanel();
+            updateCommentBadge();
+        }
+    });
 }
 
 function findComment(id) {
@@ -783,22 +824,17 @@ function findComment(id) {
 }
 
 // =====================================================
-// HELPERS
+// UI UPDATES
 // =====================================================
-function escapeHtml(t) { if (!t) return ''; var d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
-function closeModal(id) { var m = document.getElementById(id); if (m) m.style.display = 'none'; }
 function toggleCommentsPanel() {
     var p = document.getElementById('commentsPanel');
     if (p) {
         var isVisible = p.style.display === 'flex';
         p.style.display = isVisible ? 'none' : 'flex';
-
-        // Reload comments when opening
-        if (!isVisible) {
-            loadComments();
-        }
+        if (!isVisible) loadComments();
     }
 }
+
 function updateCommentsPanel() {
     var p = document.getElementById('commentsPanelBody') || document.getElementById('commentsListContainer');
     if (!p) return;
@@ -812,51 +848,31 @@ function updateCommentsPanel() {
     window.bcAllComments.forEach(function (c) {
         var initials = (c.user_name || 'User').split(' ').map(function (n) { return n[0]; }).join('').toUpperCase().substring(0, 2);
         var isOwner = c.user_id == window.bcUserId;
-        var changeType = c.change_type || 'comment';
 
-        // Build change display
         var changeDisplay = '';
-        if (changeType === 'insert' && c.original_text && c.new_text) {
-            changeDisplay = '<div style="margin-top:10px;padding:10px;background:#f8f9fa;border-radius:6px;border-left:3px solid #ffc107;"><div style="margin-bottom:8px;"><div style="font-size:11px;font-weight:600;color:#dc3545;margin-bottom:4px;">❌ BEFORE:</div><div style="text-decoration:line-through;color:#dc3545;background:rgba(220,53,69,0.08);padding:8px;border-radius:4px;font-size:13px;">' + escapeHtml(c.original_text) + '</div></div><div><div style="font-size:11px;font-weight:600;color:#28a745;margin-bottom:4px;">✅ AFTER:</div><div style="color:#28a745;background:rgba(40,167,69,0.08);padding:8px;border-radius:4px;border-left:3px solid #28a745;font-size:13px;">' + escapeHtml(c.new_text) + '</div></div></div>';
-        } else if (changeType === 'delete' && c.original_text) {
-            changeDisplay = '<div style="margin-top:10px;padding:10px;background:#fff3cd;border-radius:6px;border-left:3px solid #dc3545;"><div style="font-size:11px;font-weight:600;color:#dc3545;margin-bottom:6px;">🗑️ DELETED TEXT:</div><div style="text-decoration:line-through;color:#dc3545;background:rgba(220,53,69,0.12);padding:8px;border-radius:4px;font-size:13px;">' + escapeHtml(c.original_text) + '</div></div>';
-        } else if (c.selected_text) {
-            changeDisplay = '<div style="margin-top:10px;padding:8px;background:#e3f2fd;border-radius:4px;border-left:3px solid #0066cc;"><div style="font-size:11px;font-weight:600;color:#0066cc;margin-bottom:4px;">📝 SELECTED TEXT:</div><div style="font-size:13px;color:#333;font-style:italic;">"' + escapeHtml(c.selected_text.substring(0, 100)) + (c.selected_text.length > 100 ? '..."' : '"') + '</div></div>';
+        if (c.change_type === 'insert' && c.original_text && c.new_text) {
+            changeDisplay = '<div style="margin-top:10px;padding:10px;background:#f8f9fa;border-radius:6px;"><div style="font-size:11px;color:#dc3545;margin-bottom:4px;">Before:</div><div style="text-decoration:line-through;color:#dc3545;font-size:13px;">' + escapeHtml(c.original_text) + '</div><div style="font-size:11px;color:#28a745;margin:8px 0 4px;">After:</div><div style="color:#28a745;font-size:13px;">' + escapeHtml(c.new_text) + '</div></div>';
+        } else if (c.change_type === 'delete' && c.original_text) {
+            changeDisplay = '<div style="margin-top:10px;padding:10px;background:#f8f9fa;border-radius:6px;"><div style="text-decoration:line-through;color:#dc3545;">' + escapeHtml(c.original_text) + '</div></div>';
         }
 
-        var changeBadge = changeType !== 'comment' ? '<span style="margin-left:6px;padding:2px 6px;background:' + (changeType === 'insert' ? '#28a745' : '#dc3545') + ';color:white;border-radius:3px;font-size:10px;font-weight:600;">' + changeType.toUpperCase() + '</span>' : '';
-
-        h += '<div style="padding:15px;border-bottom:1px solid #e0e0e0;background:white;transition:background 0.2s;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">';
+        h += '<div style="padding:15px;border-bottom:1px solid #e0e0e0;">';
         h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">';
         h += '<div style="display:flex;align-items:center;gap:10px;">';
-        h += '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:14px;">' + initials + '</div>';
-        h += '<div><div style="font-weight:600;font-size:14px;color:#333;">' + escapeHtml(c.user_name) + changeBadge + '</div>';
-        h += '</div></div>';
+        h += '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:white;font-weight:600;">' + initials + '</div>';
+        h += '<div style="font-weight:600;">' + escapeHtml(c.user_name) + '</div>';
+        h += '</div>';
         if (isOwner) {
-            h += '<button onclick="deleteComment(' + c.id + ')" style="background:none;border:none;color:#dc3545;cursor:pointer;padding:4px 8px;border-radius:4px;" title="Delete"><i class="ti ti-trash" style="font-size:16px;"></i></button>';
+            h += '<button onclick="deleteComment(' + c.id + ')" style="background:none;border:none;color:#dc3545;cursor:pointer;" title="Delete"><i class="ti ti-trash"></i></button>';
         }
         h += '</div>';
-        h += '<div style="font-size:14px;color:#444;margin-bottom:4px;"><strong style="color:#666;font-size:12px;">Reason:</strong><br>' + escapeHtml(c.comment_text) + '</div>';
+        h += '<div style="color:#444;margin-bottom:4px;">' + escapeHtml(c.comment_text) + '</div>';
         h += changeDisplay;
         h += '</div>';
     });
 
     p.innerHTML = h;
 }
-
-function formatTimeAgo(dateString) {
-    var date = new Date(dateString);
-    var now = new Date();
-    var seconds = Math.floor((now - date) / 1000);
-    if (seconds < 60) return 'just now';
-    if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
-    if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
-    if (seconds < 604800) return Math.floor(seconds / 86400) + 'd ago';
-    return date.toLocaleDateString();
-}
-
-
-function scrollToComment(id) { var el = document.querySelector('[data-comment-id="' + id + '"]'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
 
 function updateCommentBadge() {
     document.querySelectorAll('#commentsBadge, #commentsBadge2, .comment-badge').forEach(function (b) {
@@ -865,6 +881,25 @@ function updateCommentBadge() {
     });
 }
 
+// =====================================================
+// HELPERS
+// =====================================================
+function escapeHtml(t) { 
+    if (!t) return ''; 
+    var d = document.createElement('div'); 
+    d.textContent = t; 
+    return d.innerHTML; 
+}
+
+function closeModal(id) { 
+    var m = document.getElementById(id); 
+    if (m) m.style.display = 'none'; 
+}
+
+function scrollToComment(id) { 
+    var el = document.querySelector('[data-comment-id="' + id + '"]'); 
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
+}
 
 // =====================================================
 // EXPOSE GLOBALLY
@@ -882,202 +917,121 @@ window.scrollToComment = scrollToComment;
 window.showBubble = showBubble;
 window.loadComments = loadComments;
 window.highlightCommentsInDocument = highlightCommentsInDocument;
-window.findComment = findComment;
-window.getContractId = getContractId;
-window.createCommentIcon = createCommentIcon;
-window.findAndWrapText = findAndWrapText;
 
-console.log('✅ Bubble comments loaded (duplicate text support)');
-
+console.log('✅ Bubble comments loaded');
 
 // =====================================================
-// FULLY AUTOMATIC CHANGE DETECTION
-// Add this to the END of bubble-comments.js
+// TRACK CHANGES - Detect when user edits commented text
 // =====================================================
 
-window.bcOriginalTexts = {};
-window.bcChangeDetectionActive = false;
-
 /**
- * Start automatic change detection
+ * Check all comments for text changes and track them
  */
-function startAutoChangeDetection() {
-    if (window.bcChangeDetectionActive) return;
-    
-    const content = document.getElementById('contractContent');
-    if (!content) {
-        setTimeout(startAutoChangeDetection, 1000);
-        return;
-    }
-    
-    window.bcChangeDetectionActive = true;
-    console.log('🎯 Auto change detection started');
-    
-    // Store original texts for all comments
-    window.bcAllComments.forEach(comment => {
-        if (!window.bcOriginalTexts[comment.id]) {
-            window.bcOriginalTexts[comment.id] = comment.original_text || comment.selected_text;
-        }
-    });
-    
-    // Check every 3 seconds
-    setInterval(checkAllHighlightsForChanges, 3000);
-    
-    // Also check on document blur
-    content.addEventListener('blur', function() {
-        setTimeout(checkAllHighlightsForChanges, 300);
-    });
-}
-
-/**
- * Check all highlighted comments for changes
- */
-async function checkAllHighlightsForChanges() {
-    const content = document.getElementById('contractContent');
+function checkForChanges() {
+    var content = document.getElementById('contractContent');
     if (!content || window.bcIsHighlighting) return;
     
-    const highlights = content.querySelectorAll('[data-comment-id]');
+    var highlights = content.querySelectorAll('[data-comment-id]');
     if (highlights.length === 0) return;
     
-    let changesDetected = 0;
+    var changesDetected = 0;
     
-    for (const highlight of highlights) {
-        const commentId = parseInt(highlight.dataset.commentId);
-        if (!commentId) continue;
+    highlights.forEach(function(highlight) {
+        var commentId = parseInt(highlight.dataset.commentId);
+        if (!commentId) return;
         
-        const comment = window.bcAllComments.find(c => c.id === commentId);
-        if (!comment) continue;
+        var comment = findComment(commentId);
+        if (!comment) return;
         
-        // Skip if already tracked
-        if (comment.change_type === 'insert' && comment.new_text) continue;
+        // Skip if already tracked as a change
+        if (comment.change_type === 'insert' && comment.new_text) return;
         
         // Get current text in the highlight
-        const icon = highlight.querySelector('.comment-icon');
-        let currentText = highlight.textContent;
+        var icon = highlight.querySelector('.comment-icon');
+        var currentText = highlight.textContent;
         if (icon) {
             currentText = currentText.replace('💬', '').replace(/\s+/g, ' ').trim();
         }
         
         // Get original text
-        const originalText = window.bcOriginalTexts[commentId];
-        if (!originalText) continue;
+        var originalText = window.bcOriginalTexts[commentId];
+        if (!originalText) return;
         
         // Compare
-        const cleanOriginal = originalText.replace(/\s+/g, ' ').trim();
-        const cleanCurrent = currentText.replace(/\s+/g, ' ').trim();
+        var cleanOriginal = originalText.replace(/\s+/g, ' ').trim();
+        var cleanCurrent = currentText.replace(/\s+/g, ' ').trim();
         
         if (cleanCurrent !== cleanOriginal && cleanCurrent.length > 0) {
-            console.log('🎯 AUTO-DETECTED CHANGE!');
-            console.log('   Comment ID:', commentId);
-            console.log('   BEFORE:', cleanOriginal);
-            console.log('   AFTER:', cleanCurrent);
+            console.log('🎯 Change detected on comment', commentId);
+            console.log('   Before:', cleanOriginal);
+            console.log('   After:', cleanCurrent);
             
             changesDetected++;
-            
-            // Update via API
-            await autoTrackChange(commentId, cleanOriginal, cleanCurrent);
-            
-            // Update stored original
-            window.bcOriginalTexts[commentId] = cleanCurrent;
+            trackChange(commentId, cleanOriginal, cleanCurrent);
         }
-    }
+    });
     
     if (changesDetected > 0) {
-        console.log('✅ Auto-tracked', changesDetected, 'change(s)');
-        showNotification(`Tracked ${changesDetected} changes on comments`, 'success');
-        
-        // Reload comments to show before/after
-        setTimeout(() => {
-            loadComments();
-        }, 500);
+        console.log('✅ Tracked', changesDetected, 'change(s)');
+        setTimeout(function() { loadComments(); }, 500);
     }
 }
 
 /**
- * Auto-track change via API
+ * Track a change via API
  */
-async function autoTrackChange(commentId, originalText, newText) {
-    try {
-        const response = await fetch(`/api/contracts/comments/${commentId}/track-change`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({
-                original_text: originalText,
-                new_text: newText,
-                change_type: 'insert'
-            })
-        });
-        
-        const data = await response.json();
-        
+function trackChange(commentId, originalText, newText) {
+    fetch('/api/contracts/comments/' + commentId + '/track-change', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+            original_text: originalText,
+            new_text: newText,
+            change_type: 'insert'
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
         if (data.success) {
-            console.log('✅ Auto-tracked change for comment', commentId);
-            
-            // Update local comment data
-            const comment = window.bcAllComments.find(c => c.id === commentId);
+            console.log('✅ Tracked change for comment', commentId);
+            var comment = findComment(commentId);
             if (comment) {
                 comment.change_type = 'insert';
                 comment.original_text = originalText;
                 comment.new_text = newText;
             }
-            
-            return true;
+            window.bcOriginalTexts[commentId] = newText;
         }
-    } catch (error) {
-        console.error('❌ Error auto-tracking:', error);
-    }
-    
-    return false;
+    })
+    .catch(function(err) {
+        console.error('Error tracking change:', err);
+    });
 }
 
 /**
- * Hook into loadComments to initialize
+ * Manual button to check for changes
  */
-const _originalLoadComments = window.loadComments;
-window.loadComments = function() {
-    _originalLoadComments.apply(this, arguments);
-    
-    setTimeout(() => {
-        // Store originals
-        window.bcAllComments.forEach(comment => {
-            if (!window.bcOriginalTexts[comment.id]) {
-                window.bcOriginalTexts[comment.id] = comment.original_text || comment.selected_text;
-            }
-        });
-        
-        // Start detection if not started
-        if (!window.bcChangeDetectionActive) {
-            startAutoChangeDetection();
-        }
-    }, 1000);
-};
+function manualCheckChanges() {
+    checkForChanges();
+    showNotification('Checked for changes', 'info');
+}
 
-/**
- * Hook into submitComment to store new originals
- */
-const _originalSubmitComment = window.submitComment;
-window.submitComment = function() {
-    const selectedText = window.commentSelection ? window.commentSelection.text : '';
-    
-    _originalSubmitComment.apply(this, arguments);
-    
-    setTimeout(() => {
-        if (window.bcAllComments.length > 0) {
-            const lastComment = window.bcAllComments[window.bcAllComments.length - 1];
-            window.bcOriginalTexts[lastComment.id] = selectedText;
-            console.log('💾 Stored original for new comment', lastComment.id, ':', selectedText);
-        }
-    }, 1000);
-};
-
-// Start on page load
+// Check for changes when user stops editing
 document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(() => {
-        if (window.bcAllComments && window.bcAllComments.length > 0) {
-            startAutoChangeDetection();
-        }
-    }, 2000);
+    var content = document.getElementById('contractContent');
+    if (content) {
+        var changeTimeout;
+        content.addEventListener('input', function() {
+            clearTimeout(changeTimeout);
+            changeTimeout = setTimeout(function() {
+                checkForChanges();
+            }, 2000); // Check 2 seconds after user stops typing
+        });
+    }
 });
 
-console.log('✅ AUTOMATIC change tracking loaded - edits will be detected every 3 seconds');
+window.checkForChanges = checkForChanges;
+window.manualCheckChanges = manualCheckChanges;
+
+console.log('✅ Track changes loaded');

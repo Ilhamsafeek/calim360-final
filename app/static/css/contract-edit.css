@@ -1127,4 +1127,75 @@
     }
 }
 
+/* Add to app/static/css/contract-edit.css */
+
+/* Modified comment indicator - shows comment text was changed */
+.comment-modified {
+    background: rgba(255, 152, 0, 0.25) !important; /* Orange tint */
+    border-bottom: 2px dashed #ff9800 !important; /* Dashed border indicates change */
+    position: relative;
+}
+
+.comment-modified:hover {
+    background: rgba(255, 152, 0, 0.4) !important;
+}
+
+/* Add small indicator badge */
+.comment-modified::before {
+    content: '✎';
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    background: #ff9800;
+    color: white;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 10;
+}
+
+/* Track insert modified */
+.track-insert.comment-modified {
+    background: rgba(255, 152, 0, 0.2) !important;
+    border-bottom: 2px dashed #ff9800 !important;
+}
+
+/* Track delete modified */
+.track-delete.comment-modified {
+    background: rgba(255, 152, 0, 0.2) !important;
+    border-bottom: 2px dashed #ff9800 !important;
+}
+
+/* Comment tooltip for modified text */
+.comment-modified[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    background: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* Arrow for tooltip */
+.comment-modified[title]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% - 5px);
+    left: 10px;
+    border: 5px solid transparent;
+    border-top-color: #333;
+    z-index: 1001;
+}
     

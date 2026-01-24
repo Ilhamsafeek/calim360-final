@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, Dict, Any
 from datetime import datetime
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
@@ -22,10 +22,11 @@ class CommentCreate(BaseModel):
     contract_id: int
     comment_text: str
     selected_text: str
-    position_start: int
-    position_end: int
+    anchor: Optional[Dict[str, Any]] = None  # ← NEW: Anchor object
+    position_start: Optional[int] = 0  # Keep for backward compatibility
+    position_end: Optional[int] = 0
     start_xpath: Optional[str] = ''
-    change_type: Optional[str] = 'comment'  # 'comment', 'insert', 'delete'
+    change_type: Optional[str] = 'comment'
     original_text: Optional[str] = None
     new_text: Optional[str] = None
 
@@ -63,10 +64,11 @@ async def add_comment(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    """Add a new bubble comment with exact positioning"""
+    """Add a new bubble comment with anchor-based tracking"""
     try:
         logger.info(f"📝 Adding comment by user {current_user.id}")
         
+        # Build position_info with anchor if available
         position_info = {
             'start': data.position_start,
             'end': data.position_end,
@@ -75,6 +77,11 @@ async def add_comment(
             'original_text': data.original_text,
             'new_text': data.new_text
         }
+        
+        # ← NEW: Add anchor if provided
+        if data.anchor:
+            position_info['anchor'] = data.anchor
+            logger.info(f"📍 Anchor fingerprint: {data.anchor.get('fingerprint', 'N/A')}")
         
         insert_query = text("""
             INSERT INTO contract_comments 
@@ -108,17 +115,18 @@ async def add_comment(
             'comment': {
                 'id': comment_id,
                 'contract_id': data.contract_id,
-                'user_id': current_user.id,  # ← Include user_id
+                'user_id': current_user.id,
                 'user_name': user_name,
                 'comment_text': data.comment_text,
                 'selected_text': data.selected_text,
+                'anchor': data.anchor,  # ← NEW: Return anchor
                 'position_start': data.position_start,
                 'position_end': data.position_end,
                 'change_type': data.change_type,
                 'original_text': data.original_text,
                 'new_text': data.new_text,
                 'created_at': datetime.now().isoformat(),
-                'can_delete': True  # Owner can always delete their own
+                'can_delete': True
             }
         }
         
@@ -126,7 +134,7 @@ async def add_comment(
         logger.error(f"❌ Error adding comment: {str(e)}")
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
-        
+
 
 @router.get("/comments/{contract_id}")
 async def get_comments(
@@ -134,7 +142,7 @@ async def get_comments(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    """Get all comments for a contract with position data"""
+    """Get all comments for a contract with anchor data"""
     try:
         query = text("""
             SELECT 
@@ -146,59 +154,51 @@ async def get_comments(
                 cc.selected_text,
                 cc.position_info,
                 cc.created_at,
-                cc.updated_at,
-                CASE WHEN cc.user_id = :current_user_id THEN 1 ELSE 0 END as can_delete
+                cc.updated_at
             FROM contract_comments cc
-            INNER JOIN users u ON cc.user_id = u.id
+            LEFT JOIN users u ON cc.user_id = u.id
             WHERE cc.contract_id = :contract_id
-            ORDER BY cc.created_at DESC
+            ORDER BY cc.created_at ASC
         """)
         
-        results = db.execute(query, {
-            'contract_id': contract_id,
-            'current_user_id': current_user.id
-        }).fetchall()
+        results = db.execute(query, {'contract_id': contract_id}).fetchall()
         
         comments = []
         for row in results:
-            # Parse position info JSON
-            try:
-                if row[6]:  # position_info column
-                    pos_info = json.loads(row[6]) if isinstance(row[6], str) else row[6]
-                else:
-                    pos_info = {}
-            except:
-                pos_info = {}
+            position_info = json.loads(row.position_info) if row.position_info else {}
             
-            comments.append({
-                'id': row[0],
-                'contract_id': row[1],
-                'user_id': row[2],  # Include user_id so frontend can compare
-                'user_name': row[3],
-                'comment_text': row[4],
-                'selected_text': row[5],
-                'position_start': pos_info.get('start', 0),
-                'position_end': pos_info.get('end', 0),
-                'start_xpath': pos_info.get('start_xpath', ''),
-                'change_type': pos_info.get('change_type', 'comment'),
-                'original_text': pos_info.get('original_text'),
-                'new_text': pos_info.get('new_text'),
-                'created_at': row[7].isoformat() if row[7] else '',
-                'updated_at': row[8].isoformat() if row[8] else '',
-                'can_delete': bool(row[9])  # Only owner can delete
-            })
-        
-        logger.info(f"✅ Retrieved {len(comments)} comments for contract {contract_id}")
+            # Extract anchor if available
+            anchor = position_info.get('anchor')
+            
+            comment = {
+                'id': row.id,
+                'contract_id': row.contract_id,
+                'user_id': row.user_id,
+                'user_name': row.user_name,
+                'comment_text': row.comment_text,
+                'selected_text': row.selected_text,
+                'anchor': anchor,  # ← NEW: Include anchor
+                'position_start': position_info.get('start', 0),
+                'position_end': position_info.get('end', 0),
+                'change_type': position_info.get('change_type', 'comment'),
+                'original_text': position_info.get('original_text'),
+                'new_text': position_info.get('new_text'),
+                'created_at': row.created_at.isoformat() if row.created_at else None,
+                'updated_at': row.updated_at.isoformat() if row.updated_at else None,
+                'can_delete': row.user_id == current_user.id
+            }
+            comments.append(comment)
         
         return {
             'success': True,
             'comments': comments,
-            'current_user_id': current_user.id  # ← ADD THIS LINE
+            'current_user_id': current_user.id
         }
         
     except Exception as e:
         logger.error(f"❌ Error fetching comments: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @router.delete("/comments/{comment_id}")
