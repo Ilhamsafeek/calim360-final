@@ -1441,6 +1441,8 @@ async def get_contract_editor_data(
         logger.error(f"Error fetching contract editor data: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
         
+
+
 @router.post("/save-draft/{contract_id}")
 async def save_contract_draft(
     contract_id: int,
@@ -1472,10 +1474,11 @@ async def save_contract_draft(
         
         result = db.execute(version_check, {"contract_id": contract_id}).fetchone()
         current_max_version = result.max_version if result and result.max_version else 0
-        next_version = current_max_version + 1
         
-        # ✅ GET CURRENT CONTENT TO COMPARE (only if version exists)
+        # ✅ GET CURRENT CONTENT TO COMPARE
         content_changed = False
+        new_content = content.get("content", "")
+        
         if current_max_version > 0:
             current_content_query = text("""
                 SELECT contract_content 
@@ -1487,15 +1490,31 @@ async def save_contract_draft(
             current_content_result = db.execute(current_content_query, {"contract_id": contract_id}).fetchone()
             current_content = current_content_result.contract_content if current_content_result else ""
             
-            new_content = content.get("content", "")
-            
             # ✅ CHECK IF CONTENT ACTUALLY CHANGED
             content_changed = (current_content.strip() != new_content.strip())
         else:
-            content_changed = False
+            # First version - always save
+            content_changed = True
             logger.info(f"📝 First version of contract {contract_id}")
         
-        new_content = content.get("content", "")
+        # ✅ ONLY CREATE NEW VERSION IF CONTENT CHANGED
+        if not content_changed:
+            logger.info(f"⏭️ No content change detected - skipping version creation")
+            return {
+                "success": True,
+                "message": "No changes detected - draft not saved",
+                "version": current_max_version,
+                "blockchain_success": False,
+                "blockchain_activities": [],
+                "blockchain_skipped": True,
+                "internal_edit": is_internal,
+                "content_changed": False,
+                "current_status": current_status,
+                "status_updated": False
+            }
+        
+        # ✅ CONTENT CHANGED - CREATE NEW VERSION
+        next_version = current_max_version + 1
         
         # Create new version
         version_query = text("""
@@ -1507,12 +1526,10 @@ async def save_contract_draft(
         # ✅ DETERMINE CHANGE SUMMARY
         if next_version == 1:
             change_summary = "Initial contract creation"
-        elif is_internal and content_changed:
+        elif is_internal:
             change_summary = "Internal edit - Content modified"
-        elif is_internal and not content_changed:
-            change_summary = "Internal edit - No content change"
         else:
-            change_summary = "Auto-saved draft"
+            change_summary = "Draft content updated"
         
         db.execute(version_query, {
             "contract_id": contract_id,
@@ -1558,35 +1575,39 @@ async def save_contract_draft(
         db.execute(update_contract, {"contract_id": contract_id})
         db.commit()
 
-        # ✅ BLOCKCHAIN UPDATE FOR ALL USERS
+        # ✅ BLOCKCHAIN UPDATE - ONLY IF CONTENT CHANGED AND NOT INTERNAL USER
         blockchain_activities = []
         blockchain_success = False
         
-        try:
-            logger.info(f"🔗 Storing contract {contract_id} on blockchain")
-            logger.info(f"   User: {current_user.email} (Internal: {is_internal})")
-            logger.info(f"   Version: {next_version}, Content Changed: {content_changed}")
-            logger.info(f"   Current Status: {current_status}, Will Mark Tampered: {should_mark_tampered}")
-            
-            blockchain_result = await blockchain_service.store_contract_hash_with_logging(
-                contract_id=contract_id,
-                document_content=new_content,
-                uploaded_by=current_user.id,
-                company_id=current_user.company_id,
-                db=db
-            )
-            
-            if blockchain_result.get("success"):
-                blockchain_success = True
-                blockchain_activities = blockchain_result.get("activities", [])
-                logger.info(f"✅ Blockchain storage successful with {len(blockchain_activities)} activity steps")
-            else:
-                logger.warning(f"⚠️ Blockchain storage failed: {blockchain_result.get('error')}")
+        if is_internal:
+            logger.info(f"⏭️ Skipping blockchain recording for internal user: {current_user.email}")
+        elif content_changed:  # ✅ ONLY UPDATE BLOCKCHAIN IF CONTENT CHANGED
+            try:
+                logger.info(f"🔗 Storing contract {contract_id} on blockchain (content changed)")
+                logger.info(f"   User: {current_user.email} (External user)")
+                logger.info(f"   Version: {next_version}")
                 
-        except Exception as blockchain_error:
-            logger.error(f"❌ Blockchain storage error (non-critical): {str(blockchain_error)}")
-            import traceback
-            logger.error(traceback.format_exc())
+                blockchain_result = await blockchain_service.store_contract_hash_with_logging(
+                    contract_id=contract_id,
+                    document_content=new_content,
+                    uploaded_by=current_user.id,
+                    company_id=current_user.company_id,
+                    db=db
+                )
+                
+                if blockchain_result.get("success"):
+                    blockchain_success = True
+                    blockchain_activities = blockchain_result.get("activities", [])
+                    logger.info(f"✅ Blockchain storage successful with {len(blockchain_activities)} activity steps")
+                else:
+                    logger.warning(f"⚠️ Blockchain storage failed: {blockchain_result.get('error')}")
+                    
+            except Exception as blockchain_error:
+                logger.error(f"❌ Blockchain storage error (non-critical): {str(blockchain_error)}")
+                import traceback
+                logger.error(traceback.format_exc())
+        else:
+            logger.info(f"⏭️ No content change - skipping blockchain update")
         
         # ✅ RETURN RESPONSE WITH NEW STATUS
         response = {
@@ -1595,10 +1616,11 @@ async def save_contract_draft(
             "version": next_version,
             "blockchain_success": blockchain_success,
             "blockchain_activities": blockchain_activities,
+            "blockchain_skipped": is_internal,
             "internal_edit": is_internal,
             "content_changed": content_changed,
-            "current_status": new_status,  # ✅ Return the ACTUAL current status (tampered or original)
-            "status_updated": should_mark_tampered  # ✅ Flag if status changed to tampered
+            "current_status": new_status,
+            "status_updated": should_mark_tampered
         }
         
         log_contract_action(
@@ -1609,17 +1631,19 @@ async def save_contract_draft(
             details={
                 "update_type": "content_saved",
                 "has_blockchain": blockchain_success,
+                "blockchain_skipped": is_internal,
                 "blockchain_activities_count": len(blockchain_activities),
                 "internal_edit": is_internal,
                 "content_changed": content_changed,
                 "previous_status": current_status,
-                "new_status": new_status,  # ✅ Log new status
-                "status_tampered": should_mark_tampered
+                "new_status": new_status,
+                "status_tampered": should_mark_tampered,
+                "version_created": next_version
             },
             ip_address=None
         )
         
-        logger.info(f"✅ Draft saved - Version: {next_version}, Status: {new_status}, Tampered: {should_mark_tampered}")
+        logger.info(f"✅ Draft saved - Version: {next_version}, Status: {new_status}, Blockchain: {'Skipped (Internal)' if is_internal else blockchain_success}")
         
         return response
         
@@ -1629,8 +1653,7 @@ async def save_contract_draft(
         import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
-        
-            
+
 
 @router.post("/send-for-signature")
 async def send_contract_for_signature(

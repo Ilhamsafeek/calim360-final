@@ -1096,7 +1096,7 @@ async def delete_user(
 @router.get("/me/profile")
 async def get_current_user_profile(
     # TEMPORARILY DISABLED FOR TESTING - UNCOMMENT WHEN READY:
-    # current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -1107,59 +1107,59 @@ async def get_current_user_profile(
         # Later uncomment the authentication and use real current_user
         
         # Mock user for testing
-        mock_user = {
-            "id": 1,
-            "email": "admin@test.com",
-            "username": "admin",
-            "first_name": "Admin",
-            "last_name": "User",
-            "full_name": "Admin User",
-            "user_type": "admin",
-            "department": "IT",
-            "job_title": "Administrator",
-            "company_id": 1,
-            "company_name": "Test Company",
-            "mobile_number": "+97412345678",
-            "profile_picture_url": None,
-            "language_preference": "en",
-            "timezone": "Asia/Qatar",
-            "two_factor_enabled": False
-        }
+        # mock_user = {
+        #     "id": 1,
+        #     "email": "admin@test.com",
+        #     "username": "admin",
+        #     "first_name": "Admin",
+        #     "last_name": "User",
+        #     "full_name": "Admin User",
+        #     "user_type": "admin",
+        #     "department": "IT",
+        #     "job_title": "Administrator",
+        #     "company_id": 1,
+        #     "company_name": "Test Company",
+        #     "mobile_number": "+97412345678",
+        #     "profile_picture_url": None,
+        #     "language_preference": "en",
+        #     "timezone": "Asia/Qatar",
+        #     "two_factor_enabled": False
+        # }
+        
+        # return {
+        #     "success": True,
+        #     "data": mock_user
+        # }
+        
+        # UNCOMMENT THIS WHEN AUTHENTICATION IS RE-ENABLED:
+        # Get company info
+        company_name = None
+        if current_user.company_id:
+            company = db.query(Company).filter(Company.id == current_user.company_id).first()
+            if company:
+                company_name = company.company_name
         
         return {
             "success": True,
-            "data": mock_user
+            "data": {
+                "id": current_user.id,
+                "email": current_user.email,
+                "username": current_user.username,
+                "first_name": current_user.first_name,
+                "last_name": current_user.last_name,
+                "full_name": f"{current_user.first_name} {current_user.last_name}",
+                "user_type": current_user.user_type,
+                "department": current_user.department,
+                "job_title": current_user.job_title,
+                "company_id": current_user.company_id,
+                "company_name": company_name,
+                "mobile_number": current_user.mobile_number,
+                "profile_picture_url": current_user.profile_picture_url,
+                "language_preference": current_user.language_preference,
+                "timezone": current_user.timezone,
+                "two_factor_enabled": current_user.two_factor_enabled
+            }
         }
-        
-        # UNCOMMENT THIS WHEN AUTHENTICATION IS RE-ENABLED:
-        # # Get company info
-        # company_name = None
-        # if current_user.company_id:
-        #     company = db.query(Company).filter(Company.id == current_user.company_id).first()
-        #     if company:
-        #         company_name = company.company_name
-        # 
-        # return {
-        #     "success": True,
-        #     "data": {
-        #         "id": current_user.id,
-        #         "email": current_user.email,
-        #         "username": current_user.username,
-        #         "first_name": current_user.first_name,
-        #         "last_name": current_user.last_name,
-        #         "full_name": f"{current_user.first_name} {current_user.last_name}",
-        #         "user_type": current_user.user_type,
-        #         "department": current_user.department,
-        #         "job_title": current_user.job_title,
-        #         "company_id": current_user.company_id,
-        #         "company_name": company_name,
-        #         "mobile_number": current_user.mobile_number,
-        #         "profile_picture_url": current_user.profile_picture_url,
-        #         "language_preference": current_user.language_preference,
-        #         "timezone": current_user.timezone,
-        #         "two_factor_enabled": current_user.two_factor_enabled
-        #     }
-        # }
     except Exception as e:
         logger.error(f"Error fetching current user profile: {str(e)}")
         raise HTTPException(

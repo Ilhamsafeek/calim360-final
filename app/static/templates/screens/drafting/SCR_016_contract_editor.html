@@ -2936,10 +2936,10 @@
 
         <!-- Action Buttons -->
         <div class="blockchain-buttons">
-            <button type="button" class="blockchain-btn blockchain-btn-primary" onclick="showBlockchainCertificate()">
+            <!-- <button type="button" class="blockchain-btn blockchain-btn-primary" onclick="showBlockchainCertificate()">
                 <i data-lucide="award"></i>
                 View Certificate
-            </button>
+            </button> -->
             <button type="button" class="blockchain-btn blockchain-btn-outline" onclick="verifyContractNow()">
                 <i data-lucide="refresh-cw"></i>
                 Re-verify
@@ -5426,17 +5426,13 @@
 
         // Save as draft only if user is not internal and contract is not tampered
         const token = localStorage.getItem('token');
-        const userResponse = await fetch('/api/users/me', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const userData = await userResponse.json();
 
-        const contractResponse = await fetch(`/api/contracts/${contractId}`, {
+        const contractResponse = await fetch(`/api/contracts/edit/${contractId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const contractData = await contractResponse.json();
 
-        if (userData.user_type !== 'internal' && contractData.status !== 'tampered') {
+        if (!contractData.is_internal_user && contractData.status !== 'tampered') {
             await saveAsDraft();
         }
 
@@ -5513,125 +5509,189 @@
 
 
     // =====================================================
-    // DATA LOADING FUNCTIONS
-    // =====================================================
-    async function loadContractData() {
-        try {
-            console.log('📡 Loading contract data for ID:', contractId);
+// HELPER: Get Contract ID from multiple sources
+// =====================================================
 
-            const token = localStorage.getItem('access_token');
-            const response = await fetch(`/api/contracts/edit/${contractId}`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include'
-            });
+function getContractIdFromPage() {
+    // Try global variable first
+    if (typeof currentContractId !== 'undefined' && currentContractId) {
+        return currentContractId;
+    }
+    
+    if (typeof contractId !== 'undefined' && contractId) {
+        return contractId;
+    }
+    
+    // Try from data attribute
+    const indicator = document.getElementById('blockchain-indicator');
+    if (indicator && indicator.dataset.contractId) {
+        return indicator.dataset.contractId;
+    }
+    
+    // Try from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const idFromUrl = urlParams.get('id');
+    if (idFromUrl) {
+        return idFromUrl;
+    }
+    
+    console.error('❌ Could not determine contract ID');
+    return null;
+}
 
-            const data = await response.json();
 
-            console.log('Contract data received:', data);
+// =====================================================
+// COMPLETE loadContractData() FUNCTION - WITH BLOCKCHAIN FIX
+// Location: app/static/templates/screens/drafting/SCR_016_contract_editor.html
+// =====================================================
 
-            if (data.success) {
-                contractData = data;
+async function loadContractData() {
+    try {
+        console.log('📡 Loading contract data for ID:', contractId);
 
-                // Set currentContractId
-                if (data.contract && data.contract.id) {
-                    currentContractId = data.contract.id;
-                    console.log('✅ currentContractId set to:', currentContractId);
+        if (!contractId) {
+            showError('No contract ID provided');
+            return;
+        }
+
+        showLoader('Loading contract data...');
+
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`/api/contracts/edit/${contractId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+
+        const data = await response.json();
+
+        console.log('Contract data received:', data);
+
+        if (data.success) {
+            contractData = data;
+
+            // Set currentContractId
+            if (data.contract && data.contract.id) {
+                currentContractId = data.contract.id;
+                console.log('✅ currentContractId set to:', currentContractId);
+                
+                // ⭐ FIX: Update blockchain indicator with contract ID
+                const blockchainIndicator = document.getElementById('blockchain-indicator');
+                if (blockchainIndicator) {
+                    blockchainIndicator.setAttribute('data-contract-id', currentContractId);
+                    console.log('✅ Blockchain indicator updated with contract ID:', currentContractId);
                 }
+            }
 
-                // Render the editor
-                renderContractEditor(data);
+            // Render the editor
+            renderContractEditor(data);
 
-                // ⭐ NEW: Update signature fields with actual signature data
-                if (data.certificate) {
-                    console.log('🖊️ Certificate data found, updating signature displays...');
-                    // Wait a moment for DOM to be ready
-                    setTimeout(() => {
-                        updateSignatureFields(data.certificate);
-                    }, 500);
-                }
+            // ⭐ NEW: Update signature fields with actual signature data
+            if (data.certificate) {
+                console.log('🖊️ Certificate data found, updating signature displays...');
+                // Wait a moment for DOM to be ready
+                setTimeout(() => {
+                    updateSignatureFields(data.certificate);
+                }, 500);
+            }
 
-                document.getElementById('contractEditor').classList.add('loaded');
-                document.getElementById('contractEditor').style.display = 'block';
-                hideLoader();
+            document.getElementById('contractEditor').classList.add('loaded');
+            document.getElementById('contractEditor').style.display = 'block';
+            hideLoader();
 
-                // Initialize AI AFTER contract is rendered
-                await initializeAIGeneration();
+            // Initialize AI AFTER contract is rendered
+            await initializeAIGeneration();
 
-                // ✅ INTERNAL USER BYPASS: Check if user is internal and contract is locked
-                const isInternalUser = data.is_internal_user || false;
-                const contractStatus = data.contract.status;
+            // ✅ INTERNAL USER BYPASS: Check if user is internal and contract is locked
+            const isInternalUser = data.is_internal_user || false;
+            const contractStatus = data.contract.status;
 
-                console.log('👤 Internal user:', isInternalUser);
-                console.log('📋 Contract status:', contractStatus);
+            console.log('👤 Internal user:', isInternalUser);
+            console.log('📋 Contract status:', contractStatus);
 
-                // ✅ ONLY LOCK FOR NON-INTERNAL USERS
-                if (contractStatus === 'executed' || contractStatus === 'signed') {
-                    if (!isInternalUser) {
-                        // EXTERNAL USER - Apply locks
-                        console.log('🔒 Locking editor for external user');
+            // ✅ ONLY LOCK FOR NON-INTERNAL USERS
+            if (contractStatus === 'executed' || contractStatus === 'signed') {
+                if (!isInternalUser) {
+                    // EXTERNAL USER - Apply locks
+                    console.log('🔒 Locking editor for external user');
 
-                        // Lock the editor
-                        const editor = document.getElementById('contractContent');
-                        editor.contentEditable = false;
-                        editor.style.background = '#f9fafb';
-                        editor.style.border = '2px solid #fbbf24';
+                    // Lock the editor
+                    const editor = document.getElementById('contractContent');
+                    editor.contentEditable = false;
+                    editor.style.background = '#f9fafb';
+                    editor.style.border = '2px solid #fbbf24';
 
-                        // Disable all editing buttons
-                        document.querySelectorAll('.toolbar-btn, .editor-toolbar button').forEach(btn => {
-                            btn.disabled = true;
-                            btn.style.opacity = '0.5';
-                            btn.style.cursor = 'not-allowed';
-                        });
+                    // Disable all editing buttons
+                    document.querySelectorAll('.toolbar-btn, .editor-toolbar button').forEach(btn => {
+                        btn.disabled = true;
+                        btn.style.opacity = '0.5';
+                        btn.style.cursor = 'not-allowed';
+                    });
 
-                        // Show warning banner
-                        showNotification('This contract cannot be edited. All changes are locked.', 'warning');
+                    // Show warning banner
+                    showNotification('This contract cannot be edited. All changes are locked.', 'warning');
 
-                        // Add visible banner
-                        const banner = document.createElement('div');
-                        banner.style.cssText = 'background: #fef3c7; border: 2px solid #f59e0b; padding: 15px; margin-bottom: 20px; border-radius: 8px; text-align: center;';
-                        banner.innerHTML = `
+                    // Add visible banner
+                    const banner = document.createElement('div');
+                    banner.style.cssText = 'background: #fef3c7; border: 2px solid #f59e0b; padding: 15px; margin-bottom: 20px; border-radius: 8px; text-align: center;';
+                    banner.innerHTML = `
                         <i class="ti ti-lock" style="font-size: 24px; color: #f59e0b;"></i>
                         <strong style="color: #92400e;">CONTRACT EXECUTED & LOCKED</strong>
                         <p style="margin: 5px 0 0 0; color: #92400e;">This contract is finalized and cannot be modified.</p>
                     `;
 
-                        const editorDiv = document.querySelector('.contract-editor');
-                        if (editorDiv) {
-                            editorDiv.insertBefore(banner, editorDiv.firstChild);
-                        }
-                    } else {
-                        // ✅ INTERNAL USER - Allow editing
-                        console.log('✅ INTERNAL USER: Editing enabled despite contract status:', contractStatus);
+                    const editorDiv = document.querySelector('.contract-editor');
+                    if (editorDiv) {
+                        editorDiv.insertBefore(banner, editorDiv.firstChild);
+                    }
+                } else {
+                    // ✅ INTERNAL USER - Allow editing
+                    console.log('✅ INTERNAL USER: Editing enabled despite contract status:', contractStatus);
 
-                        // Optional: Show badge to inform internal user
-                        const internalBadge = document.createElement('div');
-                        internalBadge.style.cssText = 'background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 10px 16px; margin-bottom: 15px; border-radius: 8px; text-align: center; font-weight: 600;';
-                        internalBadge.innerHTML = `
+                    // Optional: Show badge to inform internal user
+                    const internalBadge = document.createElement('div');
+                    internalBadge.style.cssText = 'background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 10px 16px; margin-bottom: 15px; border-radius: 8px; text-align: center; font-weight: 600;';
+                    internalBadge.innerHTML = `
                         <i class="ti ti-shield-check" style="font-size: 20px;"></i>
                         INTERNAL USER - Full Edit Access (DB Only, No Blockchain)
                     `;
 
-                        const editorDiv = document.querySelector('.contract-editor');
-                        if (editorDiv) {
-                            editorDiv.insertBefore(internalBadge, editorDiv.firstChild);
-                        }
+                    const editorDiv = document.querySelector('.contract-editor');
+                    if (editorDiv) {
+                        editorDiv.insertBefore(internalBadge, editorDiv.firstChild);
                     }
                 }
-
-            } else {
-                hideLoader();
-                showError('Failed to load contract data: ' + (data.message || 'Unknown error'));
             }
-        } catch (error) {
-            console.error('Error loading contract:', error);
+
+            // ⭐ NEW FIX: Trigger blockchain verification AFTER everything is loaded
+            // Wait for DOM to be fully ready and contract ID to be set
+            if (currentContractId) {
+                setTimeout(() => {
+                    console.log('🔗 Triggering blockchain verification for contract:', currentContractId);
+                    // Check if verifyContract function exists before calling
+                    if (typeof verifyContract === 'function') {
+                        verifyContract(currentContractId);
+                    } else {
+                        console.warn('⚠️ verifyContract function not found');
+                    }
+                }, 1500); // Wait 1.5 seconds for DOM to be fully ready
+            } else {
+                console.warn('⚠️ Contract ID not available for blockchain verification');
+            }
+
+        } else {
             hideLoader();
-            showError('Failed to load contract data: ' + error.message);
+            showError('Failed to load contract data: ' + (data.message || 'Unknown error'));
         }
+    } catch (error) {
+        console.error('Error loading contract:', error);
+        hideLoader();
+        showError('Failed to load contract data: ' + error.message);
     }
+}
 
     // =====================================================
     // RENDERING FUNCTIONS
@@ -16523,7 +16583,7 @@ Generated by CALIM 360 Smart CLM
 <script src="/app/static/js/contract-edit.js?v=1"></script>
 <script src="/app/static/js/position-tracker.js"></script>
 <script src="/app/static/js/bubble-comments.js?v=6"></script>
-<script src="/app/static/js/blockchain-verification.js"></script>
+<script src="/app/static/js/blockchain-verification.js?v=1"></script>
 
 
 {% endblock %}
