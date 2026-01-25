@@ -249,15 +249,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Auto-verify after 1 second
-        setTimeout(() => {
-            verifyContract(contractId);
-        }, 1000);
+        // setTimeout(() => {
+        //     verifyContract(contractId);
+        // }, 1000);
         
         // Also re-verify every 30 seconds
-        setInterval(() => {
-            console.log('🔄 Re-verifying contract...');
-            verifyContract(contractId);
-        }, 30000); // 30 seconds
+        // setInterval(() => {
+        //     console.log('🔄 Re-verifying contract...');
+        //     verifyContract(contractId);
+        // }, 30000); // 30 seconds
         
     } else {
         console.warn('⚠️ No contract ID found - skipping blockchain verification');
