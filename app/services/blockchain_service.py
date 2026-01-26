@@ -363,6 +363,248 @@ class BlockchainService:
                 "activities": activity_logger.get_activities()
             }
 
+
+    async def store_contract_hash_direct(
+        self,
+        contract_id: int,
+        document_content: str,  # ✅ USE THIS PROVIDED CONTENT, don't fetch from DB
+        uploaded_by: int,
+        company_id: int,
+        db: Session
+    ) -> Dict[str, Any]:
+        """
+        Store contract hash using PROVIDED content (not fetching from database)
+        ✅ CRITICAL for internal user tamper detection
+        
+        This method hashes the EXACT content provided, which allows us to:
+        - For internal users: hash CURRENT database content BEFORE modification
+        - For external users: hash NEW content AFTER saving
+        """
+        activity_logger = BlockchainActivityLogger(db, contract_id)
+        
+        try:
+            # ✅ Step 1: Get contract metadata from database
+            activity_logger.log_activity(
+                step="data_extraction",
+                status="processing",
+                details="Extracting contract metadata from database",
+                metadata={"contract_id": contract_id}
+            )
+            
+            # Get contract metadata (not content - we use provided content)
+            query = text("""
+                SELECT 
+                    c.id,
+                    c.contract_number,
+                    c.contract_title,
+                    c.contract_type,
+                    c.profile_type,
+                    c.contract_value,
+                    c.currency,
+                    c.start_date,
+                    c.end_date,
+                    c.current_version
+                FROM contracts c
+                WHERE c.id = :contract_id
+            """)
+            
+            result = db.execute(query, {"contract_id": contract_id}).fetchone()
+            
+            if not result:
+                raise ValueError(f"Contract {contract_id} not found")
+            
+            # ✅ Build data structure with metadata + PROVIDED content
+            contract_data = {
+                "contract_id": result.id,
+                "contract_number": result.contract_number or "",
+                "contract_title": result.contract_title or "",
+                "contract_type": result.contract_type or "",
+                "profile_type": result.profile_type or "",
+                "contract_value": float(result.contract_value) if result.contract_value else 0.0,
+                "currency": result.currency or "QAR",
+                "start_date": result.start_date.isoformat() if result.start_date else "",
+                "end_date": result.end_date.isoformat() if result.end_date else "",
+                "current_version": result.current_version or 1,
+                "contract_content": document_content  # ✅ USE PROVIDED CONTENT
+            }
+            
+            # Convert to JSON for hashing
+            hashable_content = json.dumps(contract_data, sort_keys=True)
+            
+            activity_logger.log_activity(
+                step="data_extraction",
+                status="success",
+                details=f"Extracted contract data with provided content ({len(document_content)} chars)",
+                metadata={
+                    "data_size": len(hashable_content),
+                    "content_size": len(document_content),
+                    "content_source": "provided_parameter"
+                }
+            )
+            
+            # ✅ Step 2: Generate SHA-256 Hash
+            activity_logger.log_activity(
+                step="hash_generation",
+                status="processing",
+                details="Computing SHA-256 cryptographic hash"
+            )
+
+            logger.info(f"🔐 Hashing provided content")
+            logger.info(f"   Contract ID: {contract_id}")
+            logger.info(f"   Content length: {len(document_content)} chars")
+            logger.info(f"   First 100 chars: {document_content[:100]}")
+            
+            document_hash = self.compute_hash(hashable_content)
+            
+            activity_logger.log_activity(
+                step="hash_generation",
+                status="success",
+                details=f"Generated SHA-256 hash: {document_hash[:16]}...{document_hash[-16:]}",
+                metadata={
+                    "hash_algorithm": "SHA-256",
+                    "full_hash": document_hash,
+                    "content_source": "provided_parameter"
+                }
+            )
+            
+            # ✅ Step 3: Prepare Blockchain Transaction
+            activity_logger.log_activity(
+                step="transaction_preparation",
+                status="processing",
+                details="Preparing blockchain transaction"
+            )
+            
+            transaction_id = f"tx_{uuid.uuid4().hex[:16]}"
+            block_number = str(int(datetime.utcnow().timestamp()))
+            
+            # ✅ Step 4: DELETE OLD RECORDS
+            activity_logger.log_activity(
+                step="cleanup",
+                status="processing",
+                details="Removing old blockchain records"
+            )
+            
+            db.execute(text("""
+                DELETE FROM blockchain_records 
+                WHERE contract_id = :contract_id
+            """), {"contract_id": contract_id})
+            
+            db.execute(text("""
+                DELETE FROM document_integrity 
+                WHERE document_id = :contract_id
+            """), {"contract_id": str(contract_id)})
+            
+            db.commit()
+            
+            activity_logger.log_activity(
+                step="cleanup",
+                status="success",
+                details="Old records removed successfully"
+            )
+            
+            # ✅ Step 5: Submit to Blockchain
+            activity_logger.log_activity(
+                step="blockchain_submission",
+                status="processing",
+                details="Submitting transaction to Hyperledger Fabric"
+            )
+            
+            # Store in blockchain
+            blockchain_record = BlockchainRecord(
+                contract_id=contract_id,
+                transaction_hash=transaction_id,
+                block_number=block_number,
+                document_hash=document_hash,
+                transaction_timestamp=datetime.utcnow(),
+                blockchain_network=self.network_name,
+                channel_name=self.channel_name,
+                chaincode_name=self.chaincode_name,
+                uploaded_by=uploaded_by,
+                company_id=company_id,
+                verification_status="verified"
+            )
+            db.add(blockchain_record)
+            
+            activity_logger.log_activity(
+                step="blockchain_submission",
+                status="success",
+                details=f"Transaction submitted successfully - TX: {transaction_id}",
+                metadata={
+                    "transaction_id": transaction_id,
+                    "block_number": block_number
+                }
+            )
+            
+            # ✅ Step 6: Store in Document Integrity Table
+            activity_logger.log_activity(
+                step="database_storage",
+                status="processing",
+                details="Storing integrity record in database"
+            )
+            
+            integrity_record = DocumentIntegrity(
+                document_id=str(contract_id),
+                document_type="contract",
+                document_hash=document_hash,
+                blockchain_hash=transaction_id,
+                hash_algorithm="SHA-256",
+                verification_status="verified",
+                last_verified_at=datetime.utcnow()
+            )
+            db.add(integrity_record)
+            
+            db.commit()
+            
+            activity_logger.log_activity(
+                step="database_storage",
+                status="success",
+                details="Blockchain record successfully stored"
+            )
+            
+            # ✅ Final Success
+            activity_logger.log_activity(
+                step="completion",
+                status="success",
+                details="Contract hash successfully stored on blockchain",
+                metadata={
+                    "transaction_hash": transaction_id,
+                    "document_hash": document_hash,
+                    "content_source": "provided_parameter"
+                }
+            )
+            
+            logger.info(f"✅ Contract {contract_id} hash stored: {document_hash[:16]}...")
+            logger.info(f"   Content was provided directly (not fetched from DB)")
+            
+            return {
+                "success": True,
+                "transaction_hash": transaction_id,
+                "block_number": block_number,
+                "document_hash": document_hash,
+                "blockchain_network": self.network_name,
+                "verification_status": "verified",
+                "timestamp": datetime.utcnow().isoformat(),
+                "activities": activity_logger.get_activities(),
+                "content_source": "provided_parameter"
+            }
+            
+        except Exception as e:
+            activity_logger.log_activity(
+                step="error",
+                status="error",
+                details=f"Blockchain storage failed: {str(e)}",
+                metadata={"error_type": type(e).__name__}
+            )
+            logger.error(f"❌ Failed to store contract hash: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return {
+                "success": False,
+                "error": str(e),
+                "activities": activity_logger.get_activities()
+            }
+
+
     async def verify_contract_hash(
         self,
         contract_id: int,
@@ -370,9 +612,9 @@ class BlockchainService:
         db: Session = None
     ) -> dict:
         """
-        ✅ FIXED: Verify contract integrity
+        ✅ FIXED: Verify contract integrity - Handles new contracts without blockchain records
         - Status field NOT included in hash
-        - Removed blockchain_txn_id (column doesn't exist)
+        - Returns pending status for new contracts instead of error
         """
         try:
             if not db:
@@ -383,9 +625,44 @@ class BlockchainService:
                     "error": "Database session required for verification"
                 }
             
-            logger.info(f"🔐 Verifying contract {contract_id} integrity (status excluded from hash)")
+            logger.info(f"🔐 Verifying contract {contract_id} integrity")
             
-            # ✅ Extract COMPREHENSIVE contract data (WITHOUT status)
+            # ✅ Check if contract exists
+            contract_check = text("SELECT id, current_version FROM contracts WHERE id = :contract_id")
+            contract_result = db.execute(contract_check, {"contract_id": contract_id}).fetchone()
+            
+            if not contract_result:
+                return {
+                    "success": False,
+                    "verified": False,
+                    "message": "Contract not found"
+                }
+            
+            current_version = contract_result.current_version if contract_result else 0
+            
+            # ✅ FIXED: Check if this is a NEW contract (no blockchain record yet)
+            blockchain_check = text("""
+                SELECT document_hash, created_at
+                FROM document_integrity
+                WHERE document_id = :contract_id
+                ORDER BY created_at DESC
+                LIMIT 1
+            """)
+            blockchain_result = db.execute(blockchain_check, {"contract_id": str(contract_id)}).fetchone()
+            
+            if not blockchain_result:
+                logger.info(f"ℹ️ Contract {contract_id} is NEW - no blockchain record yet (v{current_version})")
+                return {
+                    "success": False,
+                    "verified": False,
+                    "pending": True,
+                    "message": "No blockchain record found. Please save the contract first.",
+                    "current_hash": None,
+                    "stored_hash": None,
+                    "is_new_contract": True
+                }
+            
+            # ✅ Extract comprehensive contract data (WITHOUT status)
             contract_data = self._extract_comprehensive_contract_data(db, contract_id)
             
             if not contract_data:
@@ -395,7 +672,7 @@ class BlockchainService:
                     "message": "Failed to extract contract data for verification"
                 }
             
-            # Get current status SEPARATELY (not for hashing, just for response)
+            # Get current status separately (not for hashing, just for response)
             status_query = text("SELECT status FROM contracts WHERE id = :contract_id")
             status_result = db.execute(status_query, {"contract_id": contract_id}).fetchone()
             current_status = status_result.status if status_result else 'unknown'
@@ -409,36 +686,16 @@ class BlockchainService:
             current_hash = self.compute_hash(hashable_content)
             logger.info(f"📊 Current hash: {current_hash[:16]}...")
             
-            # ✅ FIXED: Get stored hash WITHOUT blockchain_txn_id (column doesn't exist)
-            result = db.execute(text("""
-                SELECT document_hash, created_at, last_verified_at
-                FROM document_integrity
-                WHERE document_id = :contract_id
-                ORDER BY created_at DESC
-                LIMIT 1
-            """), {"contract_id": str(contract_id)}).fetchone()
-            
-            if not result:
-                logger.warning(f"⚠️ No blockchain record found for contract {contract_id}")
-                return {
-                    "success": False,
-                    "verified": False,
-                    "message": "No blockchain record found. Please save the contract first.",
-                    "current_hash": current_hash,
-                    "stored_hash": None,
-                    "current_status": current_status
-                }
-            
-            stored_hash = result.document_hash
+            # Get stored hash
+            stored_hash = blockchain_result.document_hash
             logger.info(f"📊 Stored hash: {stored_hash[:16]}...")
             
-            # ✅ Compare hashes (status changes don't affect this)
+            # ✅ Compare hashes
             is_verified = (current_hash == stored_hash)
             
             if is_verified:
                 logger.info(f"✅ VERIFIED - Contract {contract_id} integrity confirmed")
                 logger.info(f"   Current status: {current_status}")
-                logger.info(f"   Status changes (draft→signed) do NOT trigger tampering")
                 
                 # Update verification timestamp
                 db.execute(text("""
@@ -455,7 +712,7 @@ class BlockchainService:
                     "tampered": False,
                     "current_hash": current_hash,
                     "stored_hash": stored_hash,
-                    "message": "Contract integrity verified",
+                    "message": "Contract integrity verified - No tampering detected",
                     "current_status": current_status
                 }
             
@@ -464,7 +721,7 @@ class BlockchainService:
                 logger.error(f"🚨 TAMPERING DETECTED - Contract {contract_id}")
                 logger.error(f"   Current hash:  {current_hash}")
                 logger.error(f"   Stored hash:   {stored_hash}")
-                logger.error(f"   CONTENT MODIFICATION detected (not status change)")
+                logger.error(f"   CONTENT MODIFICATION detected")
                 
                 # Log tamper event
                 tamper_event_id = str(uuid.uuid4())
@@ -515,7 +772,7 @@ class BlockchainService:
                     "tampered": True,
                     "current_hash": current_hash,
                     "stored_hash": stored_hash,
-                    "message": "TAMPERING DETECTED: Content has been modified",
+                    "message": "TAMPERING DETECTED: Content has been modified after blockchain approval",
                     "detection_reason": "Content hash mismatch",
                     "current_status": current_status
                 }

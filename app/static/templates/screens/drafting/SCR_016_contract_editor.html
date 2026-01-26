@@ -5896,6 +5896,11 @@ async function loadContractData() {
             if (contract.is_initiator === true) {
                 // Draft stage
                 actionButtons = `
+            
+            <button class="btn signature-btn" onclick="initiateSignatureWorkflow()">
+                <i class="ti ti-writing-sign"></i> Skip and Send for Signature
+            </button>
+
           <button class="btn btn-primary" onclick="submitForReview('${workflow ? workflow.status : 'nothing'}')">
     <i class="ti ti-send"></i> Submit for Internal Review
 </button>`;
@@ -6132,7 +6137,7 @@ ${actionButtons}
             </div>
         </div>
         <!-- Workflow Stepper -->
-${renderWorkflowStepper(contract.status)}
+${renderWorkflowStepper(contract.status, contract.workflow_status)}
         <!-- Workflow Status Bar -->
         <div class="workflow-status-bar">
             <div class="workflow-status-info">
@@ -6269,92 +6274,89 @@ ${contract.content && contract.content.trim() !== '' ?
         console.log('✅ Signature fields and names updated');
     }
 
-
-    function renderWorkflowStepper(status) {
-        const steps = [
-            {
-                key: 'draft',
-                icon: 'file-text',
-                label: 'Draft',
-                status: 'completed' // Draft is always completed if viewing the contract
-            },
-            {
-                key: 'review',
-                icon: 'users',
-                label: 'Internal Review',
-                status: status === 'draft' ? 'pending' :
-                    status === 'review' ? 'active' :
-                        status === 'review_completed' ? 'completed' :
-                            // If any later stage, internal review must be completed
-                            ['counterparty_internal_review', 'counterparty_review_completed',
-                                'negotiation', 'negotiation_completed', 'approval', 'approved',
-                                'signature', 'signed', 'executed'].includes(status) ? 'completed' :
-                                'pending'
-            },
-            {
-                key: 'counterparty_internal_review',
-                icon: 'building',
-                label: 'Counterparty Review',
-                status: ['draft', 'review'].includes(status) ? 'pending' :
-                    status === 'review_completed' ? 'pending' :
-                        status === 'counterparty_internal_review' ? 'active' :
-                            status === 'counterparty_review_completed' ? 'completed' :
-                                // If negotiation or later stages, counterparty review must be completed
-                                ['negotiation', 'negotiation_completed', 'approval', 'approved',
-                                    'signature', 'signed', 'executed'].includes(status) ? 'completed' :
-                                    'pending'
-            },
-            {
-                key: 'negotiation',
-                icon: 'message-circle',
-                label: 'Negotiation',
-                status: ['draft', 'review', 'review_completed', 'counterparty_internal_review'].includes(status) ? 'pending' :
-                    status === 'counterparty_review_completed' ? 'pending' :
-                        status === 'negotiation' ? 'active' :
-                            status === 'negotiation_completed' ? 'completed' :
-                                // If approval or later stages, negotiation must be completed
-                                ['approval', 'approved', 'signature', 'signed', 'executed'].includes(status) ? 'completed' :
-                                    'pending'
-            },
-            {
-                key: 'approval',
-                icon: 'circle-check',
-                label: 'Approval',
-                status: ['draft', 'review', 'review_completed', 'counterparty_internal_review',
+function renderWorkflowStepper(status, workflow_status) {
+    const steps = [
+        {
+            key: 'draft',
+            icon: 'file-text',
+            label: 'Draft',
+            status: 'completed' // Draft is always completed if viewing the contract
+        },
+        {
+            key: 'review',
+            icon: 'users',
+            label: 'Internal Review',
+            status: (workflow_status === 'drafting' && ['signature', 'signed', 'executed'].includes(status)) ? 'skipped' :
+                status === 'draft' ? 'pending' :
+                status === 'review' ? 'active' :
+                status === 'review_completed' ? 'completed' :
+                ['counterparty_internal_review', 'counterparty_review_completed',
+                    'negotiation', 'negotiation_completed', 'approval', 'approved',
+                    'signature', 'signed', 'executed'].includes(status) ? 'completed' :
+                'pending'
+        },
+        {
+            key: 'counterparty_internal_review',
+            icon: 'building',
+            label: 'Counterparty Review',
+            status: (workflow_status === 'drafting' && ['signature', 'signed', 'executed'].includes(status)) ? 'skipped' :
+                ['draft', 'review'].includes(status) ? 'pending' :
+                status === 'review_completed' ? 'pending' :
+                status === 'counterparty_internal_review' ? 'active' :
+                status === 'counterparty_review_completed' ? 'completed' :
+                ['negotiation', 'negotiation_completed', 'approval', 'approved',
+                    'signature', 'signed', 'executed'].includes(status) ? 'completed' :
+                'pending'
+        },
+        {
+            key: 'negotiation',
+            icon: 'message-circle',
+            label: 'Negotiation',
+            status: (workflow_status === 'drafting' && ['signature', 'signed', 'executed'].includes(status)) ? 'skipped' :
+                ['draft', 'review', 'review_completed', 'counterparty_internal_review'].includes(status) ? 'pending' :
+                status === 'counterparty_review_completed' ? 'pending' :
+                status === 'negotiation' ? 'active' :
+                status === 'negotiation_completed' ? 'completed' :
+                ['approval', 'approved', 'signature', 'signed', 'executed'].includes(status) ? 'completed' :
+                'pending'
+        },
+        {
+            key: 'approval',
+            icon: 'circle-check',
+            label: 'Approval',
+            status: (workflow_status === 'drafting' && ['signature', 'signed', 'executed'].includes(status)) ? 'skipped' :
+                ['draft', 'review', 'review_completed', 'counterparty_internal_review',
                     'counterparty_review_completed', 'negotiation'].includes(status) ? 'pending' :
-                    status === 'negotiation_completed' ? 'pending' :
-                        status === 'approval' ? 'active' :
-                            status === 'approved' ? 'completed' :
-                                // If signing or later stages, approval must be completed
-                                ['signature', 'signed', 'executed'].includes(status) ? 'completed' :
-                                    'pending'
-            },
-            {
-                key: 'signature',
-                icon: 'writing-sign',
-                label: 'Signature',
-                status: ['draft', 'review', 'review_completed', 'counterparty_internal_review',
-                    'counterparty_review_completed', 'negotiation', 'negotiation_completed',
-                    'approval'].includes(status) ? 'pending' :
-                    status === 'approved' ? 'pending' :
-                        status === 'signature' ? 'active' :
-                            status === 'signed' ? 'completed' :
-                                status === 'executed' ? 'completed' :
-                                    'pending'
-            },
-            {
-                key: 'executed',
-                icon: 'file-check',
-                label: 'Executed',
-                status: status === 'executed' ? 'completed' :
-                    status === 'signed' ? 'pending' :
-                        'pending'
-            },
+                status === 'negotiation_completed' ? 'pending' :
+                status === 'approval' ? 'active' :
+                status === 'approved' ? 'completed' :
+                ['signature', 'signed', 'executed'].includes(status) ? 'completed' :
+                'pending'
+        },
+        {
+            key: 'signature',
+            icon: 'writing-sign',
+            label: 'Signature',
+            status: ['draft', 'review', 'review_completed', 'counterparty_internal_review',
+                'counterparty_review_completed', 'negotiation', 'negotiation_completed',
+                'approval'].includes(status) ? 'pending' :
+                status === 'approved' ? 'pending' :
+                status === 'signature' ? 'active' :
+                status === 'signed' ? 'completed' :
+                status === 'executed' ? 'completed' :
+                'pending'
+        },
+        {
+            key: 'executed',
+            icon: 'file-check',
+            label: 'Executed',
+            status: status === 'executed' ? 'completed' :
+                status === 'signed' ? 'pending' :
+                'pending'
+        }
+    ];
 
-        ];
-
-
-        return `
+    return `
         <div class="workflow-stepper">
             <div class="stepper-container">
                 <div class="stepper-line">
@@ -6368,6 +6370,7 @@ ${contract.content && contract.content.trim() !== '' ?
                         <span class="step-label">${step.label}</span>
                         <span class="step-date">${step.status === 'completed' ? 'Completed' :
                 step.status === 'active' ? 'In Progress' :
+                step.status === 'skipped' ? 'Skipped' :
                     'Pending'
             }</span>
                     </div>
@@ -6375,8 +6378,7 @@ ${contract.content && contract.content.trim() !== '' ?
             </div>
         </div>
     `;
-    }
-
+}
 
     function renderEditorToolbar() {
         return `

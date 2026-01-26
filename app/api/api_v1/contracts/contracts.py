@@ -1149,6 +1149,7 @@ async def get_contract_editor_data(
                 c.language,
                 c.status,
                 c.approval_status,
+                c.workflow_status,
                 c.created_at,
                 c.created_by as created_by_id,
                 c.updated_at,
@@ -1407,6 +1408,7 @@ async def get_contract_editor_data(
                 "title": result.contract_title,
                 "type": result.contract_type,
                 "status": result.status,
+                "workflow_status": result.workflow_status,
                 "approval_status": result.approval_status,
                 "content": result.content if result.content else "",
                 "company_name": result.company_name,
@@ -1743,7 +1745,53 @@ async def save_contract_draft(
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
+
+
+
+@router.post("/mark-tampered/{contract_id}")
+async def mark_contract_as_tampered(
+    contract_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Mark a contract as tampered by adding a warning banner.
+    Exactly replicates the SQL UPDATE query.
+    """
+    
+    try:
+        # Execute the exact same SQL query
+        sql = """
+        UPDATE contract_versions cv
+        JOIN contracts c ON cv.contract_id = c.id 
+            AND cv.version_number = c.current_version
+        SET cv.contract_content = CONCAT(
+            '<div style="background:red;color:white;padding:20px;"><h1>⚠️ TAMPERED</h1></div>',
+            cv.contract_content
+        )
+        WHERE cv.contract_id = :contract_id
+        """
         
+        result = db.execute(sql, {"contract_id": contract_id})
+        db.commit()
+        
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail=f"Contract {contract_id} not found")
+        
+        return {
+            "success": True,
+            "message": f"Contract {contract_id} marked as TAMPERED",
+            "contract_id": contract_id,
+            "rows_updated": result.rowcount
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 
 @router.post("/send-for-signature")
 async def send_contract_for_signature(
