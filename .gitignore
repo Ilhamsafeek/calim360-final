@@ -6,3 +6,4 @@ kubernetes
 .env
 app/uploads
 .sql
+chroma_db

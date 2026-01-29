@@ -6,6 +6,47 @@
 <link rel="stylesheet" href="/app/static/css/contract-edit.css">
 <link rel="stylesheet" href="/static/css/bubble-comments.css">
 <style>
+    /* Modern Dark Minimalist Tooltip - ONLY for .tooltip-skip-workflow */
+
+    /* Tooltip BELOW the button with proper spacing */
+    .tooltip-skip-workflow {
+        position: relative;
+    }
+
+    .tooltip-skip-workflow::before {
+        content: attr(data-tooltip);
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        background: #1e293b;
+        background-color: #1e293b;
+        color: #ffffff;
+        padding: 5px 14px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1.6;
+        white-space: normal;
+        max-width: 380px;
+        min-width: 320px;
+        width: max-content;
+        text-align: left;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.25s ease, visibility 0.25s ease;
+        z-index: 99999;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6),
+            0 0 0 2px rgba(30, 41, 59, 1);
+        pointer-events: none;
+    }
+
+    /* REMOVED THE ::after ARROW */
+
+    .tooltip-skip-workflow:hover::before {
+        opacity: 1 !important;
+        visibility: visible;
+    }
+
     .modal-header {
         background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
         color: white;
@@ -659,7 +700,7 @@
     }
 
     .blockchain-body {
-        padding: 1.5rem;
+        /* padding: 1.5rem; */
     }
 
     /* ==========================================
@@ -2919,36 +2960,28 @@
 
 <!-- UPDATED BLOCKCHAIN SECTION WITH CSS CLASSES -->
 <div class="card blockchain-card mb-3">
-    <div class="blockchain-header">
-        <h5>
-            <i data-lucide="shield" class="blockchain-icon-shield"></i>
-            Blockchain Verification
-        </h5>
+    <div class="blockchain-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+        <div style="flex: 1; min-width: 250px;">
+            <h5 style="margin-bottom: 5px;">
+                <i data-lucide="shield" class="blockchain-icon-shield"></i>
+                Blockchain Verification
+            </h5>
             <small>
                 <i data-lucide="lock"></i>
                 This contract is secured on Hyperledger Fabric blockchain for tamper-proof verification.
             </small>
-
-    </div>
-    <div class="card-body blockchain-body">
-        <!-- Verification Status -->
-        <div id="blockchain-indicator" class="mb-3" data-contract-id="">
-            <div class="blockchain-verifying">
-                <div class="blockchain-spinner"></div>
-                <span>Verifying document integrity on blockchain...</span>
-            </div>
         </div>
-
-        <!-- Action Buttons -->
-        <div class="blockchain-buttons">
-            <!-- <button type="button" class="blockchain-btn blockchain-btn-primary" onclick="showBlockchainCertificate()">
+        
+        <!-- Action Buttons in Header -->
+        <div class="blockchain-buttons" style="margin: 0; flex-wrap: wrap;">
+            <button type="button" class="blockchain-btn blockchain-btn-primary" onclick="showBlockchainCertificate()">
                 <i data-lucide="award"></i>
                 View Certificate
-            </button> -->
-            <button type="button" class="blockchain-btn blockchain-btn-outline" onclick="verifyContractNow()">
+            </button>
+            <!-- <button type="button" class="blockchain-btn blockchain-btn-outline" onclick="verifyContractNow()">
                 <i data-lucide="refresh-cw"></i>
                 Re-verify
-            </button>
+            </button> -->
             <button type="button" class="blockchain-btn blockchain-btn-secondary" onclick="showBlockchainInfo()">
                 <i data-lucide="info"></i>
                 What is this?
@@ -2958,10 +2991,17 @@
                 <i class="ti ti-cube-3d-sphere"></i>
                 View Blockchain Operations
             </button>
-
-
         </div>
-
+    </div>
+    
+    <div class="card-body blockchain-body">
+        <!-- Verification Status -->
+        <div id="blockchain-indicator" class="mb-3" data-contract-id="">
+            <div class="blockchain-verifying">
+                <div class="blockchain-spinner"></div>
+                <span>Verifying document integrity on blockchain...</span>
+            </div>
+        </div>
     </div>
 </div>
 <!-- END BLOCKCHAIN VERIFICATION SECTION -->
@@ -5424,7 +5464,6 @@
 
         // Save as draft only if user is not internal and contract is not tampered
         const token = localStorage.getItem('token');
-
         const contractResponse = await fetch(`/api/contracts/edit/${contractId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -5434,10 +5473,8 @@
             await saveAsDraft();
         }
 
-        setTimeout(() => {
-            verifyContract(contractId);
-        }, 1000);
-
+        // Verify contract after everything is loaded
+        await verifyContract(contractId);
     });
 
 
@@ -5507,189 +5544,189 @@
 
 
     // =====================================================
-// HELPER: Get Contract ID from multiple sources
-// =====================================================
+    // HELPER: Get Contract ID from multiple sources
+    // =====================================================
 
-function getContractIdFromPage() {
-    // Try global variable first
-    if (typeof currentContractId !== 'undefined' && currentContractId) {
-        return currentContractId;
-    }
-    
-    if (typeof contractId !== 'undefined' && contractId) {
-        return contractId;
-    }
-    
-    // Try from data attribute
-    const indicator = document.getElementById('blockchain-indicator');
-    if (indicator && indicator.dataset.contractId) {
-        return indicator.dataset.contractId;
-    }
-    
-    // Try from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const idFromUrl = urlParams.get('id');
-    if (idFromUrl) {
-        return idFromUrl;
-    }
-    
-    console.error('❌ Could not determine contract ID');
-    return null;
-}
-
-
-// =====================================================
-// COMPLETE loadContractData() FUNCTION - WITH BLOCKCHAIN FIX
-// Location: app/static/templates/screens/drafting/SCR_016_contract_editor.html
-// =====================================================
-
-async function loadContractData() {
-    try {
-        console.log('📡 Loading contract data for ID:', contractId);
-
-        if (!contractId) {
-            showError('No contract ID provided');
-            return;
+    function getContractIdFromPage() {
+        // Try global variable first
+        if (typeof currentContractId !== 'undefined' && currentContractId) {
+            return currentContractId;
         }
 
-        showLoader('Loading contract data...');
+        if (typeof contractId !== 'undefined' && contractId) {
+            return contractId;
+        }
 
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`/api/contracts/edit/${contractId}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include'
-        });
+        // Try from data attribute
+        const indicator = document.getElementById('blockchain-indicator');
+        if (indicator && indicator.dataset.contractId) {
+            return indicator.dataset.contractId;
+        }
 
-        const data = await response.json();
+        // Try from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const idFromUrl = urlParams.get('id');
+        if (idFromUrl) {
+            return idFromUrl;
+        }
 
-        console.log('Contract data received:', data);
+        console.error('❌ Could not determine contract ID');
+        return null;
+    }
 
-        if (data.success) {
-            contractData = data;
 
-            // Set currentContractId
-            if (data.contract && data.contract.id) {
-                currentContractId = data.contract.id;
-                console.log('✅ currentContractId set to:', currentContractId);
-                
-                // ⭐ FIX: Update blockchain indicator with contract ID
-                const blockchainIndicator = document.getElementById('blockchain-indicator');
-                if (blockchainIndicator) {
-                    blockchainIndicator.setAttribute('data-contract-id', currentContractId);
-                    console.log('✅ Blockchain indicator updated with contract ID:', currentContractId);
+    // =====================================================
+    // COMPLETE loadContractData() FUNCTION - WITH BLOCKCHAIN FIX
+    // Location: app/static/templates/screens/drafting/SCR_016_contract_editor.html
+    // =====================================================
+
+    async function loadContractData() {
+        try {
+            console.log('📡 Loading contract data for ID:', contractId);
+
+            if (!contractId) {
+                showError('No contract ID provided');
+                return;
+            }
+
+            showLoader('Loading contract data...');
+
+            const token = localStorage.getItem('access_token');
+            const response = await fetch(`/api/contracts/edit/${contractId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            const data = await response.json();
+
+            console.log('Contract data received:', data);
+
+            if (data.success) {
+                contractData = data;
+
+                // Set currentContractId
+                if (data.contract && data.contract.id) {
+                    currentContractId = data.contract.id;
+                    console.log('✅ currentContractId set to:', currentContractId);
+
+                    // ⭐ FIX: Update blockchain indicator with contract ID
+                    const blockchainIndicator = document.getElementById('blockchain-indicator');
+                    if (blockchainIndicator) {
+                        blockchainIndicator.setAttribute('data-contract-id', currentContractId);
+                        console.log('✅ Blockchain indicator updated with contract ID:', currentContractId);
+                    }
                 }
-            }
 
-            // Render the editor
-            renderContractEditor(data);
+                // Render the editor
+                renderContractEditor(data);
 
-            // ⭐ NEW: Update signature fields with actual signature data
-            if (data.certificate) {
-                console.log('🖊️ Certificate data found, updating signature displays...');
-                // Wait a moment for DOM to be ready
-                setTimeout(() => {
-                    updateSignatureFields(data.certificate);
-                }, 500);
-            }
+                // ⭐ NEW: Update signature fields with actual signature data
+                if (data.certificate) {
+                    console.log('🖊️ Certificate data found, updating signature displays...');
+                    // Wait a moment for DOM to be ready
+                    setTimeout(() => {
+                        updateSignatureFields(data.certificate);
+                    }, 500);
+                }
 
-            document.getElementById('contractEditor').classList.add('loaded');
-            document.getElementById('contractEditor').style.display = 'block';
-            hideLoader();
+                document.getElementById('contractEditor').classList.add('loaded');
+                document.getElementById('contractEditor').style.display = 'block';
+                hideLoader();
 
-            // Initialize AI AFTER contract is rendered
-            await initializeAIGeneration();
+                // Initialize AI AFTER contract is rendered
+                await initializeAIGeneration();
 
-            // ✅ INTERNAL USER BYPASS: Check if user is internal and contract is locked
-            const isInternalUser = data.is_internal_user || false;
-            const contractStatus = data.contract.status;
+                // ✅ INTERNAL USER BYPASS: Check if user is internal and contract is locked
+                const isInternalUser = data.is_internal_user || false;
+                const contractStatus = data.contract.status;
 
-            console.log('👤 Internal user:', isInternalUser);
-            console.log('📋 Contract status:', contractStatus);
+                console.log('👤 Internal user:', isInternalUser);
+                console.log('📋 Contract status:', contractStatus);
 
-            // ✅ ONLY LOCK FOR NON-INTERNAL USERS
-            if (contractStatus === 'executed' || contractStatus === 'signed') {
-                if (!isInternalUser) {
-                    // EXTERNAL USER - Apply locks
-                    console.log('🔒 Locking editor for external user');
+                // ✅ ONLY LOCK FOR NON-INTERNAL USERS
+                if (contractStatus === 'executed' || contractStatus === 'signed') {
+                    if (!isInternalUser) {
+                        // EXTERNAL USER - Apply locks
+                        console.log('🔒 Locking editor for external user');
 
-                    // Lock the editor
-                    const editor = document.getElementById('contractContent');
-                    editor.contentEditable = false;
-                    editor.style.background = '#f9fafb';
-                    editor.style.border = '2px solid #fbbf24';
+                        // Lock the editor
+                        const editor = document.getElementById('contractContent');
+                        editor.contentEditable = false;
+                        editor.style.background = '#f9fafb';
+                        editor.style.border = '2px solid #fbbf24';
 
-                    // Disable all editing buttons
-                    document.querySelectorAll('.toolbar-btn, .editor-toolbar button').forEach(btn => {
-                        btn.disabled = true;
-                        btn.style.opacity = '0.5';
-                        btn.style.cursor = 'not-allowed';
-                    });
+                        // Disable all editing buttons
+                        document.querySelectorAll('.toolbar-btn, .editor-toolbar button').forEach(btn => {
+                            btn.disabled = true;
+                            btn.style.opacity = '0.5';
+                            btn.style.cursor = 'not-allowed';
+                        });
 
-                    // Show warning banner
-                    showNotification('This contract cannot be edited. All changes are locked.', 'warning');
+                        // Show warning banner
+                        showNotification('This contract cannot be edited. All changes are locked.', 'warning');
 
-                    // Add visible banner
-                    const banner = document.createElement('div');
-                    banner.style.cssText = 'background: #fef3c7; border: 2px solid #f59e0b; padding: 15px; margin-bottom: 20px; border-radius: 8px; text-align: center;';
-                    banner.innerHTML = `
+                        // Add visible banner
+                        const banner = document.createElement('div');
+                        banner.style.cssText = 'background: #fef3c7; border: 2px solid #f59e0b; padding: 15px; margin-bottom: 20px; border-radius: 8px; text-align: center;';
+                        banner.innerHTML = `
                         <i class="ti ti-lock" style="font-size: 24px; color: #f59e0b;"></i>
                         <strong style="color: #92400e;">CONTRACT EXECUTED & LOCKED</strong>
                         <p style="margin: 5px 0 0 0; color: #92400e;">This contract is finalized and cannot be modified.</p>
                     `;
 
-                    const editorDiv = document.querySelector('.contract-editor');
-                    if (editorDiv) {
-                        editorDiv.insertBefore(banner, editorDiv.firstChild);
-                    }
-                } else {
-                    // ✅ INTERNAL USER - Allow editing
-                    console.log('✅ INTERNAL USER: Editing enabled despite contract status:', contractStatus);
+                        const editorDiv = document.querySelector('.contract-editor');
+                        if (editorDiv) {
+                            editorDiv.insertBefore(banner, editorDiv.firstChild);
+                        }
+                    } else {
+                        // ✅ INTERNAL USER - Allow editing
+                        console.log('✅ INTERNAL USER: Editing enabled despite contract status:', contractStatus);
 
-                    // Optional: Show badge to inform internal user
-                    const internalBadge = document.createElement('div');
-                    internalBadge.style.cssText = 'background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 10px 16px; margin-bottom: 15px; border-radius: 8px; text-align: center; font-weight: 600;';
-                    internalBadge.innerHTML = `
+                        // Optional: Show badge to inform internal user
+                        const internalBadge = document.createElement('div');
+                        internalBadge.style.cssText = 'background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 10px 16px; margin-bottom: 15px; border-radius: 8px; text-align: center; font-weight: 600;';
+                        internalBadge.innerHTML = `
                         <i class="ti ti-shield-check" style="font-size: 20px;"></i>
                         INTERNAL USER - Full Edit Access (DB Only, No Blockchain)
                     `;
 
-                    const editorDiv = document.querySelector('.contract-editor');
-                    if (editorDiv) {
-                        editorDiv.insertBefore(internalBadge, editorDiv.firstChild);
+                        const editorDiv = document.querySelector('.contract-editor');
+                        if (editorDiv) {
+                            editorDiv.insertBefore(internalBadge, editorDiv.firstChild);
+                        }
                     }
                 }
-            }
 
-            // ⭐ NEW FIX: Trigger blockchain verification AFTER everything is loaded
-            // Wait for DOM to be fully ready and contract ID to be set
-            if (currentContractId) {
-                setTimeout(() => {
-                    console.log('🔗 Triggering blockchain verification for contract:', currentContractId);
-                    // Check if verifyContract function exists before calling
-                    if (typeof verifyContract === 'function') {
-                        verifyContract(currentContractId);
-                    } else {
-                        console.warn('⚠️ verifyContract function not found');
-                    }
-                }, 1500); // Wait 1.5 seconds for DOM to be fully ready
+                // ⭐ NEW FIX: Trigger blockchain verification AFTER everything is loaded
+                // Wait for DOM to be fully ready and contract ID to be set
+                // if (currentContractId) {
+                //     setTimeout(() => {
+                //         console.log('🔗 Triggering blockchain verification for contract:', currentContractId);
+                //         // Check if verifyContract function exists before calling
+                //         if (typeof verifyContract === 'function') {
+                //             verifyContract(currentContractId);
+                //         } else {
+                //             console.warn('⚠️ verifyContract function not found');
+                //         }
+                //     }, 1500); // Wait 1.5 seconds for DOM to be fully ready
+                // } else {
+                //     console.warn('⚠️ Contract ID not available for blockchain verification');
+                // }
+
             } else {
-                console.warn('⚠️ Contract ID not available for blockchain verification');
+                hideLoader();
+                showError('Failed to load contract data: ' + (data.message || 'Unknown error'));
             }
-
-        } else {
+        } catch (error) {
+            console.error('Error loading contract:', error);
             hideLoader();
-            showError('Failed to load contract data: ' + (data.message || 'Unknown error'));
+            showError('Failed to load contract data: ' + error.message);
         }
-    } catch (error) {
-        console.error('Error loading contract:', error);
-        hideLoader();
-        showError('Failed to load contract data: ' + error.message);
     }
-}
 
     // =====================================================
     // RENDERING FUNCTIONS
@@ -5897,13 +5934,18 @@ async function loadContractData() {
                 // Draft stage
                 actionButtons = `
             
-            <button class="btn signature-btn" onclick="initiateSignatureWorkflow()">
-                <i class="ti ti-writing-sign"></i> Skip and Send for Signature
-            </button>
+          
 
           <button class="btn btn-primary" onclick="submitForReview('${workflow ? workflow.status : 'nothing'}')">
     <i class="ti ti-send"></i> Submit for Internal Review
-</button>`;
+</button>
+
+<button class="btn signature-btn tooltip-skip-workflow" 
+        onclick="initiateSignatureWorkflow()"
+        data-tooltip="Skip Workflow and Send for Initiator and Counterparty Signatures directly">
+    <i class="ti ti-writing-sign"></i> Send for Signature
+</button>
+`;
 
 
 
@@ -6086,13 +6128,17 @@ async function loadContractData() {
             </button>`;
                 // } 
 
-
             }
-
 
         } else if (contract.status === 'signature') {
 
-            const party = contract.is_counterparty ? 'client' : 'company';
+            let party = contract.is_counterparty ? 'client' : 'company';
+
+            if (contract.is_same_company_as_initiator) {
+                party = 'company';
+            } else {
+                party = 'client';
+            }
 
             if (contract.is_esignee) {
                 // Signature stage
@@ -6137,7 +6183,7 @@ ${actionButtons}
             </div>
         </div>
         <!-- Workflow Stepper -->
-${renderWorkflowStepper(contract.status, contract.workflow_status)}
+${renderWorkflowStepper(contract)}
         <!-- Workflow Status Bar -->
         <div class="workflow-status-bar">
             <div class="workflow-status-info">
@@ -6153,7 +6199,7 @@ ${renderWorkflowStepper(contract.status, contract.workflow_status)}
                  <button class="workflow-setup-btn" onclick="openWorkflowSetupModal()">
                     <i class="ti ti-settings-automation"></i> Setup Custom Workflow
                 </button>
-               
+
                 ${!contract.is_counterparty ? `
     <button class="workflow-setup-btn" onclick="if('${contract.language}' !== 'en') { showNotification('Review Analysis is available only for English language contracts.', 'warning'); } else { openRiviewModal(); }">
         <i class="ti ti-alert-triangle"></i> Review Analysis
@@ -6274,89 +6320,93 @@ ${contract.content && contract.content.trim() !== '' ?
         console.log('✅ Signature fields and names updated');
     }
 
-function renderWorkflowStepper(status, workflow_status) {
-    const steps = [
-        {
-            key: 'draft',
-            icon: 'file-text',
-            label: 'Draft',
-            status: 'completed' // Draft is always completed if viewing the contract
-        },
-        {
-            key: 'review',
-            icon: 'users',
-            label: 'Internal Review',
-            status: (workflow_status === 'drafting' && ['signature', 'signed', 'executed'].includes(status)) ? 'skipped' :
-                status === 'draft' ? 'pending' :
-                status === 'review' ? 'active' :
-                status === 'review_completed' ? 'completed' :
-                ['counterparty_internal_review', 'counterparty_review_completed',
-                    'negotiation', 'negotiation_completed', 'approval', 'approved',
-                    'signature', 'signed', 'executed'].includes(status) ? 'completed' :
-                'pending'
-        },
-        {
-            key: 'counterparty_internal_review',
-            icon: 'building',
-            label: 'Counterparty Review',
-            status: (workflow_status === 'drafting' && ['signature', 'signed', 'executed'].includes(status)) ? 'skipped' :
-                ['draft', 'review'].includes(status) ? 'pending' :
-                status === 'review_completed' ? 'pending' :
-                status === 'counterparty_internal_review' ? 'active' :
-                status === 'counterparty_review_completed' ? 'completed' :
-                ['negotiation', 'negotiation_completed', 'approval', 'approved',
-                    'signature', 'signed', 'executed'].includes(status) ? 'completed' :
-                'pending'
-        },
-        {
-            key: 'negotiation',
-            icon: 'message-circle',
-            label: 'Negotiation',
-            status: (workflow_status === 'drafting' && ['signature', 'signed', 'executed'].includes(status)) ? 'skipped' :
-                ['draft', 'review', 'review_completed', 'counterparty_internal_review'].includes(status) ? 'pending' :
-                status === 'counterparty_review_completed' ? 'pending' :
-                status === 'negotiation' ? 'active' :
-                status === 'negotiation_completed' ? 'completed' :
-                ['approval', 'approved', 'signature', 'signed', 'executed'].includes(status) ? 'completed' :
-                'pending'
-        },
-        {
-            key: 'approval',
-            icon: 'circle-check',
-            label: 'Approval',
-            status: (workflow_status === 'drafting' && ['signature', 'signed', 'executed'].includes(status)) ? 'skipped' :
-                ['draft', 'review', 'review_completed', 'counterparty_internal_review',
-                    'counterparty_review_completed', 'negotiation'].includes(status) ? 'pending' :
-                status === 'negotiation_completed' ? 'pending' :
-                status === 'approval' ? 'active' :
-                status === 'approved' ? 'completed' :
-                ['signature', 'signed', 'executed'].includes(status) ? 'completed' :
-                'pending'
-        },
-        {
-            key: 'signature',
-            icon: 'writing-sign',
-            label: 'Signature',
-            status: ['draft', 'review', 'review_completed', 'counterparty_internal_review',
-                'counterparty_review_completed', 'negotiation', 'negotiation_completed',
-                'approval'].includes(status) ? 'pending' :
-                status === 'approved' ? 'pending' :
-                status === 'signature' ? 'active' :
-                status === 'signed' ? 'completed' :
-                status === 'executed' ? 'completed' :
-                'pending'
-        },
-        {
-            key: 'executed',
-            icon: 'file-check',
-            label: 'Executed',
-            status: status === 'executed' ? 'completed' :
-                status === 'signed' ? 'pending' :
-                'pending'
-        }
-    ];
+    function renderWorkflowStepper(contract) {
 
-    return `
+        let status = contract.status;
+        let action_person_id = contract.action_person_id;
+
+        const steps = [
+            {
+                key: 'draft',
+                icon: 'file-text',
+                label: 'Draft',
+                status: 'completed' // Draft is always completed if viewing the contract
+            },
+            {
+                key: 'review',
+                icon: 'users',
+                label: 'Internal Review',
+                status: (!action_person_id && ['signature', 'signed', 'executed'].includes(status)) ? 'skipped' :
+                    status === 'draft' ? 'pending' :
+                        status === 'review' ? 'active' :
+                            status === 'review_completed' ? 'completed' :
+                                ['counterparty_internal_review', 'counterparty_review_completed',
+                                    'negotiation', 'negotiation_completed', 'approval', 'approved',
+                                    'signature', 'signed', 'executed'].includes(status) ? 'completed' :
+                                    'pending'
+            },
+            {
+                key: 'counterparty_internal_review',
+                icon: 'building',
+                label: 'Counterparty Review',
+                status: (!action_person_id && ['signature', 'signed', 'executed'].includes(status)) ? 'skipped' :
+                    ['draft', 'review'].includes(status) ? 'pending' :
+                        status === 'review_completed' ? 'pending' :
+                            status === 'counterparty_internal_review' ? 'active' :
+                                status === 'counterparty_review_completed' ? 'completed' :
+                                    ['negotiation', 'negotiation_completed', 'approval', 'approved',
+                                        'signature', 'signed', 'executed'].includes(status) ? 'completed' :
+                                        'pending'
+            },
+            {
+                key: 'negotiation',
+                icon: 'message-circle',
+                label: 'Negotiation',
+                status: (!action_person_id && ['signature', 'signed', 'executed'].includes(status)) ? 'skipped' :
+                    ['draft', 'review', 'review_completed', 'counterparty_internal_review'].includes(status) ? 'pending' :
+                        status === 'counterparty_review_completed' ? 'pending' :
+                            status === 'negotiation' ? 'active' :
+                                status === 'negotiation_completed' ? 'completed' :
+                                    ['approval', 'approved', 'signature', 'signed', 'executed'].includes(status) ? 'completed' :
+                                        'pending'
+            },
+            {
+                key: 'approval',
+                icon: 'circle-check',
+                label: 'Approval',
+                status: (!action_person_id && ['signature', 'signed', 'executed'].includes(status)) ? 'skipped' :
+                    ['draft', 'review', 'review_completed', 'counterparty_internal_review',
+                        'counterparty_review_completed', 'negotiation'].includes(status) ? 'pending' :
+                        status === 'negotiation_completed' ? 'pending' :
+                            status === 'approval' ? 'active' :
+                                status === 'approved' ? 'completed' :
+                                    ['signature', 'signed', 'executed'].includes(status) ? 'completed' :
+                                        'pending'
+            },
+            {
+                key: 'signature',
+                icon: 'writing-sign',
+                label: 'Signature',
+                status: ['draft', 'review', 'review_completed', 'counterparty_internal_review',
+                    'counterparty_review_completed', 'negotiation', 'negotiation_completed',
+                    'approval'].includes(status) ? 'pending' :
+                    status === 'approved' ? 'pending' :
+                        status === 'signature' ? 'active' :
+                            status === 'signed' ? 'completed' :
+                                status === 'executed' ? 'completed' :
+                                    'pending'
+            },
+            {
+                key: 'executed',
+                icon: 'file-check',
+                label: 'Executed',
+                status: status === 'executed' ? 'completed' :
+                    status === 'signed' ? 'pending' :
+                        'pending'
+            }
+        ];
+
+        return `
         <div class="workflow-stepper">
             <div class="stepper-container">
                 <div class="stepper-line">
@@ -6370,15 +6420,15 @@ function renderWorkflowStepper(status, workflow_status) {
                         <span class="step-label">${step.label}</span>
                         <span class="step-date">${step.status === 'completed' ? 'Completed' :
                 step.status === 'active' ? 'In Progress' :
-                step.status === 'skipped' ? 'Skipped' :
-                    'Pending'
+                    step.status === 'skipped' ? 'Skipped' :
+                        'Pending'
             }</span>
                     </div>
                 `).join('')}
             </div>
         </div>
     `;
-}
+    }
 
     function renderEditorToolbar() {
         return `
@@ -9293,28 +9343,6 @@ function renderWorkflowStepper(status, workflow_status) {
     }
 
 
-
-
-    // Auto-save functionality
-    function startAutoSave() {
-        // Clear any existing interval
-        if (autoSaveInterval) {
-            clearInterval(autoSaveInterval);
-        }
-
-        // Save every 30 seconds if there are changes
-        let lastContent = document.getElementById('contractContent').innerHTML;
-
-        autoSaveInterval = setInterval(async () => {
-            const currentContent = document.getElementById('contractContent').innerHTML;
-
-            if (currentContent !== lastContent) {
-                await saveAsDraft();
-                lastContent = currentContent;
-            }
-        }, 30000); // 30 seconds
-    }
-
     function updateSaveStatus(status) {
         const statusEl = document.getElementById('saveStatus');
         if (!statusEl) return;
@@ -10371,97 +10399,112 @@ ${(riskAnalysisData.risk_items || []).map(item => `
     let openModals = [];
 
     // Utility Functions
- function openModal(modalId) {
-    console.log('🔓 Opening modal:', modalId);
-    
-    const modal = document.getElementById(modalId);
-    if (!modal) {
-        console.error('❌ Modal not found:', modalId);
-        return;
-    }
 
-    // Add to open modals stack
-    if (!openModals.includes(modalId)) {
-        openModals.push(modalId);
-    }
+    function openModal(modalId) {
+        console.log('🔓 Opening modal:', modalId);
 
-    // Show modal
-    modal.style.display = 'block';
-    
-    // Add show class with slight delay for animation
-    setTimeout(() => {
-        modal.classList.add('show');
-    }, 10);
-
-    // Lock body scroll ONLY if this is the first modal
-    if (openModals.length === 1) {
-        document.body.style.overflow = 'hidden';
-        document.body.classList.add('modal-open');
-    }
-
-    // Special handling for specific modals
-    switch(modalId) {
-        case 'signatureModal':
-            if (typeof initCanvas === 'function') {
-                initCanvas();
-            }
-            break;
-        case 'contractWorkflowModal':
-            selectedContractWorkflow = null;
-            break;
-        case 'templatePreviewModal':
-            if (selectedTemplate) {
-                updateTemplatePreview();
-            }
-            break;
-    }
-
-    console.log('✅ Modal opened. Stack:', openModals);
-}
-
-
-function closeModal(modalId) {
-    console.log('🔒 Closing modal:', modalId);
-    
-    const modal = document.getElementById(modalId);
-    if (!modal) {
-        console.error('❌ Modal not found:', modalId);
-        return;
-    }
-
-    // Remove from stack
-    openModals = openModals.filter(id => id !== modalId);
-
-    // Hide modal
-    modal.classList.remove('show');
-    
-    // Wait for animation, then hide completely
-    setTimeout(() => {
-        modal.style.display = 'none';
-    }, 300);
-
-    // Clear modal-specific content
-    if (modalId === 'contractWorkflowModal') {
-        const tbody = document.getElementById('contractWorkflowSteps');
-        if (tbody) {
-            tbody.innerHTML = '';
-            contractWorkflowStepCount = 0;
+        const modal = document.getElementById(modalId);
+        if (!modal) {
+            console.error('❌ Modal not found:', modalId);
+            return;
         }
+
+        // Add to open modals stack
+        if (!openModals.includes(modalId)) {
+            openModals.push(modalId);
+        }
+
+        // Show modal
+        modal.style.display = 'block';
+
+        // Add show class with slight delay for animation
+        setTimeout(() => {
+            modal.classList.add('show');
+        }, 10);
+
+        // Lock body scroll ONLY if this is the first modal
+        if (openModals.length === 1) {
+            document.body.classList.add('modal-open');
+            // Use class-based approach instead of inline styles
+        }
+
+        // Special handling for specific modals
+        switch (modalId) {
+            case 'signatureModal':
+                if (typeof initCanvas === 'function') {
+                    initCanvas();
+                }
+                break;
+            case 'contractWorkflowModal':
+                selectedContractWorkflow = null;
+                break;
+            case 'templatePreviewModal':
+                if (selectedTemplate) {
+                    updateTemplatePreview();
+                }
+                break;
+            case 'addClauseModal':
+                // Ensure clause modal content can scroll
+                const clauseModalBody = modal.querySelector('.modal-body');
+                if (clauseModalBody) {
+                    clauseModalBody.style.maxHeight = '65vh';
+                    clauseModalBody.style.overflowY = 'auto';
+                }
+                break;
+        }
+
+        console.log('✅ Modal opened. Stack:', openModals);
     }
 
-    // Restore body scroll ONLY if no modals are open
-    if (openModals.length === 0) {
-        document.body.style.overflow = 'auto';
-        document.body.classList.remove('modal-open');
-        
-        // Remove any stray backdrops
-        document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
-            backdrop.remove();
-        });
+
+    function closeModal(modalId) {
+        console.log('🔒 Closing modal:', modalId);
+
+        const modal = document.getElementById(modalId);
+        if (!modal) {
+            console.error('❌ Modal not found:', modalId);
+            return;
+        }
+
+        // Remove from stack
+        openModals = openModals.filter(id => id !== modalId);
+
+        // Hide modal
+        modal.classList.remove('show');
+
+        // Wait for animation, then hide completely
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
+
+        // Clear modal-specific content
+        if (modalId === 'contractWorkflowModal') {
+            const tbody = document.getElementById('contractWorkflowSteps');
+            if (tbody) {
+                tbody.innerHTML = '';
+                contractWorkflowStepCount = 0;
+            }
+        }
+
+        // CRITICAL FIX: Restore body scroll ONLY if no modals are open
+        if (openModals.length === 0) {
+            // Remove class instead of setting inline style
+            document.body.classList.remove('modal-open');
+
+            // Force remove any inline overflow styles that might be stuck
+            document.body.style.removeProperty('overflow');
+
+            // Remove any stray backdrops
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                backdrop.remove();
+            });
+
+            console.log('✅ Body scroll RESTORED');
+        }
+
+        console.log('✅ Modal closed. Remaining modals:', openModals);
     }
 
-    console.log('✅ Modal closed. Remaining stack:', openModals);
-}
 
 
 
@@ -10785,6 +10828,17 @@ function closeModal(modalId) {
             hideLoader();
         }
     }
+
+
+    // ESC key handler - improved
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && openModals.length > 0) {
+            // Close the most recently opened modal
+            const lastModal = openModals[openModals.length - 1];
+            closeModal(lastModal);
+        }
+    });
+
 
     // Execute Contract - CONNECTED TO BACKEND
     async function executeContract() {
@@ -11181,8 +11235,6 @@ function closeModal(modalId) {
 
 <script>
 
-
-
     window.refreshComments = function () {
         console.log('🔄 Manually refreshing comments...');
 
@@ -11197,17 +11249,6 @@ function closeModal(modalId) {
 
         if (contractId) {
             verifyContract(contractId);
-        } else {
-            showNotification('Contract ID not found. Please save the contract first.', 'error');
-
-        }
-    }
-
-    // Wrapper function for certificate button
-    function showBlockchainCertificate() {
-        if (contractId) {
-            // Call the function from blockchain-verification.js
-            showBlockchainCertificateById(contractId);
         } else {
             showNotification('Contract ID not found. Please save the contract first.', 'error');
 
@@ -16652,7 +16693,7 @@ Generated by CALIM 360 Smart CLM
 <script src="/app/static/js/contract-edit.js?v=1"></script>
 <script src="/app/static/js/position-tracker.js"></script>
 <script src="/app/static/js/bubble-comments.js?v=6"></script>
-<script src="/app/static/js/blockchain-verification.js?v=1"></script>
+<script src="/app/static/js/blockchain-verification.js?v=6"></script>
 
 
 {% endblock %}

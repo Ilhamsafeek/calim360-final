@@ -30,9 +30,7 @@
     .filter-bar {
         background: white;
         padding: 1rem;
-        border-radius: 8px;
-        border: 1px solid var(--border-color);
-        margin-bottom: 1.5rem;
+
         display: flex;
         gap: 1rem;
         align-items: center;
@@ -244,7 +242,6 @@
         border-radius: 8px 8px 0 0;
         border: 1px solid var(--border-color);
         border-bottom: none;
-        margin-top: 1.5rem;
     }
 
     .sub-tabs {
@@ -617,7 +614,7 @@
         color: var(--secondary-color);
     }
 
-     .status-tampered {
+    .status-tampered {
         background: rgba(255, 21, 0, 1);
         color: white;
     }
@@ -1110,6 +1107,98 @@
             background-position: 0 0;
         }
     }
+
+
+    /* Sub Tabs Container - Combined Layout */
+    .sub-tabs-container {
+        background: white;
+        border-radius: 8px 8px 0 0;
+        border: 1px solid var(--border-color);
+        border-bottom: none;
+    }
+
+    .sub-tabs {
+        display: flex;
+        gap: 1rem;
+        /* Remove padding as it's now handled by parent */
+    }
+
+    .sub-tab {
+        padding: 1rem 0;
+        border: none;
+        background: none;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+        white-space: nowrap;
+        transition: all 0.3s;
+    }
+
+    .sub-tab:hover {
+        color: var(--text-color);
+    }
+
+    .sub-tab.active {
+        color: var(--primary-color);
+        border-bottom-color: var(--primary-color);
+    }
+
+    /* Filter Bar - Updated for inline layout */
+    .filter-bar {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+        .sub-tabs-container>div {
+            flex-direction: column;
+            align-items: stretch !important;
+            gap: 1rem !important;
+        }
+
+        .sub-tabs {
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .filter-bar {
+            flex-direction: column;
+            align-items: stretch;
+            padding: 1rem !important;
+        }
+
+        .search-box {
+            min-width: 100%;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .sub-tabs-container>div {
+            padding: 0 1rem !important;
+        }
+
+        .filter-select {
+            width: 100%;
+        }
+    }
+
+
+
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .tooltip-new-contract::before {
+            width: 280px;
+            font-size: 13px;
+            padding: 14px 18px;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -1139,7 +1228,7 @@
                     <span class="nav-text">Clause Library</span>
                 </a>
             </div>
-            <button class="btn btn-primary" id="new" onclick="createNewContract()">
+            <button class="btn btn-primary tooltip-new-contract" id="new" onclick="createNewContract()">
                 <i class="ti ti-plus"></i> New Contract
             </button>
         </div>
@@ -1168,58 +1257,7 @@
         </div>
     </div>
 
-    <!-- Filter Bar -->
-    <div class="filter-bar">
-        <div class="search-box">
-            <i class="ti ti-search search-icon"></i>
-            <input type="text" class="search-input" id="searchInput"
-                placeholder="Search contracts by title, ID, or party..." onkeyup="performSearch()">
-        </div>
 
-        <!-- <select class="filter-select" id="statusFilter" onchange="applyFilters()">
-            <option value="">All Status</option>
-            <option value="draft">Draft</option>
-            <option value="review">In Review</option>
-            <option value="approved">Approved</option>
-            <option value="negotiation">In Negotiation</option>
-            <option value="pending">Pending Response</option>
-            <option value="signed">Signed</option>
-            <option value="expired">Expired</option>
-        </select> -->
-
-        <select class="filter-select" id="typeFilter" onchange="applyFilters()">
-            <option value="">All Types</option>
-            <option value="service">Service Agreement</option>
-            <option value="nda">NDA</option>
-            <option value="purchase">Purchase Order</option>
-            <option value="employment">Employment</option>
-            <option value="consultancy">Consultancy</option>
-            <option value="maintenance">Maintenance</option>
-        </select>
-
-        <select class="filter-select" id="dateFilter" onchange="applyFilters()">
-            <option value="">All Time</option>
-            <option value="today">Today</option>
-            <option value="week">This Week</option>
-            <option value="month">This Month</option>
-            <option value="quarter">This Quarter</option>
-            <option value="year">This Year</option>
-        </select>
-
-        <select class="filter-select" id="sortFilter" onchange="applyFilters()">
-            <option value="">Sort By</option>
-            <option value="latest_updated">Latest Updated</option>
-            <option value="created_date">Created Date</option>
-            <option value="contract_number">Contract Number</option>
-            <option value="title">Title (A-Z)</option>
-            <option value="tag">Tag A-Z</option>
-        </select>
-
-        <!-- <button class="advanced-filters-toggle" onclick="toggleAdvancedFilters()">
-            <i class="ti ti-adjustments-horizontal"></i>
-            Advanced Filters
-        </button> -->
-    </div>
 
     <!-- Advanced Filters -->
     <div class="advanced-filters" id="advancedFilters">
@@ -1270,13 +1308,54 @@
     <!-- <div class="active-filters" id="activeFilters"></div> -->
 
     <!-- Sub Tabs -->
+    <!-- Sub Tabs and Filter Bar - Combined Row -->
     <div class="sub-tabs-container">
-        <div class="sub-tabs" id="subTabs">
-            <!-- Drafting Sub-tabs (default) -->
-            <button class="sub-tab active" onclick="switchSubTab('all')" data-subtab="all">All Contracts</button>
-            <button class="sub-tab" onclick="switchSubTab('my')" data-subtab="my">My Contracts</button>
-            <button class="sub-tab" onclick="switchSubTab('templates')" data-subtab="templates">Templates</button>
-            <button class="sub-tab" onclick="switchSubTab('draft')" data-subtab="draft">Drafts</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 2rem; padding: 0 1.5rem;">
+            <!-- Left side: Sub Tabs -->
+            <div class="sub-tabs" id="subTabs" style="padding: 0; flex-shrink: 0;">
+                <!-- Drafting Sub-tabs (default) -->
+                <button class="sub-tab active" onclick="switchSubTab('all')" data-subtab="all">All Contracts</button>
+                <button class="sub-tab" onclick="switchSubTab('my')" data-subtab="my">My Contracts</button>
+                <button class="sub-tab" onclick="switchSubTab('templates')" data-subtab="templates">Templates</button>
+                <button class="sub-tab" onclick="switchSubTab('draft')" data-subtab="draft">Drafts</button>
+            </div>
+
+            <!-- Right side: Filter Bar -->
+            <div class="filter-bar" style="flex: 1; padding: 1rem 0; border: none;">
+                <div class="search-box">
+                    <i class="ti ti-search search-icon"></i>
+                    <input type="text" class="search-input" id="searchInput"
+                        placeholder="Search contracts by title, ID, or party..." onkeyup="performSearch()">
+                </div>
+
+                <select class="filter-select" id="typeFilter" onchange="applyFilters()">
+                    <option value="">All Types</option>
+                    <option value="service">Service Agreement</option>
+                    <option value="nda">NDA</option>
+                    <option value="purchase">Purchase Order</option>
+                    <option value="employment">Employment</option>
+                    <option value="consultancy">Consultancy</option>
+                    <option value="maintenance">Maintenance</option>
+                </select>
+
+                <select class="filter-select" id="dateFilter" onchange="applyFilters()">
+                    <option value="">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                    <option value="quarter">This Quarter</option>
+                    <option value="year">This Year</option>
+                </select>
+
+                <select class="filter-select" id="sortFilter" onchange="applyFilters()">
+                    <option value="">Sort By</option>
+                    <option value="latest_updated">Latest Updated</option>
+                    <option value="created_date">Created Date</option>
+                    <option value="contract_number">Contract Number</option>
+                    <option value="title">Title (A-Z)</option>
+                    <option value="tag">Tag A-Z</option>
+                </select>
+            </div>
         </div>
     </div>
 
@@ -1378,21 +1457,21 @@
                     return titleA.localeCompare(titleB);
                 });
                 break;
-            
 
-             case 'tag':  // ✅ FIXED - was sorting by title
-            filteredContracts.sort((a, b) => {
-                const tagA = (a.single_tag || '').toLowerCase();
-                const tagB = (b.single_tag || '').toLowerCase();
-                
-                // Put contracts without tags at the end
-                if (!tagA && tagB) return 1;
-                if (tagA && !tagB) return -1;
-                if (!tagA && !tagB) return 0;
-                
-                return tagA.localeCompare(tagB);
-            });
-            break;
+
+            case 'tag':  // ✅ FIXED - was sorting by title
+                filteredContracts.sort((a, b) => {
+                    const tagA = (a.single_tag || '').toLowerCase();
+                    const tagB = (b.single_tag || '').toLowerCase();
+
+                    // Put contracts without tags at the end
+                    if (!tagA && tagB) return 1;
+                    if (tagA && !tagB) return -1;
+                    if (!tagA && !tagB) return 0;
+
+                    return tagA.localeCompare(tagB);
+                });
+                break;
         }
     }
 
@@ -1553,40 +1632,40 @@
         }
 
 
-         if (tagFilter) {
-        filteredContracts = filteredContracts.filter(contract => 
-            contract.single_tag === tagFilter
-        );
-    }
+        if (tagFilter) {
+            filteredContracts = filteredContracts.filter(contract =>
+                contract.single_tag === tagFilter
+            );
+        }
 
         // Apply date range filter
- if (dateFilter) {
-        const now = new Date();
-        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        if (dateFilter) {
+            const now = new Date();
+            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-        filteredContracts = filteredContracts.filter(contract => {
-            const contractDate = new Date(contract.created_at || contract.updated_at);
+            filteredContracts = filteredContracts.filter(contract => {
+                const contractDate = new Date(contract.created_at || contract.updated_at);
 
-            switch (dateFilter) {
-                case 'today':
-                    return contractDate >= startOfToday;
-                case 'week':
-                    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-                    return contractDate >= weekAgo;
-                case 'month':
-                    const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-                    return contractDate >= monthAgo;
-                case 'quarter':
-                    const quarterAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
-                    return contractDate >= quarterAgo;
-                case 'year':
-                    const yearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-                    return contractDate >= yearAgo;
-                default:
-                    return true;
-            }
-        });
-    }
+                switch (dateFilter) {
+                    case 'today':
+                        return contractDate >= startOfToday;
+                    case 'week':
+                        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                        return contractDate >= weekAgo;
+                    case 'month':
+                        const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+                        return contractDate >= monthAgo;
+                    case 'quarter':
+                        const quarterAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+                        return contractDate >= quarterAgo;
+                    case 'year':
+                        const yearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+                        return contractDate >= yearAgo;
+                    default:
+                        return true;
+                }
+            });
+        }
 
         // Apply sub-tab filters
         applySubTabFilter();
@@ -2037,7 +2116,7 @@
                     <div>
                         <h3 style="margin: 0; color: white; display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem;">
                             <i class="ti ti-shield-check"></i>
-                            Preparing Risk Analysis
+                            Preparing Risk Analysis Report
                         </h3>
                         <p style="margin: 0.5rem 0 0; color: rgba(255,255,255,0.9); font-size: 0.875rem;">${contractTitle}</p>
                     </div>
@@ -2990,7 +3069,7 @@ End of Report
                 if (progress > 75) {
                     updateStepStatus('analyze', 'completed');
                     updateStepStatus('save', 'active');
-                    updateLoadingMessage('our document is being analyzed and it will take a while...');
+                    updateLoadingMessage('Your document is being analyzed and it will take a while...');
                 }
             } else {
                 clearInterval(interval);

@@ -27,6 +27,8 @@ from weasyprint import HTML
 import pypandoc
 import tempfile
 from app.services.workflow_email_service import WorkflowEmailService
+import shutil
+import secrets
 
 # Add these 4 lines
 import hashlib
@@ -1155,6 +1157,7 @@ async def get_contract_editor_data(
                 c.updated_at,
                 c.party_b_id,
                 c.party_b_lead_id,
+                c.action_person_id,
                 c.signed_date,
                 c.party_esignature_authority_id,
                 c.counterparty_esignature_authority_id,
@@ -1188,6 +1191,9 @@ async def get_contract_editor_data(
         
         is_initiator = current_user.id == result.created_by_id
         is_counterparty = current_user.company_id == result.party_b_id
+
+        is_same_company_as_initiator = current_user.company_id == result.company_id
+
         
         # ===== INITIATOR WORKFLOW (Party A) =====
         workflow_query = text("""
@@ -1428,7 +1434,9 @@ async def get_contract_editor_data(
                 "is_ai_generated": result.is_ai_generated,
                 "ai_generation_params": result.ai_generation_params,
                 "language": result.language,
-                "is_esignee": is_esignee
+                "is_esignee": is_esignee,
+                "action_person_id": result.action_person_id,
+                "is_same_company_as_initiator": is_same_company_as_initiator,
             },
             "workflow": {
                 "status": workflow.workflow_status if workflow else "not_configured",
@@ -1488,6 +1496,11 @@ def _generate_verification_note(is_internal: bool, original_hash_stored: bool) -
         return "Verification will succeed: blockchain hash = current content"
 
 
+# =====================================================
+# SIMPLE FIX: Replace your existing save_contract_draft function
+# FILE: app/api/api_v1/contracts/contracts.py
+# =====================================================
+
 @router.post("/save-draft/{contract_id}")
 async def save_contract_draft(
     contract_id: int,
@@ -1495,256 +1508,93 @@ async def save_contract_draft(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    ✅ FIXED: Save contract draft - Stores original hash BEFORE internal edits for tamper detection
-    
-    Flow for INTERNAL users:
-    1. Store ORIGINAL content hash on blockchain (clean version)
-    2. Add TAMPERED banner to content
-    3. Save tampered version to database
-    4. Verification will detect mismatch between blockchain hash and current content
-    
-    Flow for EXTERNAL users:
-    1. Save content to database
-    2. Store hash on blockchain (matching content)
-    3. Verification will show match
-    """
+    """Save contract draft with tampering detection for internal users"""
     try:
-        # ✅ CHECK IF INTERNAL USER
         is_internal = is_internal_user(current_user)
-        logger.info(f"👤 User: {current_user.email} (Internal: {is_internal})")
+        new_content = content.get("content", "")
         
-        # ✅ GET CURRENT CONTRACT STATUS (for logging only)
-        contract_status_query = text("""
-            SELECT status FROM contracts WHERE id = :contract_id
-        """)
-        contract_status_result = db.execute(contract_status_query, {"contract_id": contract_id}).fetchone()
-        current_status = contract_status_result.status if contract_status_result else 'draft'
-        
-        logger.info(f"📋 Current contract status: {current_status} (workflow changes are ALLOWED)")
-        
-        # Get the latest version number
-        version_check = text("""
-            SELECT MAX(version_number) as max_version
-            FROM contract_versions
-            WHERE contract_id = :contract_id
-        """)
-        
+        # Get current version
+        version_check = text("SELECT MAX(version_number) as max_version FROM contract_versions WHERE contract_id = :contract_id")
         result = db.execute(version_check, {"contract_id": contract_id}).fetchone()
         current_max_version = result.max_version if result and result.max_version else 0
         
-        # ✅ GET CURRENT CONTENT TO COMPARE
-        content_changed = False
-        new_content = content.get("content", "")
-        
+        # Check if content changed
+        content_changed = True
         if current_max_version > 0:
-            current_content_query = text("""
-                SELECT contract_content 
-                FROM contract_versions 
-                WHERE contract_id = :contract_id 
-                ORDER BY version_number DESC 
-                LIMIT 1
-            """)
+            current_content_query = text("SELECT contract_content FROM contract_versions WHERE contract_id = :contract_id ORDER BY version_number DESC LIMIT 1")
             current_content_result = db.execute(current_content_query, {"contract_id": contract_id}).fetchone()
             current_content = current_content_result.contract_content if current_content_result else ""
-            
-            # ✅ CHECK IF CONTENT ACTUALLY CHANGED
             content_changed = (current_content.strip() != new_content.strip())
-        else:
-            # First version - always save
-            content_changed = True
-            logger.info(f"📝 First version of contract {contract_id}")
         
-        # ✅ ONLY CREATE NEW VERSION IF CONTENT CHANGED
         if not content_changed:
-            logger.info(f"⏭️ No content change detected - skipping version creation")
-            return {
-                "success": True,
-                "message": "No changes detected - draft not saved",
-                "version": current_max_version,
-                "blockchain_success": False,
-                "blockchain_activities": [],
-                "blockchain_skipped": True,
-                "internal_edit": is_internal,
-                "content_changed": False,
-                "current_status": current_status,
-                "status_updated": False,
-                "tampered_banner_added": False,
-                "original_hash_stored": False
-            }
+            return {"success": True, "message": "No changes detected", "version": current_max_version}
         
-        # ✅ CONTENT CHANGED - PROCEED WITH BLOCKCHAIN AND VERSION CREATION
         next_version = current_max_version + 1
         blockchain_success = False
-        blockchain_activities = []
-        original_hash_stored = False
-        tampered_banner_added = False
         final_content = new_content
         
-        # ✅ STEP 1: FOR INTERNAL USERS - STORE ORIGINAL HASH **BEFORE** TAMPERING
-        if is_internal and content_changed:
-            try:
-                logger.info(f"🔗 INTERNAL USER DETECTED - Storing ORIGINAL content hash on blockchain BEFORE adding tampered banner")
-                logger.info(f"   Contract ID: {contract_id}")
-                logger.info(f"   User: {current_user.email}")
-                logger.info(f"   Version: {next_version}")
-                logger.info(f"   Content length: {len(new_content)} chars")
-                
-                # ✅ Store CLEAN content hash (without tampered banner)
-                blockchain_result = await blockchain_service.store_contract_hash_with_logging(
-                    contract_id=contract_id,
-                    document_content=new_content,  # ✅ ORIGINAL clean content
-                    uploaded_by=current_user.id,
-                    company_id=current_user.company_id,
-                    db=db
-                )
-                
-                if blockchain_result.get("success"):
-                    original_hash_stored = True
-                    blockchain_success = True
-                    blockchain_activities = blockchain_result.get("activities", [])
-                    logger.info(f"✅ Original (clean) hash stored on blockchain successfully")
-                    logger.info(f"   Transaction ID: {blockchain_result.get('transaction_id', 'N/A')}")
-                    logger.info(f"   Block Number: {blockchain_result.get('block_number', 'N/A')}")
-                else:
-                    logger.warning(f"⚠️ Failed to store original hash: {blockchain_result.get('error')}")
-                    
-            except Exception as blockchain_error:
-                logger.error(f"❌ Blockchain storage error for original hash: {str(blockchain_error)}")
-                import traceback
-                logger.error(traceback.format_exc())
-            
-            # ✅ STEP 2: NOW ADD TAMPERED BANNER TO CONTENT
-            final_content = new_content  # Keep original content with banner if already added by frontend
-            tampered_banner_added = True
-            logger.info(f"🚨 Tampered banner will be included in version {next_version}")
-            logger.info(f"   This allows verification to detect mismatch between:")
-            logger.info(f"   - Blockchain hash (clean content)")
-            logger.info(f"   - Current content (with tampered banner)")
+        # ✅ FIX: For INTERNAL users - DON'T store on blockchain
+        if is_internal:
+            logger.info(f"⏭️ Internal user - SKIPPING blockchain storage")
+            logger.info(f"   Verification will detect no blockchain record = TAMPERED")
+            # Don't store blockchain hash - this creates the tampering detection
+            blockchain_success = False
+            final_content = new_content  # Save content as-is, no banner
         
-        # ✅ STEP 3: FOR EXTERNAL USERS - STORE HASH NORMALLY (AFTER SAVING)
-        elif not is_internal and content_changed:
-            logger.info(f"👥 EXTERNAL USER - Will store hash on blockchain after saving version")
+        # For EXTERNAL users - Store hash AFTER saving
+        elif not is_internal:
+            # Will store blockchain hash after version is created
+            pass
         
-        # ✅ CREATE NEW VERSION IN DATABASE
+        # Create new version
         version_query = text("""
             INSERT INTO contract_versions 
             (contract_id, version_number, contract_content, change_summary, version_type, created_by, created_at)
             VALUES (:contract_id, :version_number, :content, :change_summary, 'draft', :user_id, NOW())
         """)
         
-        # ✅ DETERMINE CHANGE SUMMARY
-        if next_version == 1:
-            change_summary = "Initial contract creation"
-        elif is_internal:
-            change_summary = "Internal edit - Content modified (TAMPERED)"
-        else:
-            change_summary = "Draft content updated"
+        change_summary = "Internal edit (No blockchain)" if is_internal else "Draft updated"
         
         db.execute(version_query, {
             "contract_id": contract_id,
             "version_number": next_version,
-            "content": final_content,  # ✅ For internal: includes tampered banner
+            "content": final_content,
             "change_summary": change_summary,
             "user_id": current_user.id
         })
         
-        # ✅ UPDATE TIMESTAMP ONLY - NEVER CHANGE STATUS HERE
-        update_contract = text("""
-            UPDATE contracts 
-            SET updated_at = NOW()
-            WHERE id = :contract_id
-        """)
+        # Update timestamp
+        db.execute(text("UPDATE contracts SET updated_at = NOW() WHERE id = :contract_id"), {"contract_id": contract_id})
         
-        db.execute(update_contract, {"contract_id": contract_id})
-        
-        # ✅ STEP 4: FOR EXTERNAL USERS - NOW STORE HASH ON BLOCKCHAIN
-        if not is_internal and content_changed:
+        # For EXTERNAL users - Store blockchain hash now
+        if not is_internal:
             try:
-                logger.info(f"🔗 EXTERNAL USER - Storing contract hash on blockchain")
-                logger.info(f"   Contract ID: {contract_id}")
-                logger.info(f"   User: {current_user.email}")
-                logger.info(f"   Version: {next_version}")
-                
                 blockchain_result = await blockchain_service.store_contract_hash_with_logging(
                     contract_id=contract_id,
-                    document_content=new_content,  # Same content as in database
+                    document_content=final_content,
                     uploaded_by=current_user.id,
                     company_id=current_user.company_id,
                     db=db
                 )
-                
                 if blockchain_result.get("success"):
                     blockchain_success = True
-                    blockchain_activities = blockchain_result.get("activities", [])
-                    logger.info(f"✅ Blockchain storage successful with {len(blockchain_activities)} activity steps")
-                else:
-                    logger.warning(f"⚠️ Blockchain storage failed: {blockchain_result.get('error')}")
-                    
-            except Exception as blockchain_error:
-                logger.error(f"❌ Blockchain storage error (non-critical): {str(blockchain_error)}")
-                import traceback
-                logger.error(traceback.format_exc())
+            except Exception as e:
+                logger.error(f"❌ Blockchain error: {str(e)}")
         
-        # ✅ COMMIT ALL CHANGES
         db.commit()
         
-        # ✅ PREPARE RESPONSE (using helper functions WITHOUT 'self')
-        response = {
-            "success": True, 
-            "message": _generate_success_message(is_internal, tampered_banner_added, original_hash_stored),
+        return {
+            "success": True,
+            "message": "Internal edit saved (no blockchain)" if is_internal else "Draft saved",
             "version": next_version,
             "blockchain_success": blockchain_success,
-            "blockchain_activities": blockchain_activities,
-            "original_hash_stored": original_hash_stored,
-            "internal_edit": is_internal,
-            "content_changed": content_changed,
-            "current_status": current_status,
-            "status_updated": False,
-            "tampered_banner_added": tampered_banner_added,
-            "verification_note": _generate_verification_note(is_internal, original_hash_stored)
+            "internal_edit": is_internal
         }
-        
-        # ✅ LOG ACTION
-        log_contract_action(
-            db=db,
-            action_type="contract_updated",
-            contract_id=contract_id,
-            user_id=current_user.id,
-            details={
-                "update_type": "content_saved",
-                "has_blockchain": blockchain_success,
-                "original_hash_stored": original_hash_stored,
-                "blockchain_activities_count": len(blockchain_activities),
-                "internal_edit": is_internal,
-                "content_changed": content_changed,
-                "status": current_status,
-                "version_created": next_version,
-                "tampered_banner_added": tampered_banner_added
-            },
-            ip_address=None
-        )
-        
-        # ✅ LOG SUMMARY
-        logger.info(f"✅ Draft saved successfully:")
-        logger.info(f"   Version: {next_version}")
-        logger.info(f"   Status: {current_status} (unchanged)")
-        logger.info(f"   User Type: {'Internal' if is_internal else 'External'}")
-        logger.info(f"   Blockchain: {blockchain_success}")
-        logger.info(f"   Original Hash Stored: {original_hash_stored}")
-        logger.info(f"   Tampered Banner: {tampered_banner_added}")
-        if is_internal and original_hash_stored:
-            logger.info(f"   🔐 Tamper Detection: ENABLED (blockchain hash vs current content will mismatch)")
-        
-        return response
         
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ Error saving draft: {str(e)}")
-        import traceback
-        logger.error(traceback.format_exc())
+        logger.error(f"❌ Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 
@@ -3941,6 +3791,10 @@ def calculate_completion(contract):
 # COMPLETE FIX: Risk Analysis with Data Transformation
 # =====================================================
 
+from app.services.rag_service import ContractRAGService
+
+# app/api/contracts.py - COMPLETE FIXED FUNCTION
+
 @router.post("/risk-analysis/{contract_id}")
 async def analyze_contract_risks(
     contract_id: int,
@@ -3948,16 +3802,18 @@ async def analyze_contract_risks(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """AI-powered risk analysis for contract using Claude API"""
+    """AI-powered risk analysis with RAG - supports any jurisdiction worldwide"""
     try:
         language = request.get("language", "en") if request else "en"
-        logger.info(f"🔍 Starting AI risk analysis for contract {contract_id}")
+        profile_type = request.get("profile_type", "client")
         
-        # ✅ FIXED: Check for existing analysis with proper type conversion
+        logger.info(f"🔍 Starting RAG-enhanced risk analysis for contract {contract_id}")
+        
+        # Check for existing RAG-enhanced analysis
         query = text("""
             SELECT analysis_data, risk_score, created_at
             FROM ai_analysis_results
-            WHERE CAST(contract_id AS CHAR) COLLATE utf8mb4_unicode_ci = CAST(:contract_id AS CHAR) COLLATE utf8mb4_unicode_ci
+            WHERE CAST(contract_id AS CHAR) = CAST(:contract_id AS CHAR)
             AND analysis_type = 'risk_analysis'
             ORDER BY created_at DESC
             LIMIT 1
@@ -3966,38 +3822,56 @@ async def analyze_contract_risks(
         existing_analysis = db.execute(query, {"contract_id": str(contract_id)}).fetchone()
 
         if existing_analysis:
-            logger.info(f"✅ Found existing risk analysis for contract {contract_id}")
             try:
                 analysis_data = json.loads(existing_analysis[0]) if isinstance(existing_analysis[0], str) else existing_analysis[0]
-                logger.info(f"✅ Successfully parsed existing analysis data")
                 
-                return {
-                    "success": True,
-                    "contract_id": contract_id,
-                    "analysis": analysis_data,
-                    "ai_powered": True,
-                    "cached": True,
-                    "analyzed_at": existing_analysis[2].isoformat() if existing_analysis[2] else None
-                }
+                # ✅ CHECK IF THIS IS A RAG-ENHANCED ANALYSIS
+                is_rag_enhanced = analysis_data.get("rag_enhanced", False)
+                analysis_version = analysis_data.get("analysis_version", "")
+                
+                if is_rag_enhanced and "rag" in analysis_version.lower():
+                    # This is already RAG-enhanced, use cache
+                    analysis_date = existing_analysis[2]
+                    hours_old = (datetime.now() - analysis_date).total_seconds() / 3600
+                    
+                    if hours_old < 24:  # Cache for 24 hours
+                        logger.info(f"✅ Returning cached RAG analysis (age: {hours_old:.1f} hours)")
+                        
+                        return {
+                            "success": True,
+                            "contract_id": contract_id,
+                            "analysis": analysis_data,
+                            "ai_powered": True,
+                            "rag_enhanced": True,
+                            "cached": True,
+                            "analyzed_at": existing_analysis[2].isoformat()
+                        }
+                else:
+                    # Old non-RAG analysis, regenerate with RAG
+                    logger.info(f"🔄 Found old non-RAG analysis, regenerating with RAG enhancement...")
+                    
             except Exception as parse_error:
-                logger.error(f"❌ Error parsing existing analysis: {str(parse_error)}")
-                # Continue to generate new analysis if parsing fails
-        
-        # If no existing analysis, generate new one
-        logger.info(f"📝 No existing analysis found, generating new analysis...")
+                logger.error(f"❌ Error parsing cached analysis: {str(parse_error)}")
         
         # Get contract details
-        contract = db.execute(text("""
-            SELECT contract_title, contract_type, status, contract_content, contract_value
-            FROM contracts 
-            WHERE id = :contract_id
-        """), {"contract_id": contract_id}).fetchone()
+        contract_query = text("""
+            SELECT 
+                c.contract_title, 
+                c.contract_type, 
+                c.status, 
+                c.contract_value
+            FROM contracts c
+            WHERE c.id = :contract_id
+        """)
+        
+        contract = db.execute(contract_query, {"contract_id": contract_id}).fetchone()
         
         if not contract:
             raise HTTPException(status_code=404, detail="Contract not found")
         
         contract_title = contract[0] or "Untitled Contract"
         contract_type = contract[1] or "General"
+        contract_value = contract[3] or 0.0
         
         # Get the latest contract version content
         version_content = db.execute(text("""
@@ -4015,7 +3889,54 @@ async def analyze_contract_risks(
             logger.info(f"📄 Retrieved contract content: {len(contract_content)} characters")
         else:
             logger.warning(f"⚠️ No contract content found for analysis")
-            contract_content = ""
+            raise HTTPException(status_code=400, detail="No contract content available for analysis")
+        
+        # 🚀 INITIALIZE RAG SERVICE
+        from app.services.rag_service import ContractRAGService
+        rag_service = ContractRAGService()
+        
+        # 🚀 INDEX THE CONTRACT DOCUMENT
+        logger.info(f"📊 Indexing contract document into vector database...")
+        indexed = rag_service.index_contract(
+            contract_id=contract_id,
+            contract_content=contract_content,
+            contract_title=contract_title
+        )
+        
+        if not indexed:
+            logger.warning("⚠️ Failed to index contract, proceeding with fallback")
+        
+        # 🚀 RETRIEVE RELEVANT CHUNKS
+        risk_analysis_query = f"""
+        Analyze this {contract_type} contract for:
+        - Governing law and jurisdiction clauses
+        - Liability and indemnity clauses
+        - Payment and termination terms
+        - Time and delay provisions
+        - Insurance and security requirements
+        - Dispute resolution mechanisms
+        - Compliance and regulatory risks
+        - Performance obligations
+        - Force majeure provisions
+        - Warranties and representations
+        - Intellectual property rights
+        - Confidentiality and data protection
+        """
+        
+        relevant_chunks = rag_service.retrieve_relevant_chunks(
+            contract_id=contract_id,
+            query=risk_analysis_query,
+            n_results=20
+        )
+        
+        # Build context from retrieved chunks (but don't expose chunk numbers to Claude)
+        if relevant_chunks:
+            context = "\n\n".join([chunk['text'] for chunk in relevant_chunks])
+            logger.info(f"✅ Retrieved {len(relevant_chunks)} relevant sections ({len(context)} chars)")
+        else:
+            # Fallback to full document if RAG fails
+            context = contract_content[:15000]
+            logger.warning("⚠️ Using fallback full document approach")
         
         # Initialize Claude service
         from app.services.claude_service import ClaudeService
@@ -4026,78 +3947,230 @@ async def analyze_contract_risks(
             raise HTTPException(status_code=503, detail="AI service unavailable")
         
         # Generate comprehensive risk analysis prompt
-        risk_prompt = f"""You are a Contract and Legal Risk Analyst with expertise in construction, oil & gas, and infrastructure contracts under Qatar jurisdiction.
+        risk_prompt = f"""You are an expert international Contract and Legal Risk Analyst with expertise in:
+- Commercial contracts across all jurisdictions
+- Construction, Infrastructure, Oil & Gas, Technology, Service Agreements
+- International trade and cross-border transactions
+- Common Law, Civil Law, and Sharia Law systems
+- International arbitration (ICC, LCIA, SIAC, DIFC Courts, etc.)
 
-Review and analyze the following contract in comprehensive detail. Prepare a thorough Risk Assessment Report.
+You are analyzing from the perspective of a **{profile_type}**.
 
-CONTRACT DETAILS:
-==================
+═══════════════════════════════════════════════════════
+CONTRACT DETAILS
+═══════════════════════════════════════════════════════
 Title: {contract_title}
 Type: {contract_type}
-Jurisdiction: Qatar (QFCRA, Qatar Civil Code)
+Profile/Role: {profile_type}
+Contract Value: {contract_value}
 
-CONTRACT CONTENT:
-==================
-{contract_content[:15000]}
+**IMPORTANT**: You must identify the governing law and jurisdiction from the contract content itself.
 
-ANALYSIS REQUIREMENTS:
-======================
-Provide a comprehensive risk analysis in the following JSON format:
+═══════════════════════════════════════════════════════
+RELEVANT CONTRACT SECTIONS FOR ANALYSIS
+═══════════════════════════════════════════════════════
+The following are the most relevant sections of the contract document:
+
+{context}
+
+═══════════════════════════════════════════════════════
+COMPREHENSIVE RISK ANALYSIS REQUIREMENTS
+═══════════════════════════════════════════════════════
+
+**STEP 1: IDENTIFY JURISDICTION AND GOVERNING LAW**
+First, carefully examine the contract to identify:
+- What is the governing law clause?
+- What jurisdiction is specified?
+- Where will disputes be resolved?
+- What legal system applies (Common Law, Civil Law, Sharia, Mixed)?
+
+**STEP 2: PERFORM COMPREHENSIVE RISK ANALYSIS**
+
+Analyze ALL of the following dimensions:
+
+**1. DOCUMENT STRUCTURE & PRECEDENCE**
+- Document hierarchy and order of precedence
+- Definitions and interpretation clauses
+- Integration and entire agreement clauses
+- Amendment and waiver provisions
+- Severability clauses
+
+**2. PARTIES & CAPACITY**
+- Party identification and legal capacity
+- Authority to execute
+- Corporate/entity structure considerations
+- Guarantees and parent company obligations
+
+**3. SCOPE OF WORK / SERVICES**
+- Detailed scope definition
+- Deliverables and acceptance criteria
+- Performance standards and KPIs
+- Interface obligations
+- Exclusions and limitations
+
+**4. FINANCIAL TERMS**
+- Contract price/value and payment structure
+- Payment terms and milestones
+- Retention and holdbacks
+- Price adjustment mechanisms
+- Currency and exchange rate risks
+
+**5. TIME & SCHEDULE**
+- Commencement and completion dates
+- Time for performance
+- Extension of time provisions
+- Liquidated damages for delay
+- Suspension rights
+
+**6. VARIATIONS & CHANGE CONTROL**
+- Variation definition and procedures
+- Change order process
+- Valuation methodology
+- Time and cost impacts
+
+**7. WARRANTIES & REPRESENTATIONS**
+- Express warranties
+- Implied warranties
+- Duration and scope
+- Warranty exclusions
+
+**8. LIABILITY & INDEMNITIES**
+- Liability caps and limitations
+- Carve-outs from caps (CRITICAL)
+- Indemnity provisions
+- Consequential loss exclusions
+- Third-party claims
+
+**9. INSURANCE & SECURITY**
+- Required insurance policies
+- Coverage amounts and terms
+- Additional insured status
+- Performance bonds
+- Bank guarantees
+- Letters of credit
+
+**10. INTELLECTUAL PROPERTY**
+- IP ownership
+- License grants
+- Background vs foreground IP
+- IP indemnities
+
+**11. CONFIDENTIALITY & DATA PROTECTION**
+- Confidentiality obligations
+- Data protection compliance (GDPR, local laws)
+- Personal data handling
+- Duration of obligations
+
+**12. TERMINATION**
+- Termination for cause
+- Termination for convenience
+- Termination procedures
+- Payment on termination
+- Survival clauses
+
+**13. FORCE MAJEURE**
+- Force majeure definition
+- Notice requirements
+- Consequences (time vs cost relief)
+- Long-stop provisions
+
+**14. DISPUTE RESOLUTION**
+- Governing law (identify from contract)
+- Arbitration vs litigation
+- Seat of arbitration
+- Arbitration rules
+- Expert determination
+- Escalation procedures
+
+**15. REGULATORY & COMPLIANCE**
+- Industry-specific regulations
+- Anti-bribery and corruption
+- Sanctions and export controls
+- Health, safety, and environment
+- Local content requirements
+- Sustainability obligations
+
+═══════════════════════════════════════════════════════
+OUTPUT FORMAT - RESPOND ONLY WITH THIS JSON STRUCTURE
+═══════════════════════════════════════════════════════
 
 {{
     "executive_summary": {{
-        "overview": "<2-3 sentence summary of overall contract risk position>",
-        "overall_score": <0-100 risk score>,
-        "overall_risk_rating": "<Critical/High/Medium/Low>",
-        "key_risk_areas": ["<Risk area 1>", "<Risk area 2>", "<Risk area 3>"]
+        "overview": "<3-4 paragraph executive summary. Identify and mention the jurisdiction and governing law prominently>",
+        "overall_score": <0-100 integer>,
+        "key_risk_areas": ["<Area 1>", "<Area 2>", "<Area 3>", "<Area 4>", "<Area 5>"],
+        "overall_risk_rating": "<High/Medium/Low>",
+        "jurisdiction_status": "<Clear/Ambiguous/Missing>"
     }},
     
     "contract_overview": {{
-        "parties_involved": "<Brief description of contracting parties>",
-        "contract_purpose": "<Main purpose and scope>",
-        "contract_value": "<Estimated or stated value>",
-        "contract_duration": "<Term and key dates>",
-        "key_obligations": ["<Obligation 1>", "<Obligation 2>"]
+        "parties_involved": ["<Party 1 with full details>", "<Party 2 with full details>"],
+        "purpose": "<2 paragraphs describing contract purpose>",
+        "contract_value": "{contract_value}",
+        "term_summary": "<Start/end dates, duration, renewal terms>",
+        "governing_law": "<Governing law identified from contract>",
+        "jurisdiction": "<Jurisdiction identified from contract>",
+        "dispute_mechanism": "<Arbitration/Court details from contract>",
+        "applicable_legal_system": "<Common Law/Civil Law/Sharia/Mixed/Not Clear>"
     }},
     
     "clause_wise_analysis": [
         {{
-            "clause_title": "<Clause name>",
-            "clause_number": "<Section/Article number>",
-            "risk_rating": "<high/medium/low>",
-            "risk_description": "<What makes this clause risky>",
-            "potential_impact": "<Business/financial/legal impact>",
-            "recommendations": "<Specific mitigation actions>"
+            "clause_number": "<Actual clause number from contract, e.g. 'Clause 17.6', 'Article 5.2', 'Section 3.1'>",
+            "clause_title": "<Title of the clause>",
+            "severity": "<high/medium/low>",
+            "clause_summary": "<2-3 paragraph summary>",
+            "risks": ["<Risk 1>", "<Risk 2>"],
+            "financial_impact": "<Impact analysis>",
+            "enforceability": "<Enforceability under identified governing law>",
+            "jurisdiction_specific_issues": "<Any jurisdiction-specific concerns>",
+            "mitigation_strategy": "<2-3 paragraphs>"
         }}
     ],
     
     "regulatory_compliance": {{
-        "qfcra_compliance": "<Yes/Partial/No>",
-        "qatar_civil_code_alignment": "<Yes/Partial/No>",
-        "data_protection_compliance": "<Yes/Partial/No>",
-        "industry_standards": "<Assessment of compliance with construction/O&G standards>",
+        "jurisdiction_analysis": "<Analysis specific to identified jurisdiction - 2-3 paragraphs>",
         "compliance_gaps": ["<Gap 1>", "<Gap 2>"],
-        "remediation_steps": ["<Step 1>", "<Step 2>"]
+        "required_amendments": ["<Amendment 1>", "<Amendment 2>"],
+        "licenses_permits": ["<License/Permit 1>", "<License/Permit 2>"],
+        "cross_border_considerations": ["<Consideration 1>", "<Consideration 2>"]
     }},
     
     "risk_mitigation": {{
-        "immediate_actions": ["<Action 1>", "<Action 2>"],
-        "contract_amendments_needed": ["<Amendment 1>", "<Amendment 2>"],
-        "protective_clauses_to_add": [
-            {{
-                "clause_type": "<Type>",
-                "suggested_wording": "<Proposed text>",
-                "purpose": "<Why needed>"
-            }}
-        ],
-        "commercial_balance_points": ["<Point 1>", "<Point 2>"]
+        "immediate_actions": ["<Action 1>", "<Action 2>", "<Action 3>"],
+        "negotiation_strategy": "<2-3 paragraphs>",
+        "fallback_positions": ["<Fallback 1>", "<Fallback 2>"],
+        "deal_breakers": ["<Deal breaker 1>", "<Deal breaker 2>"],
+        "alternative_structures": ["<Alternative 1>", "<Alternative 2>"]
     }},
     
     "negotiation_points": {{
-        "critical_items": ["<Item 1>", "<Item 2>"],
-        "areas_for_pushback": ["<Area 1>", "<Area 2>"],
-        "acceptable_compromises": ["<Compromise 1>", "<Compromise 2>"],
-        "deal_breakers": ["<Deal breaker 1>", "<Deal breaker 2>"]
+        "high_priority": [
+            {{
+                "issue": "<Issue>",
+                "current_position": "<Current - 2 paragraphs>",
+                "recommended_position": "<Recommended - 2 paragraphs>",
+                "fallback_options": ["<Option 1>", "<Option 2>"],
+                "rationale": "<1-2 paragraphs>",
+                "jurisdiction_angle": "<Jurisdiction-specific negotiation point if relevant>"
+            }}
+        ],
+        "medium_priority": [
+            {{
+                "issue": "<Issue>",
+                "current_position": "<Current>",
+                "recommended_position": "<Recommended>",
+                "fallback_options": ["<Option 1>", "<Option 2>"]
+            }}
+        ],
+        "suggested_new_clauses": [
+            {{
+                "clause_type": "<Type>",
+                "suggested_wording": "<Complete text>",
+                "purpose": "<2 paragraphs>",
+                "jurisdiction_compliant": "<Yes/No/Needs Review>"
+            }}
+        ]
     }},
     
     "risk_summary": {{
@@ -4107,35 +4180,59 @@ Provide a comprehensive risk analysis in the following JSON format:
         "total_risks": <count>,
         "risk_items": [
             {{
-                "type": "<Legal/Financial/Operational/Compliance/Termination/Liability>",
-                "issue": "<Brief title>",
-                "description": "<Detailed description>",
+                "type": "<Legal/Financial/Operational/Compliance/Jurisdictional>",
+                "issue": "<Title>",
+                "description": "<3-4 paragraphs - reference actual clause numbers like 'Clause 17.6' or 'Article 5', NOT chunk numbers>",
                 "severity": "<high/medium/low>",
                 "score": <1-100>,
-                "clause_reference": "<Clause ref>",
-                "mitigation": "<Mitigation strategy>",
-                "financial_impact": "<Potential cost if applicable>"
+                "clause_reference": "<Actual clause numbers from contract, e.g. 'Clause 17.6, Sub-Clause 18.9, Article 5'>",
+                "mitigation": "<2-3 paragraphs>",
+                "financial_impact": "<Impact analysis>",
+                "jurisdiction_impact": "<How identified jurisdiction affects this risk>"
             }}
         ],
-        "red_flags": ["<Critical red flag 1>", "<Critical red flag 2>"]
+        "red_flags": ["<Red flag 1>", "<Red flag 2>"]
     }},
     
     "conclusion": {{
         "key_findings": ["<Finding 1>", "<Finding 2>", "<Finding 3>"],
-        "final_risk_position": "<Overall assessment>",
+        "final_risk_position": "<3-4 paragraphs>",
         "execution_readiness": "<Yes/Conditional/No>",
         "conditions_for_execution": ["<Condition 1>", "<Condition 2>"],
-        "recommendations_priority": ["<Top recommendation 1>", "<Top recommendation 2>"],
-        "next_steps": ["<Step 1>", "<Step 2>"]
+        "recommendations_priority": ["<Top 1>", "<Top 2>", "<Top 3>"],
+        "next_steps": ["<Step 1>", "<Step 2>", "<Step 3>"],
+        "legal_counsel_required": "<Yes/No/Recommended>",
+        "jurisdiction_specific_advice": "<Recommendations specific to identified jurisdiction>"
     }}
 }}
 
-Analyze thoroughly and respond with ONLY the JSON object. Be comprehensive, specific, and actionable."""
+**CRITICAL INSTRUCTIONS - READ CAREFULLY:**
+1. **NEVER EVER mention "chunks" or "chunk numbers" anywhere in your response**
+2. **ALWAYS use actual clause numbers from the contract document** - look for references like:
+   - "Clause 17.6" or "Sub-Clause 18.9"
+   - "Article 5" or "Section 3.1"
+   - "Schedule 7" or "Appendix A"
+3. **If you cannot find specific clause numbers, use descriptive references:**
+   - "the liability limitation provisions"
+   - "termination section"
+   - "payment terms"
+   - "insurance requirements"
+4. **Write as if reading a physical contract** - reference sections naturally as they appear in the document
+5. **Be professional and business-focused** - this is for executives and legal teams, not technical users
+6. **Extract clause numbers directly from the text** - they should be visible in the contract content
+7. Provide 3-4 paragraphs for each major risk with specific clause citations
+8. Include financial impact ranges where possible
+9. Be actionable - every recommendation must be implementable
+10. Adapt analysis to the identified legal system (Common Law, Civil Law, Sharia, etc.)
+
+Analyze the contract now and provide the comprehensive JSON response."""
 
         # Call Claude API
+        logger.info(f"🤖 Calling Claude API with RAG-enhanced prompt ({len(risk_prompt)} chars)")
+        
         message = claude_service.client.messages.create(
             model=claude_service.model,
-            max_tokens=16000,
+            max_tokens=16384,
             temperature=0.3,
             messages=[{"role": "user", "content": risk_prompt}]
         )
@@ -4153,11 +4250,16 @@ Analyze thoroughly and respond with ONLY the JSON object. Be comprehensive, spec
         
         # Parse JSON
         claude_analysis = json.loads(ai_response)
-        logger.info(f"✅ AI analysis parsed successfully")
+        logger.info(f"✅ RAG-enhanced AI analysis parsed successfully")
         
         # Extract data
         executive_summary = claude_analysis.get("executive_summary", {})
         risk_summary = claude_analysis.get("risk_summary", {})
+        contract_overview = claude_analysis.get("contract_overview", {})
+        
+        # Extract jurisdiction and governing law from Claude's analysis
+        jurisdiction = contract_overview.get("jurisdiction", "Not specified")
+        governing_law = contract_overview.get("governing_law", "Not specified")
         
         overall_risk_score = executive_summary.get("overall_score", 50)
         risk_items = risk_summary.get("risk_items", [])
@@ -4167,18 +4269,15 @@ Analyze thoroughly and respond with ONLY the JSON object. Be comprehensive, spec
         medium_risks = risk_summary.get("medium_risks", len([r for r in risk_items if r.get("severity", "").lower() == "medium"]))
         low_risks = risk_summary.get("low_risks", len([r for r in risk_items if r.get("severity", "").lower() == "low"]))
         
+        logger.info(f"📍 Identified jurisdiction: {jurisdiction}, Governing law: {governing_law}")
+        
         # Format analysis
         formatted_analysis = {
             "overall_score": overall_risk_score,
             "risk_score": overall_risk_score,
             "risk_level": executive_summary.get("overall_risk_rating", "Medium"),
-            "executive_summary": {
-                "overview": executive_summary.get("overview", "Contract analyzed for potential risks."),
-                "overall_score": overall_risk_score,
-                "key_risk_areas": executive_summary.get("key_risk_areas", []),
-                "overall_risk_rating": executive_summary.get("overall_risk_rating", "Medium")
-            },
-            "contract_overview": claude_analysis.get("contract_overview", {}),
+            "executive_summary": executive_summary,
+            "contract_overview": contract_overview,
             "clause_wise_analysis": claude_analysis.get("clause_wise_analysis", []),
             "regulatory_compliance": claude_analysis.get("regulatory_compliance", {}),
             "risk_mitigation": claude_analysis.get("risk_mitigation", {}),
@@ -4187,17 +4286,21 @@ Analyze thoroughly and respond with ONLY the JSON object. Be comprehensive, spec
                 "high_risks": high_risks,
                 "medium_risks": medium_risks,
                 "low_risks": low_risks,
-                "total_risks": risk_summary.get("total_risks", high_risks + medium_risks + low_risks),
+                "total_risks": high_risks + medium_risks + low_risks,
                 "risk_items": risk_items,
                 "red_flags": risk_summary.get("red_flags", [])
             },
             "conclusion": claude_analysis.get("conclusion", {}),
-            "profile_type": request.get("profile_type", "General"),
+            "profile_type": profile_type,
+            "jurisdiction": jurisdiction,
+            "governing_law": governing_law,
+            "rag_enhanced": True,
+            "chunks_retrieved": len(relevant_chunks),
             "analyzed_at": datetime.now().isoformat(),
-            "analysis_version": "comprehensive_v2.0"
+            "analysis_version": "rag_universal_v1.0"
         }
         
-        # ✅ FIXED: Save to database with proper type handling
+        # Save to database
         save_query = text("""
             INSERT INTO ai_analysis_results 
             (contract_id, analysis_type, analysis_data, risk_score, created_at)
@@ -4212,7 +4315,7 @@ Analyze thoroughly and respond with ONLY the JSON object. Be comprehensive, spec
         })
         db.commit()
         
-        logger.info(f"✅ Risk analysis saved to database for contract {contract_id}")
+        logger.info(f"✅ RAG-enhanced risk analysis saved for contract {contract_id} (chunks: {len(relevant_chunks)}, jurisdiction: {jurisdiction})")
         
         return {
             "success": True,
@@ -4220,498 +4323,152 @@ Analyze thoroughly and respond with ONLY the JSON object. Be comprehensive, spec
             "contract_title": contract_title,
             "analysis": formatted_analysis,
             "ai_powered": True,
+            "rag_enhanced": True,
+            "chunks_used": len(relevant_chunks),
+            "jurisdiction": jurisdiction,
+            "governing_law": governing_law,
             "model": "claude-sonnet-4-20250514"
         }
         
     except json.JSONDecodeError as e:
         logger.error(f"❌ JSON parsing error: {str(e)}")
-        return {
-            "success": True,
-            "contract_id": contract_id,
-            "analysis": {
-                "overall_score": 50,
-                "risk_score": 50,
-                "risk_level": "Medium",
-                "high_risks": 0,
-                "medium_risks": 1,
-                "low_risks": 0,
-                "executive_summary": "Risk analysis completed with limited data. Manual review recommended.",
-                "risk_items": [{
-                    "type": "General",
-                    "issue": "AI Analysis Parsing Error",
-                    "description": "Unable to parse complete analysis. Manual review recommended.",
-                    "severity": "medium",
-                    "score": 50,
-                    "clause_reference": "General",
-                    "mitigation": "Conduct manual risk assessment"
-                }],
-                "red_flags": [],
-                "recommendations": []
-            },
-            "ai_powered": True,
-            "error": "Partial analysis completed"
-        }
+        raise HTTPException(status_code=500, detail="Failed to parse AI response")
     except Exception as e:
-        logger.error(f"❌ Error in risk analysis: {str(e)}")
+        logger.error(f"❌ Error in RAG-enhanced risk analysis: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-        
 
+        
+# app/api/contracts.py - COMPLETE FIXED FUNCTION
 
 @router.post("/risk-analysis-upload")
 async def upload_contract_for_risk_analysis(
     file: UploadFile = File(...),
-    profile_type: str = Form(...),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    profile_type: str = Form("client"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
-    """Upload contract file and perform immediate AI risk analysis with format preservation"""
-    
-    claude_service = ClaudeService()
-
+    """Upload contract file for risk analysis"""
     try:
         logger.info(f"📋 Risk Analysis Upload from user {current_user.email}")
         logger.info(f"📎 File: {file.filename}, Profile: {profile_type}")
         
         # Validate file type
-        allowed_extensions = {'.pdf', '.docx', '.doc', '.txt'}
         file_ext = os.path.splitext(file.filename)[1].lower()
+        if file_ext not in ['.pdf', '.docx', '.doc']:
+            raise HTTPException(status_code=400, detail="Only PDF and Word documents are supported")
         
-        if file_ext not in allowed_extensions:
-            raise HTTPException(
-                status_code=400,
-                detail=f"File type not supported. Allowed: {', '.join(allowed_extensions)}"
-            )
-        
-        # =====================================================
-        # Generate unique contract number with retry logic
-        # =====================================================
+        # Generate unique contract number
         year = datetime.now().year
-        month = datetime.now().month
-        contract_number = None
-        max_retries = 5
+        timestamp_suffix = int(datetime.now().timestamp() * 1000) % 100000
+        contract_number = f"CNT-{year}-{timestamp_suffix:05d}"
         
-        for attempt in range(max_retries):
-            try:
-                max_number_query = text("""
-                    SELECT contract_number 
-                    FROM contracts 
-                    WHERE contract_number LIKE :pattern 
-                    AND company_id = :company_id
-                    ORDER BY contract_number DESC
-                    LIMIT 1
-                """)
-                
-                result = db.execute(max_number_query, {
-                    "pattern": f"CNT-{year}-%",
-                    "company_id": current_user.company_id
-                }).fetchone()
-                
-                if result and result.contract_number:
-                    last_number = int(result.contract_number.split('-')[-1])
-                    new_number = last_number + 1
-                else:
-                    new_number = 1
-                
-                contract_number = f"CNT-{year}-{new_number:04d}"
-                logger.info(f"🔢 Generated contract number: {contract_number} (attempt {attempt + 1})")
-                
-                insert_contract = text("""
-                    INSERT INTO contracts (
-                        contract_number, contract_title, contract_type, profile_type,
-                        status, current_version, created_by, company_id, created_at, updated_at
-                    ) VALUES (
-                        :contract_number, :contract_title, :contract_type, :profile_type,
-                        'draft', 1, :created_by, :company_id, NOW(), NOW()
-                    )
-                """)
-                
-                contract_title = f"Risk Analysis - {file.filename}"
-                
-                db.execute(insert_contract, {
-                    "contract_number": contract_number,
-                    "contract_title": contract_title,
-                    "contract_type": "risk_analysis",
-                    "profile_type": profile_type,
-                    "created_by": current_user.id,
-                    "company_id": current_user.company_id
-                })
-                db.commit()
-                
-                logger.info(f"✅ Contract created with number: {contract_number}")
-                break
-                
-            except Exception as e:
-                db.rollback()
-                if "Duplicate entry" in str(e) and attempt < max_retries - 1:
-                    logger.warning(f"⚠️ Duplicate contract number {contract_number}, retrying... (attempt {attempt + 1})")
-                    continue
-                elif attempt == max_retries - 1:
-                    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-                    contract_number = f"CNT-{year}-{timestamp[-6:]}"
-                    logger.warning(f"⚠️ Using timestamp-based contract number: {contract_number}")
-                    
-                    db.execute(insert_contract, {
-                        "contract_number": contract_number,
-                        "contract_title": contract_title,
-                        "contract_type": "risk_analysis",
-                        "profile_type": profile_type,
-                        "created_by": current_user.id,
-                        "company_id": current_user.company_id
-                    })
-                    db.commit()
-                    logger.info(f"✅ Contract created with timestamp-based number: {contract_number}")
-                    break
-                else:
-                    raise
+        logger.info(f"🔢 Generated contract number: {contract_number}")
         
-        # Get the inserted contract ID
-        contract_id_query = text("""
-            SELECT id FROM contracts 
-            WHERE contract_number = :contract_number 
-            AND company_id = :company_id
-        """)
-        contract_result = db.execute(contract_id_query, {
-            "contract_number": contract_number,
-            "company_id": current_user.company_id
-        }).fetchone()
-        
-        if not contract_result:
-            raise HTTPException(status_code=500, detail="Failed to create contract")
-        
-        contract_id = contract_result.id
-        logger.info(f"✅ Contract created with ID: {contract_id}")
-        
-        # Create upload directory
-        upload_base = os.path.join("app", "uploads", "contracts", str(contract_id))
-        os.makedirs(upload_base, exist_ok=True)
-        
-        # Save file
-        file_path = os.path.join(upload_base, file.filename)
-        file_content = await file.read()
-        with open(file_path, "wb") as f:
-            f.write(file_content)
-        
-        logger.info(f"💾 File saved to: {file_path}")
-        
-        # =====================================================
-        # EXTRACT TEXT USING DocumentParser
-        # =====================================================
-        logger.info(f"📄 Extracting text from {file_ext} file...")
-        
-        from app.utils.document_parser import DocumentParser
-        
-        extracted_text = DocumentParser.extract_text(str(file_path))
-        
-        if not extracted_text or len(extracted_text.strip()) < 10:
-            logger.warning(f"⚠️ No text extracted from file, using placeholder")
-            extracted_text = f"<p>Unable to extract text from {file.filename}. Please check the file format.</p>"
-        else:
-            logger.info(f"✅ Extracted {len(extracted_text)} characters from document")
-        
-        # Format the extracted content as HTML
-        file_size_kb = len(file_content) / 1024
-        
-        html_content = f"""
-        <div class="contract-document" style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            
-            <!-- Document Content -->
-            <div class="document-content" style="background: white;">
-                <div style="white-space: pre-wrap; word-wrap: break-word; font-size: 14px; line-height: 1.8;">
-{extracted_text}
-                </div>
-            </div>
-           
-        </div>
-        """
-        
-        # Get plain text for AI analysis
-        import re
-        extracted_text_plain = re.sub('<[^<]+?>', '', extracted_text)
-        extracted_text_plain = re.sub(r'\s+', ' ', extracted_text_plain).strip()
-        
-        logger.info(f"📊 Extracted: {len(extracted_text_plain)} chars (HTML: {len(html_content)} chars)")
-        
-        # Save contract version with formatted HTML content
-        insert_version = text("""
-            INSERT INTO contract_versions (
-                contract_id, version_number, version_type, contract_content,
-                change_summary, created_by, created_at
+        # Create contract record
+        from sqlalchemy import text as sql_text
+        contract_query = sql_text("""
+            INSERT INTO contracts (
+                contract_number, contract_title, contract_type, 
+                company_id, created_by, status, created_at, updated_at
             ) VALUES (
-                :contract_id, 1, 'draft', :contract_content,
-                :change_summary, :created_by, NOW()
+                :contract_number, :contract_title, :contract_type,
+                :company_id, :created_by, 'draft', NOW(), NOW()
             )
         """)
         
-        db.execute(insert_version, {
-            "contract_id": contract_id,
-            "contract_content": html_content,
-            "change_summary": f"Initial upload: {file.filename} - {len(extracted_text_plain):,} characters extracted",
+        db.execute(contract_query, {
+            "contract_number": contract_number,
+            "contract_title": f"Risk Analysis - {file.filename}",
+            "contract_type": "risk_analysis",
+            "company_id": current_user.company_id,
             "created_by": current_user.id
         })
         db.commit()
         
-        logger.info("✅ Contract version saved with preserved formatting")
+        # Get created contract ID
+        contract_id_result = db.execute(sql_text("""
+            SELECT id FROM contracts WHERE contract_number = :contract_number
+        """), {"contract_number": contract_number}).fetchone()
         
-        # =====================================================
-        # AI-POWERED COMPREHENSIVE RISK ANALYSIS WITH CLAUDE
-        # =====================================================
-        try:
-            logger.info("🤖 Starting comprehensive AI risk analysis with Claude...")
-            
-            if not claude_service or not claude_service.client:
-                logger.warning("⚠️ Claude service not available - skipping AI analysis")
-                raise Exception("Claude service not initialized")
-            
-            # Build comprehensive risk analysis prompt
-            risk_prompt = f"""You are a Contract and Legal Risk Analyst with expertise in {profile_type}, contract law, and regulatory compliance under Qatar jurisdiction.
-
-Review and analyze the following contract, agreement(s), and all related documents in detail. Prepare a comprehensive Risk Assessment (Analysis) Report. The report should identify contractual, legal, regulatory, and compliance risks and be prepared in accordance with the applicable governing law and jurisdiction stated in the contract.
-
-**CONTRACT TEXT:**
-{extracted_text_plain[:15000]}
-
-**ANALYSIS PERSPECTIVE:** {profile_type}
-**JURISDICTION:** Qatar (QFCRA compliance requirements apply)
-
-The report must be structured, professional, and detailed. Provide your analysis in the following JSON format ONLY (no other text, no markdown):
-
-{{
-    "executive_summary": {{
-        "overview": "<High-level overview of the contract in 2-3 sentences>",
-        "key_risk_areas": ["<Risk area 1>", "<Risk area 2>", "<Risk area 3>"],
-        "overall_risk_rating": "<Low/Medium/High>",
-        "overall_score": <number 0-100, where 100 is highest risk>
-    }},
-    
-    "contract_overview": {{
-        "parties_involved": ["<Party 1 name and role>", "<Party 2 name and role>"],
-        "purpose": "<Purpose and scope of the agreement>",
-        "contract_value": "<Contract value if mentioned, or 'Not specified'>",
-        "term_summary": "<Contract duration and key dates>",
-        "termination_summary": "<Termination conditions summary>",
-        "governing_law": "<Applicable law and jurisdiction>"
-    }},
-    
-    "clause_wise_analysis": [
-        {{
-            "clause_number": "<Clause reference e.g., 'Clause 5.2' or 'Payment Terms'>",
-            "clause_title": "<Brief title of the clause>",
-            "clause_summary": "<What the clause says>",
-            "risks_identified": ["<Risk 1>", "<Risk 2>"],
-            "risk_type": "<Legal/Financial/Operational/Compliance/Termination/Liability>",
-            "severity": "<high/medium/low>",
-            "enforceability": "<Assessment of enforceability under Qatar law>",
-            "ambiguities": ["<Ambiguous point 1>", "<Ambiguous point 2>"],
-            "one_sided_provisions": ["<One-sided provision if any>"],
-            "missing_provisions": ["<What should be added>"]
-        }}
-    ],
-    
-    "regulatory_compliance": {{
-        "applicable_laws": ["<Law/Regulation 1>", "<Law/Regulation 2>"],
-        "qfcra_compliance": ["<QFCRA requirement 1>", "<QFCRA requirement 2>"],
-        "compliance_gaps": ["<Gap 1>", "<Gap 2>"],
-        "regulatory_exposure": "<Assessment of regulatory risks>",
-        "cross_border_risks": ["<Cross-border risk if any>"],
-        "industry_specific_requirements": ["<Industry requirement 1>"]
-    }},
-    
-    "risk_mitigation": {{
-        "immediate_actions": ["<Action 1>", "<Action 2>"],
-        "clause_enhancements": [
-            {{
-                "clause": "<Clause reference>",
-                "current_issue": "<What's wrong>",
-                "suggested_enhancement": "<How to improve it>",
-                "legal_rationale": "<Why this change is needed>"
-            }}
-        ],
-        "safeguards_needed": ["<Safeguard 1>", "<Safeguard 2>"],
-        "insurance_requirements": ["<Insurance type if needed>"],
-        "monitoring_requirements": ["<What needs monitoring>"]
-    }},
-    
-    "negotiation_points": {{
-        "critical_issues": [
-            {{
-                "issue": "<Critical issue requiring renegotiation>",
-                "current_position": "<Current contract position>",
-                "recommended_position": "<What should be negotiated>",
-                "priority": "<High/Medium/Low>",
-                "fallback_options": ["<Alternative 1>", "<Alternative 2>"]
-            }}
-        ],
-        "suggested_clauses": [
-            {{
-                "clause_type": "<Type of clause to add>",
-                "suggested_wording": "<Proposed clause text>",
-                "purpose": "<Why this clause is needed>"
-            }}
-        ],
-        "commercial_balance_points": ["<Balance point 1>", "<Balance point 2>"]
-    }},
-    
-    "risk_summary": {{
-        "high_risks": <count>,
-        "medium_risks": <count>,
-        "low_risks": <count>,
-        "total_risks": <count>,
-        "risk_items": [
-            {{
-                "type": "<Legal/Financial/Operational/Compliance/Termination/Liability>",
-                "issue": "<Brief issue title>",
-                "description": "<Detailed description>",
-                "severity": "<high/medium/low>",
-                "score": <1-100>,
-                "clause_reference": "<Clause ref>",
-                "mitigation": "<Mitigation strategy>",
-                "financial_impact": "<Potential cost/loss if applicable>"
-            }}
-        ],
-        "red_flags": ["<Critical red flag 1>", "<Critical red flag 2>"]
-    }},
-    
-    "conclusion": {{
-        "key_findings": ["<Finding 1>", "<Finding 2>", "<Finding 3>"],
-        "final_risk_position": "<Overall assessment of contract risk>",
-        "execution_readiness": "<Yes/Conditional/No>",
-        "conditions_for_execution": ["<Condition 1>", "<Condition 2>"],
-        "recommendations_priority": ["<Top recommendation 1>", "<Top recommendation 2>"],
-        "next_steps": ["<Step 1>", "<Step 2>"]
-    }}
-}}
-
-Analyze thoroughly and respond with ONLY the JSON object. Be comprehensive, specific, and actionable."""
-
-            # Call Claude API
-            message = claude_service.client.messages.create(
-                model=claude_service.model,
-                max_tokens=8000,  # Increased for comprehensive analysis
-                temperature=0.3,
-                messages=[{"role": "user", "content": risk_prompt}]
+        contract_id = contract_id_result[0]
+        logger.info(f"✅ Contract created with ID: {contract_id}")
+        
+        # Save uploaded file
+        upload_dir = f"app/uploads/contracts/{contract_id}"
+        os.makedirs(upload_dir, exist_ok=True)
+        file_path = os.path.join(upload_dir, file.filename)
+        
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        logger.info(f"💾 File saved to: {file_path}")
+        
+        # Extract text from document
+        logger.info(f"📄 Extracting text from {file_ext} file...")
+        
+        plain_text = ""
+        html_content = ""
+        
+        if file_ext == '.pdf':
+            import pdfplumber
+            with pdfplumber.open(file_path) as pdf:
+                logger.info(f"PDF has {len(pdf.pages)} pages")
+                text_parts = []
+                for page in pdf.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text_parts.append(page_text)
+                plain_text = '\n'.join(text_parts)
+                logger.info(f"pdfplumber extracted {len(plain_text)} characters")
+        
+        elif file_ext in ['.docx', '.doc']:
+            import docx2txt
+            plain_text = docx2txt.process(file_path)
+            logger.info(f"docx2txt extracted {len(plain_text)} characters")
+        
+        if not plain_text:
+            raise HTTPException(status_code=400, detail="Failed to extract content from document")
+        
+        # Convert to HTML for storage
+        html_content = f"""
+        <div class="contract-document" style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            {plain_text.replace(chr(10), '<br>')}
+        </div>
+        """
+        
+        logger.info(f"✅ Extracted {len(plain_text)} characters from document")
+        
+        # Save contract version
+        version_query = sql_text("""
+            INSERT INTO contract_versions (
+                contract_id, version_number, contract_content, 
+                created_by, created_at
+            ) VALUES (
+                :contract_id, 1, :contract_content, 
+                :created_by, NOW()
             )
-            
-            # Extract response text
-            ai_response = message.content[0].text.strip()
-            logger.info(f"✅ Claude response received ({len(ai_response)} chars)")
-            
-            # Clean up response - remove markdown code blocks if present
-            if ai_response.startswith("```"):
-                ai_response = ai_response.split("```")[1]
-                if ai_response.startswith("json"):
-                    ai_response = ai_response[4:]
-                ai_response = ai_response.strip()
-            
-            # Parse JSON response
-            claude_analysis = json.loads(ai_response)
-            logger.info(f"✅ AI analysis parsed successfully")
-            
-            # Extract and validate data structure
-            executive_summary = claude_analysis.get("executive_summary", {})
-            risk_summary = claude_analysis.get("risk_summary", {})
-            
-            overall_risk_score = executive_summary.get("overall_score", 50)
-            risk_items = risk_summary.get("risk_items", [])
-            
-            # Count risks by severity
-            high_risks = risk_summary.get("high_risks", len([r for r in risk_items if r.get("severity", "").lower() == "high"]))
-            medium_risks = risk_summary.get("medium_risks", len([r for r in risk_items if r.get("severity", "").lower() == "medium"]))
-            low_risks = risk_summary.get("low_risks", len([r for r in risk_items if r.get("severity", "").lower() == "low"]))
-            
-            # Format the comprehensive analysis for storage
-            formatted_analysis = {
-                "overall_score": overall_risk_score,
-                "risk_score": overall_risk_score,
-                "risk_level": executive_summary.get("overall_risk_rating", "Medium"),
-                
-                # Executive Summary
-                "executive_summary": {
-                    "overview": executive_summary.get("overview", "Contract analyzed for potential risks."),
-                    "key_risk_areas": executive_summary.get("key_risk_areas", []),
-                    "overall_risk_rating": executive_summary.get("overall_risk_rating", "Medium")
-                },
-                
-                # Contract Overview
-                "contract_overview": claude_analysis.get("contract_overview", {}),
-                
-                # Clause-Wise Analysis
-                "clause_wise_analysis": claude_analysis.get("clause_wise_analysis", []),
-                
-                # Regulatory & Compliance
-                "regulatory_compliance": claude_analysis.get("regulatory_compliance", {}),
-                
-                # Risk Mitigation
-                "risk_mitigation": claude_analysis.get("risk_mitigation", {}),
-                
-                # Negotiation Points
-                "negotiation_points": claude_analysis.get("negotiation_points", {}),
-                
-                # Risk Summary
-                "risk_summary": {
-                    "high_risks": high_risks,
-                    "medium_risks": medium_risks,
-                    "low_risks": low_risks,
-                    "total_risks": risk_summary.get("total_risks", high_risks + medium_risks + low_risks),
-                    "risk_items": risk_items,
-                    "red_flags": risk_summary.get("red_flags", [])
-                },
-                
-                # Conclusion
-                "conclusion": claude_analysis.get("conclusion", {}),
-                
-                # Metadata
-                "profile_type": profile_type,
-                "analyzed_at": datetime.now().isoformat(),
-                "analysis_version": "comprehensive_v2.0"
-            }
-            
-            # Save comprehensive analysis to database
-            save_analysis = text("""
-                INSERT INTO ai_analysis_results 
-                (contract_id, analysis_type, analysis_data, risk_score, created_at)
-                VALUES (:contract_id, 'risk_analysis', :analysis_data, :risk_score, NOW())
-            """)
-            
-            db.execute(save_analysis, {
-                "contract_id": contract_id,
-                "analysis_data": json.dumps(formatted_analysis),
-                "risk_score": overall_risk_score
-            })
-            db.commit()
-            
-            logger.info(f"✅ Comprehensive AI risk analysis saved (Risk Score: {overall_risk_score}, Total Risks: {high_risks + medium_risks + low_risks})")
-            
-        except json.JSONDecodeError as json_err:
-            logger.error(f"❌ JSON parsing error: {str(json_err)}")
-            logger.error(f"Response was: {ai_response[:500]}...")
-            # Continue without AI analysis - contract is still saved
-            
-        except Exception as ai_error:
-            logger.error(f"❌ AI analysis error: {str(ai_error)}")
-            import traceback
-            logger.error(traceback.format_exc())
-            # Continue without AI analysis - user can run it later
+        """)
         
-        # Return success response
+        db.execute(version_query, {
+            "contract_id": contract_id,
+            "contract_content": html_content,
+            "created_by": current_user.id
+        })
+        db.commit()
+        
+        logger.info(f"✅ Contract version saved")
+        
+        # Return contract ID - frontend will call /risk-analysis/{contract_id}
         return {
             "success": True,
+            "message": "Contract uploaded successfully. Starting analysis...",
             "contract_id": contract_id,
             "contract_number": contract_number,
-            "message": f"Contract '{file.filename}' uploaded and analyzed successfully",
-            "file_path": file_path,
-            "extracted_length": len(extracted_text_plain),
-            "formatted": True,
-            "content_extracted": len(extracted_text_plain) > 10,
-            "analysis_comprehensive": True
+            "contract_title": f"Risk Analysis - {file.filename}"
         }
         
-    except HTTPException as he:
-        raise he
     except Exception as e:
-        db.rollback()
         logger.error(f"❌ Error in risk analysis upload: {str(e)}")
-        import traceback
-        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
         
 # =====================================================
@@ -6634,11 +6391,10 @@ async def update_contract_metadata(
 
         # Verify contract exists and belongs to user's company
         contract_check = db.execute(text("""
-            SELECT id, contract_number, is_ai_generated, content
-            FROM contracts c
-            LEFT JOIN contract_versions cv ON c.id = cv.contract_id AND cv.version_number = c.current_version
-            WHERE c.id = :contract_id 
-            AND c.company_id = :company_id
+          SELECT c.id, c.contract_number, c.is_ai_generated
+          FROM contracts c
+          WHERE c.id = :contract_id 
+          AND c.company_id = :company_id
         """), {
             "contract_id": contract_id,
             "company_id": current_user.company_id

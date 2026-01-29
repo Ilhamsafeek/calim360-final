@@ -1769,6 +1769,47 @@
         .modal-overlay * {
             pointer-events: auto !important;
         } */
+
+
+            /* Tooltip for buttons with data-tooltip attribute */
+    /* Tooltip for New Contract button - Bottom Right positioning with rich text */
+    .tooltip-new-contract {
+        position: relative;
+    }
+
+    .tooltip-new-contract::before {
+        content: "✨ START YOUR JOURNEY HERE\AGo ahead and create a Contract.\ASee how easy it is. You can choose from a variety of different templates or put one together in a few simple steps using our AI algorithm, or even upload one of your own.";
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        background: linear-gradient(135deg, #206bc4, #1a5ba8);
+        color: white;
+        padding: 16px 20px;
+        border-radius: 12px;
+        font-size: 14px;
+        line-height: 1.8;
+        white-space: pre-line;
+        width: 350px;
+        text-align: left;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+        transform: translateY(-5px);
+        z-index: 1000;
+        box-shadow: 0 8px 24px rgba(32, 107, 196, 0.25), 0 2px 8px rgba(0, 0, 0, 0.1);
+        pointer-events: none;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* REMOVED THE ::after ARROW - NO MORE TRIANGLE */
+
+    .tooltip-new-contract:hover::before {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    
     </style>
 
     {% block head %}{% endblock %}
@@ -2378,8 +2419,6 @@
         `;
             }
         }
-
-
 
         function showTypingIndicator() {
             const messagesContainer = document.getElementById('chatbotMessages');
