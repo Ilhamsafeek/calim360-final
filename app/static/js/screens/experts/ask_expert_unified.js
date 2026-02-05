@@ -104,7 +104,7 @@
                 sessions = data.data;
             }
             
-            console.log('✅ Found', sessions.length, 'consultations');
+            console.log(' Found', sessions.length, 'consultations');
             
             if (sessions.length === 0) {
                 chatList.innerHTML = `
@@ -141,7 +141,7 @@ function createChatItem(session) {
     div.className = 'chat-item';
     div.dataset.sessionId = session.session_id;
     
-    // ✅ FIXED: Simple click handler that passes sessionId directly
+    //  FIXED: Simple click handler that passes sessionId directly
     div.onclick = function() {
         openChat(session.session_id);
     };
@@ -206,21 +206,13 @@ function escapeHtml(text) {
 // =====================================================
 function updateChatHeader(sessionData) {
     const expertName = sessionData.expert_name || 'Expert';
-    const expertSpecialization = sessionData.expert_specialization || 'General';
-    const isAvailable = sessionData.expert_available !== false;
+    const subject = sessionData.subject || 'No subject';
     
     const expertNameEl = document.getElementById('expertName');
-    const expertSpecEl = document.getElementById('expertSpecialization');
-    const expertStatusEl = document.getElementById('expertStatus');
-    const statusDot = document.getElementById('statusDot');
+    const subjectEl = document.getElementById('consultationSubject');
     
     if (expertNameEl) expertNameEl.textContent = expertName;
-    if (expertSpecEl) expertSpecEl.textContent = expertSpecialization;
-    if (expertStatusEl) expertStatusEl.textContent = isAvailable ? 'Available' : 'Offline';
-    
-    if (statusDot) {
-        statusDot.className = isAvailable ? 'status-dot' : 'status-dot offline';
-    }
+    if (subjectEl) subjectEl.textContent = subject;
     
     // Set avatar
     const avatar = document.getElementById('expertAvatar');
@@ -229,14 +221,13 @@ function updateChatHeader(sessionData) {
             avatar.innerHTML = `<img src="${sessionData.expert_picture}" alt="${expertName}">`;
         } else {
             const initials = expertName.split(' ').map(n => n[0]).join('').toUpperCase();
-            avatar.innerHTML = initials;
+            avatar.textContent = initials;
         }
     }
 }
 
-
 async function openChat(sessionIdOrEvent) {
-    // ✅ Handle both direct sessionId and event object
+    //  Handle both direct sessionId and event object
     let sessionId;
     
     if (typeof sessionIdOrEvent === 'string') {
@@ -469,7 +460,7 @@ async function loadMessages(sessionId) {
                 throw new Error('Failed to send message');
             }
             
-            console.log('✅ Message sent successfully');
+            console.log(' Message sent successfully');
             
             // Clear input
             input.value = '';
@@ -655,7 +646,7 @@ async function loadMessages(sessionId) {
             }
             
             const data = await response.json();
-            console.log('✅ Consultation created:', data);
+            console.log(' Consultation created:', data);
             
             // Close both modals
             closeConsultationModal();
@@ -693,7 +684,7 @@ async function loadMessages(sessionId) {
             const data = await response.json();
             
             allExperts = data.experts || [];
-            console.log(`✅ Loaded ${allExperts.length} experts`);
+            console.log(` Loaded ${allExperts.length} experts`);
             
             renderExperts(allExperts);
             
@@ -760,7 +751,7 @@ async function loadMessages(sessionId) {
             grid.appendChild(card);
         });
         
-        console.log('✅ Expert cards rendered successfully');
+        console.log(' Expert cards rendered successfully');
     }
 
     // =====================================================
@@ -786,16 +777,6 @@ async function loadMessages(sessionId) {
                 </div>
             </div>
             <div class="expert-card-specialization">${specialization}</div>
-            <div class="expert-card-stats">
-                <span class="expert-card-stat">
-                    <i class="ti ti-star-filled" style="color: #ffc107;"></i>
-                    ${rating.toFixed(1)}
-                </span>
-                <span class="expert-card-stat">
-                    <i class="ti ti-message-circle"></i>
-                    ${consultations} consultations
-                </span>
-            </div>
         `;
         
         // Click handler - open consultation modal instead of prompts
@@ -878,7 +859,7 @@ async function loadMessages(sessionId) {
     // NOTIFICATION HELPERS
     // =====================================================
     function showSuccess(message) {
-        console.log('✅ Success:', message);
+        console.log(' Success:', message);
         alert(message);
     }
 

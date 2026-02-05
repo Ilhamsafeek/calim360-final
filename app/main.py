@@ -516,7 +516,7 @@ app.include_router(subscription_router.router)
 app.include_router(registration_router)
 app.include_router(login_router)
 app.include_router(logout_router)
-app.include_router(password_recovery_router)  # <-- ADD THIS LINE
+app.include_router(password_recovery_router)
 
 logger.info(" Auth routers registered")
 
@@ -1399,6 +1399,28 @@ async def ask_expert_page(
         "user": user_context,
         "subscriptions": user_context['subscriptions'],
     })
+
+
+@app.get("/expert-consultations")
+async def expert_consultations_page(
+    request: Request,
+    expert: Optional[str] = Query(None),
+    action: Optional[str] = Query(None),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Expert's view of their assigned consultations"""
+    if current_user.user_type not in ['consultant', 'expert']:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    user_context = get_user_context_with_subscriptions(current_user, db)
+    return templates.TemplateResponse("screens/experts/expert_dashboard.html", {
+       "request": request,
+       "current_page": "experts",
+       "user": user_context,
+       "subscriptions": user_context['subscriptions'],
+    })
+
 
 @app.get("/consultation-room", response_class=HTMLResponse)
 async def consultation_room_page(

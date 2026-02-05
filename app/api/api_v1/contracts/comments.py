@@ -228,7 +228,7 @@ async def delete_comment(
         db.execute(delete_query, {'comment_id': comment_id})
         db.commit()
         
-        logger.info(f"✅ Comment {comment_id} deleted successfully")
+        logger.info(f" Comment {comment_id} deleted successfully")
         
         return {
             'success': True,
@@ -291,7 +291,6 @@ async def update_comment(
 
 
 # =====================================================
-# Add this to app/api/api_v1/contracts/comments.py
 # API endpoint to track changes automatically
 # =====================================================
 

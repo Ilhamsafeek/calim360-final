@@ -235,7 +235,7 @@ async def get_pending_actions(
         except Exception as e:
             logger.warning(f"Could not query signatories table: {e}")
         
-        logger.info(f"✅ Found {len(pending_actions)} pending actions for user {user_id}")
+        logger.info(f" Found {len(pending_actions)} pending actions for user {user_id}")
         
         return {
             "success": True,

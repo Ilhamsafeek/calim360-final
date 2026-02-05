@@ -356,6 +356,7 @@ async function loadTemplates() {
     }
 }
 
+
 function createTemplateCard(template) {
     const card = document.createElement('div');
     card.className = 'template-card';
@@ -393,7 +394,7 @@ function createTemplateCard(template) {
         'saas': 'cloud',
         'maintenance': 'tool',
         'hosting': 'server',
-        'partnership': 'handshake',
+        'partnership': 'link',
         'jv': 'building-community',
         'mou': 'file-certificate',
         'loan': 'coin',
@@ -418,20 +419,28 @@ function createTemplateCard(template) {
         'accounting': 'calculator',
         'audit': 'report-search',
         'training': 'presentation',
-        'education': 'book'
+        'education': 'book',
     };
 
     const icon = iconMap[template.type] || 'file-text';
 
+   const languageBadge = template.language === 'ar' 
+    ? '<span class="language-badge lang-ar">عر</span>'
+    : '<span class="language-badge lang-en">EN</span>';
+    
     card.innerHTML = `
-        <div class="template-icon"><i class="ti ti-${icon}"></i></div>
-        <div class="template-info">
-            <div class="template-name">${template.name}</div>
-        </div>
-    `;
+    ${languageBadge}
+    <div class="template-icon"><i class="ti ti-${icon}"></i></div>
+    <div class="template-info">
+        <div class="template-name">${template.name}</div>
+    </div>
+`;
 
     return card;
 }
+
+
+
 
 function selectTemplate(element) {
     console.log(' Template selected');
@@ -512,7 +521,6 @@ function populateProjectSelect(projects) {
 
     console.log(` Populated ${projects.length} projects`);
 
-    // 🔥 ADD EVENT LISTENER - Add these 2 lines
     projectSelect.removeEventListener('change', handleProjectSelectChange);
     projectSelect.addEventListener('change', handleProjectSelectChange);
 }
@@ -1170,7 +1178,7 @@ async function saveContract() {
                 end_date: endDate,
                 contract_value: contractValue ? parseFloat(contractValue) : null,
                 currency: currency,
-                tags: document.getElementById('tagsSelect')?.value || null,  // ✅ Send as string, not array
+                tags: document.getElementById('tagsSelect')?.value || null,  //  Send as string, not array
                 selected_clauses: selectedClauses ?
                     (Array.isArray(selectedClauses) ?
                         selectedClauses.reduce((acc, clause) => {
@@ -1248,7 +1256,7 @@ async function saveContract() {
                 project_id: projectId && projectId !== 'create_new' && projectId !== ''
                     ? parseInt(projectId)
                     : null,
-                tags: document.getElementById('tagsSelect')?.value || null,  // ✅ Send as string, not array  // ✅ NEW
+                tags: document.getElementById('tagsSelect')?.value || null,  //  Send as string, not array  //  NEW
                 status: 'draft'
             };
 
@@ -1481,7 +1489,7 @@ async function createContractFromTemplate(templateId) {
             profile_type: selectedProfile || 'contractor',
             template_id: parseInt(templateId),
             project_id: document.getElementById('projectSelect')?.value || null,
-            tags: document.getElementById('tagsSelect')?.value ? [document.getElementById('tagsSelect').value] : []  // ✅ NEW
+            tags: document.getElementById('tagsSelect')?.value ? [document.getElementById('tagsSelect').value] : []  //  NEW
         };
 
         console.log(' Creating contract:', contractData);

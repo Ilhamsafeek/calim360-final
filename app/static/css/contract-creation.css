@@ -1259,3 +1259,29 @@
 #stream-status i {
     animation: pulse 1.5s ease-in-out infinite;
 }
+
+.language-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    z-index: 1;
+}
+
+.language-badge.lang-en {
+    background: #8db7f6;
+    color: white;
+}
+
+.language-badge.lang-ar {
+    background: #71a371;
+    color: white;
+}

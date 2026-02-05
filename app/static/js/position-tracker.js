@@ -62,21 +62,21 @@ window.PositionTracker = {
         // Strategy 1: Try exact position match first (fastest)
         const exactMatch = this._tryExactPosition(container, anchor);
         if (exactMatch) {
-            console.log('✅ Found by exact position');
+            console.log(' Found by exact position');
             return exactMatch;
         }
         
         // Strategy 2: Try DOM path (survives most edits)
         const pathMatch = this._tryDOMPath(container, anchor);
         if (pathMatch) {
-            console.log('✅ Found by DOM path');
+            console.log(' Found by DOM path');
             return pathMatch;
         }
         
         // Strategy 3: Try context matching (handles moved text)
         const contextMatch = this._tryContextMatch(container, anchor);
         if (contextMatch) {
-            console.log('✅ Found by context');
+            console.log(' Found by context');
             return contextMatch;
         }
         
@@ -471,4 +471,4 @@ window.PositionTracker = {
     }
 };
 
-console.log('✅ Position Tracker loaded');
+console.log(' Position Tracker loaded');

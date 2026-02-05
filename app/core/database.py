@@ -129,7 +129,6 @@ def init_db():
             # Disable foreign key checks
             conn.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
             
-            # Create only the tables defined in your models
             # Don't drop existing tables to preserve data
             Base.metadata.create_all(bind=conn, checkfirst=True)
             

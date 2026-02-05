@@ -41,7 +41,6 @@ router = APIRouter(prefix="/api/contracts", tags=["Contract Drafting"])
 
 
 
-# Add this schema with your other schemas
 class CommentCreateRequest(BaseModel):
     contract_id: int
     comment_text: str

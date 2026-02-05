@@ -49,7 +49,7 @@ class Contract(Base):
     auto_renewal = Column(Boolean, default=False)
     renewal_period_months = Column(Integer)
     renewal_notice_days = Column(Integer)
-    # ✅ Single tag column
+    #  Single tag column
     single_tag = Column(String(100), nullable=True)
     
     # Status

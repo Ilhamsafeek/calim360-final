@@ -200,7 +200,7 @@ function highlightCommentsInDocument() {
         if (highlightComment(content, comment)) successCount++;
     });
 
-    console.log('✅ Highlighted', successCount, '/', window.bcAllComments.length, 'comments');
+    console.log(' Highlighted', successCount, '/', window.bcAllComments.length, 'comments');
 
     setTimeout(function () { window.bcIsHighlighting = false; }, 300);
 }
@@ -922,7 +922,7 @@ window.showBubble = showBubble;
 window.loadComments = loadComments;
 window.highlightCommentsInDocument = highlightCommentsInDocument;
 
-console.log('✅ Bubble comments loaded');
+console.log(' Bubble comments loaded');
 
 // =====================================================
 // TRACK CHANGES - Detect when user edits commented text
@@ -976,7 +976,7 @@ function checkForChanges() {
     });
     
     if (changesDetected > 0) {
-        console.log('✅ Tracked', changesDetected, 'change(s)');
+        console.log(' Tracked', changesDetected, 'change(s)');
         setTimeout(function() { loadComments(); }, 500);
     }
 }
@@ -998,7 +998,7 @@ function trackChange(commentId, originalText, newText) {
     .then(function(r) { return r.json(); })
     .then(function(data) {
         if (data.success) {
-            console.log('✅ Tracked change for comment', commentId);
+            console.log(' Tracked change for comment', commentId);
             var comment = findComment(commentId);
             if (comment) {
                 comment.change_type = 'insert';
@@ -1038,4 +1038,4 @@ document.addEventListener('DOMContentLoaded', function() {
 window.checkForChanges = checkForChanges;
 window.manualCheckChanges = manualCheckChanges;
 
-console.log('✅ Track changes loaded');
+console.log(' Track changes loaded');

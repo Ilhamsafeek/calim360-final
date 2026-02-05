@@ -385,9 +385,6 @@ async def get_expert_profile(
             detail=f"Failed to fetch expert profile: {str(e)}"
         )
 
-# Keep all your other endpoints exactly as they are...
-# (get_my_queries, get_all_queries, get_available_experts, etc.)
-
 # =====================================================
 # FIXED: GET AVAILABLE EXPERTS WITH PROPER FILTERING
 # =====================================================
@@ -479,7 +476,6 @@ async def get_available_experts(
             detail=f"Failed to fetch experts: {str(e)}"
         )
 
-# ... keep all your other endpoints (get_my_queries, get_query_details, update_query, assign_expert_to_query) ...
 # =====================================================
 # GET QUERY DETAILS
 # =====================================================

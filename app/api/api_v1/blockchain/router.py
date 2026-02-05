@@ -49,7 +49,7 @@ async def store_contract_on_blockchain(
 ):
     """
     Store contract on blockchain with comprehensive hashing
-    ✅ UC032 COMPLIANT: Hashes ALL contract fields automatically
+     UC032 COMPLIANT: Hashes ALL contract fields automatically
     """
     try:
         logger.info(f"🔗 Storing contract {contract_id} on blockchain")
@@ -63,14 +63,14 @@ async def store_contract_on_blockchain(
         if contract.company_id != current_user.company_id:
             raise HTTPException(status_code=403, detail="Access denied")
         
-        # ✅ NEW: Service handles ALL data extraction from database
+        #  NEW: Service handles ALL data extraction from database
         # We just pass contract_id and let service fetch comprehensive data
         result = await blockchain_service.store_contract_hash_with_logging(
             contract_id=contract_id,
             document_content="",  # Ignored - service fetches from DB
             uploaded_by=current_user.id,
             company_id=current_user.company_id,
-            db=db  # ✅ CRITICAL: Pass db session
+            db=db  #  CRITICAL: Pass db session
         )
         
         if not result.get("success"):
@@ -79,7 +79,7 @@ async def store_contract_on_blockchain(
                 detail=result.get("error", "Failed to store on blockchain")
             )
         
-        logger.info(f"✅ Contract {contract_id} stored on blockchain successfully")
+        logger.info(f" Contract {contract_id} stored on blockchain successfully")
         return result
         
     except HTTPException:
@@ -117,7 +117,7 @@ async def verify_contract_hash_endpoint(
                 "message": "Contract not found"
             }
         
-        # ✅ GET LATEST VERSION TIMESTAMP
+        #  GET LATEST VERSION TIMESTAMP
         version_query = text("""
             SELECT created_at 
             FROM contract_versions 
@@ -136,7 +136,7 @@ async def verify_contract_hash_endpoint(
         
         latest_version_time = version_result.created_at
         
-        # ✅ CHECK FOR BLOCKCHAIN RECORD AFTER LATEST VERSION
+        #  CHECK FOR BLOCKCHAIN RECORD AFTER LATEST VERSION
         # Use a small time buffer (1 second) to account for timing differences
         from datetime import timedelta
         version_time_with_buffer = latest_version_time - timedelta(seconds=1)
@@ -156,12 +156,12 @@ async def verify_contract_hash_endpoint(
             "version_time": version_time_with_buffer
         }).fetchone()
         
-        # ✅ NO BLOCKCHAIN RECORD AFTER LATEST VERSION = TAMPERED
+        #  NO BLOCKCHAIN RECORD AFTER LATEST VERSION = TAMPERED
         if not blockchain_result:
             logger.warning(f"⚠️ TAMPERING DETECTED: No blockchain record after version for contract {contract_id}")
             logger.warning(f"   Latest version time: {latest_version_time}")
             
-            # ✅ GET THE LAST BLOCKCHAIN HASH (before tampering) AND CURRENT CONTENT HASH
+            #  GET THE LAST BLOCKCHAIN HASH (before tampering) AND CURRENT CONTENT HASH
             stored_hash = None
             current_hash = None
             
@@ -202,7 +202,7 @@ async def verify_contract_hash_endpoint(
                     logger.warning(f"   No current content found")
                 
                 if stored_hash and current_hash:
-                    logger.info(f"   ✅ Both hashes available for comparison")
+                    logger.info(f"    Both hashes available for comparison")
                     logger.info(f"      Stored:  {stored_hash}")
                     logger.info(f"      Current: {current_hash}")
                     logger.info(f"      Match: {stored_hash == current_hash}")
@@ -227,7 +227,7 @@ async def verify_contract_hash_endpoint(
                 "current_hash": current_hash
             }
         
-        # ✅ HAS BLOCKCHAIN RECORD - Use existing verification service
+        #  HAS BLOCKCHAIN RECORD - Use existing verification service
         result = await blockchain_service.verify_contract_hash(
             contract_id=contract_id,
             current_document_content="",
@@ -235,7 +235,7 @@ async def verify_contract_hash_endpoint(
         )
         
         if result.get("verified"):
-            logger.info(f"✅ Contract {contract_id} verification: PASSED")
+            logger.info(f" Contract {contract_id} verification: PASSED")
         else:
             logger.warning(f"🚨 Contract {contract_id} verification: FAILED")
         
@@ -251,10 +251,6 @@ async def verify_contract_hash_endpoint(
         raise HTTPException(status_code=500, detail=str(e))
         
 
-# =====================================================
-# REPLACE your existing verify_contract_integrity function
-# FILE: app/api/api_v1/contracts/contracts.py
-# =====================================================
 
 @router.post("/verify/{contract_id}")
 async def verify_contract_integrity(
@@ -264,7 +260,7 @@ async def verify_contract_integrity(
 ):
     """
     Verify contract integrity with tampering detection
-    ✅ Detects if internal user modified content without blockchain
+     Detects if internal user modified content without blockchain
     """
     try:
         logger.info(f"🔍 Verifying contract {contract_id} integrity")
@@ -278,7 +274,7 @@ async def verify_contract_integrity(
         if contract.company_id != current_user.company_id:
             raise HTTPException(status_code=403, detail="Access denied")
         
-        # ✅ GET LATEST VERSION TIMESTAMP
+        #  GET LATEST VERSION TIMESTAMP
         version_query = text("""
             SELECT created_at 
             FROM contract_versions 
@@ -293,7 +289,7 @@ async def verify_contract_integrity(
         
         latest_version_time = version_result.created_at
         
-        # ✅ CHECK FOR BLOCKCHAIN RECORD AFTER LATEST VERSION
+        #  CHECK FOR BLOCKCHAIN RECORD AFTER LATEST VERSION
         blockchain_query = text("""
             SELECT document_hash, transaction_hash, created_at 
             FROM blockchain_records 
@@ -307,7 +303,7 @@ async def verify_contract_integrity(
             "version_time": latest_version_time
         }).fetchone()
         
-        # ✅ NO BLOCKCHAIN RECORD AFTER LATEST VERSION = TAMPERED
+        #  NO BLOCKCHAIN RECORD AFTER LATEST VERSION = TAMPERED
         if not blockchain_result:
             logger.warning(f"⚠️ TAMPERING DETECTED: No blockchain record after version timestamp for contract {contract_id}")
             logger.warning(f"   Latest version: {latest_version_time}")
@@ -324,7 +320,7 @@ async def verify_contract_integrity(
                 }
             }
         
-        # ✅ HAS BLOCKCHAIN RECORD - Use existing service
+        #  HAS BLOCKCHAIN RECORD - Use existing service
         result = await blockchain_service.verify_contract_hash(
             contract_id=contract_id,
             current_document_content="",
@@ -691,7 +687,7 @@ async def get_blockchain_activity(
             "total_activities": len(audit_logs)
         }
         
-        logger.info(f"✅ Retrieved {len(audit_logs)} blockchain activities for contract {contract_id}")
+        logger.info(f" Retrieved {len(audit_logs)} blockchain activities for contract {contract_id}")
         
         return {
             "success": True,
@@ -763,7 +759,7 @@ async def get_recent_blockchain_activity(
                 "contract_title": row.contract_title
             })
         
-        logger.info(f"✅ Retrieved {len(activities)} recent blockchain activities")
+        logger.info(f" Retrieved {len(activities)} recent blockchain activities")
         
         return {
             "success": True,

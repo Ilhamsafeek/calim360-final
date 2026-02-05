@@ -29,7 +29,7 @@ function getCookie(name) {
     return null;
 }
 
-// ✅ MAIN VERIFICATION FUNCTION - FIXED
+//  MAIN VERIFICATION FUNCTION - FIXED
 async function verifyContract(contractId) {
     try {
         console.log('🔍 Starting verification for contract:', contractId);
@@ -40,14 +40,14 @@ async function verifyContract(contractId) {
             return;
         }
         
-        // ✅ CORRECT ENDPOINT WITH POST METHOD
+        //  CORRECT ENDPOINT WITH POST METHOD
         const response = await fetch(`/api/blockchain/verify-contract-hash`, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
                 ...(token && { 'Authorization': `Bearer ${token}` })
             },
-            credentials: 'include', // ✅ CRITICAL: Send cookies for session auth
+            credentials: 'include', //  CRITICAL: Send cookies for session auth
             body: JSON.stringify({ contract_id: parseInt(contractId) })
         });
         
@@ -64,7 +64,7 @@ async function verifyContract(contractId) {
             console.warn('🚨 TAMPERING DETECTED!');
             showTamperAlert(contractId, result);
         } else {
-            console.log('✅ Contract verified');
+            console.log(' Contract verified');
             showVerifiedIndicator(contractId, result);
         }
         
@@ -97,18 +97,18 @@ function showVerifiedIndicator(contractId, result) {
     //     </div>
     // `;
     
-    console.log('✅ Showing verified indicator');
+    console.log(' Showing verified indicator');
 }
 
 // Show tamper alert
 function showTamperAlert(contractId, result) {
-    // ✅ SHOW MODAL POPUP
+    //  SHOW MODAL POPUP
     showTamperingModal(result);
     
-    // ✅ DISABLE ALL EDITING
+    //  DISABLE ALL EDITING
     disableContractEditing();
     
-    // Also show inline alert
+    // Also show inline alert with recovery button
     const indicator = document.getElementById('blockchain-indicator');
     
     // Create alert HTML
@@ -143,6 +143,14 @@ function showTamperAlert(contractId, result) {
                         </div>
                     </div>
                     ` : ''}
+
+                    <!-- Recovery Button -->
+                    <div id="recovery-button-container" style="margin-top: 15px; display: none;">
+                        <button id="recover-contract-btn" class="btn btn-warning" onclick="recoverContract()">
+                            <i class="ti ti-refresh me-1"></i>
+                            Recover Previous Version
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -168,10 +176,186 @@ function showTamperAlert(contractId, result) {
         }
     }
     
+    // Now check if user can recover and show button
+    checkIfCanRecoverAfterTamper();
+    
     console.error('🚨 Showing tamper alert');
 }
 
-// ✅ NEW: SHOW MODAL POPUP FOR TAMPERING
+
+
+// Check if user can see recovery button AFTER tamper alert is shown
+async function checkIfCanRecoverAfterTamper() {
+    const token = getAuthToken();
+    
+    if (!token) {
+        console.log('❌ No auth token found');
+        return;
+    }
+    
+    try {
+        const contractId = getContractId();
+        
+        if (!contractId) {
+            console.error('❌ No contract ID found');
+            return;
+        }
+        
+        console.log('🔍 Checking recovery authorization for contract:', contractId);
+        
+        // DEBUG: Check all localStorage keys
+        console.log('📦 Checking localStorage for user data...');
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            console.log(`  - ${key}:`, localStorage.getItem(key));
+        }
+        
+        // Try to get current user info from various sources
+        let currentUserId = null;
+        let currentUserType = null;
+        
+        // Check common localStorage keys
+        const possibleKeys = ['user', 'userData', 'currentUser', 'user_data', 'auth_user', 'userInfo'];
+        
+        for (const key of possibleKeys) {
+            const value = localStorage.getItem(key);
+            if (value) {
+                try {
+                    const parsed = JSON.parse(value);
+                    console.log(`Found data in '${key}':`, parsed);
+                    
+                    // Try different property names
+                    currentUserId = parsed.user_id || parsed.id || parsed.userId || parsed.ID;
+                    currentUserType = parsed.user_type || parsed.type || parsed.userType || parsed.role;
+                    
+                    if (currentUserId) {
+                        console.log(' Found user ID:', currentUserId, 'Type:', currentUserType);
+                        break;
+                    }
+                } catch (e) {
+                    // Not JSON, might be a plain value
+                    console.log(`'${key}' is not JSON:`, value);
+                }
+            }
+        }
+        
+        // If still no user ID, try to decode JWT token
+        if (!currentUserId && token) {
+            console.log('Trying to decode JWT token...');
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                console.log('JWT payload:', payload);
+                currentUserId = payload.user_id || payload.id || payload.sub || payload.userId;
+                currentUserType = payload.user_type || payload.type || payload.role;
+                console.log('From JWT - User ID:', currentUserId, 'Type:', currentUserType);
+            } catch (e) {
+                console.error('Failed to decode JWT:', e);
+            }
+        }
+        
+        if (!currentUserId) {
+            console.error('❌ Could not get current user ID from any source');
+            console.log('Available localStorage keys:', Object.keys(localStorage));
+            return;
+        }
+        
+        // Get contract info
+        const contractResponse = await fetch(`/api/contracts/${contractId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+        
+        if (!contractResponse.ok) {
+            console.error('❌ Failed to get contract info:', contractResponse.status);
+            return;
+        }
+        
+        const contractData = await contractResponse.json();
+        const contractCreatorId = contractData.created_by;
+        
+        // Check authorization
+        const isInternal = currentUserType === 'internal';
+        const isInitiator = currentUserId === contractCreatorId;
+        
+        console.log('Recovery check:', { 
+            isInternal, 
+            isInitiator, 
+            currentUserId, 
+            contractCreatorId,
+            currentUserType
+        });
+        
+        // Show button if authorized
+        if (isInternal || isInitiator) {
+            const recoveryContainer = document.getElementById('recovery-button-container');
+            if (recoveryContainer) {
+                recoveryContainer.style.display = 'block';
+                console.log(' Recovery button shown');
+            }
+        } else {
+            console.log('❌ User not authorized to recover');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error checking recovery authorization:', error);
+    }
+}
+
+// Recover contract function
+async function recoverContract() {
+    const contractId = getContractId();
+    
+    if (!confirm('Are you sure you want to delete the latest tampered version and restore the previous valid version?\n\nThis action cannot be undone.')) {
+        return;
+    }
+    
+    const token = getAuthToken();
+    const recoverBtn = document.getElementById('recover-contract-btn');
+    
+    if (!recoverBtn) {
+        alert('Recovery button not found');
+        return;
+    }
+    
+    // Show loading
+    recoverBtn.disabled = true;
+    const originalHTML = recoverBtn.innerHTML;
+    recoverBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Recovering...';
+    
+    try {
+        const response = await fetch(`/api/contracts/${contractId}/recover-tampered-version`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+            alert(' Contract recovered successfully!\n\nThe tampered version has been deleted and the previous valid version has been restored.');
+            window.location.reload();
+        } else {
+            throw new Error(result.detail || 'Recovery failed');
+        }
+        
+    } catch (error) {
+        console.error('Recovery error:', error);
+        alert('❌ Recovery failed: ' + error.message);
+        
+        // Reset button
+        recoverBtn.disabled = false;
+        recoverBtn.innerHTML = originalHTML;
+    }
+}
+
+
+//  NEW: SHOW MODAL POPUP FOR TAMPERING
 function showTamperingModal(result) {
     // Remove existing modal if any
     const existingModal = document.getElementById('tampering-modal');
@@ -371,7 +555,7 @@ function showErrorIndicator(contractId) {
     `;
 }
 
-// ✅ DISABLE ONLY CONTRACT EDITING (NOT ENTIRE PAGE)
+//  DISABLE ONLY CONTRACT EDITING (NOT ENTIRE PAGE)
 function disableContractEditing() {
     console.log('🔒 Disabling contract editing due to tampering');
     
@@ -431,7 +615,7 @@ function disableContractEditing() {
         });
     });
     
-    // ✅ Disable buttons by text content (proper way without :has-text)
+    //  Disable buttons by text content (proper way without :has-text)
     document.querySelectorAll('button').forEach(btn => {
         const text = btn.textContent.trim();
         const id = btn.id || '';
@@ -463,7 +647,7 @@ function disableContractEditing() {
         }
     });
     
-    // ✅ Disable Quill toolbar buttons and formatting controls
+    //  Disable Quill toolbar buttons and formatting controls
     document.querySelectorAll('.ql-toolbar button, .ql-toolbar select, .ql-formats button, .toolbar-btn').forEach(btn => {
         // Skip maximize button
         if (btn.id === 'maximizeToggleBtn' || btn.className.includes('maximize')) {
@@ -527,7 +711,7 @@ function disableContractEditing() {
     console.log('🔒 Contract editing disabled (navigation and other UI still work)');
 }
 
-// ✅ ADD TAMPER WATERMARK ONLY ON CONTRACT EDITOR
+//  ADD TAMPER WATERMARK ONLY ON CONTRACT EDITOR
 function addTamperWatermark() {
     // Remove existing watermark if any
     const existing = document.getElementById('tamper-watermark');
@@ -588,42 +772,6 @@ function contactAdministrator(contractId) {
 }
 
 
-// =====================================================
-// ✅ AUTO-VERIFY ON PAGE LOAD
-// =====================================================
-
-// document.addEventListener('DOMContentLoaded', function() {
-//     console.log('🔐 Blockchain verification system loaded');
-    
-//     const contractId = getContractId();
-    
-//     if (contractId) {
-//         console.log('📋 Contract ID found:', contractId);
-        
-//         const indicator = document.getElementById('blockchain-indicator');
-//         if (indicator) {
-//             indicator.innerHTML = `
-//                 <div class="alert alert-info" style="display: flex; align-items: center; gap: 10px; margin: 10px 0;">
-//                     <div class="spinner-border spinner-border-sm text-primary" role="status">
-//                         <span class="visually-hidden">Loading...</span>
-//                     </div>
-//                     <span>Verifying blockchain integrity...</span>
-//                 </div>
-//             `;
-//         }
-        
-//         // Auto-verify after 1 second
-//         setTimeout(() => {
-//             verifyContract(contractId);
-//         }, 1000);
-        
-//     } else {
-//         console.warn('⚠️ No contract ID found - skipping blockchain verification');
-//     }
-// });
-
-
-// Show blockchain certificate
 async function showBlockchainCertificate() {
     const contractId = getContractId();
     if (!contractId) {
@@ -676,8 +824,6 @@ async function showBlockchainCertificate() {
     }
 }
 
-
-// Create verified certificate modal
 // Create verified certificate modal
 function createVerifiedCertificate(result) {
     const contractId = getContractId();
@@ -905,6 +1051,9 @@ function closeBlockchainModal() {
         document.body.style.overflow = '';
     }
 }
+
+
+
 // =====================================================
 // EXPORT FUNCTIONS
 // =====================================================
@@ -915,4 +1064,6 @@ if (typeof window !== 'undefined') {
     window.viewAuditLog = viewAuditLog;
     window.contactAdministrator = contactAdministrator;
     window.showBlockchainCertificate = showBlockchainCertificate;
+    window.recoverContract = recoverContract; 
+    window.checkIfCanRecoverAfterTamper = checkIfCanRecoverAfterTamper; 
 }

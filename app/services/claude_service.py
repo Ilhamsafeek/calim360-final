@@ -210,6 +210,8 @@ Draft the clause now:"""
                 if key not in ["REQUIRED CLAUSES (MUST INCLUDE)", "Additional Requirements"]
             ])
             
+            current_date = datetime.now().strftime("%d %B, %Y")
+            
             # Enhanced prompt emphasizing legal enforceability
             prompt = f"""Draft a comprehensive, contractually and legally binding {contract_type} contract that is fully enforceable under {jurisdiction} law.
 
@@ -235,7 +237,7 @@ Draft the clause now:"""
     4. **All required clauses fully developed** - Each clause must include detailed provisions, sub-clauses, procedures, and timelines
     5. **No placeholders** - Use actual dates, values, and specific terms provided. No [TBD], [INSERT], or generic text
     6. **Production-ready quality** - This contract should be ready for signature and legal enforcement
-    7. Use Current Year and Current Date if needed
+    7. Today's Date is: {current_date} - Use this as the reference date
     
     **DELIVERABLE:**
     - Minimum 3,500 words with thorough legal detail
@@ -784,12 +786,6 @@ except Exception as e:
 
 
 
-
-# =====================================================
-# Add this method to: app/services/claude_service.py
-# Inside the ClaudeService class
-# =====================================================
-
 def analyze_contract_risks_detailed(
     self,
     contract_content: str,
@@ -1041,12 +1037,6 @@ Provide ONLY the suggested clause text, no explanation needed."""
 
 
 
-
-
-# =====================================================
-# ADD THIS METHOD TO: app/services/claude_service.py
-# Add it inside the ClaudeService class
-# =====================================================
 async def generate_text(self, prompt: str, max_tokens: int = 2000) -> str:
     """Generate text using Claude API"""
     if not self.client:
@@ -1107,9 +1097,6 @@ def _generate_mock_obligations_response(self) -> str:
     return json.dumps(mock_obligations)
 
 
-# =====================================================
-# ALSO ADD THIS ENHANCED METHOD FOR OBLIGATION EXTRACTION
-# =====================================================
 
 async def extract_obligations_from_contract(
     self,

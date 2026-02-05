@@ -1,5 +1,4 @@
 # =====================================================
-# FILE: app/models/ai_analysis.py
 # AI Analysis Models for Claude Integration
 # =====================================================
 
@@ -155,9 +154,7 @@ class AIClauseSuggestion(Base):
 # Update existing Contract model to include AI relationships
 # =====================================================
 
-# Add this to your existing Contract model in app/models/contract.py:
 """
-# Add these relationships to the Contract model:
 
 # AI Analysis relationship
 ai_analyses = relationship("AIAnalysisResult", back_populates="contract", cascade="all, delete-orphan")
@@ -199,7 +196,6 @@ def get_ai_confidence_score(self):
 # =====================================================
 
 """
-Add these to your .env file:
 
 # Claude AI Configuration
 CLAUDE_API_KEY=your_claude_api_key_here

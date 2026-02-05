@@ -57,7 +57,7 @@ class WorkflowEmailService:
                                 <p style="margin: 5px 0;"><strong>Contract Number:</strong> {contract_number}</p>
                                 <p style="margin: 5px 0;"><strong>Contract Title:</strong> {contract_title}</p>
                                 <p style="margin: 5px 0;"><strong>Requested by:</strong> {initiator_name}</p>
-                                <p style="margin: 5px 0;"><strong>Date:</strong> {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</p>
+                                <p style="margin: 5px 0;"><strong>Date:</strong> {datetime.now().strftime('%B %d, %Y')}</p>
                             </div>
                             
                             <p style="margin: 25px 0;">Please review the contract and provide your feedback.</p>
@@ -135,7 +135,7 @@ class WorkflowEmailService:
                             <p style="margin: 5px 0;"><strong>Contract Title:</strong> {contract_title}</p>
                             <p style="margin: 5px 0;"><strong>Workflow:</strong> {workflow_name}</p>
                             <p style="margin: 5px 0;"><strong>Your Role:</strong> {step_name}</p>
-                            <p style="margin: 5px 0;"><strong>Date:</strong> {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</p>
+                            <p style="margin: 5px 0;"><strong>Date:</strong> {datetime.now().strftime('%B %d, %Y')}</p>
                         </div>
                         
                         <center>
@@ -177,14 +177,14 @@ class WorkflowEmailService:
         try:
             contract_url = f"https://calim360.com/contract/edit/{contract_id}"
             
-            subject = f"✅ Internal Review Completed - {contract_number}"
+            subject = f" Internal Review Completed - {contract_number}"
             
             html_body = f"""
             <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
                 <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
                     <div style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0;">
-                        <h2 style="margin: 0;">✅ Internal Review Completed</h2>
+                        <h2 style="margin: 0;"> Internal Review Completed</h2>
                     </div>
                     
                     <div style="padding: 30px; background: #f9f9f9;">
@@ -196,7 +196,7 @@ class WorkflowEmailService:
                             <p style="margin: 5px 0;"><strong>Contract Number:</strong> {contract_number}</p>
                             <p style="margin: 5px 0;"><strong>Contract Title:</strong> {contract_title}</p>
                             <p style="margin: 5px 0;"><strong>Status:</strong> Review Completed</p>
-                            <p style="margin: 5px 0;"><strong>Date:</strong> {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</p>
+                            <p style="margin: 5px 0;"><strong>Date:</strong> {datetime.now().strftime('%B %d, %Y')}</p>
                         </div>
                         
                         <p>You can now proceed with the next steps in the contract lifecycle.</p>
@@ -240,14 +240,14 @@ class WorkflowEmailService:
         try:
             contract_url = f"https://calim360.com/contract/edit/{contract_id}"
             
-            subject = f"✅ Counter-Party Review Completed - {contract_number}"
+            subject = f" Counter-Party Review Completed - {contract_number}"
             
             html_body = f"""
             <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
                 <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
                     <div style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0;">
-                        <h2 style="margin: 0;">✅ Counter-Party Review Completed</h2>
+                        <h2 style="margin: 0;"> Counter-Party Review Completed</h2>
                     </div>
                     
                     <div style="padding: 30px; background: #f9f9f9;">
@@ -259,7 +259,7 @@ class WorkflowEmailService:
                             <p style="margin: 5px 0;"><strong>Contract Number:</strong> {contract_number}</p>
                             <p style="margin: 5px 0;"><strong>Contract Title:</strong> {contract_title}</p>
                             <p style="margin: 5px 0;"><strong>Status:</strong> Counter-Party Review Completed</p>
-                            <p style="margin: 5px 0;"><strong>Date:</strong> {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</p>
+                            <p style="margin: 5px 0;"><strong>Date:</strong> {datetime.now().strftime('%B %d, %Y')}</p>
                         </div>
                         
                         <p>The contract can now move forward to the next stage.</p>
@@ -323,7 +323,7 @@ class WorkflowEmailService:
                             <p style="margin: 5px 0;"><strong>Contract Number:</strong> {contract_number}</p>
                             <p style="margin: 5px 0;"><strong>Contract Title:</strong> {contract_title}</p>
                             <p style="margin: 5px 0;"><strong>Your Role:</strong> {party_type} E-Sign Authority</p>
-                            <p style="margin: 5px 0;"><strong>Date:</strong> {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</p>
+                            <p style="margin: 5px 0;"><strong>Date:</strong> {datetime.now().strftime('%B %d, %Y')}</p>
                         </div>
                         
                         <div style="background: #fff3cd; border-left: 4px solid #f0ad4e; padding: 15px; margin: 20px 0; border-radius: 6px;">
@@ -400,7 +400,7 @@ class WorkflowEmailService:
                             <p style="margin: 5px 0;"><strong>Contract Title:</strong> {contract_title}</p>
                             <p style="margin: 5px 0;"><strong>Rejected By:</strong> {rejector_name}</p>
                             <p style="margin: 5px 0;"><strong>Stage:</strong> {stage_name}</p>
-                            <p style="margin: 5px 0;"><strong>Date:</strong> {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</p>
+                            <p style="margin: 5px 0;"><strong>Date:</strong> {datetime.now().strftime('%B %d, %Y')}</p>
                         </div>
                         
                         <div style="background: #ffe5e5; border-left: 4px solid #e74c3c; padding: 15px; margin: 20px 0; border-radius: 6px;">
@@ -449,14 +449,14 @@ class WorkflowEmailService:
         try:
             contract_url = f"https://calim360.com/contract/edit/{contract_id}"
             
-            subject = f"✅ Approval Workflow Completed - {contract_number}"
+            subject = f" Approval Workflow Completed - {contract_number}"
             
             html_body = f"""
             <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
                 <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
                     <div style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0;">
-                        <h2 style="margin: 0;">✅ Approval Workflow Completed</h2>
+                        <h2 style="margin: 0;"> Approval Workflow Completed</h2>
                     </div>
                     
                     <div style="padding: 30px; background: #f9f9f9;">
@@ -468,7 +468,7 @@ class WorkflowEmailService:
                             <p style="margin: 5px 0;"><strong>Contract Number:</strong> {contract_number}</p>
                             <p style="margin: 5px 0;"><strong>Contract Title:</strong> {contract_title}</p>
                             <p style="margin: 5px 0;"><strong>Status:</strong> Approval Completed</p>
-                            <p style="margin: 5px 0;"><strong>Date:</strong> {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</p>
+                            <p style="margin: 5px 0;"><strong>Date:</strong> {datetime.now().strftime('%B %d, %Y')}</p>
                         </div>
                         
                         <p>The contract can now proceed to execution and signature.</p>
@@ -496,4 +496,178 @@ class WorkflowEmailService:
             
         except Exception as e:
             logger.error(f"❌ Error sending approval completion email: {str(e)}")
+            return False
+
+
+
+    @staticmethod
+    def send_all_parties_signed_notification(
+        db: Session,
+        contract_id: int,
+        contract_number: str,
+        contract_title: str,
+        recipient_email: str,
+        recipient_name: str,
+        recipient_role: str  # "Initiator" or "Counter-Party Lead"
+    ) -> bool:
+        """Send email when all parties have signed the contract"""
+        try:
+            contract_url = f"https://calim360.com/contract/edit/{contract_id}"
+            
+            subject = f"🎉 All Parties Have Signed - {contract_number}"
+            
+            html_body = f"""
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                    <div style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+                        <h2 style="margin: 0;">🎉 All Parties Have Signed</h2>
+                    </div>
+                    
+                    <div style="padding: 30px; background: #f9f9f9;">
+                        <p style="font-size: 16px; margin-bottom: 10px;">Dear <strong>{recipient_name}</strong>,</p>
+                        
+                        <p>Great news! All parties have successfully signed the contract.</p>
+                        
+                        <div style="background: white; padding: 20px; border-left: 4px solid #3498db; margin: 20px 0; border-radius: 4px;">
+                            <p style="margin: 5px 0;"><strong>Contract Number:</strong> {contract_number}</p>
+                            <p style="margin: 5px 0;"><strong>Contract Title:</strong> {contract_title}</p>
+                            <p style="margin: 5px 0;"><strong>Your Role:</strong> {recipient_role}</p>
+                            <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #3498db; font-weight: 600;">ALL PARTIES SIGNED</span></p>
+                            <p style="margin: 5px 0;"><strong>Date:</strong> {datetime.now().strftime('%B %d, %Y')}</p>
+                        </div>
+                        
+                        <div style="background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px; margin: 20px 0; border-radius: 6px;">
+                            <strong style="color: #0c5460;">✓ Signature Status:</strong>
+                            <ul style="margin: 10px 0 0 0; color: #0c5460;">
+                                <li>Party A (Initiator) - <strong>Signed ✓</strong></li>
+                                <li>Party B (Counter-Party) - <strong>Signed ✓</strong></li>
+                            </ul>
+                        </div>
+                        
+                        <div style="background: #fff3cd; border-left: 4px solid #f0ad4e; padding: 15px; margin: 20px 0; border-radius: 6px;">
+                            <strong style="color: #856404;">📋 Next Step:</strong>
+                            <p style="margin: 10px 0 0 0; color: #856404;">
+                                The contract is ready for final execution. The authorized person can now execute the contract to make it legally binding.
+                            </p>
+                        </div>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="{contract_url}" style="display: inline-block; padding: 12px 30px; background: #3498db; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                                View Contract →
+                            </a>
+                        </div>
+                        
+                        <p style="color: #666; font-size: 0.9rem; margin-top: 20px;">
+                            Both the initiator and counter-party lead have been notified that all signatures are complete.
+                        </p>
+                    </div>
+                    
+                    <div style="text-align: center; padding: 20px; color: #666; font-size: 12px; border-radius: 0 0 8px 8px; background: #f0f0f0;">
+                        <p style="margin: 5px 0;"><strong>CALIM 360</strong> - Smart Contract Lifecycle Management</p>
+                        <p style="margin: 5px 0;">© {datetime.now().year} CALIM 360. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            
+            send_email_smtp(recipient_email, subject, html_body)
+            logger.info(f"✉️ All parties signed email sent to {recipient_email} ({recipient_role})")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Error sending all parties signed email: {str(e)}")
+            return False
+
+
+
+    @staticmethod
+    def send_contract_executed_notification(
+        db: Session,
+        contract_id: int,
+        contract_number: str,
+        contract_title: str,
+        recipient_email: str,
+        recipient_name: str,
+        recipient_role: str,
+        executed_by_name: str
+    ) -> bool:
+        """Send email when contract is officially executed"""
+        try:
+            contract_url = f"https://calim360.com/contract/edit/{contract_id}"
+            
+            subject = f"✅ Contract Executed - {contract_number}"
+            
+            html_body = f"""
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                    <div style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+                        <h2 style="margin: 0;">✅ Contract Officially Executed</h2>
+                    </div>
+                    
+                    <div style="padding: 30px; background: #f9f9f9;">
+                        <p style="font-size: 16px; margin-bottom: 10px;">Dear <strong>{recipient_name}</strong>,</p>
+                        
+                        <p>The contract has been officially executed and is now legally binding.</p>
+                        
+                        <div style="background: white; padding: 20px; border-left: 4px solid #27ae60; margin: 20px 0; border-radius: 4px;">
+                            <p style="margin: 5px 0;"><strong>Contract Number:</strong> {contract_number}</p>
+                            <p style="margin: 5px 0;"><strong>Contract Title:</strong> {contract_title}</p>
+                            <p style="margin: 5px 0;"><strong>Your Role:</strong> {recipient_role}</p>
+                            <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #27ae60; font-weight: 600;">EXECUTED</span></p>
+                            <p style="margin: 5px 0;"><strong>Executed By:</strong> {executed_by_name}</p>
+                            <p style="margin: 5px 0;"><strong>Execution Date:</strong> {datetime.now().strftime('%B %d, %Y')}</p>
+                        </div>
+                        
+                        <div style="background: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0; border-radius: 6px;">
+                            <strong style="color: #155724;">🎉 Contract is Now Active:</strong>
+                            <ul style="margin: 10px 0 0 0; color: #155724;">
+                                <li>The contract is legally binding and enforceable</li>
+                                <li>All contractual obligations are now in effect</li>
+                                <li>Effective date has been recorded</li>
+                                <li>Execution certificate has been generated</li>
+                            </ul>
+                        </div>
+                        
+                        <div style="background: #fff3cd; border-left: 4px solid #f0ad4e; padding: 15px; margin: 20px 0; border-radius: 6px;">
+                            <strong style="color: #856404;">📋 Action Items:</strong>
+                            <ul style="margin: 10px 0 0 0; color: #856404;">
+                                <li>Download the executed contract and execution certificate</li>
+                                <li>Review your contractual obligations and deadlines</li>
+                                <li>Set up obligation tracking and reminders</li>
+                                <li>Archive the executed contract in your records</li>
+                                <li>Notify relevant stakeholders in your organization</li>
+                            </ul>
+                        </div>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="{contract_url}" style="display: inline-block; padding: 12px 30px; background: #27ae60; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                                View Executed Contract →
+                            </a>
+                        </div>
+                        
+                        <p style="color: #666; font-size: 0.9rem; margin-top: 20px;">
+                            Both parties have been notified of the contract execution. This is an automated notification from CALIM 360.
+                        </p>
+                    </div>
+                    
+                    <div style="text-align: center; padding: 20px; color: #666; font-size: 12px; border-radius: 0 0 8px 8px; background: #f0f0f0;">
+                        <p style="margin: 5px 0;"><strong>CALIM 360</strong> - Smart Contract Lifecycle Management</p>
+                        <p style="margin: 5px 0;">© {datetime.now().year} CALIM 360. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            
+            send_email_smtp(recipient_email, subject, html_body)
+            logger.info(f"✉️ Contract execution email sent to {recipient_email} ({recipient_role})")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Error sending contract execution email: {str(e)}")
             return False

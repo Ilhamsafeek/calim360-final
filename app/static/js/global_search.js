@@ -46,7 +46,7 @@ function initGlobalSearch() {
         }
     });
     
-    console.log('✅ Global search initialized');
+    console.log(' Global search initialized');
 }
 
 /**

@@ -1,6 +1,3 @@
-# # =====================================================
-# # FILE: app/core/auth.py (ADD THIS FUNCTION)
-# # =====================================================
 
 # from typing import Optional
 # from fastapi import Request

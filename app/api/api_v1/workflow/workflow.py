@@ -126,13 +126,13 @@ async def create_master_workflow(
         })
 
         if existing_workflow:
-            # ✅ UPDATE EXISTING - Keep active, update metadata and steps
+            #  UPDATE EXISTING - Keep active, update metadata and steps
             logger.info(f"Updating existing master workflow ID {existing_workflow.id}")
             
             existing_workflow.workflow_name = workflow_data.name
             existing_workflow.workflow_json = workflow_json_data
             existing_workflow.updated_at = datetime.utcnow()
-            # ✅ Keep is_active = True
+            #  Keep is_active = True
             
             # Delete old steps
             db.query(WorkflowStep).filter(
@@ -140,9 +140,9 @@ async def create_master_workflow(
             ).delete()
             
             workflow = existing_workflow
-            logger.info(f"✅ Updated master workflow for company {current_user.company_id}")
+            logger.info(f" Updated master workflow for company {current_user.company_id}")
         else:
-            # ✅ CREATE NEW
+            #  CREATE NEW
             logger.info(f"Creating new master workflow for company {current_user.company_id}")
             
             workflow = Workflow(
@@ -150,14 +150,14 @@ async def create_master_workflow(
                 workflow_name=workflow_data.name,
                 workflow_type="master",
                 is_master=True,
-                is_active=True,  # ✅ Active from creation
+                is_active=True,  #  Active from creation
                 workflow_json=workflow_json_data,
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow()
             )
             db.add(workflow)
             db.flush()
-            logger.info(f"✅ Created new master workflow ID {workflow.id}")
+            logger.info(f" Created new master workflow ID {workflow.id}")
 
         # Create workflow steps (same for both create and update)
         for step_data in workflow_data.steps:
@@ -176,7 +176,7 @@ async def create_master_workflow(
         db.commit()
         db.refresh(workflow)
 
-        logger.info(f"✅ Workflow saved successfully with {len(workflow_data.steps)} steps")
+        logger.info(f" Workflow saved successfully with {len(workflow_data.steps)} steps")
 
         return {
             "success": True,

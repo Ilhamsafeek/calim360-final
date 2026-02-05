@@ -486,7 +486,7 @@
 
         <div class="quick-actions">
 
-          
+
 
             <a href="/contract/create" class="btn btn-primary">
                 <i class="ti ti-plus"></i>
@@ -501,96 +501,96 @@
 
     <!-- Statistics Cards -->
     <div class="stats-grid">
-    <!-- Total Contracts -->
-    <a href="/contracts" class="stat-card">
-        <div class="stat-header">
-            <div class="stat-icon blue">
-                <i class="ti ti-files"></i>
+        <!-- Total Contracts -->
+        <a href="/contracts?module=drafting" class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon blue">
+                    <i class="ti ti-files"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>All Contracts</h4>
+                </div>
             </div>
-            <div class="stat-info">
-                <h4>All Contracts</h4>
-            </div>
-        </div>
-        <div class="stat-value" id="totalContracts">-</div>
-    </a>
+            <div class="stat-value" id="totalContracts">-</div>
+        </a>
 
-    <!-- Executed Contracts -->
-    <a href="/contracts?module=operations" class="stat-card">
-        <div class="stat-header">
-            <div class="stat-icon green">
-                <i class="ti ti-circle-check"></i>
+        <!-- Executed Contracts -->
+        <a href="/contracts?module=operations" class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon green">
+                    <i class="ti ti-circle-check"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Executed Contracts</h4>
+                </div>
             </div>
-            <div class="stat-info">
-                <h4>Executed Contracts</h4>
-            </div>
-        </div>
-        <div class="stat-value" id="activeContracts">-</div>
-    </a>
+            <div class="stat-value" id="activeContracts">-</div>
+        </a>
 
-    <!-- Active Projects Card -->
-    <a href="/projects" class="stat-card">
-        <div class="stat-header">
-            <div class="stat-icon purple">
-                <i class="ti ti-folder"></i>
+        <!-- Active Projects Card -->
+        <a href="/projects" class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon purple">
+                    <i class="ti ti-folder"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Active Projects</h4>
+                </div>
             </div>
-            <div class="stat-info">
-                <h4>Active Projects</h4>
-            </div>
-        </div>
-        <div class="stat-value" id="activeProjects">-</div>
-        <!-- <div class="stat-change positive" id="activeProjectsChange" style="display: none;">
+            <div class="stat-value" id="activeProjects">-</div>
+            <!-- <div class="stat-change positive" id="activeProjectsChange" style="display: none;">
             <i class="ti ti-trending-up"></i>
             <span id="activeProjectsChangeText">-</span>
         </div> -->
-    </a>
+        </a>
 
-    <!-- Contracts in Progress -->
-    <a href="/contracts?module=negotiation" class="stat-card">
-        <div class="stat-header">
-            <div class="stat-icon purple">
-                <i class="ti ti-hourglass"></i>
+        <!-- Contracts in Progress -->
+        <a href="/contracts?module=negotiation" class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon purple">
+                    <i class="ti ti-hourglass"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Contracts in Progress</h4>
+                </div>
             </div>
-            <div class="stat-info">
-                <h4>Contracts in Progress</h4>
+            <div class="stat-value" id="pendingApprovals">-</div>
+            <div class="stat-change negative" id="pendingApprovalsChange" style="display: none;">
+                <i class="ti ti-alert-circle"></i>
+                <span>Needs attention</span>
             </div>
-        </div>
-        <div class="stat-value" id="pendingApprovals">-</div>
-        <div class="stat-change negative" id="pendingApprovalsChange" style="display: none;">
-            <i class="ti ti-alert-circle"></i>
-            <span>Needs attention</span>
-        </div>
-    </a>
+        </a>
 
-    <!-- All Obligations -->
-    <a href="/obligations" class="stat-card">
-        <div class="stat-header">
-            <div class="stat-icon red">
-                <i class="ti ti-alert-octagon"></i>
+        <!-- All Obligations -->
+        <a href="/obligations" class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon red">
+                    <i class="ti ti-alert-octagon"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>All Obligations</h4>
+                </div>
             </div>
-            <div class="stat-info">
-                <h4>All Obligations</h4>
+            <div class="stat-value" id="overdueObligations">-</div>
+            <div class="stat-change negative" id="overdueObligationsChange" style="display: none;">
+                <i class="ti ti-arrow-down"></i>
+                <span>Urgent action needed</span>
             </div>
-        </div>
-        <div class="stat-value" id="overdueObligations">-</div>
-        <div class="stat-change negative" id="overdueObligationsChange" style="display: none;">
-            <i class="ti ti-arrow-down"></i>
-            <span>Urgent action needed</span>
-        </div>
-    </a>
+        </a>
 
-    <!-- Pending Actions / My Approvals -->
-    <a href="/pending-actions" class="stat-card">
-        <div class="stat-header">
-            <div class="stat-icon cyan">
-                <i class="ti ti-clipboard-check"></i>
+        <!-- Pending Actions / My Approvals -->
+        <a href="/pending-actions" class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon cyan">
+                    <i class="ti ti-clipboard-check"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Pending Actions</h4>
+                </div>
             </div>
-            <div class="stat-info">
-                <h4>Pending Actions</h4>
-            </div>
-        </div>
-        <div class="stat-value" id="myApprovals">-</div>
-    </a>
-</div>
+            <div class="stat-value" id="myApprovals">-</div>
+        </a>
+    </div>
 
     <!-- Main Content Grid -->
     <div class="content-grid">
@@ -871,7 +871,7 @@
                         <div class="activity-content">
                             <div class="activity-text">${displayText}</div>
                             <div class="activity-time">
-                                <i class="ti ti-clock"></i> ${formatTimeAgo(activity.timestamp)} by ${activity.user || 'Unknown'}
+                                by ${activity.user || 'Unknown'}
                             </div>
                         </div>
                     </div>
@@ -970,16 +970,31 @@
     }
 
     function formatTimeAgo(timestamp) {
-        if (!timestamp) return 'recently';
-        const now = new Date();
-        const past = new Date(timestamp);
-        const seconds = Math.floor((now - past) / 1000);
+        if (!timestamp) return 'Just now';
 
-        if (seconds < 60) return 'just now';
-        if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-        if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-        if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-        return formatDate(timestamp);
+        // Parse timestamp - assume UTC from backend
+        let date;
+        if (timestamp.includes('T')) {
+            date = new Date(timestamp);
+        } else {
+            // MySQL datetime - treat as UTC
+            date = new Date(timestamp.replace(' ', 'T') + 'Z');
+        }
+
+        const now = new Date();
+        const diffMs = now - date;
+        const diffSecs = Math.floor(diffMs / 1000);
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffSecs < 10) return 'Just now';
+        if (diffSecs < 60) return 'Less than a minute ago';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
+
+        return date.toLocaleDateString();
     }
 
     function getActivityIcon(action) {

@@ -249,7 +249,7 @@ async def send_password_changed_confirmation(email: str, user_name: str):
                     <p>Your CALIM 360 password has been successfully changed.</p>
                     <p><strong>Change Details:</strong></p>
                     <ul>
-                        <li>Date: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</li>
+                        <li>Date: {datetime.now().strftime('%B %d, %Y')}</li>
                         <li>Account: {email}</li>
                     </ul>
                     <div style="background: #fff3cd; border-left: 4px solid #f0ad4e; padding: 15px; margin: 20px 0; border-radius: 6px;">

@@ -19,7 +19,7 @@ class DashboardManager {
     async loadDashboardData() {
         try {
             this.showLoader();
-            
+
             // Load all dashboard data in parallel
             await Promise.all([
                 this.loadStats(),
@@ -29,7 +29,7 @@ class DashboardManager {
                 this.loadWorkflows(),
                 this.loadDocumentStats()
             ]);
-            
+
             this.hideLoader();
         } catch (error) {
             console.error('Error loading dashboard data:', error);
@@ -52,7 +52,7 @@ class DashboardManager {
             }
 
             const result = await response.json();
-            
+
             if (result.success) {
                 this.statsData = result.data;
                 this.updateStatsCards();
@@ -156,7 +156,7 @@ class DashboardManager {
         if (!this.statsData) return;
 
         const stats = this.statsData;
-        
+
         // Update main stats cards
         this.updateElement('active-contracts-count', stats.contracts.active || 0);
         this.updateElement('pending-contracts-count', stats.contracts.pending || 0);
@@ -169,15 +169,14 @@ class DashboardManager {
         if (!this.statsData) return;
 
         const stats = this.statsData;
-        
+
         // Update Recent Audit Activity
         this.updateElement('audit-activity-count', stats.activity.recent_count || 0);
-        
-        // Update AI Risk Analysis (placeholder - you can add this to your API)
+
         this.updateElement('high-risk-clauses', '3'); // Placeholder
         this.updateElement('compliance-issues', '2'); // Placeholder
         this.updateElement('ai-suggestions', '7'); // Placeholder
-        
+
         // Update Active Workflows
         this.updateElement('pending-approvals-count', stats.workflows.my_pending_approvals || 0);
         this.updateElement('in-review-count', stats.workflows.in_progress || 0);
@@ -225,7 +224,7 @@ class DashboardManager {
         container.innerHTML = obligations.slice(0, 3).map(obligation => {
             const dueInDays = obligation.days_until_due;
             let statusColor = '#22c55e'; // Default green
-            
+
             if (dueInDays < 0) {
                 statusColor = '#dc2626'; // Red for overdue
             } else if (dueInDays <= 3) {
@@ -323,7 +322,7 @@ class DashboardManager {
         };
 
         const actionText = actionMap[activity.action] || activity.action.replace('_', ' ').title();
-        
+
         if (activity.description) {
             return activity.description;
         } else if (activity.contract_number) {
@@ -335,21 +334,41 @@ class DashboardManager {
 
     formatTimeAgo(timestamp) {
         if (!timestamp) return 'Just now';
-        
-        const date = new Date(timestamp);
+
+        // Parse the timestamp - handle both ISO format and MySQL datetime
+        let date;
+        if (timestamp.includes('T')) {
+            // ISO format with timezone: 2026-01-30T10:30:00Z or 2026-01-30T10:30:00
+            date = new Date(timestamp);
+        } else {
+            // MySQL datetime format: 2026-01-30 10:30:00
+            // Assume it's UTC and add 'Z' to parse correctly
+            date = new Date(timestamp.replace(' ', 'T') + 'Z');
+        }
+
+        // Get current time
         const now = new Date();
+
+        // Calculate difference in milliseconds
         const diffMs = now - date;
+
+        // Convert to more usable units
+        const diffSecs = Math.floor(diffMs / 1000);
         const diffMins = Math.floor(diffMs / 60000);
         const diffHours = Math.floor(diffMs / 3600000);
         const diffDays = Math.floor(diffMs / 86400000);
 
-        if (diffMins < 1) return 'Just now';
-        if (diffMins < 60) return `${diffMins}m ago`;
-        if (diffHours < 24) return `${diffHours}h ago`;
-        if (diffDays < 7) return `${diffDays}d ago`;
-        
-        return date.toLocaleDateString();
+        // Handle future timestamps or just now
+        if (diffSecs < 10) return 'Just now';
+        if (diffSecs < 60) return 'Less than a minute ago';
+        if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
+        if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+        if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+
+        // For older dates, show the actual date
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
+
 
     formatDueDate(dueDate, daysUntilDue) {
         if (daysUntilDue < 0) {
@@ -365,16 +384,16 @@ class DashboardManager {
 
     hexToRgb(hex) {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? 
-            `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` 
+        return result ?
+            `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`
             : '34, 197, 94'; // Default green
     }
 
     getAuthToken() {
         // Get auth token from cookies or localStorage
         // This is a simplified version - adjust based on your auth setup
-        return localStorage.getItem('auth_token') || 
-               document.cookie.replace(/(?:(?:^|.*;\s*)auth_token\s*=\s*([^;]*).*$)|^.*$/, "$1");
+        return localStorage.getItem('auth_token') ||
+            document.cookie.replace(/(?:(?:^|.*;\s*)auth_token\s*=\s*([^;]*).*$)|^.*$/, "$1");
     }
 
     showLoader() {
@@ -437,7 +456,7 @@ class DashboardManager {
 }
 
 // Initialize dashboard when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     window.dashboardManager = new DashboardManager();
 });
 

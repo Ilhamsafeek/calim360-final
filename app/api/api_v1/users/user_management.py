@@ -465,10 +465,3 @@ async def resend_welcome_email(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to send email: {str(e)}"
         )
-
-
-# =====================================================
-# ROUTER REGISTRATION
-# Add this router to your main app with:
-# app.include_router(user_management.router, prefix="/api/users", tags=["users"])
-# =====================================================

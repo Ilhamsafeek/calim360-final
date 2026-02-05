@@ -130,7 +130,7 @@ def delete_expert_profile(db: Session, user_id: int):
         return False
 
 # =====================================================
-# GET COMPANY USERS ENDPOINT (for your frontend)
+# GET COMPANY USERS ENDPOINT
 # =====================================================
 @router.get("/company")
 async def get_company_users(
@@ -141,7 +141,7 @@ async def get_company_users(
     role_filter: Optional[str] = None,
     user_type_filter: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # ✅ Added authentication
+    current_user: User = Depends(get_current_user)  #  Added authentication
 ):
     """
     Get all users in the current user's company with filtering and pagination.
@@ -151,7 +151,7 @@ async def get_company_users(
     try:
         logger.info(f"Fetching users for company: {current_user.company_id}")
         
-        # ✅ Use current user's company_id
+        #  Use current user's company_id
         company_id = current_user.company_id
         
         # Build base query
@@ -263,14 +263,14 @@ async def get_company_users(
 async def create_user(
     user_data: dict,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # ✅ Re-enabled authentication
+    current_user: User = Depends(get_current_user)  #  Re-enabled authentication
 ):
     """
     Create a new user in the same company as the current user.
     Supports creating expert profiles for consultant users.
     
-    ✅ FIXED: Now uses current_user.company_id instead of hardcoded default
-    ✅ NEW: Sends welcome email with login credentials if requested
+     FIXED: Now uses current_user.company_id instead of hardcoded default
+     NEW: Sends welcome email with login credentials if requested
     """
     try:
         logger.info(f"Creating user: {user_data.get('email', 'unknown')}")
@@ -307,9 +307,9 @@ async def create_user(
                 detail="Only administrators and managers can create users"
             )
         
-        # ✅ CRITICAL FIX: Use current user's company_id instead of hardcoded default
+        #  CRITICAL FIX: Use current user's company_id instead of hardcoded default
         company_id = current_user.company_id
-        logger.info(f"✅ Creating user for company ID: {company_id} (current user's company)")
+        logger.info(f" Creating user for company ID: {company_id} (current user's company)")
         
         # Check if email already exists
         existing_user = db.query(User).filter(User.email == user_data["email"]).first()
@@ -329,7 +329,7 @@ async def create_user(
         if existing_username:
             username = f"{username}_{secrets.randbelow(1000)}"
         
-        # ✅ Store plain password BEFORE hashing (for welcome email)
+        #  Store plain password BEFORE hashing (for welcome email)
         plain_password = user_data["password"]
         
         # Hash password
@@ -340,7 +340,7 @@ async def create_user(
         
         # Create new user with current user's company
         new_user = User(
-            company_id=company_id,  # ✅ FIXED: Use current user's company instead of default
+            company_id=company_id,  #  FIXED: Use current user's company instead of default
             first_name=user_data["first_name"],
             last_name=user_data["last_name"],
             email=user_data["email"],
@@ -365,34 +365,70 @@ async def create_user(
         db.add(new_user)
         db.flush()  # Get the user ID without committing
         
-        logger.info(f"✅ User created: {new_user.email} (ID: {new_user.id}) in company {company_id}")
-        
-        # Create expert profile if user is a consultant
-        if user_data.get("user_type") == "consultant" and user_data.get("expert_profile"):
-            expert_data = user_data["expert_profile"]
-            
-            expert_profile = ExpertProfile(
-                user_id=new_user.id,
-                specialization=expert_data.get("specialization"),
-                expertise_areas=expert_data.get("expertise_areas", []),
-                experience_years=expert_data.get("experience_years"),
-                hourly_rate=expert_data.get("hourly_rate"),
-                availability_status=expert_data.get("availability_status", "available"),
-                certifications=expert_data.get("certifications", []),
-                languages=expert_data.get("languages", ["English", "Arabic"]),
-                bio=expert_data.get("bio"),
-                created_at=datetime.utcnow()
-            )
-            
-            db.add(expert_profile)
-            logger.info(f"✅ Expert profile created for user {new_user.id}")
-        
-        # Commit all changes
+        # Commit user first
         db.commit()
         db.refresh(new_user)
+
+        logger.info(f"✅ User created: {new_user.email} (ID: {new_user.id})")
+
+        # Create expert profile if user is expert/consultant
+        if user_data.get("user_type") in ["consultant", "expert"] and user_data.get("expert_profile"):
+            try:
+                expert_data = user_data["expert_profile"]
+                logger.info(f"📋 Expert data received: {expert_data}")
+                
+                # Prepare data
+                insert_data = {
+                    "user_id": new_user.id,
+                    "specialization": expert_data.get("specialization"),
+                    "years_of_experience": expert_data.get("years_of_experience") or 0,
+                    "license_number": expert_data.get("license_number"),
+                    "license_authority": expert_data.get("license_authority"),
+                    "hourly_rate": expert_data.get("hourly_rate") or 0.0,
+                    "expertise_areas": expert_data.get("expertise_areas"),
+                    "bio": expert_data.get("bio"),
+                    "qfcra_certified": 1 if expert_data.get("qfcra_certified") else 0,
+                    "qid_verified": 1 if expert_data.get("qid_verified") else 0,
+                    "is_available": 1
+                }
+                
+                logger.info(f"📋 Inserting data: {insert_data}")
+                
+                result = db.execute(text("""
+                    INSERT INTO expert_profiles (
+                        user_id, specialization, years_of_experience, 
+                        license_number, license_authority, hourly_rate,
+                        expertise_areas, bio, qfcra_certified, qid_verified,
+                        is_available, total_consultations, average_rating,
+                        created_at, updated_at
+                    ) VALUES (
+                        :user_id, :specialization, :years_of_experience,
+                        :license_number, :license_authority, :hourly_rate,
+                        :expertise_areas, :bio, :qfcra_certified, :qid_verified,
+                        :is_available, 0, 0.0, NOW(), NOW()
+                    )
+                """), insert_data)
+                
+                db.commit()
+                
+                # Verify it was inserted
+                check = db.execute(text("SELECT id FROM expert_profiles WHERE user_id = :user_id"), 
+                                {"user_id": new_user.id}).fetchone()
+                
+                if check:
+                    logger.info(f"✅ Expert profile created! ID: {check[0]}")
+                else:
+                    logger.error(f"❌ Expert profile NOT found after insert!")
+                    
+            except Exception as e:
+                db.rollback()
+                logger.error(f"❌ Expert profile error: {str(e)}")
+                import traceback
+                logger.error(traceback.format_exc())
+                raise
         
         # =====================================================
-        # ✅ NEW: SEND WELCOME EMAIL IF REQUESTED
+        #  NEW: SEND WELCOME EMAIL IF REQUESTED
         # =====================================================
         email_sent = False
         if user_data.get("send_welcome_email", False):
@@ -424,7 +460,7 @@ async def create_user(
                 )
                 
                 if email_sent:
-                    logger.info(f"✅ Welcome email sent successfully to: {new_user.email}")
+                    logger.info(f" Welcome email sent successfully to: {new_user.email}")
                 else:
                     logger.warning(f"⚠️ Welcome email failed to send to: {new_user.email}")
                     
@@ -454,7 +490,7 @@ async def create_user(
             "is_active": new_user.is_active,
             "is_verified": new_user.is_verified,
             "created_at": new_user.created_at.isoformat() if new_user.created_at else None,
-            "welcome_email_sent": email_sent  # ✅ NEW: Include email status
+            "welcome_email_sent": email_sent  #  NEW: Include email status
         }
         
         # Add expert profile to response if applicable
@@ -471,7 +507,7 @@ async def create_user(
                     "availability_status": expert_profile.availability_status
                 }
         
-        logger.info(f"✅ User creation completed successfully")
+        logger.info(f" User creation completed successfully")
         return response
         
     except HTTPException:
@@ -545,7 +581,7 @@ async def search_users(
 
 
 # =====================================================
-# EXISTING: GET USERS ENDPOINT (your original code)
+# EXISTING: GET USERS ENDPOINT
 # =====================================================
 @router.get("/")
 async def get_users(
@@ -560,7 +596,7 @@ async def get_users(
     # current_user: User = Depends(get_current_user)
 ):
     """
-    Get list of users with filtering options - YOUR ORIGINAL ENDPOINT
+    Get list of users with filtering options ORIGINAL ENDPOINT
     """
     try:
         # For testing without authentication, comment out user restriction
@@ -654,7 +690,7 @@ async def get_users(
 
 
 # =====================================================
-# GET ALL USERS ENDPOINT (for your frontend)
+# GET ALL USERS ENDPOINT
 # =====================================================
 @router.get("/all")
 async def get_company_users(
@@ -665,7 +701,7 @@ async def get_company_users(
     role_filter: Optional[str] = None,
     user_type_filter: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # ✅ Added authentication
+    current_user: User = Depends(get_current_user)  #  Added authentication
 ):
     """
     Get all users in with filtering and pagination.
@@ -675,7 +711,7 @@ async def get_company_users(
     try:
         logger.info(f"Fetching users for company: {current_user.company_id}")
         
-        # ✅ Use current user's company_id
+        #  Use current user's company_id
         company_id = current_user.company_id
         
         # Build base query
@@ -784,7 +820,7 @@ async def get_company_users(
 
 
 # =====================================================
-# EXISTING: GET SINGLE USER ENDPOINT (your original code)
+# EXISTING: GET SINGLE USER ENDPOINT 
 # =====================================================
 @router.get("/{user_id}")
 async def get_user(
@@ -795,7 +831,7 @@ async def get_user(
     """Get specific user by ID (must be in same company)."""
     
     try:
-        # ✅ Security: Only allow access to users in the same company
+        #  Security: Only allow access to users in the same company
         user = db.query(User).filter(
             User.id == user_id,
             User.company_id == current_user.company_id
@@ -997,7 +1033,7 @@ async def update_user(
         db.commit()
         db.refresh(user)
         
-        logger.info(f"✅ User updated: {user.email}")
+        logger.info(f" User updated: {user.email}")
         
         return {
             "message": "User updated successfully",
@@ -1091,7 +1127,7 @@ async def delete_user(
         )
 
 # =====================================================
-# EXISTING: GET CURRENT USER PROFILE (your original code)
+# EXISTING: GET CURRENT USER PROFILE 
 # =====================================================
 @router.get("/me/profile")
 async def get_current_user_profile(
@@ -1100,7 +1136,7 @@ async def get_current_user_profile(
     db: Session = Depends(get_db)
 ):
     """
-    Get current logged-in user's profile information - YOUR ORIGINAL ENDPOINT
+    Get current logged-in user's profile information - ORIGINAL ENDPOINT
     """
     try:
         # For testing, return a mock user profile

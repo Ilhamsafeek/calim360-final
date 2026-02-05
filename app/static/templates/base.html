@@ -6,10 +6,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>{% block title %}CALIM 360{% endblock %} - Contract Lifecycle Management</title>
+    <meta name="description"
+        content="SaaS Intelligent & blockchain secured bilingual Contract Management and Administration platform">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="/static/assets/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="/app/static/img/c360.png">
 
     <!-- Tabler Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.34.0/tabler-icons.min.css">
@@ -1771,45 +1774,43 @@
         } */
 
 
-            /* Tooltip for buttons with data-tooltip attribute */
-    /* Tooltip for New Contract button - Bottom Right positioning with rich text */
-    .tooltip-new-contract {
-        position: relative;
-    }
+        /* Tooltip for buttons with data-tooltip attribute */
+        /* Tooltip for New Contract button - Bottom Right positioning with rich text */
+        .tooltip-new-contract {
+            position: relative;
+        }
 
-    .tooltip-new-contract::before {
-        content: "✨ START YOUR JOURNEY HERE\AGo ahead and create a Contract.\ASee how easy it is. You can choose from a variety of different templates or put one together in a few simple steps using our AI algorithm, or even upload one of your own.";
-        position: absolute;
-        top: calc(100% + 10px);
-        right: 0;
-        background: linear-gradient(135deg, #206bc4, #1a5ba8);
-        color: white;
-        padding: 16px 20px;
-        border-radius: 12px;
-        font-size: 14px;
-        line-height: 1.8;
-        white-space: pre-line;
-        width: 350px;
-        text-align: left;
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
-        transform: translateY(-5px);
-        z-index: 1000;
-        box-shadow: 0 8px 24px rgba(32, 107, 196, 0.25), 0 2px 8px rgba(0, 0, 0, 0.1);
-        pointer-events: none;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
+        .tooltip-new-contract::before {
+            content: "✨ START YOUR JOURNEY HERE\AGo ahead and create a Contract.\ASee how easy it is. You can choose from a variety of different templates or put one together in a few simple steps using our AI algorithm, or even upload one of your own.";
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            background: linear-gradient(135deg, #206bc4, #1a5ba8);
+            color: white;
+            padding: 16px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.8;
+            white-space: pre-line;
+            width: 350px;
+            text-align: left;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+            transform: translateY(-5px);
+            z-index: 1000;
+            box-shadow: 0 8px 24px rgba(32, 107, 196, 0.25), 0 2px 8px rgba(0, 0, 0, 0.1);
+            pointer-events: none;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
 
-    /* REMOVED THE ::after ARROW - NO MORE TRIANGLE */
+        /* REMOVED THE ::after ARROW - NO MORE TRIANGLE */
 
-    .tooltip-new-contract:hover::before {
-        opacity: 1;
-        visibility: visible;
-        transform: translateY(0);
-    }
-
-    
+        .tooltip-new-contract:hover::before {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
     </style>
 
     {% block head %}{% endblock %}
@@ -1889,14 +1890,24 @@
                 <!-- Expert & Support -->
                 <div class="nav-section">
                     <div class="nav-section-title">Expert Consultation</div>
+
+                    {% if user is defined and user.user_type in ['consultant', 'expert'] %}
+                    <!-- Expert View - Respond to consultations -->
+                    <a href="/expert-consultations" class="nav-link" id="nav-experts">
+                        <i class="ti ti-headset nav-icon"></i>
+                        <span class="nav-text">My Consultations</span>
+                    </a>
+                    {% else %}
+                    <!-- Regular User View - Ask experts -->
                     <a href="/ask-expert-unified" class="nav-link" id="nav-experts">
                         <i class="ti ti-user-question nav-icon"></i>
                         <span class="nav-text">Ask an Expert</span>
                     </a>
+                    {% endif %}
+
                 </div>
                 {% endif %}
 
-                <!-- Add this in the sidebar navigation, under Settings section -->
                 <div class="nav-section">
                     <div class="nav-section-title">Administration</div>
                     <div class="nav-item">
@@ -2363,7 +2374,7 @@
             // Format emoji badges with icons
             text = text.replace(/📌 (.*?):/g, '<div class="info-badge important"><i class="ti ti-pin"></i> $1:</div>');
             text = text.replace(/⚠️ (.*?):/g, '<div class="info-badge warning"><i class="ti ti-alert-triangle"></i> $1:</div>');
-            text = text.replace(/✅ (.*?):/g, '<div class="info-badge success"><i class="ti ti-check"></i> $1:</div>');
+            text = text.replace(/ (.*?):/g, '<div class="info-badge success"><i class="ti ti-check"></i> $1:</div>');
             text = text.replace(/⚖️ (.*?):/g, '<div class="info-badge legal"><i class="ti ti-gavel"></i> $1:</div>');
 
             // Convert bullet points • to styled list items

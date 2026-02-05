@@ -30,7 +30,6 @@ from app.services.workflow_email_service import WorkflowEmailService
 import shutil
 import secrets
 
-# Add these 4 lines
 import hashlib
 import uuid
 import json
@@ -41,6 +40,13 @@ import pdfplumber
 import docx
 from sqlalchemy.sql import text
 
+from docx import Document
+from docx.shared import Inches, Pt, RGBColor
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
+from html.parser import HTMLParser
+from bs4 import BeautifulSoup
 
 
 from app.core.database import get_db
@@ -101,6 +107,195 @@ class UpdateMetadataRequest(BaseModel):
     """Request to update contract AI generation metadata"""
     ai_generation_params: Dict[str, Any]
 
+
+
+class ContractHTMLParser(HTMLParser):
+    """
+    Enhanced HTML parser to convert contract HTML to Word document
+    Handles images (including base64 signature images)
+    """
+    
+    def __init__(self, doc):
+        super().__init__()
+        self.doc = doc
+        self.current_paragraph = None
+        self.current_run = None
+        self.bold = False
+        self.italic = False
+        self.underline = False
+        self.heading_level = 0
+        self.in_list = False
+        self.list_type = None
+        self.list_counter = 0
+        
+    def handle_starttag(self, tag, attrs):
+        """Handle HTML opening tags"""
+        tag = tag.lower()
+        attrs_dict = dict(attrs)
+        
+        # Extract style attributes
+        style_dict = {}
+        if 'style' in attrs_dict:
+            styles = attrs_dict['style'].split(';')
+            for style in styles:
+                if ':' in style:
+                    key, value = style.split(':', 1)
+                    style_dict[key.strip().lower()] = value.strip()
+        
+        if tag in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+            self.heading_level = int(tag[1])
+            self.current_paragraph = self.doc.add_paragraph()
+            self.current_paragraph.paragraph_format.space_after = Pt(12)
+            self.current_paragraph.paragraph_format.space_before = Pt(6)
+            
+        elif tag == 'p':
+            self.current_paragraph = self.doc.add_paragraph()
+            self.current_paragraph.paragraph_format.space_after = Pt(10)
+            self.current_paragraph.paragraph_format.line_spacing = 1.15
+            
+            # Apply text alignment
+            if 'text-align' in style_dict:
+                align = style_dict['text-align']
+                if align == 'center':
+                    self.current_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                elif align == 'right':
+                    self.current_paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                elif align == 'justify':
+                    self.current_paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                    
+        elif tag == 'br':
+            if self.current_paragraph:
+                self.current_run = self.current_paragraph.add_run()
+                self.current_run.add_break()
+                
+        elif tag == 'strong' or tag == 'b':
+            self.bold = True
+            
+        elif tag == 'em' or tag == 'i':
+            self.italic = True
+            
+        elif tag == 'u':
+            self.underline = True
+            
+        elif tag == 'ul':
+            self.in_list = True
+            self.list_type = 'ul'
+            
+        elif tag == 'ol':
+            self.in_list = True
+            self.list_type = 'ol'
+            self.list_counter = 0
+            
+        elif tag == 'li':
+            self.current_paragraph = self.doc.add_paragraph()
+            if self.list_type == 'ul':
+                self.current_paragraph.style = 'List Bullet'
+            else:
+                self.list_counter += 1
+                self.current_paragraph.style = 'List Number'
+            self.current_paragraph.paragraph_format.space_after = Pt(6)
+            
+        elif tag == 'img':
+            # Handle images (including base64 signatures)
+            src = attrs_dict.get('src', '')
+            if src:
+                try:
+                    if src.startswith('data:image'):
+                        # Base64 image
+                        header, base64_data = src.split(',', 1)
+                        image_data = base64.b64decode(base64_data)
+                        image_stream = BytesIO(image_data)
+                        
+                        # Create paragraph if needed
+                        if not self.current_paragraph:
+                            self.current_paragraph = self.doc.add_paragraph()
+                        
+                        # Add image
+                        run = self.current_paragraph.add_run()
+                        run.add_picture(image_stream, width=Inches(2.0))
+                        
+                except Exception as e:
+                    # If image fails, add placeholder text
+                    if not self.current_paragraph:
+                        self.current_paragraph = self.doc.add_paragraph()
+                    run = self.current_paragraph.add_run('[Signature Image]')
+                    run.font.italic = True
+                    
+        elif tag == 'div':
+            # Divs might have special styling
+            if 'text-align' in style_dict:
+                self.current_paragraph = self.doc.add_paragraph()
+                align = style_dict['text-align']
+                if align == 'center':
+                    self.current_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                elif align == 'right':
+                    self.current_paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                    
+    def handle_endtag(self, tag):
+        """Handle HTML closing tags"""
+        tag = tag.lower()
+        
+        if tag in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+            self.heading_level = 0
+            self.current_paragraph = None
+            
+        elif tag == 'p':
+            self.current_paragraph = None
+            
+        elif tag == 'strong' or tag == 'b':
+            self.bold = False
+            
+        elif tag == 'em' or tag == 'i':
+            self.italic = False
+            
+        elif tag == 'u':
+            self.underline = False
+            
+        elif tag == 'ul' or tag == 'ol':
+            self.in_list = False
+            self.list_type = None
+            self.list_counter = 0
+            
+        elif tag == 'li':
+            self.current_paragraph = None
+            
+    def handle_data(self, data):
+        """Handle text content"""
+        if not data.strip():
+            return
+            
+        # Create paragraph if none exists
+        if not self.current_paragraph:
+            self.current_paragraph = self.doc.add_paragraph()
+            self.current_paragraph.paragraph_format.space_after = Pt(10)
+            
+        # Add text run
+        run = self.current_paragraph.add_run(data)
+        
+        # Apply formatting
+        run.font.name = 'Arial'
+        run.font.size = Pt(11)
+        
+        if self.heading_level > 0:
+            run.bold = True
+            if self.heading_level == 1:
+                run.font.size = Pt(18)
+                run.font.color.rgb = RGBColor(0, 0, 0)
+            elif self.heading_level == 2:
+                run.font.size = Pt(16)
+                run.font.color.rgb = RGBColor(30, 41, 59)
+            elif self.heading_level == 3:
+                run.font.size = Pt(14)
+                run.font.color.rgb = RGBColor(51, 65, 85)
+            else:
+                run.font.size = Pt(12)
+        else:
+            if self.bold:
+                run.bold = True
+            if self.italic:
+                run.italic = True
+            if self.underline:
+                run.underline = True
 
 
 # =====================================================
@@ -207,7 +402,7 @@ async def list_contract_templates(
         
         query = """
             SELECT id, template_name, template_type, template_category,
-                   description, is_active
+                   description, is_active, language
             FROM contract_templates
             WHERE is_active = 1
         """
@@ -219,7 +414,7 @@ async def list_contract_templates(
             query += " AND (template_category = :category OR template_category = 'all')"
             params["category"] = category
         
-        query += " ORDER BY template_name"
+        query += " ORDER BY language DESC, template_name"
         
         result = db.execute(text(query), params)
         rows = result.fetchall()
@@ -232,7 +427,8 @@ async def list_contract_templates(
                 "type": row[2],
                 "category": row[3],
                 "description": row[4],
-                "is_active": row[5]
+                "is_active": row[5],
+                "language": row[6]
             })
         
         logger.info(f" Found {len(templates)} templates")
@@ -341,9 +537,9 @@ async def create_contract_from_template(
             "status": "draft",
             "workflow_status": "drafting",
             "created_by": current_user.id,
-            "created_at": datetime.utcnow(),  # ✅ FIXED
-            "updated_at": datetime.utcnow(),  # ✅ FIXED
-            "single_tag": request.get("tags") if request.get("tags") else None,  # ✅ Convert array to comma-separated
+            "created_at": datetime.utcnow(),  #  FIXED
+            "updated_at": datetime.utcnow(),  #  FIXED
+            "single_tag": request.get("tags") if request.get("tags") else None,  #  Convert array to comma-separated
             
         }
         
@@ -622,8 +818,8 @@ async def generate_contract_with_ai(
             "current_version": 1,
             "is_ai_generated": 1,
             "ai_generation_params": generation_params_json,
-            "party_b_lead_id": None,  #  ADD THIS - Will be set later when counterparty is added
-            "party_b_id": None,       #  ADD THIS - Will be set later when counterparty is added
+            "party_b_lead_id": None, 
+            "party_b_id": None,      
             "created_by": str(current_user.id),
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
@@ -886,7 +1082,7 @@ async def get_contracts(
             Contract.company_id == company_id,
             Contract.party_b_id == company_id
         ),
-        Contract.is_deleted == False,
+        Contract.is_deleted == 0,
         Contract.contract_type != 'risk_analysis'
     )
     
@@ -903,13 +1099,13 @@ async def get_contracts(
                 # Contract.workflow_status.in_(['external_review', 'negotiation', 'approval']),
                 # and_(
                 #     Contract.workflow_status.is_(None),
-                    Contract.status.in_(['in_progress', 'pending_approval', 'negotiation'])
-                )
+                    Contract.status.notin_(['draft', 'executed'])
+                ) 
             # )
         )
     elif module == "operations":
         query = query.filter(
-            Contract.status.in_(['approved', 'expired', 'terminated', 'completed', 'executed', 'signed'])
+            Contract.status.in_(['executed'])
         )
     
     # Status filter for sub-tabs
@@ -1337,15 +1533,15 @@ async def get_contract_editor_data(
         # ===== EXECUTION CERTIFICATE DATA =====
         certificate_data = None
         
-        # ✅ FIXED: Check for signature, signed, and executed status
+        #  FIXED: Check for signature, signed, and executed status
         if result.status in ('signature', 'signed', 'executed'):  # Added 'signature' status
             try:
-                # ✅ REMOVED: contract_metadata table query (doesn't exist)
-                # ✅ NEW: Always generate from signatories table
+                #  REMOVED: contract_metadata table query (doesn't exist)
+                #  NEW: Always generate from signatories table
                 
                 executed_by_name = f"{current_user.first_name} {current_user.last_name}"
                 
-                # ✅ FIXED: Get signatories with signature_data and signature_method
+                #  FIXED: Get signatories with signature_data and signature_method
                 signatories_query = text("""
                     SELECT 
                         s.signer_type,
@@ -1391,19 +1587,18 @@ async def get_contract_editor_data(
                         "email": sig.email or "",
                         "has_signed": bool(sig.has_signed),
                         "signed_at": sig.signed_at.isoformat() if sig.signed_at else None,
-                        "signature_data": sig.signature_data or "",  # ✅ ADDED
-                        "signature_method": sig.signature_method or "draw",  # ✅ ADDED
+                        "signature_data": sig.signature_data or "",  #  ADDED
+                        "signature_method": sig.signature_method or "draw",  #  ADDED
                         "ip_address": sig.ip_address or "",
                         "signing_order": sig.signing_order
                     })
                 
-                logger.info(f"✅ Certificate data loaded with {len(certificate_data['signatories'])} signatories")
+                logger.info(f" Certificate data loaded with {len(certificate_data['signatories'])} signatories")
                     
             except Exception as cert_error:
                 logger.warning(f"⚠️ Could not retrieve certificate data: {str(cert_error)}")
                 certificate_data = None
         
-        # ===== RETURN RESPONSE ===== (keep your existing return statement below)
         
         # ===== RETURN RESPONSE =====
         return {
@@ -1473,7 +1668,7 @@ async def get_contract_editor_data(
         raise HTTPException(status_code=500, detail=str(e))
         
 
-# ✅ HELPER FUNCTIONS (Place these at the TOP of the file, outside the router functions)
+#  HELPER FUNCTIONS (Place these at the TOP of the file, outside the router functions)
 def _generate_success_message(is_internal: bool, tampered_banner_added: bool, original_hash_stored: bool) -> str:
     """Generate appropriate success message based on operation"""
     if is_internal and tampered_banner_added and original_hash_stored:
@@ -1496,10 +1691,6 @@ def _generate_verification_note(is_internal: bool, original_hash_stored: bool) -
         return "Verification will succeed: blockchain hash = current content"
 
 
-# =====================================================
-# SIMPLE FIX: Replace your existing save_contract_draft function
-# FILE: app/api/api_v1/contracts/contracts.py
-# =====================================================
 
 @router.post("/save-draft/{contract_id}")
 async def save_contract_draft(
@@ -1533,7 +1724,7 @@ async def save_contract_draft(
         blockchain_success = False
         final_content = new_content
         
-        # ✅ FIX: For INTERNAL users - DON'T store on blockchain
+        #  FIX: For INTERNAL users - DON'T store on blockchain
         if is_internal:
             logger.info(f"⏭️ Internal user - SKIPPING blockchain storage")
             logger.info(f"   Verification will detect no blockchain record = TAMPERED")
@@ -1678,7 +1869,7 @@ async def send_contract_for_signature(
                 "detail": f"Contract must be in approval or negotiation status. Current: {contract.status}"
             }
         
-        logger.info(f"✅ Contract verified: {contract.contract_number}")
+        logger.info(f" Contract verified: {contract.contract_number}")
         
         # STEP 2: Update contract status to 'signature'
         update_contract = text("""
@@ -1690,7 +1881,7 @@ async def send_contract_for_signature(
         """)
         
         db.execute(update_contract, {"contract_id": contract_id})
-        logger.info(f"✅ Contract status updated to 'signature'")
+        logger.info(f" Contract status updated to 'signature'")
         
         # STEP 3: Get E-SIGN authority users from workflow (if exists)
         workflow_query = text("""
@@ -1724,7 +1915,7 @@ async def send_contract_for_signature(
         
         if workflow_signers and len(workflow_signers) >= 2:
             # Use workflow to determine signatories
-            logger.info(f"✅ Found {len(workflow_signers)} workflow E-SIGN authorities")
+            logger.info(f" Found {len(workflow_signers)} workflow E-SIGN authorities")
             
             for idx, signer in enumerate(workflow_signers):
                 # Determine signer_type based on company
@@ -1751,7 +1942,7 @@ async def send_contract_for_signature(
                     "email": signer.email
                 })
                 
-                logger.info(f"✅ Created signatory: {signer.first_name} {signer.last_name} ({signer_type})")
+                logger.info(f" Created signatory: {signer.first_name} {signer.last_name} ({signer_type})")
                 signatories_created += 1
         
         else:
@@ -1815,7 +2006,7 @@ async def send_contract_for_signature(
                     "email": company_rep.email
                 })
                 
-                logger.info(f"✅ Created COMPANY signatory: {company_rep.first_name} {company_rep.last_name}")
+                logger.info(f" Created COMPANY signatory: {company_rep.first_name} {company_rep.last_name}")
                 signatories_created += 1
             
             # Create CLIENT signatory
@@ -1836,7 +2027,7 @@ async def send_contract_for_signature(
                     "email": counterparty.email
                 })
                 
-                logger.info(f"✅ Created CLIENT signatory: {counterparty.first_name} {counterparty.last_name}")
+                logger.info(f" Created CLIENT signatory: {counterparty.first_name} {counterparty.last_name}")
                 signatories_created += 1
         
         # STEP 6: Verify we have 2 signatories
@@ -1867,7 +2058,7 @@ async def send_contract_for_signature(
         
         db.commit()
         
-        logger.info(f"✅ Contract {contract_id} sent for signature with {signatories_created} signatories")
+        logger.info(f" Contract {contract_id} sent for signature with {signatories_created} signatories")
         
 
         log_contract_action(
@@ -2026,7 +2217,7 @@ async def apply_signature(
         if not contract:
             raise HTTPException(status_code=404, detail="Contract not found")
         
-        logger.info(f"✅ Contract: {contract.contract_number} - Status: {contract.status}")
+        logger.info(f" Contract: {contract.contract_number} - Status: {contract.status}")
         
         if contract.status != 'signature':
             return {
@@ -2062,7 +2253,7 @@ async def apply_signature(
         
         if existing:
             # UPDATE existing signatory record
-            # ✅ FIXED: Using only columns that exist in signatories table
+            #  FIXED: Using only columns that exist in signatories table
             update_signatory = text("""
                 UPDATE signatories
                 SET has_signed = 1,
@@ -2081,10 +2272,10 @@ async def apply_signature(
                 "contract_id": contract_id,
                 "user_id": current_user.id
             })
-            logger.info(f"✅ Updated existing signatory record for user {current_user.id}")
+            logger.info(f" Updated existing signatory record for user {current_user.id}")
         else:
             # INSERT new signatory record
-            # ✅ FIXED: Using external_email instead of email, removed company_id
+            #  FIXED: Using external_email instead of email, removed company_id
             insert_signatory = text("""
                 INSERT INTO signatories
                 (contract_id, user_id, signer_type, 
@@ -2110,7 +2301,7 @@ async def apply_signature(
                 "external_email": current_user.email,
                 "signing_order": signing_order
             })
-            logger.info(f"✅ Created new signatory record for user {current_user.id}")
+            logger.info(f" Created new signatory record for user {current_user.id}")
         
         # STEP 4: Check if all required signatures collected (BEFORE log_contract_action)
         all_signatures_query = text("""
@@ -2125,7 +2316,7 @@ async def apply_signature(
             "contract_id": contract_id
         }).fetchone()
         
-        # ✅ FIX: Initialize all_signed BEFORE using it in log_contract_action
+        #  FIX: Initialize all_signed BEFORE using it in log_contract_action
         all_signed = (signature_status.signed_count >= 2) #signature_status.total_signatories
         
         logger.info(f"📊 Signature status: {signature_status.signed_count}/{signature_status.total_signatories}")
@@ -2158,8 +2349,55 @@ async def apply_signature(
             db.execute(update_contract, {"contract_id": contract_id})
             new_contract_status = "signed"
             logger.info(f"🎉 All parties have signed! Contract {contract_id} status updated to 'signed'")
+
+
+            # Get party details (if not already in signature_status)
+            party_details_query = text("""
+                SELECT 
+                    c.contract_number,
+                    c.contract_title,
+                    CONCAT(u1.first_name, ' ', u1.last_name) as initiator_name,
+                    u1.email as initiator_email,
+                    CONCAT(u2.first_name, ' ', u2.last_name) as party_b_name,
+                    u2.email as party_b_email
+                FROM contracts c
+                LEFT JOIN users u1 ON c.created_by = u1.id
+                LEFT JOIN users u2 ON c.party_b_lead_id = u2.id
+                WHERE c.id = :contract_id
+            """)
+            
+            details = db.execute(party_details_query, {"contract_id": contract_id}).fetchone()
+            
+            if details:
+                # Email to Initiator
+                if details.initiator_email:
+                    WorkflowEmailService.send_all_parties_signed_notification(
+                        db=db,
+                        contract_id=contract_id,
+                        contract_number=details.contract_number,
+                        contract_title=details.contract_title,
+                        recipient_email=details.initiator_email,
+                        recipient_name=details.initiator_name,
+                        recipient_role="Contract Initiator"
+                    )
+                
+                # Email to Party B Lead
+                if details.party_b_email:
+                    WorkflowEmailService.send_all_parties_signed_notification(
+                        db=db,
+                        contract_id=contract_id,
+                        contract_number=details.contract_number,
+                        contract_title=details.contract_title,
+                        recipient_email=details.party_b_email,
+                        recipient_name=details.party_b_name,
+                        recipient_role="Counter-Party Lead"
+                    )
+                
+                logger.info("✅ All parties signed notifications sent")
+
         
         db.commit()
+
         
         # STEP 7: Return success response
         return {
@@ -2244,7 +2482,7 @@ async def get_contract_with_certificate(
                 "signing_order": sig.signing_order
             })
         
-        logger.info(f"✅ Retrieved certificate with {len(certificate_data['signatories'])} signatories")
+        logger.info(f" Retrieved certificate with {len(certificate_data['signatories'])} signatories")
         
         return {
             "success": True,
@@ -2429,7 +2667,7 @@ async def execute_contract(
     try:
         contract_id = int(execution_data.get("contract_id"))
         
-        logger.info(f" Executing contract {contract_id}")
+        logger.info(f"🔄 Executing contract {contract_id}")
         
         # Verify contract
         contract_check = text("""
@@ -2478,7 +2716,7 @@ async def execute_contract(
             "contract_title": contract.contract_title,
             "execution_date": datetime.now().isoformat(),
             "signed_date": contract.signed_date.isoformat() if contract.signed_date else None,
-            "executed_by": executed_by_name,  # FIXED
+            "executed_by": executed_by_name,
             "executed_by_email": current_user.email,
             "signatories": []
         }
@@ -2531,7 +2769,7 @@ async def execute_contract(
                 "cert_data": json.dumps(certificate_data)
             })
         except Exception as meta_error:
-            logger.warning(f" Could not store certificate metadata: {str(meta_error)}")
+            logger.warning(f"⚠️ Could not store certificate metadata: {str(meta_error)}")
             # Continue - certificate is in response anyway
         
         # Audit log with JSON
@@ -2559,6 +2797,66 @@ async def execute_contract(
         
         db.commit()
         
+        # =====================================================
+        # 📧 SEND EMAIL NOTIFICATIONS - CONTRACT EXECUTED
+        # =====================================================
+        try:
+            from app.services.workflow_email_service import WorkflowEmailService
+            
+            # Get initiator and counter-party details
+            party_details_query = text("""
+                SELECT 
+                    c.created_by,
+                    c.party_b_lead_id,
+                    CONCAT(u1.first_name, ' ', u1.last_name) as initiator_name,
+                    u1.email as initiator_email,
+                    CONCAT(u2.first_name, ' ', u2.last_name) as party_b_name,
+                    u2.email as party_b_email
+                FROM contracts c
+                LEFT JOIN users u1 ON c.created_by = u1.id
+                LEFT JOIN users u2 ON c.party_b_lead_id = u2.id
+                WHERE c.id = :contract_id
+            """)
+            
+            party_details = db.execute(party_details_query, {"contract_id": contract_id}).fetchone()
+            
+            if party_details:
+                # Send to Initiator
+                if party_details.initiator_email:
+                    WorkflowEmailService.send_contract_executed_notification(
+                        db=db,
+                        contract_id=contract_id,
+                        contract_number=contract.contract_number,
+                        contract_title=contract.contract_title,
+                        recipient_email=party_details.initiator_email,
+                        recipient_name=party_details.initiator_name,
+                        recipient_role="Contract Initiator",
+                        executed_by_name=executed_by_name
+                    )
+                    logger.info(f"✉️ Execution email sent to Initiator: {party_details.initiator_email}")
+                
+                # Send to Counter-Party Lead
+                if party_details.party_b_email:
+                    WorkflowEmailService.send_contract_executed_notification(
+                        db=db,
+                        contract_id=contract_id,
+                        contract_number=contract.contract_number,
+                        contract_title=contract.contract_title,
+                        recipient_email=party_details.party_b_email,
+                        recipient_name=party_details.party_b_name,
+                        recipient_role="Counter-Party Lead",
+                        executed_by_name=executed_by_name
+                    )
+                    logger.info(f"✉️ Execution email sent to Counter-Party: {party_details.party_b_email}")
+                
+                logger.info("✅ Contract execution notifications sent to both parties")
+            else:
+                logger.warning("⚠️ Could not find party details for email notifications")
+                
+        except Exception as email_error:
+            logger.error(f"❌ Error sending execution emails: {str(email_error)}")
+            # Don't fail the execution if email fails
+        
         logger.info(f"🎉 Contract {contract_id} executed successfully!")
         
         return {
@@ -2574,9 +2872,10 @@ async def execute_contract(
         raise
     except Exception as e:
         db.rollback()
-        logger.error(f" Error executing contract: {str(e)}")
+        logger.error(f"❌ Error executing contract: {str(e)}")
         logger.exception(e)
         raise HTTPException(status_code=500, detail=str(e))
+        
 
 @router.get("/execution-certificate/{contract_id}")
 async def get_execution_certificate(
@@ -3212,7 +3511,7 @@ async def submit_for_internal_review(
                     "company_id": current_user.company_id
                 })
 
-                logger.info(f"✅ Internal review workflow status updated to 'in_progress'")
+                logger.info(f" Internal review workflow status updated to 'in_progress'")
 
                 # Get first reviewer in the workflow for action_person_id
                 logger.info(f"🔍 Finding first reviewer in internal review workflow...")
@@ -3235,7 +3534,7 @@ async def submit_for_internal_review(
                 }).first()
                 
                 first_reviewer_id = first_reviewer.id if first_reviewer else None
-                logger.info(f"✅ First reviewer ID: {first_reviewer_id}")
+                logger.info(f" First reviewer ID: {first_reviewer_id}")
                 
                 # Update contract with action_person_id
                 update_contract_query = text("""
@@ -3249,7 +3548,7 @@ async def submit_for_internal_review(
                     "contract_id": contract_id
                 })
                 
-                logger.info(f"✅ Contract {contract_id} action_person_id set to: {first_reviewer_id}")
+                logger.info(f" Contract {contract_id} action_person_id set to: {first_reviewer_id}")
 # 📧 EMAIL NOTIFICATION: Internal review request
                 try:
                     logger.info("📧 Preparing to send internal review notification emails...")
@@ -3337,15 +3636,15 @@ async def submit_for_internal_review(
                 }).first()
                 
                 first_approver_id = first_approver.id if first_approver else None
-                logger.info(f"✅ First approver ID: {first_approver_id}")
+                logger.info(f" First approver ID: {first_approver_id}")
                 
                 # Update contract status to 'approval'
                 contract.status = 'approval'
                 contract.action_person_id = first_approver_id
                 contract.updated_at = datetime.now()
                 
-                logger.info(f"✅ Contract {contract_id} status updated to 'approval'")
-                logger.info(f"✅ action_person_id set to: {first_approver_id}")
+                logger.info(f" Contract {contract_id} status updated to 'approval'")
+                logger.info(f" action_person_id set to: {first_approver_id}")
 # 📧 EMAIL NOTIFICATION: Approval workflow initiated
                 try:
                     if first_approver_id:
@@ -3417,7 +3716,7 @@ async def submit_for_internal_review(
                     "company_id": current_user.company_id
                 })
 
-                logger.info(f"✅ Approval workflow status updated to 'in_progress'")
+                logger.info(f" Approval workflow status updated to 'in_progress'")
 
             # =====================================================
             # HANDLE SIGNATURE
@@ -3457,7 +3756,7 @@ async def submit_for_internal_review(
                         detail="No E-SIGN step found in workflow. Please configure workflow with E-SIGN authority step."
                     )
                 
-                logger.info(f"✅ Found E-SIGN step: '{esign_step.step_name}' at position {esign_step.step_number}")
+                logger.info(f" Found E-SIGN step: '{esign_step.step_name}' at position {esign_step.step_number}")
                 logger.info(f"   Workflow: {esign_step.workflow_name} (Master: {esign_step.is_master})")
             
 
@@ -3466,8 +3765,8 @@ async def submit_for_internal_review(
                 contract.action_person_id = esign_step.assignee_user_id
                 contract.updated_at = datetime.now()
                 
-                logger.info(f"✅ Contract {contract_id} status updated to 'signature'")
-                logger.info(f"✅ action_person_id set to e-sign authority: {esign_step.assignee_user_id}")
+                logger.info(f" Contract {contract_id} status updated to 'signature'")
+                logger.info(f" action_person_id set to e-sign authority: {esign_step.assignee_user_id}")
 
 # 📧 EMAIL NOTIFICATION: Contract sent for signature
                 try:
@@ -3532,7 +3831,7 @@ async def submit_for_internal_review(
                     "company_id": current_user.company_id
                 })
 
-                logger.info(f"✅ Signature workflow status updated to 'in_progress'")
+                logger.info(f" Signature workflow status updated to 'in_progress'")
                 
         else:
             # Log that counterparty submitted review (status not updated)
@@ -3559,7 +3858,7 @@ async def submit_for_internal_review(
                 #     "company_id": current_user.company_id
                 # })
 
-                # logger.info(f"✅ Internal review workflow status updated to 'in_progress'")
+                # logger.info(f" Internal review workflow status updated to 'in_progress'")
 
                 # Get first reviewer in the workflow for action_person_id
                 logger.info(f"🔍 Finding first reviewer in internal review workflow...")
@@ -3582,7 +3881,7 @@ async def submit_for_internal_review(
                 }).first()
                 
                 first_reviewer_id = first_reviewer.id if first_reviewer else None
-                logger.info(f"✅ First reviewer ID: {first_reviewer_id}")
+                logger.info(f" First reviewer ID: {first_reviewer_id}")
                 
                 # Update contract with action_person_id
                 update_contract_query = text("""
@@ -3596,7 +3895,7 @@ async def submit_for_internal_review(
                     "contract_id": contract_id
                 })
                 
-                logger.info(f"✅ Contract {contract_id} action_person_id set to: {first_reviewer_id}")
+                logger.info(f" Contract {contract_id} action_person_id set to: {first_reviewer_id}")
 
 # 📧 EMAIL NOTIFICATION: Internal review request
                 try:
@@ -3825,7 +4124,7 @@ async def analyze_contract_risks(
             try:
                 analysis_data = json.loads(existing_analysis[0]) if isinstance(existing_analysis[0], str) else existing_analysis[0]
                 
-                # ✅ CHECK IF THIS IS A RAG-ENHANCED ANALYSIS
+                #  CHECK IF THIS IS A RAG-ENHANCED ANALYSIS
                 is_rag_enhanced = analysis_data.get("rag_enhanced", False)
                 analysis_version = analysis_data.get("analysis_version", "")
                 
@@ -3835,7 +4134,7 @@ async def analyze_contract_risks(
                     hours_old = (datetime.now() - analysis_date).total_seconds() / 3600
                     
                     if hours_old < 24:  # Cache for 24 hours
-                        logger.info(f"✅ Returning cached RAG analysis (age: {hours_old:.1f} hours)")
+                        logger.info(f" Returning cached RAG analysis (age: {hours_old:.1f} hours)")
                         
                         return {
                             "success": True,
@@ -3932,7 +4231,7 @@ async def analyze_contract_risks(
         # Build context from retrieved chunks (but don't expose chunk numbers to Claude)
         if relevant_chunks:
             context = "\n\n".join([chunk['text'] for chunk in relevant_chunks])
-            logger.info(f"✅ Retrieved {len(relevant_chunks)} relevant sections ({len(context)} chars)")
+            logger.info(f" Retrieved {len(relevant_chunks)} relevant sections ({len(context)} chars)")
         else:
             # Fallback to full document if RAG fails
             context = contract_content[:15000]
@@ -4239,7 +4538,7 @@ Analyze the contract now and provide the comprehensive JSON response."""
         
         # Extract and parse response
         ai_response = message.content[0].text.strip()
-        logger.info(f"✅ Claude response received ({len(ai_response)} chars)")
+        logger.info(f" Claude response received ({len(ai_response)} chars)")
         
         # Clean up response
         if ai_response.startswith("```"):
@@ -4250,7 +4549,7 @@ Analyze the contract now and provide the comprehensive JSON response."""
         
         # Parse JSON
         claude_analysis = json.loads(ai_response)
-        logger.info(f"✅ RAG-enhanced AI analysis parsed successfully")
+        logger.info(f" RAG-enhanced AI analysis parsed successfully")
         
         # Extract data
         executive_summary = claude_analysis.get("executive_summary", {})
@@ -4315,7 +4614,7 @@ Analyze the contract now and provide the comprehensive JSON response."""
         })
         db.commit()
         
-        logger.info(f"✅ RAG-enhanced risk analysis saved for contract {contract_id} (chunks: {len(relevant_chunks)}, jurisdiction: {jurisdiction})")
+        logger.info(f" RAG-enhanced risk analysis saved for contract {contract_id} (chunks: {len(relevant_chunks)}, jurisdiction: {jurisdiction})")
         
         return {
             "success": True,
@@ -4391,7 +4690,7 @@ async def upload_contract_for_risk_analysis(
         """), {"contract_number": contract_number}).fetchone()
         
         contract_id = contract_id_result[0]
-        logger.info(f"✅ Contract created with ID: {contract_id}")
+        logger.info(f" Contract created with ID: {contract_id}")
         
         # Save uploaded file
         upload_dir = f"app/uploads/contracts/{contract_id}"
@@ -4436,7 +4735,7 @@ async def upload_contract_for_risk_analysis(
         </div>
         """
         
-        logger.info(f"✅ Extracted {len(plain_text)} characters from document")
+        logger.info(f" Extracted {len(plain_text)} characters from document")
         
         # Save contract version
         version_query = sql_text("""
@@ -4456,7 +4755,7 @@ async def upload_contract_for_risk_analysis(
         })
         db.commit()
         
-        logger.info(f"✅ Contract version saved")
+        logger.info(f" Contract version saved")
         
         # Return contract ID - frontend will call /risk-analysis/{contract_id}
         return {
@@ -4813,15 +5112,14 @@ async def export_contract_improved(
 # =====================================================
 def export_as_pdf(contract, signatories):
     """
-    Simple: Take HTML from database and convert directly to PDF
-    No parsing, no reconstruction - just direct conversion
+    Generate PDF from contract content as-is
+    Signatures should already be in the contract content from editor
     """
     
-    # Get HTML content directly from database
+    # Get HTML content directly from database (includes embedded signatures)
     content_html = contract.contract_content or "<p>No content available</p>"
     
-    
-    # Wrap in a complete HTML document with basic styling
+    # Complete HTML document
     complete_html = f'''
     <!DOCTYPE html>
     <html>
@@ -4840,7 +5138,6 @@ def export_as_pdf(contract, signatories):
                 color: #000;
             }}
             
-            /* Just basic styling - content already has its own styles */
             .header {{
                 border-bottom: 2px solid #2563eb;
                 padding-bottom: 15px;
@@ -4859,26 +5156,20 @@ def export_as_pdf(contract, signatories):
                 color: #666;
             }}
             
-            /* Let the contract content keep its own styling */
-            .contract-content {{
-                /* Content already has inline styles from editor */
-            }}
-            
-            /* Signature styling */
-            .signatures {{
-                margin-top: 40px;
-                page-break-inside: avoid;
+            /* Ensure images display properly */
+            img {{
+                max-width: 100%;
+                height: auto;
             }}
         </style>
     </head>
     <body>
+      
         
-        <!-- Contract Content - DIRECTLY FROM DATABASE -->
+        <!-- Contract Content (includes signatures at their designated positions) -->
         <div class="contract-content">
             {content_html}
         </div>
-        
-       
     </body>
     </html>
     '''
@@ -4899,7 +5190,6 @@ def export_as_pdf(contract, signatories):
         }
     )
 
-
 # =====================================================
 # DOCX EXPORT WITH FULL STYLING PRESERVED
 # Uses Word's HTML format to preserve all styling
@@ -4911,175 +5201,151 @@ def export_as_pdf(contract, signatories):
 # Replace export_as_word() in contracts.py
 # =====================================================
 
+
+
+def inject_signatures_into_html(content_html, signatories):
+    """
+    Inject actual signature images/text into the contract HTML
+    at their designated positions (where signature blocks exist)
+    """
+    if not signatories or len(signatories) == 0:
+        return content_html
+    
+    # Parse HTML with BeautifulSoup
+    soup = BeautifulSoup(content_html, 'html.parser')
+    
+    # Process each signatory
+    for sig in signatories:
+        if not sig.has_signed or not sig.signature_data:
+            continue
+            
+        signer_type = sig.signer_type.lower()
+        signer_name = f"{sig.first_name} {sig.last_name}" if sig.first_name else "Unknown"
+        
+        # Find signature placeholder for this signer type
+        # Look for common patterns: class="signature-client", class="signature-company", etc.
+        signature_containers = soup.find_all(['div', 'span'], 
+            class_=lambda x: x and signer_type in x.lower() if x else False)
+        
+        if not signature_containers:
+            # Alternative: look for text patterns like "CLIENT", "COMPANY" in headings
+            for heading in soup.find_all(['h3', 'h4', 'strong', 'b']):
+                if signer_type in heading.get_text().lower():
+                    # Find the next container or paragraph for signature
+                    signature_container = heading.find_next(['div', 'p'])
+                    if signature_container:
+                        signature_containers = [signature_container]
+                        break
+        
+        # Inject signature into found containers
+        for container in signature_containers:
+            # Clear existing content
+            container.clear()
+            
+            # Add name
+            name_p = soup.new_tag('p')
+            name_strong = soup.new_tag('strong')
+            name_strong.string = signer_name
+            name_p.append(name_strong)
+            name_p['style'] = 'margin: 5px 0; font-size: 12pt;'
+            container.append(name_p)
+            
+            # Add role
+            role_p = soup.new_tag('p')
+            role_p.string = f"Role: {sig.signer_type}"
+            role_p['style'] = 'margin: 5px 0; font-size: 10pt;'
+            container.append(role_p)
+            
+            # Add status
+            status_p = soup.new_tag('p')
+            status_text = f"Status: Signed on {sig.signed_at.strftime('%B %d, %Y at %I:%M %p')}" if sig.signed_at else "Status: Signed"
+            status_p.string = status_text
+            status_p['style'] = 'margin: 5px 0; font-size: 10pt; color: #22c55e;'
+            container.append(status_p)
+            
+            # Add method
+            if sig.signature_method:
+                method_p = soup.new_tag('p')
+                method_p.string = f"Method: {sig.signature_method}"
+                method_p['style'] = 'margin: 5px 0; font-size: 9pt; font-style: italic; color: #64748b;'
+                container.append(method_p)
+            
+            # Add signature image or text
+            sig_div = soup.new_tag('div')
+            sig_div['style'] = 'margin-top: 10px; padding: 10px; background: white; border: 1px solid #e2e8f0; border-radius: 4px;'
+            
+            if sig.signature_data.startswith('data:image'):
+                # Image signature
+                img = soup.new_tag('img')
+                img['src'] = sig.signature_data
+                img['alt'] = 'Signature'
+                img['style'] = 'max-width: 200px; max-height: 80px; display: block;'
+                sig_div.append(img)
+            else:
+                # Text signature
+                text_p = soup.new_tag('p')
+                text_p.string = sig.signature_data
+                text_p['style'] = "font-family: 'Brush Script MT', cursive; font-size: 24pt; color: #000; font-style: italic; margin: 0;"
+                sig_div.append(text_p)
+            
+            container.append(sig_div)
+            
+            # Only inject into first matching container
+            break
+    
+    return str(soup)
+
+
 import pypandoc
 import tempfile
 import os
 
+
 def export_as_word(contract, signatories):
     """
-    Generate proper .docx file using pandoc
-    Pandoc creates true Word documents with styling preserved
+    Generate Word document from contract content as-is
+    Signatures should already be in the contract content from editor
     """
     
-    # Get HTML content from database
+    # Get HTML content from database (includes embedded signatures)
     content_html = contract.contract_content or "<p>No content available</p>"
     
-    # Build signature section HTML
-    signature_html = ""
-    if signatories:
-        signature_html = '<div style="page-break-before: always; margin-top: 30px;">'
-        signature_html += '<h2 style="color: #1e293b; border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-top: 20px;">Signatures</h2>'
-        
-        for sig in signatories:
-            signer_name = f"{sig.first_name} {sig.last_name}" if sig.first_name else "Pending"
-            status = "✓ Signed" if sig.has_signed else "Pending"
-            signed_date = sig.signed_at.strftime('%B %d, %Y %H:%M') if sig.signed_at else "N/A"
-            
-            signature_html += f'''
-            <div style="border: 2px solid #cbd5e0; border-radius: 8px; padding: 15px; margin: 15px 0; background-color: #f8fafc;">
-                <p style="margin: 5px 0; font-size: 12pt;"><strong>{sig.signer_type.capitalize()}:</strong> {signer_name}</p>
-                <p style="margin: 5px 0; font-size: 11pt; color: #64748b;"><strong>Status:</strong> {status}</p>
-                <p style="margin: 5px 0; font-size: 11pt; color: #64748b;"><strong>Date:</strong> {signed_date}</p>
-            '''
-            
-            # Add signature image
-            if sig.signature_data and sig.signature_data.startswith('data:image'):
-                signature_html += f'''
-                <div style="margin-top: 10px;">
-                    <img src="{sig.signature_data}" style="max-width: 200px; max-height: 80px;" alt="Signature" />
-                </div>
-                '''
-            
-            signature_html += '</div>'
-        
-        signature_html += '</div>'
+    # Create new Word document
+    doc = Document()
     
-    # Build complete HTML document
-    complete_html = f'''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>{contract.contract_title or "Contract"}</title>
-        <style>
-            body {{
-                font-family: Arial, Calibri, sans-serif;
-                font-size: 11pt;
-                line-height: 1.6;
-                color: #000000;
-                margin: 0;
-                padding: 0;
-            }}
-            
-            .document-header {{
-                border-bottom: 3px solid #2563eb;
-                padding-bottom: 15px;
-                margin-bottom: 20px;
-            }}
-            
-            .document-title {{
-                font-size: 20pt;
-                font-weight: bold;
-                color: #1e293b;
-                text-align: center;
-                margin: 0 0 10px 0;
-            }}
-            
-            .document-metadata {{
-                font-size: 10pt;
-                color: #64748b;
-            }}
-            
-            h1 {{ font-size: 18pt; font-weight: bold; color: #1e293b; margin: 20px 0 10px 0; }}
-            h2 {{ font-size: 14pt; font-weight: bold; color: #1e293b; margin: 15px 0 10px 0; }}
-            h3 {{ font-size: 12pt; font-weight: bold; color: #334155; margin: 12px 0 8px 0; }}
-            
-            p {{ margin: 10px 0; text-align: justify; }}
-            
-            strong, b {{ font-weight: bold; }}
-            em, i {{ font-style: italic; }}
-            u {{ text-decoration: underline; }}
-            
-            table {{
-                width: 100%;
-                border-collapse: collapse;
-                margin: 15px 0;
-            }}
-            table, th, td {{ border: 1px solid #cbd5e0; }}
-            th {{ background-color: #f1f5f9; font-weight: bold; padding: 8px; }}
-            td {{ padding: 8px; }}
-            
-            ul, ol {{ margin: 10px 0; padding-left: 30px; }}
-            li {{ margin: 5px 0; }}
-            
-            img {{ max-width: 100%; height: auto; }}
-        </style>
-    </head>
-    <body>
-        <!-- Document Header -->
-        <div class="document-header">
-            <h1 class="document-title">{contract.contract_title or "Contract Document"}</h1>
-            <div class="document-metadata">
-                <p><strong>Contract Number:</strong> {contract.contract_number or 'N/A'}</p>
-                <p><strong>Date:</strong> {datetime.now().strftime('%B %d, %Y')}</p>
-                <p><strong>Status:</strong> {contract.status.upper() if contract.status else 'N/A'}</p>
-            </div>
-        </div>
-        
-        <!-- Contract Content -->
-        <div class="contract-content">
-            {content_html}
-        </div>
-        
-      
-    </body>
-    </html>
-    '''
+    # Set page margins (same as PDF)
+    sections = doc.sections
+    for section in sections:
+        section.top_margin = Inches(0.79)  # 20mm
+        section.bottom_margin = Inches(0.79)
+        section.left_margin = Inches(0.79)
+        section.right_margin = Inches(0.79)
+        section.page_width = Inches(8.27)  # A4 width
+        section.page_height = Inches(11.69)  # A4 height
     
-    try:
-        # Create temporary file for HTML
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as temp_html:
-            temp_html.write(complete_html)
-            temp_html_path = temp_html.name
-        
-        # Create temporary file for DOCX output
-        temp_docx = tempfile.NamedTemporaryFile(suffix='.docx', delete=False)
-        temp_docx_path = temp_docx.name
-        temp_docx.close()
-        
-        # Convert HTML to DOCX using pandoc
-        pypandoc.convert_file(
-            temp_html_path,
-            'docx',
-            outputfile=temp_docx_path,
-            extra_args=['--standalone']
-        )
-        
-        # Read the generated DOCX file
-        with open(temp_docx_path, 'rb') as f:
-            docx_bytes = f.read()
-        
-        # Clean up temporary files
-        os.unlink(temp_html_path)
-        os.unlink(temp_docx_path)
-        
-        # Create buffer
-        buffer = BytesIO(docx_bytes)
-        buffer.seek(0)
-        
-        filename = f"{contract.contract_number or 'Contract'}_{datetime.now().strftime('%Y%m%d')}.docx"
-        
-        return StreamingResponse(
-            buffer,
-            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            headers={
-                "Content-Disposition": f"attachment; filename={filename}"
-            }
-        )
-        
-    except Exception as e:
-        logger.error(f"Pandoc DOCX generation error: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"DOCX generation failed: {str(e)}")
+    # Clean HTML (remove scripts, styles)
+    content_html = re.sub(r'<script[^>]*>.*?</script>', '', content_html, flags=re.DOTALL | re.IGNORECASE)
+    content_html = re.sub(r'<style[^>]*>.*?</style>', '', content_html, flags=re.DOTALL | re.IGNORECASE)
+    
+    # Parse HTML and add to document (including embedded signatures)
+    parser = ContractHTMLParser(doc)
+    parser.feed(content_html)
+    
+    # Save to buffer
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    
+    filename = f"{contract.contract_number or 'Contract'}_{datetime.now().strftime('%Y%m%d')}.docx"
+    
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}"
+        }
+    )
+
 
 # =====================================================
 # ALTERNATIVE: Use pypandoc for better conversion
@@ -5168,13 +5434,7 @@ def export_as_html(contract, signatories):
         </style>
     </head>
     <body>
-        <h1>{contract.contract_title or 'Contract'}</h1>
-        <div class="metadata">
-            <p><strong>Contract Number:</strong> {contract.contract_number or 'N/A'}</p>
-            <p><strong>Date:</strong> {datetime.now().strftime('%B %d, %Y')}</p>
-            <p><strong>Status:</strong> {contract.status.upper() if contract.status else 'N/A'}</p>
-        </div>
-        <hr/>
+       
         <div class="content">
             {content}
         </div>
@@ -5338,13 +5598,13 @@ async def manage_track_changes(
         })
         db.commit()
         
-        # ✅ FIXED: Log the action with correct parameter order
+        #  FIXED: Log the action with correct parameter order
         log_contract_action(
             db=db,
-            action_type=f"track_changes_{action}",  # ✅ String first
-            contract_id=contract_id,                 # ✅ Int second
-            user_id=current_user.id,                 # ✅ Int third
-            details={                                # ✅ Dict fourth
+            action_type=f"track_changes_{action}",  #  String first
+            contract_id=contract_id,                 #  Int second
+            user_id=current_user.id,                 #  Int third
+            details={                                #  Dict fourth
                 "action": action,
                 "timestamp": datetime.utcnow().isoformat()
             }
@@ -5407,10 +5667,6 @@ def send_notification(db: Session, user_id: int, title: str, message: str, type:
         pass  # Don't fail main operation if notification fails
 
 
-# =====================================================
-# Add these endpoints at the end of app/api/api_v1/contracts/contracts.py
-# Before the last line of the file
-# =====================================================
 @router.post("/send-to-counterparty")
 async def send_to_counterparty(
     request: Request,
@@ -5509,7 +5765,7 @@ async def quick_approve_contract(
             "contract_id": contract_id,
             "counterparty_company_id": current_user.company_id
         })
-        logger.info(f"✅ Completed counter-party workflow for company {current_user.company_id}")
+        logger.info(f" Completed counter-party workflow for company {current_user.company_id}")
         
         # 🔄 STEP 2: Activate initiator's workflow instance to 'active'
         activate_initiator_workflow = text("""
@@ -5525,7 +5781,7 @@ async def quick_approve_contract(
             "contract_id": contract_id,
             "initiator_company_id": initiator_company_id
         })
-        logger.info(f"✅ Activated initiator workflow for company {initiator_company_id}")
+        logger.info(f" Activated initiator workflow for company {initiator_company_id}")
         
         # Create activity log
         try:
@@ -5544,7 +5800,7 @@ async def quick_approve_contract(
             logger.warning(f"Could not create activity log: {str(activity_err)}")
         
         db.commit()
-        logger.info(f"✅ Contract {contract_id} quick approved by user {current_user.id}")
+        logger.info(f" Contract {contract_id} quick approved by user {current_user.id}")
         
         # TODO: Send notification to initiator
         # send_notification_to_initiator(contract)
@@ -5585,7 +5841,6 @@ async def complete_counterparty_review(
         """)
         db.execute(update_query, {"id": contract_id})
         
-        # Log the action using your audit_logs schema
         audit_query = text("""
             INSERT INTO audit_logs (user_id, contract_id, action_type, action_details, ip_address, created_at)
             VALUES (:user_id, :contract_id, :action_type, :action_details, :ip_address, NOW())
@@ -5613,14 +5868,6 @@ async def complete_counterparty_review(
         db.rollback()
         return {"success": False, "message": str(e)}
 
-
-
-
-"""
-Fixed Clause Analysis API Endpoint - app/api/api_v1/contracts/contracts.py
-
-Add this endpoint to your contracts.py file to properly analyze all clauses
-"""
 def sanitize_for_json(text: str) -> str:
     """Sanitize text to be safely included in JSON responses"""
     if not text:
@@ -6236,7 +6483,7 @@ async def stream_ai_contract_generation(
         party_a_name = party_a.get("name", "Party A")
         party_b_name = party_b.get("name", "Party B")
 
-        
+        current_date = datetime.now().strftime("%d %B, %Y")
         # Build prompt
         prompt_text = f"""Generate a complete, production-ready {contract_type} contract:
 - Party A ({profile_type}): 
@@ -6246,7 +6493,7 @@ Selected Clauses: {', '.join(selected_clause_descriptions) if selected_clause_de
 
 **CRITICAL REQUIREMENTS:**
 
-1. Use Current Year and Current Date if needed
+1. Today's Date is: {current_date} - Use this as the reference date
 2. Production-ready, contractually & legally binding (minimum 3,500 words)
 3. Professional legal language with contractually & legally binding for {jurisdiction}
 4. complete Contract should be written in {language} language
@@ -6372,7 +6619,6 @@ Generate the complete contract now:"""
 
 
 
-# Add this endpoint to your router
 @router.put("/{contract_id}/update-metadata")
 async def update_contract_metadata(
     contract_id: int,
@@ -6383,7 +6629,7 @@ async def update_contract_metadata(
     """
     Update AI generation parameters for a contract
     This allows regeneration with modified metadata
-    ✅ NOW INCLUDES BLOCKCHAIN HASH UPDATE
+     NOW INCLUDES BLOCKCHAIN HASH UPDATE
     """
     try:
         logger.info(f"📝 Updating metadata for contract {contract_id}")
@@ -6430,7 +6676,7 @@ async def update_contract_metadata(
 
         db.commit()
 
-        logger.info(f"✅ Metadata updated for contract {contract_check.contract_number}")
+        logger.info(f" Metadata updated for contract {contract_check.contract_number}")
 
         # =====================================================
         # 🔐 UPDATE BLOCKCHAIN HASH AFTER METADATA UPDATE
@@ -6453,7 +6699,7 @@ async def update_contract_metadata(
             )
             
             if blockchain_result.get("success"):
-                logger.info(f"✅ Blockchain hash updated successfully")
+                logger.info(f" Blockchain hash updated successfully")
             else:
                 logger.warning(f"⚠️ Blockchain update failed: {blockchain_result.get('error')}")
                 
@@ -6978,11 +7224,6 @@ async def view_contract_document(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# =====================================================
-# FILE: app/api/api_v1/contracts/contracts.py
-# ADD THIS ENDPOINT for contract search
-# =====================================================
-
 @router.get("/search")
 async def search_contracts(
     q: str = Query(..., min_length=1, description="Search query"),
@@ -7047,7 +7288,7 @@ async def search_contracts(
                 "updated_at": str(row[9]) if row[9] else None
             })
         
-        logger.info(f"✅ Found {len(contracts)} contracts matching '{q}'")
+        logger.info(f" Found {len(contracts)} contracts matching '{q}'")
         
         return {
             "success": True,
@@ -7063,7 +7304,6 @@ async def search_contracts(
             detail=f"Failed to search contracts: {str(e)}"
         )
 
-# In your contracts router file: app/api/api_v1/contracts/contracts.py
 
 @router.put("/{contract_id}/esignature")
 async def send_for_esignature(
@@ -7077,6 +7317,7 @@ async def send_for_esignature(
         data = await request.json()
         party_esignature_authority_id = data.get('party_esignature_authority_id')
         counterparty_esignature_authority_id = data.get('counterparty_esignature_authority_id')
+        
         # 1. Check contract exists
         contract = db.query(Contract).filter(
             Contract.id == contract_id
@@ -7086,12 +7327,74 @@ async def send_for_esignature(
             raise HTTPException(status_code=404, detail="Contract not found")
         
         # 2. Update contract status
-        contract.party_esignature_authority_id=party_esignature_authority_id
-        contract.counterparty_esignature_authority_id=counterparty_esignature_authority_id
+        contract.party_esignature_authority_id = party_esignature_authority_id
+        contract.counterparty_esignature_authority_id = counterparty_esignature_authority_id
         contract.status = 'signature'
         contract.updated_at = datetime.now()
         
         db.commit()
+        
+        # =====================================================
+        # 📧 SEND EMAIL NOTIFICATIONS TO E-SIGNATURE AUTHORITIES
+        # =====================================================
+        try:
+            from app.services.workflow_email_service import WorkflowEmailService
+            
+            # Send email to Party A (Initiator) E-Signature Authority
+            if party_esignature_authority_id:
+                party_a_query = text("""
+                    SELECT 
+                        u.email,
+                        CONCAT(u.first_name, ' ', u.last_name) as full_name
+                    FROM users u
+                    WHERE u.id = :user_id
+                """)
+                party_a_info = db.execute(party_a_query, {"user_id": party_esignature_authority_id}).fetchone()
+                
+                if party_a_info and party_a_info.email:
+                    WorkflowEmailService.send_contract_sent_for_signature(
+                        db=db,
+                        contract_id=contract_id,
+                        contract_number=contract.contract_number,
+                        contract_title=contract.contract_title,
+                        esign_authority_email=party_a_info.email,
+                        esign_authority_name=party_a_info.full_name,
+                        party_type="Party A (Initiator)"
+                    )
+                    logger.info(f"✉️ E-signature email sent to Party A: {party_a_info.email}")
+                else:
+                    logger.warning(f"⚠️ Party A e-sign authority email not found for user ID: {party_esignature_authority_id}")
+            
+            # Send email to Party B (Counter-Party) E-Signature Authority
+            if counterparty_esignature_authority_id:
+                party_b_query = text("""
+                    SELECT 
+                        u.email,
+                        CONCAT(u.first_name, ' ', u.last_name) as full_name
+                    FROM users u
+                    WHERE u.id = :user_id
+                """)
+                party_b_info = db.execute(party_b_query, {"user_id": counterparty_esignature_authority_id}).fetchone()
+                
+                if party_b_info and party_b_info.email:
+                    WorkflowEmailService.send_contract_sent_for_signature(
+                        db=db,
+                        contract_id=contract_id,
+                        contract_number=contract.contract_number,
+                        contract_title=contract.contract_title,
+                        esign_authority_email=party_b_info.email,
+                        esign_authority_name=party_b_info.full_name,
+                        party_type="Party B (Counter-Party)"
+                    )
+                    logger.info(f"✉️ E-signature email sent to Party B: {party_b_info.email}")
+                else:
+                    logger.warning(f"⚠️ Party B e-sign authority email not found for user ID: {counterparty_esignature_authority_id}")
+            
+            logger.info("✅ E-signature notification emails sent to both authorities")
+            
+        except Exception as email_error:
+            logger.error(f"❌ Error sending e-signature emails: {str(email_error)}")
+            # Don't fail the operation if email fails
         
         return {
             "success": True,
@@ -7236,3 +7539,69 @@ def get_action_description(action_type: str, details: dict) -> str:
         description += f" ({details['entity_type']})"
     
     return description
+
+
+@router.post("/{contract_id}/recover-tampered-version")
+async def recover_tampered_version(
+    contract_id: int,
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete latest tampered version"""
+    
+    # Check authorization
+    contract_check = db.execute(text("""
+        SELECT created_by FROM contracts WHERE id = :cid
+    """), {"cid": contract_id}).fetchone()
+    
+    if not contract_check:
+        raise HTTPException(status_code=404, detail="Contract not found")
+    
+    # Get user attributes safely
+    user_id = getattr(current_user, 'id', None) or getattr(current_user, 'user_id', None)
+    user_type = getattr(current_user, 'user_type', None) or getattr(current_user, 'type', None)
+    
+    is_internal = user_type == "internal"
+    is_initiator = user_id == contract_check.created_by
+    
+    if not (is_internal or is_initiator):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    # Get latest version
+    current = db.execute(text("""
+        SELECT id, version_number
+        FROM contract_versions
+        WHERE contract_id = :cid
+        ORDER BY version_number DESC
+        LIMIT 1
+    """), {"cid": contract_id}).fetchone()
+    
+    if not current:
+        raise HTTPException(status_code=404, detail="No versions found")
+    
+    # Check if there's a previous version
+    previous = db.execute(text("""
+        SELECT id
+        FROM contract_versions
+        WHERE contract_id = :cid AND version_number < :vnum
+        ORDER BY version_number DESC
+        LIMIT 1
+    """), {"cid": contract_id, "vnum": current.version_number}).fetchone()
+    
+    if not previous:
+        raise HTTPException(status_code=400, detail="No previous version available to recover")
+    
+    try:
+        # Simply delete the latest version
+        db.execute(text("DELETE FROM contract_versions WHERE id = :vid"), 
+                   {"vid": current.id})
+        
+        db.commit()
+        
+        return {
+            "success": True, 
+            "message": "Latest version deleted successfully. Please refresh the page."
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Recovery failed: {str(e)}")

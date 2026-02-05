@@ -1210,7 +1210,7 @@
         <div>
             <h1 id="pageTitle" style="font-size: 1.5rem; font-weight: 600; margin: 0;">Contract Drafting</h1>
             <p id="pageDescription" style="color: var(--text-muted); font-size: 0.9rem; margin: 0.25rem 0 0 0;">
-                Create and manage contract drafts with templates and AI assistance
+                Create and refine contract drafts with AI Assistance and ready-to-use templates
             </p>
         </div>
 
@@ -1219,10 +1219,10 @@
             <!-- Dynamic action buttons container -->
             <div id="dynamicActionButtons" style="display: flex; gap: 1rem;">
                 <!-- Default buttons for Drafting module -->
-                <a href="/contract/templates" class="nav-link dynamic-btn" data-module="drafting">
+                <!-- <a href="/contract/templates" class="nav-link dynamic-btn" data-module="drafting">
                     <i class="ti ti-template"></i>
                     <span class="nav-text">Templates</span>
-                </a>
+                </a> -->
                 <a href="/clause-library" class="nav-link dynamic-btn" data-module="drafting">
                     <i class="ti ti-books nav-icon"></i>
                     <span class="nav-text">Clause Library</span>
@@ -1330,12 +1330,16 @@
 
                 <select class="filter-select" id="typeFilter" onchange="applyFilters()">
                     <option value="">All Types</option>
+                    <option value="employment">Employment Contract</option>
                     <option value="service">Service Agreement</option>
-                    <option value="nda">NDA</option>
-                    <option value="purchase">Purchase Order</option>
-                    <option value="employment">Employment</option>
-                    <option value="consultancy">Consultancy</option>
-                    <option value="maintenance">Maintenance</option>
+                    <option value="purchase">Purchase Agreement</option>
+                    <option value="lease">Lease Agreement</option>
+                    <option value="nda">Non-Disclosure Agreement</option>
+                    <option value="consulting">Consulting Agreement</option>
+                    <option value="construction">Construction Contract</option>
+                    <option value="supply">Supply Agreement</option>
+                    <option value="other">Other</option>
+
                 </select>
 
                 <select class="filter-select" id="dateFilter" onchange="applyFilters()">
@@ -1362,7 +1366,7 @@
     <!-- Contracts Grid -->
     <div class="contracts-grid-container">
         <div class="contracts-header">
-            <div class="results-count" id="resultsCount">Showing 0 contracts</div>
+            <div class="results-count" id="resultsCount"></div>
             <!-- <div class="view-controls">
                 <button class="view-toggle active" onclick="toggleView('grid')" title="Grid View">
                     <i class="ti ti-layout-grid"></i>
@@ -1416,8 +1420,8 @@
     let currentSortBy = '';
     let currentSubTab = 'all';
     let activeFilters = {};
-    let currentUploadType = null;  //  ADD THIS
-    let selectedFile = null;        //  ADD THIS
+    let currentUploadType = null;
+    let selectedFile = null;
 
 
 
@@ -1459,7 +1463,7 @@
                 break;
 
 
-            case 'tag':  // ✅ FIXED - was sorting by title
+            case 'tag':  //  FIXED - was sorting by title
                 filteredContracts.sort((a, b) => {
                     const tagA = (a.single_tag || '').toLowerCase();
                     const tagB = (b.single_tag || '').toLowerCase();
@@ -1551,7 +1555,7 @@
         if (contractsGrid) contractsGrid.style.display = 'none';
         if (emptyState) emptyState.style.display = 'none';
         if (paginationContainer) paginationContainer.style.display = 'none';
-        if (resultsCount) resultsCount.textContent = 'Loading...';
+        // if (resultsCount) resultsCount.textContent = 'Loading...';
     }
 
     // Hide loading state - RENAMED to avoid auth.js conflict
@@ -1605,8 +1609,8 @@
         // const statusFilter = document.getElementById('statusFilter')?.value || '';
         const typeFilter = document.getElementById('typeFilter')?.value || '';
         const dateFilter = document.getElementById('dateFilter')?.value || '';
-        const sortFilter = document.getElementById('sortFilter')?.value || ''; // 🆕 ADD THIS LINE
-        const tagFilter = document.getElementById('tagFilter')?.value || '';  // ✅ NEW
+        const sortFilter = document.getElementById('sortFilter')?.value || '';
+        const tagFilter = document.getElementById('tagFilter')?.value || '';
 
         // 🆕 Store current sort
         currentSortBy = sortFilter;
@@ -1673,7 +1677,6 @@
         // Apply advanced filters (priority, department, region, value)
         applyAdvancedFilters();
 
-        // 🆕 APPLY SORTING - ADD THIS LINE BEFORE renderContracts()
         applySorting();
 
         // Render and update UI
@@ -1735,7 +1738,7 @@
         const moduleInfo = {
             drafting: {
                 title: 'Contract Drafting',
-                description: 'Create and manage contract drafts with templates and AI assistance'
+                description: 'Create and refine contract drafts with AI Assistance and ready-to-use templates'
             },
             negotiation: {
                 title: 'Contract Negotiation',
@@ -1833,7 +1836,7 @@
     // }
     // Upload existing contract function
     function uploadExistingContract(type) {
-        currentUploadType = type;  //  ADD THIS LINE
+        currentUploadType = type;
 
         // Create a file input element
         const fileInput = document.createElement('input');
@@ -1845,7 +1848,7 @@
         fileInput.addEventListener('change', function (event) {
             const file = event.target.files[0];
             if (file) {
-                selectedFile = file;  //  ADD THIS LINE
+                selectedFile = file;
                 showUploadDialog(file, type);
             }
         });
@@ -2519,7 +2522,7 @@
             <div class="modal-footer" style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color, #dee2e6); display: flex; justify-content: space-between; align-items: center; background: var(--body-bg, #f8f9fa);">
                 <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
                     <i class="ti ti-clock"></i>
-                    <span>Analyzed: ${new Date(analysis.analyzed_at || Date.now()).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                    <span>Analyzed: ${new Date(analysis.analyzed_at || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                 </div>
                 <div style="display: flex; gap: 0.75rem;">
                     <button onclick="downloadRiskReport('${contractId}')" class="btn" style="background: #6c757d; color: white; border: none; padding: 0.6rem 1.25rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; transition: all 0.2s;">
@@ -2642,13 +2645,10 @@
         // Build text report
         let report = `RISK ANALYSIS REPORT
 ${contractTitle}
-Generated: ${new Date().toLocaleString('en-GB', {
+Generated: ${new Date().toLocaleDateString('en-GB', {
             day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
+            month: 'long',
+            year: 'numeric'
         })}
 ${'='.repeat(80)}
 
@@ -2947,7 +2947,7 @@ ${'-'.repeat(80)}
 Analysis Information:
 - Profile Type: ${analysis.profile_type || 'Not specified'}
 - Analysis Version: ${analysis.analysis_version || 'N/A'}
-- Generated: ${analysis.analyzed_at ? new Date(analysis.analyzed_at).toLocaleString() : 'N/A'}
+- Generated: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
 ${'='.repeat(80)}
 End of Report
 `;
@@ -2957,7 +2957,10 @@ End of Report
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        const timestamp = new Date().toISOString().split('T')[0];
+
+        const today = new Date();
+        const timestamp = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
         a.download = `Risk_Analysis_Report_${contractId}_${timestamp}.txt`;
         document.body.appendChild(a);
         a.click();
@@ -3121,7 +3124,6 @@ End of Report
         document.querySelector('div[style*="position: fixed"]').remove();
 
         try {
-            // In a real application, you would first upload the file to your backend
             // For now, we'll simulate the upload and get a contract ID
 
             // Show loading state
@@ -3261,16 +3263,7 @@ End of Report
         } else if (module === 'operations') {
             subTabsContainer.innerHTML = `
             <button class="sub-tab active" onclick="switchSubTab('all')" data-subtab="all">
-                <i class="ti ti-list"></i> All Contracts
-            </button>
-            <button class="sub-tab" onclick="switchSubTab('executed')" data-subtab="executed">
-                <i class="ti ti-file-check"></i> Executed Contracts
-            </button>
-            <button class="sub-tab" onclick="switchSubTab('renewals')" data-subtab="renewals">
-                <i class="ti ti-refresh-alert"></i> Up for Renewal
-            </button>
-            <button class="sub-tab" onclick="switchSubTab('expired')" data-subtab="expired">
-                <i class="ti ti-calendar-x"></i> Expired
+                <i class="ti ti-list"></i> Executed Contracts
             </button>
         `;
             currentSubTab = 'all';
@@ -3413,7 +3406,7 @@ End of Report
 
         grid.style.display = 'grid';
         emptyState.style.display = 'none';
-        resultsCount.textContent = `Showing ${filteredContracts.length} contract${filteredContracts.length !== 1 ? 's' : ''}`;
+        // resultsCount.textContent = `Showing ${filteredContracts.length} contract${filteredContracts.length !== 1 ? 's' : ''}`;
         grid.innerHTML = filteredContracts.map(contract => `
         <div class="contract-card" onclick="viewContract('${contract.id}')">
             ${contract.priority ? `<div class="priority-indicator priority-${contract.priority}"></div>` : ''}
@@ -3515,43 +3508,23 @@ End of Report
         switch (contract.status) {
             case 'draft':
                 actions = `
-                <button class="quick-action-btn" onclick="event.stopPropagation(); continueEditing('${contract.id}')">
-                    <i class="ti ti-edit"></i> Continue
-                </button>
-                <button class="quick-action-btn" onclick="event.stopPropagation(); submitForReview('${contract.id}')">
-                    <i class="ti ti-send"></i> Submit
-                </button>
+               
             `;
                 break;
             case 'review':
                 actions = `
-                <button class="quick-action-btn" onclick="event.stopPropagation(); viewWorkflow('${contract.id}')">
-                    <i class="ti ti-git-branch"></i> Workflow
-                </button>
-                <button class="quick-action-btn" onclick="event.stopPropagation(); sendForReview('${contract.id}')">
-                    <i class="ti ti-users"></i> Review
-                </button>
+               
             `;
                 break;
             case 'approved':
                 actions = `
-                <button class="quick-action-btn" onclick="event.stopPropagation(); initiateSignature('${contract.id}')">
-                    <i class="ti ti-writing-sign"></i> Sign
-                </button>
-                <button class="quick-action-btn" onclick="event.stopPropagation(); sendToCounterparty('${contract.id}')">
-                    <i class="ti ti-send"></i> Send
-                </button>
+              
             `;
                 break;
             case 'negotiation':
             case 'pending':
                 actions = `
-                <button class="quick-action-btn" onclick="event.stopPropagation(); viewNegotiation('${contract.id}')">
-                    <i class="ti ti-message-circle"></i> Negotiate
-                </button>
-                <button class="quick-action-btn" onclick="event.stopPropagation(); viewHistory('${contract.id}')">
-                    <i class="ti ti-history"></i> History
-                </button>
+              
             `;
                 break;
             case 'executed':
@@ -3564,12 +3537,7 @@ End of Report
                 break;
             case 'expired':
                 actions = `
-                <button class="quick-action-btn" onclick="event.stopPropagation(); renewContract('${contract.id}')">
-                    <i class="ti ti-refresh"></i> Renew
-                </button>
-                <button class="quick-action-btn" onclick="event.stopPropagation(); viewHistory('${contract.id}')">
-                    <i class="ti ti-history"></i> History
-                </button>
+              
             `;
                 break;
         }
@@ -3928,7 +3896,7 @@ End of Report
     // Navigation functions for action buttons
     function navigateToRiskAnalysis() {
         // window.location.href = `/contract/edit`;
-        currentUploadType = 'risk_analysis';  //  ADD THIS LINE
+        currentUploadType = 'risk_analysis';
         uploadExistingContract('risk_analysis')
     }
 
@@ -4510,7 +4478,7 @@ End of Report
             }
 
             const data = await response.json();
-            console.log('✅ Activity logs received:', data);
+            console.log(' Activity logs received:', data);
 
             // Update modal with real data
             const modalBody = modal.querySelector('.modal-body');
@@ -4672,34 +4640,44 @@ End of Report
     }
 
     // Helper function to format timestamp
-    // Helper function to format timestamp - FIXED VERSION
+    // Helper function to format timestamp - DATE ONLY VERSION
     function formatTimestamp(timestamp) {
-        if (!timestamp) return 'N/A';
+        if (!timestamp) return 'Unknown date';
 
-        // Handle database format: "2025-01-15 15:41:15"
+        // Parse the timestamp
         let date;
-        if (typeof timestamp === 'string') {
-            date = new Date(timestamp.replace(' ', 'T'));
-        } else {
+        if (timestamp.includes('T')) {
             date = new Date(timestamp);
+        } else {
+            date = new Date(timestamp.replace(' ', 'T'));
         }
 
-        // Check if date is valid
-        if (isNaN(date.getTime())) {
-            return 'Invalid Date';
+        const now = new Date();
+        const diff = now - date;
+
+        // Less than 24 hours - show "Today"
+        if (diff < 86400000 && diff >= 0) {
+            return 'Today';
         }
 
-        // Format: Jan 15, 2025, 3:41 PM
-        return date.toLocaleString('en-US', {
+        // Yesterday
+        if (diff >= 86400000 && diff < 172800000) {
+            return 'Yesterday';
+        }
+
+        // Within last 7 days
+        if (diff < 604800000 && diff >= 0) {
+            const days = Math.floor(diff / 86400000);
+            return `${days} day${days > 1 ? 's' : ''} ago`;
+        }
+
+        // Older - show date only
+        return date.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
+            day: 'numeric'
         });
     }
-
 
 </script>
 <!-- <script src="/app/static/js/contract-actions.js"></script> -->

@@ -22,46 +22,60 @@ async def get_dashboard_statistics(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    Get comprehensive dashboard statistics with real-time data
-    Includes contracts where company is either primary party or party B
-    INCLUDES: My Pending Approvals (contracts awaiting current user's approval)
-    INCLUDES: Project Statistics (active projects, project value, projects by status)
-    """
+    """Get comprehensive dashboard statistics"""
     try:
         company_id = current_user.company_id
         user_id = current_user.id
         today = datetime.now()
+        thirty_days_from_now = today + timedelta(days=30)
         
-        # Total Contracts - including party_b_id
+        # ✅ Total Contracts - All contracts (exclude risk_analysis)
         total_contracts_result = db.execute(
             text("""
                 SELECT COUNT(*) as count FROM contracts 
-                WHERE company_id = :company_id OR party_b_id = :company_id
+                WHERE (company_id = :company_id OR party_b_id = :company_id)
+                AND is_deleted = 0
+                AND contract_type != 'risk_analysis'
             """),
             {"company_id": company_id}
         ).fetchone()
         total_contracts = total_contracts_result.count if total_contracts_result else 0
         
-        # Active Contracts - including party_b_id
+        # ✅ Executed Contracts - Match operations module EXACTLY
         active_contracts_result = db.execute(
             text("""
                 SELECT COUNT(*) as count FROM contracts 
-                WHERE (company_id = :company_id OR party_b_id = :company_id) 
-                AND status = 'executed'
+                WHERE (company_id = :company_id OR party_b_id = :company_id)
+                AND status IN ('executed')
+                AND is_deleted = 0
+                AND contract_type != 'risk_analysis'
             """),
             {"company_id": company_id}
         ).fetchone()
         active_contracts = active_contracts_result.count if active_contracts_result else 0
         
-        # Expiring Soon (within 30 days) - including party_b_id
-        thirty_days_from_now = today + timedelta(days=30)
+        # ✅ Contracts in Progress - Match negotiation module EXACTLY
+        pending_approvals_result = db.execute(
+            text("""
+                SELECT COUNT(*) as count FROM contracts 
+                WHERE (company_id = :company_id OR party_b_id = :company_id)
+                AND status NOT IN ('draft', 'executed')
+                AND is_deleted = 0
+                AND contract_type != 'risk_analysis'
+            """),
+            {"company_id": company_id}
+        ).fetchone()
+        pending_approvals = pending_approvals_result.count if pending_approvals_result else 0
+        
+        # Expiring Soon - Next 30 days
         expiring_soon_result = db.execute(
             text("""
                 SELECT COUNT(*) as count FROM contracts 
                 WHERE (company_id = :company_id OR party_b_id = :company_id)
-                AND status = 'executed'
+                AND end_date IS NOT NULL 
                 AND end_date BETWEEN :today AND :end_date
+                AND is_deleted = 0
+                AND contract_type != 'risk_analysis'
             """),
             {
                 "company_id": company_id,
@@ -71,39 +85,28 @@ async def get_dashboard_statistics(
         ).fetchone()
         expiring_soon = expiring_soon_result.count if expiring_soon_result else 0
         
-        # Pending Approvals (Company-wide) - including party_b_id
-        pending_approvals_result = db.execute(
-            text("""
-                SELECT COUNT(DISTINCT wi.id) as count 
-                FROM workflow_instances wi
-                JOIN contracts c ON wi.contract_id = c.id
-                WHERE (c.company_id = :company_id OR c.party_b_id = :company_id)
-                AND wi.status IN ('pending', 'in_progress', 'active')
-            """),
-            {"company_id": company_id}
-        ).fetchone()
-        pending_approvals = pending_approvals_result.count if pending_approvals_result else 0
-        
         # 🆕 MY PENDING APPROVALS - Using same logic as is_my_workflow_turn
-        # Counts contracts where current workflow step is assigned to current user
         my_pending_approvals_result = db.execute(
             text("""
                 SELECT COUNT(*) as count
                 FROM contracts
-                WHERE action_person_id = :user_id OR party_esignature_authority_id = :user_id OR counterparty_esignature_authority_id = :user_id
-                AND (company_id = :company_id OR party_b_id = :company_id)
+                WHERE (action_person_id = :user_id OR party_esignature_authority_id = :user_id OR counterparty_esignature_authority_id = :user_id)
                 AND status IN ('approval', 'signature', 'review','draft','review_completed','counterparty_internal_review','counterparty_review_completed')
+                AND is_deleted = 0
+                AND contract_type != 'risk_analysis'
             """),
             {"company_id": company_id, "user_id": user_id}
         ).fetchone()
         my_pending_approvals = my_pending_approvals_result.count if my_pending_approvals_result else 0
         
-        # Contracts by Status - including party_b_id
+        # Contracts by Status
         status_breakdown_result = db.execute(
             text("""
                 SELECT status, COUNT(*) as count 
                 FROM contracts 
-                WHERE company_id = :company_id OR party_b_id = :company_id
+                WHERE (company_id = :company_id OR party_b_id = :company_id)
+                AND is_deleted = 0
+                AND contract_type != 'risk_analysis'
                 GROUP BY status
             """),
             {"company_id": company_id}
@@ -111,7 +114,7 @@ async def get_dashboard_statistics(
         
         status_breakdown = {row.status: row.count for row in status_breakdown_result}
         
-        # Obligations Statistics - including party_b_id
+        # Obligations Statistics
         total_obligations_result = db.execute(
             text("""
                 SELECT COUNT(o.id) as count
@@ -153,7 +156,7 @@ async def get_dashboard_statistics(
         ).fetchone()
         upcoming_obligations = upcoming_obligations_result.count if upcoming_obligations_result else 0
         
-        # Document Statistics - uploaded_documents has user_id not company_id
+        # Document Statistics
         total_documents_result = db.execute(
             text("""
                 SELECT COUNT(DISTINCT ud.id) as count 
@@ -166,7 +169,6 @@ async def get_dashboard_statistics(
         total_documents = total_documents_result.count if total_documents_result else 0
         
         # 🆕 PROJECT STATISTICS
-        # Active Projects Count
         active_projects_result = db.execute(
             text("""
                 SELECT COUNT(*) as count 
@@ -178,7 +180,6 @@ async def get_dashboard_statistics(
         ).fetchone()
         active_projects = active_projects_result.count if active_projects_result else 0
         
-        # Total Projects Count (all statuses)
         total_projects_result = db.execute(
             text("""
                 SELECT COUNT(*) as count 
@@ -189,51 +190,23 @@ async def get_dashboard_statistics(
         ).fetchone()
         total_projects = total_projects_result.count if total_projects_result else 0
         
-        # Total Project Value (Active Projects)
-        total_project_value_result = db.execute(
-            text("""
-                SELECT COALESCE(SUM(project_value), 0) as total_value,
-                       COALESCE(AVG(project_value), 0) as avg_value
-                FROM projects 
-                WHERE company_id = :company_id 
-                AND status = 'active'
-                AND project_value IS NOT NULL
-            """),
-            {"company_id": company_id}
-        ).fetchone()
-        total_project_value = total_project_value_result.total_value if total_project_value_result else 0
-        avg_project_value = total_project_value_result.avg_value if total_project_value_result else 0
-        
-        # Projects by Status
-        projects_by_status_result = db.execute(
-            text("""
-                SELECT status, COUNT(*) as count 
-                FROM projects 
-                WHERE company_id = :company_id
-                GROUP BY status
-            """),
-            {"company_id": company_id}
-        ).fetchall()
-        projects_by_status = {row.status: row.count for row in projects_by_status_result}
-        
-        # Recent Projects (last 30 days)
-        thirty_days_ago = today - timedelta(days=30)
         recent_projects_result = db.execute(
             text("""
                 SELECT COUNT(*) as count 
                 FROM projects 
-                WHERE company_id = :company_id
-                AND created_at >= :thirty_days_ago
+                WHERE company_id = :company_id 
+                AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
             """),
-            {"company_id": company_id, "thirty_days_ago": thirty_days_ago}
+            {"company_id": company_id}
         ).fetchone()
         recent_projects = recent_projects_result.count if recent_projects_result else 0
         
-        # Projects by Type
         projects_by_type_result = db.execute(
             text("""
-                SELECT project_type, COUNT(*) as count 
-                FROM projects 
+                SELECT 
+                    project_type,
+                    COUNT(*) as count
+                FROM projects
                 WHERE company_id = :company_id
                 AND project_type IS NOT NULL
                 GROUP BY project_type
@@ -242,19 +215,21 @@ async def get_dashboard_statistics(
         ).fetchall()
         projects_by_type = {row.project_type: row.count for row in projects_by_type_result}
         
-        # Recent Activity (last 7 days) - including party_b_id
+        # Recent Activity
         seven_days_ago = today - timedelta(days=7)
         recent_contracts_result = db.execute(
             text("""
                 SELECT COUNT(*) as count FROM contracts 
                 WHERE (company_id = :company_id OR party_b_id = :company_id)
                 AND created_at >= :seven_days_ago
+                AND is_deleted = 0
+                AND contract_type != 'risk_analysis'
             """),
             {"company_id": company_id, "seven_days_ago": seven_days_ago}
         ).fetchone()
         recent_contracts = recent_contracts_result.count if recent_contracts_result else 0
         
-        # Contract Value Statistics - including party_b_id
+        # Contract Value Statistics
         contract_values_result = db.execute(
             text("""
                 SELECT 
@@ -264,11 +239,13 @@ async def get_dashboard_statistics(
                 FROM contracts 
                 WHERE (company_id = :company_id OR party_b_id = :company_id)
                 AND contract_value IS NOT NULL
+                AND is_deleted = 0
+                AND contract_type != 'risk_analysis'
             """),
             {"company_id": company_id}
         ).fetchone()
         
-        # Workflow Statistics - including party_b_id
+        # Workflow Statistics
         workflows_stats_result = db.execute(
             text("""
                 SELECT wi.status, COUNT(*) as count 
@@ -282,10 +259,9 @@ async def get_dashboard_statistics(
         
         workflow_breakdown = {row.status: row.count for row in workflows_stats_result}
         
-        # Risk Assessment - risk_level column doesn't exist, skip for now
         high_risk_contracts = 0
         
-        logger.info(f"📊 Dashboard Stats - User: {current_user.email}, Total Contracts: {total_contracts}, Active Projects: {active_projects}, My Pending Approvals: {my_pending_approvals}")
+        logger.info(f"📊 Dashboard Stats - User: {current_user.email}, Total: {total_contracts}, Executed: {active_contracts}, In Progress: {pending_approvals}, Active Projects: {active_projects}, My Pending: {my_pending_approvals}")
         
         return {
             "success": True,
@@ -296,45 +272,39 @@ async def get_dashboard_statistics(
                     "expiring_soon": expiring_soon,
                     "pending_approvals": pending_approvals,
                     "my_pending_approvals": my_pending_approvals,
-                    "recent_contracts": recent_contracts
+                    "high_risk_contracts": high_risk_contracts,
+                    "recent_activity": recent_contracts
                 },
                 "contracts": {
                     "by_status": status_breakdown,
-                    "total_value": float(contract_values_result.total_value or 0),
-                    "average_value": float(contract_values_result.avg_value or 0),
-                    "high_risk": high_risk_contracts
+                    "total": total_contracts,
+                    "value": {
+                        "total": float(contract_values_result.total_value) if contract_values_result else 0,
+                        "average": float(contract_values_result.avg_value) if contract_values_result else 0
+                    }
                 },
                 "obligations": {
                     "total": total_obligations,
                     "overdue": overdue_obligations,
-                    "upcoming": upcoming_obligations,
-                    "completion_rate": round((total_obligations - overdue_obligations) / total_obligations * 100, 1) if total_obligations > 0 else 0
-                },
-                "workflows": {
-                    "by_status": workflow_breakdown,
-                    "pending": workflow_breakdown.get('pending', 0),
-                    "in_progress": workflow_breakdown.get('in_progress', 0),
-                    "completed": workflow_breakdown.get('completed', 0)
+                    "upcoming": upcoming_obligations
                 },
                 "documents": {
                     "total": total_documents
                 },
                 "projects": {
-                    "total": total_projects,
                     "active": active_projects,
-                    "total_value": float(total_project_value or 0),
-                    "average_value": float(avg_project_value or 0),
-                    "by_status": projects_by_status,
-                    "by_type": projects_by_type,
-                    "recent": recent_projects
-                }
+                    "total": total_projects,
+                    "recent": recent_projects,
+                    "by_type": projects_by_type
+                },
+                "workflows": workflow_breakdown
             }
         }
         
     except Exception as e:
-        logger.error(f" Error fetching dashboard statistics: {str(e)}")
+        logger.error(f"Error fetching dashboard statistics: {str(e)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
-
         
         
 @router.get("/expiring-contracts")
@@ -644,15 +614,21 @@ async def get_pending_actions(
                     ELSE 'Action required on this contract'
                 END as description
             FROM contracts c
-            WHERE c.action_person_id = :user_id OR c.party_esignature_authority_id = :user_id OR c.counterparty_esignature_authority_id = :user_id
-            ORDER BY c.updated_at DESC
+           
+                WHERE (action_person_id = :user_id OR party_esignature_authority_id = :user_id OR counterparty_esignature_authority_id = :user_id)
+                AND status IN ('approval', 'signature', 'review','draft','review_completed','counterparty_internal_review','counterparty_review_completed')
+                AND is_deleted = 0
+                AND contract_type != 'risk_analysis'
+                ORDER BY c.updated_at DESC
+
+
         """)
         
         result = db.execute(query, {
             "user_id": current_user.id,
         }).fetchall()
         
-        logger.info(f"✅ Found {len(result)} pending actions {current_user.id}, {current_user.company_id}")
+        logger.info(f" Found {len(result)} pending actions {current_user.id}, {current_user.company_id}")
         
         # Format response
         actions = []
@@ -676,7 +652,7 @@ async def get_pending_actions(
             actions.append(action)
             
         logger.info("="*80)
-        logger.info(f"✅ PENDING ACTIONS FETCHED SUCCESSFULLY")
+        logger.info(f" PENDING ACTIONS FETCHED SUCCESSFULLY")
         logger.info(f"📊 Total Actions: {len(actions)}")
         logger.info("="*80)
         

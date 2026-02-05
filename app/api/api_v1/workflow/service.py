@@ -148,14 +148,14 @@ class WorkflowService:
             ).first()
             
             if existing:
-                # ✅ UPDATE EXISTING - Keep it active, just update steps
+                #  UPDATE EXISTING - Keep it active, just update steps
                 logger.info(f"Found existing master workflow ID {existing.id} - Updating steps only")
                 
                 # Update workflow metadata
                 existing.workflow_name = workflow_data.workflow_name
                 existing.description = workflow_data.description
                 existing.updated_at = datetime.utcnow()
-                # ✅ Keep is_active = True - DO NOT DEACTIVATE
+                #  Keep is_active = True - DO NOT DEACTIVATE
                 
                 # Build department mapping
                 departments_map = {}
@@ -165,7 +165,7 @@ class WorkflowService:
                         logger.info(f"Department mapping: Step {step_data.step_number} -> {step_data.department}")
                 
                 # Update departments_json
-                existing.workflow_json = json.dumps({"departments": departments_map}) if departments_map else None  # ✅ CORRECT
+                existing.workflow_json = json.dumps({"departments": departments_map}) if departments_map else None  #  CORRECT
                 
                 # Delete old steps
                 deleted_count = self.db.query(WorkflowStep).filter(
@@ -176,7 +176,7 @@ class WorkflowService:
                 workflow = existing
                 
             else:
-                # ✅ CREATE NEW - No existing master workflow
+                #  CREATE NEW - No existing master workflow
                 logger.info(f"No existing master workflow found - Creating new one")
                 
                 # Build department mapping
@@ -195,8 +195,8 @@ class WorkflowService:
                     description=workflow_data.description,
                     workflow_type="master",
                     is_master=True,
-                    is_active=True,  # ✅ Set as active
-                    workflow_json=json.dumps({"departments": departments_map}) if departments_map else None,  # ✅ CORRECT
+                    is_active=True,  #  Set as active
+                    workflow_json=json.dumps({"departments": departments_map}) if departments_map else None,  #  CORRECT
                     created_at=datetime.utcnow(),
                     updated_at=datetime.utcnow()
                 )
@@ -204,7 +204,7 @@ class WorkflowService:
                 self.db.flush()  # Get the workflow ID
                 logger.info(f"Created new master workflow ID {workflow.id}")
             
-            # ✅ Insert new steps (same for both create and update)
+            #  Insert new steps (same for both create and update)
             step_count = 0
             for step_data in workflow_data.steps:
                 logger.info(f"Processing step {step_data.step_number}: {step_data.step_name or step_data.role}")
@@ -258,7 +258,7 @@ class WorkflowService:
             
             # Commit all changes
             self.db.commit()
-            logger.info(f"✅ Successfully saved master workflow with {step_count} steps")
+            logger.info(f" Successfully saved master workflow with {step_count} steps")
             
             # Return the workflow
             return self.get_master_workflow(company_id)

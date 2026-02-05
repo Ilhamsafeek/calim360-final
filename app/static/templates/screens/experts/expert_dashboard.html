@@ -1,0 +1,412 @@
+{% extends "base.html" %}
+{% block title %}Expert Consultations{% endblock %}
+
+{% block head %}
+<style>
+    /* Import the same styles from ask_expert_unified */
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Ask Expert Container */
+    .ask-expert-container {
+        display: flex;
+        height: calc(100vh - 60px);
+        background: #f8f9fa;
+    }
+
+    /* Chat Sidebar */
+    .chat-sidebar {
+        width: 320px;
+        background: white;
+        border-right: 1px solid #e9ecef;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sidebar-header {
+        padding: 20px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .sidebar-header h3 {
+        margin: 0 0 4px 0;
+        font-size: 20px;
+        color: #212529;
+        font-weight: 600;
+    }
+
+    .sidebar-header p {
+        margin: 0;
+        font-size: 13px;
+        color: #6c757d;
+    }
+
+    .search-box {
+        padding: 12px 16px;
+        border-bottom: 1px solid #e9ecef;
+        position: relative;
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 28px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        font-size: 16px;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 8px 12px 8px 32px;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+    .search-box input:focus {
+        outline: none;
+        border-color: #2762cb;
+    }
+
+    .chat-list {
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .chat-item {
+        padding: 14px 16px;
+        border-bottom: 1px solid #f1f3f5;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+
+    .chat-item:hover {
+        background: #f8f9fa;
+    }
+
+    .chat-item.active {
+        background: #e7f1ff;
+        border-left: 3px solid #2762cb;
+    }
+
+    .chat-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px;
+    }
+
+    .chat-expert-name {
+        font-weight: 600;
+        font-size: 14px;
+        color: #212529;
+    }
+
+    .chat-time {
+        font-size: 12px;
+        color: #868e96;
+    }
+
+    .chat-subject {
+        font-size: 13px;
+        color: #495057;
+        margin-bottom: 4px;
+        font-weight: 500;
+    }
+
+    .chat-preview {
+        font-size: 13px;
+        color: #868e96;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .unread-badge {
+        display: inline-block;
+        background: #2762cb;
+        color: white;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 6px;
+        border-radius: 10px;
+        margin-left: 8px;
+    }
+
+    /* Chat Main */
+    .chat-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: white;
+    }
+
+    .chat-header {
+        padding: 16px 24px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: white;
+    }
+
+    .chat-header-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .expert-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #2762cb, #1a4d9c);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 16px;
+    }
+
+    .chat-header-info h4 {
+        margin: 0;
+        font-size: 16px;
+        color: #212529;
+        font-weight: 600;
+    }
+
+    .chat-header-info p {
+        margin: 0;
+        font-size: 13px;
+        color: #6c757d;
+    }
+
+    .chat-header-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .icon-btn {
+        width: 36px;
+        height: 36px;
+        border: 1px solid #dee2e6;
+        background: white;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+
+    .icon-btn:hover {
+        background: #f8f9fa;
+        border-color: #adb5bd;
+    }
+
+    .chat-messages {
+        flex: 1;
+        padding: 24px;
+        overflow-y: auto;
+        background: #f8f9fa;
+    }
+
+    .message {
+        margin-bottom: 16px;
+        display: flex;
+        animation: fadeIn 0.2s;
+    }
+
+    .message.own {
+        justify-content: flex-end;
+    }
+
+    .message-content {
+        max-width: 70%;
+    }
+
+    .message.own .message-content {
+        background: #2762cb;
+        color: white;
+        padding: 10px 14px;
+        border-radius: 12px 12px 2px 12px;
+    }
+
+    .message.received .message-content {
+        background: white;
+        color: #212529;
+        padding: 10px 14px;
+        border-radius: 12px 12px 12px 2px;
+        border: 1px solid #e9ecef;
+    }
+
+    .message-text {
+        font-size: 14px;
+        line-height: 1.5;
+        margin-bottom: 4px;
+    }
+
+    .message-time {
+        font-size: 11px;
+        opacity: 0.7;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #868e96;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        color: #dee2e6;
+        margin-bottom: 16px;
+    }
+
+    .empty-state h4 {
+        font-size: 18px;
+        color: #495057;
+        margin: 0 0 8px 0;
+        font-weight: 600;
+    }
+
+    .empty-state p {
+        font-size: 14px;
+        color: #868e96;
+        margin: 0;
+    }
+
+    .chat-input-area {
+        padding: 16px 24px;
+        border-top: 1px solid #e9ecef;
+        background: white;
+    }
+
+    .chat-input-wrapper {
+        display: flex;
+        gap: 12px;
+        align-items: flex-end;
+    }
+
+    .chat-input {
+        flex: 1;
+        padding: 10px 14px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        font-size: 14px;
+        resize: none;
+        min-height: 42px;
+        max-height: 120px;
+        font-family: inherit;
+    }
+
+    .chat-input:focus {
+        outline: none;
+        border-color: #2762cb;
+    }
+
+    .send-btn {
+        padding: 10px 20px;
+        background: #2762cb;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: background 0.15s;
+        height: 42px;
+    }
+
+    .send-btn:hover {
+        background: #1f52a8;
+    }
+
+    .loading-spinner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        color: #adb5bd;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ask-expert-container">
+    <div class="chat-sidebar">
+        <div class="sidebar-header">
+            <h3>My Consultations</h3>
+            <!-- <p>Respond to client inquiries</p> -->
+        </div>
+        
+        <div class="search-box">
+            <i class="ti ti-search"></i>
+            <input type="text" id="chatSearchInput" placeholder="Search consultations..." oninput="searchChats()">
+        </div>
+        
+        <div class="chat-list" id="chatList">
+            <div class="loading-spinner">
+                <i class="ti ti-loader-2" style="font-size: 24px; animation: spin 1s linear infinite;"></i>
+                <p>Loading consultations...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-main">
+        <div class="chat-header" id="chatHeader" style="display: none;">
+            <div class="chat-header-info">
+                <div class="expert-avatar" id="clientAvatar">CL</div>
+                <div>
+                    <h4 id="clientName">Client Name</h4>
+                    <p id="consultationSubject">Subject</p>
+                </div>
+            </div>
+            <div class="chat-header-actions">
+                <button class="icon-btn" onclick="endSession()" title="End Session">
+                    <i class="ti ti-phone-off"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="empty-state">
+                <i class="ti ti-message-circle"></i>
+                <h4>No Consultation Selected</h4>
+                <p>Select a consultation from the list to respond</p>
+            </div>
+        </div>
+
+        <div class="chat-input-area" id="chatInputArea" style="display: none;">
+            <div class="chat-input-wrapper">
+                <textarea 
+                    id="messageInput" 
+                    class="chat-input" 
+                    placeholder="Type your response..." 
+                    rows="1"
+                    onkeydown="handleEnterKey(event)"
+                ></textarea>
+                <button class="send-btn" onclick="sendMessage()">
+                    <i class="ti ti-send"></i>
+                    Send
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/screens/experts/expert_dashboard.js"></script>
+{% endblock %}

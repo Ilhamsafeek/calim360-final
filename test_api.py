@@ -3,7 +3,7 @@ import requests
 import json
 
 BASE_URL = "http://localhost:8000"
-CONTRACT_ID = 4649  # Change to your contract ID
+CONTRACT_ID = 4649  
 
 def test_create_obligation():
     print("=" * 60)
@@ -86,8 +86,7 @@ def test_fetch_obligations():
         print(f" ERROR: {str(e)}")
 
 if __name__ == "__main__":
-    # Make sure your FastAPI server is running first!
-    print("\n  Make sure your FastAPI server is running on port 8000!\n")
+    print("\n  Make sure  FastAPI server is running on port 8000!\n")
     input("Press Enter to continue...")
     
     test_create_obligation()

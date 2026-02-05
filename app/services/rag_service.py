@@ -11,7 +11,7 @@ class ContractRAGService:
     """Simple RAG service for contract document analysis - supports all jurisdictions"""
     
     def __init__(self):
-        # ✅ UPDATED: New ChromaDB client configuration
+        #  UPDATED: New ChromaDB client configuration
         self.client = chromadb.PersistentClient(
             path="./chroma_db"
         )
@@ -22,7 +22,7 @@ class ContractRAGService:
             metadata={"hnsw:space": "cosine"}
         )
         
-        logger.info("✅ RAG Service initialized with ChromaDB (PersistentClient)")
+        logger.info(" RAG Service initialized with ChromaDB (PersistentClient)")
     
     def chunk_document(self, text: str, chunk_size: int = 800, overlap: int = 150) -> List[Dict[str, Any]]:
         """
@@ -114,7 +114,7 @@ class ContractRAGService:
                 metadatas=metadatas
             )
             
-            logger.info(f"✅ Indexed {len(chunks)} chunks for contract {contract_id}")
+            logger.info(f" Indexed {len(chunks)} chunks for contract {contract_id}")
             return True
             
         except Exception as e:
@@ -149,7 +149,7 @@ class ContractRAGService:
                     'contract_title': metadata.get('contract_title', '')
                 })
             
-            logger.info(f"✅ Retrieved {len(chunks)} relevant chunks for contract {contract_id}")
+            logger.info(f" Retrieved {len(chunks)} relevant chunks for contract {contract_id}")
             return chunks
             
         except Exception as e:

@@ -4,7 +4,6 @@
 
 {% block content %}
 <style>
-    /* EXACT COPY OF YOUR ORIGINAL CSS - NO CHANGES */
     .consultations-page {
         padding: 2rem;
         max-width: 1400px;
@@ -707,7 +706,7 @@ async function loadConsultations() {
         const token = getAuthToken();
         console.log('🔑 Token exists:', !!token);
         
-        // ✅ CORRECTED: /api/v1/experts/my-consultations
+        //  CORRECTED: /api/v1/experts/my-consultations
         const response = await fetch('/api/v1/experts/my-consultations?limit=50', {
             headers: {
                 'Authorization': 'Bearer ' + token
@@ -733,7 +732,7 @@ async function loadConsultations() {
                 allConsultations = [];
             }
             
-            console.log('✅ Parsed consultations:', allConsultations.length, 'items');
+            console.log(' Parsed consultations:', allConsultations.length, 'items');
             
             // Update UI
             updateStatistics();

@@ -659,7 +659,7 @@ def send_password_changed_confirmation(email: str, first_name: str) -> bool:
                         <table>
                             <tr>
                                 <td>Date & Time:</td>
-                                <td>{datetime.now().strftime('%B %d, %Y at %I:%M %p')}</td>
+                                <td>{datetime.now().strftime('%B %d, %Y')}</td>
                             </tr>
                             <tr>
                                 <td>Account Email:</td>
@@ -709,7 +709,7 @@ Hello {first_name},
 Your CALIM 360 account password has been successfully changed.
 
 Change Details:
-- Date & Time: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}
+- Date & Time: {datetime.now().strftime('%B %d, %Y')}
 - Account Email: {email}
 - Action: Password Reset
 

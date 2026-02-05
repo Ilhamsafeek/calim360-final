@@ -835,7 +835,7 @@ async function handleLogin() {
         const response = await fetch('/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include', //  ADD THIS for session cookies
+            credentials: 'include', 
             body: JSON.stringify(data)
         });
 

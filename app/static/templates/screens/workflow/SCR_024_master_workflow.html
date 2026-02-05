@@ -65,9 +65,29 @@
         color: #0c5460;
     }
 
+    .alert-warning {
+        background: #fff3cd;
+        border-color: #856404;
+        color: #856404;
+    }
+
     .alert i {
         font-size: 1.25rem;
         flex-shrink: 0;
+    }
+
+    /* Read-only mode styling */
+    .read-only-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #fff3cd;
+        color: #856404;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-left: 1rem;
     }
 
     /* Workflow Card */
@@ -205,6 +225,12 @@
         border-color: var(--success-color);
     }
 
+    .user-search-input:disabled {
+        background: var(--background-light);
+        cursor: not-allowed;
+        color: var(--text-muted);
+    }
+
     .search-icon {
         position: absolute;
         right: 0.75rem;
@@ -239,6 +265,11 @@
 
     .clear-user-btn:hover {
         color: var(--danger-color);
+    }
+
+    .clear-user-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 
     .user-dropdown {
@@ -315,6 +346,12 @@
         opacity: 0.8;
     }
 
+    .remove-step.disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
     /* Action Buttons */
     .action-buttons {
         display: flex;
@@ -339,12 +376,26 @@
         gap: 0.5rem;
     }
 
+    .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-secondary {
+        background: var(--text-muted);
+        color: white;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+        background: #5a6268;
+    }
+
     .btn-primary {
         background: var(--primary-color);
         color: white;
     }
 
-    .btn-primary:hover {
+    .btn-primary:hover:not(:disabled) {
         background: #1e4fb3;
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(39, 98, 203, 0.25);
@@ -355,7 +406,7 @@
         color: white;
     }
 
-    .btn-success:hover {
+    .btn-success:hover:not(:disabled) {
         background: #218838;
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(40, 167, 69, 0.25);
@@ -378,9 +429,15 @@
         font-weight: 500;
     }
 
-    .add-step-btn:hover {
+    .add-step-btn:hover:not(:disabled) {
         border-color: var(--primary-color);
         background: rgba(39, 98, 203, 0.05);
+    }
+
+    .add-step-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        color: var(--text-muted);
     }
 
     /* Department Badge */
@@ -447,6 +504,10 @@
         <h1>
             <i class="ti ti-git-branch"></i>
             Master Workflow Setup
+            <span class="read-only-badge" id="readOnlyBadge" style="display: none;">
+                <i class="ti ti-lock"></i>
+                Read Only
+            </span>
         </h1>
         <p>
             Configure the default workflow for all contracts. This workflow will be applied company-wide unless
@@ -459,6 +520,15 @@
         <div>
             <strong>Important:</strong> The Master Workflow will be the default for all new contracts. Individual
             contracts can override this workflow if needed.
+        </div>
+    </div>
+
+    <!-- Permission Warning Alert -->
+    <div class="alert alert-warning" id="permissionWarning" style="display: none;">
+        <i class="ti ti-alert-triangle"></i>
+        <div>
+            <strong>Access Restricted:</strong> You do not have permission to edit the Master Workflow. Only Internal
+            users, Admins, and Managers can modify this configuration.
         </div>
     </div>
 
@@ -486,7 +556,7 @@
                 </tbody>
             </table>
 
-            <button class="add-step-btn" onclick="addWorkflowStep()">
+            <button class="add-step-btn" id="addStepBtn" onclick="addWorkflowStep()">
                 <i class="ti ti-plus"></i>
                 Add Workflow Step
             </button>
@@ -500,7 +570,7 @@
                 <i class="ti ti-arrow-left"></i>
                 Back
             </button>
-            <button class="btn btn-success" onclick="submitWorkflow()">
+            <button class="btn btn-success" id="submitBtn" onclick="submitWorkflow()">
                 <i class="ti ti-check"></i>
                 Submit
             </button>
@@ -513,13 +583,79 @@
     let stepCount = 0;
     let availableRoles = ['Reviewer', 'Approver', 'Legal Reviewer', 'Finance Approver', 'Director'];
     let allUsers = []; // Store all users for quick lookup
+    let currentUser = null; // Store current user information
+    let canEdit = false; // Permission flag
 
     // Initialize
     document.addEventListener('DOMContentLoaded', function () {
-        console.log(' Master Workflow page loaded');
-        loadAllUsers();
-        loadWorkflowData();
+        console.log('🚀 Master Workflow page loaded');
+        checkUserPermissions();
     });
+
+
+    // Check user permissions
+    async function checkUserPermissions() {
+        try {
+            const response = await fetch('/api/auth/me');
+            if (response.ok) {
+                currentUser = await response.json();
+                console.log('👤 Full response from /api/auth/me:', JSON.stringify(currentUser, null, 2));
+
+                // Access user_type and user_role from the nested user object
+                const userType = (currentUser.user?.user_type || '').toLowerCase();
+                const userRole = (currentUser.user?.user_role || '').toLowerCase();
+                const isInternal = currentUser.user?.is_internal || false;
+
+                // Can edit if: internal user type OR admin/manager role
+                canEdit = isInternal || userRole === 'admin' || userRole === 'manager';
+
+                console.log(`🔐 User type: ${userType}, User role: ${userRole}, Is internal: ${isInternal}, Can edit: ${canEdit}`);
+
+                if (!canEdit) {
+                    setReadOnlyMode();
+                }
+
+                // Load data after permission check
+                loadAllUsers();
+                loadWorkflowData();
+            } else {
+                console.error('❌ Failed to get user information');
+                showNotification('Failed to verify user permissions', 'error');
+            }
+        } catch (error) {
+            console.error('❌ Error checking permissions:', error);
+            showNotification('Error verifying permissions', 'error');
+        }
+    }
+
+    // Set read-only mode
+    function setReadOnlyMode() {
+        console.log('🔒 Setting read-only mode');
+
+        // Show read-only badge
+        const readOnlyBadge = document.getElementById('readOnlyBadge');
+        if (readOnlyBadge) {
+            readOnlyBadge.style.display = 'inline-flex';
+        }
+
+        // Show permission warning
+        const permissionWarning = document.getElementById('permissionWarning');
+        if (permissionWarning) {
+            permissionWarning.style.display = 'flex';
+        }
+
+        // Disable add step button
+        const addStepBtn = document.getElementById('addStepBtn');
+        if (addStepBtn) {
+            addStepBtn.disabled = true;
+        }
+
+        // Disable submit button
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+        }
+    }
 
     // Load all users from the company
     async function loadAllUsers() {
@@ -528,10 +664,10 @@
             if (response.ok) {
                 const data = await response.json();
                 allUsers = data.users || [];
-                console.log(` Loaded ${allUsers.length} users`);
+                console.log(`✅ Loaded ${allUsers.length} users`);
             }
         } catch (error) {
-            console.error(' Error loading users:', error);
+            console.error('❌ Error loading users:', error);
         }
     }
 
@@ -557,7 +693,7 @@
                 renderWorkflowSteps();
             }
         } catch (error) {
-            console.error(' Error loading workflow:', error);
+            console.error('❌ Error loading workflow:', error);
             renderWorkflowSteps();
         }
     }
@@ -602,7 +738,7 @@
                 });
             });
             stepCount = workflowSteps.length;
-            console.log(` Populated ${stepCount} steps:`, workflowSteps);
+            console.log(`✅ Populated ${stepCount} steps:`, workflowSteps);
         }
 
         renderWorkflowSteps();
@@ -618,7 +754,7 @@
             tbody.appendChild(createStepRow(step, index));
         });
 
-        console.log(` Rendered ${workflowSteps.length} workflow steps`);
+        console.log(`✅ Rendered ${workflowSteps.length} workflow steps`);
     }
 
     // Create step row
@@ -636,12 +772,16 @@
         const userDisplayValue = step.user_name ? `${step.user_name} (${step.user_email})` : '';
         const hasUserClass = step.user_name ? 'has-value' : '';
 
+        // Disabled attributes if user can't edit
+        const disabledAttr = !canEdit ? 'disabled' : '';
+        const disabledClass = !canEdit ? 'disabled' : '';
+
         tr.innerHTML = `
         <td>
             <div class="step-number">${stepNum}</div>
         </td>
         <td>
-            <select class="form-select" name="role_${stepNum}" onchange="updateStepRole(${index}, this.value)">
+            <select class="form-select" name="role_${stepNum}" onchange="updateStepRole(${index}, this.value)" ${disabledAttr}>
                 <option value="">Select Role</option>
                 ${roleOptions}
             </select>
@@ -657,9 +797,10 @@
                         value="${userDisplayValue}"
                         onkeyup="searchUsers(${index}, this.value)"
                         onfocus="showUserDropdown(${index})"
-                        autocomplete="off">
+                        autocomplete="off"
+                        ${disabledAttr}>
                     <i class="ti ti-search search-icon"></i>
-                    <button type="button" class="clear-user-btn" onclick="clearUser(${index})">
+                    <button type="button" class="clear-user-btn" onclick="clearUser(${index})" ${disabledAttr}>
                         <i class="ti ti-x"></i>
                     </button>
                 </div>
@@ -673,7 +814,7 @@
             </div>
         </td>
         <td style="text-align: center;">
-            <i class="ti ti-trash remove-step" onclick="removeStep(${index})"></i>
+            <i class="ti ti-trash remove-step ${disabledClass}" onclick="removeStep(${index})"></i>
         </td>
     `;
 
@@ -682,6 +823,11 @@
 
     // Add new workflow step
     function addWorkflowStep() {
+        if (!canEdit) {
+            showNotification('You do not have permission to add workflow steps', 'warning');
+            return;
+        }
+
         workflowSteps.push({
             step_number: workflowSteps.length + 1,
             role: '',
@@ -697,6 +843,11 @@
 
     // Remove step
     function removeStep(index) {
+        if (!canEdit) {
+            showNotification('You do not have permission to remove workflow steps', 'warning');
+            return;
+        }
+
         if (workflowSteps.length <= 1) {
             showNotification('At least one workflow step is required', 'warning');
             return;
@@ -716,6 +867,10 @@
 
     // Update step role
     function updateStepRole(index, role) {
+        if (!canEdit) {
+            return;
+        }
+
         if (workflowSteps[index]) {
             workflowSteps[index].role = role;
             console.log(`✏️ Updated step ${index + 1} role to: ${role}`);
@@ -725,6 +880,10 @@
     // Search users
     let searchTimeout;
     window.searchUsers = function (index, query) {
+        if (!canEdit) {
+            return;
+        }
+
         clearTimeout(searchTimeout);
 
         const stepNum = index + 1;
@@ -753,6 +912,10 @@
 
     // Show user dropdown
     window.showUserDropdown = function (index) {
+        if (!canEdit) {
+            return;
+        }
+
         const stepNum = index + 1;
         const input = document.getElementById(`userSearch_${stepNum}`);
 
@@ -814,6 +977,10 @@
 
     // Select user from dropdown
     window.selectUser = function (index, user) {
+        if (!canEdit) {
+            return;
+        }
+
         if (!workflowSteps[index]) return;
 
         workflowSteps[index].user_id = user.id;
@@ -846,6 +1013,10 @@
 
     // Clear selected user
     window.clearUser = function (index) {
+        if (!canEdit) {
+            return;
+        }
+
         if (!workflowSteps[index]) return;
 
         const stepNum = index + 1;
@@ -887,10 +1058,15 @@
 
     // Save workflow
     async function saveWorkflow() {
+        if (!canEdit) {
+            showNotification('You do not have permission to save the workflow', 'warning');
+            return;
+        }
+
         if (!validateWorkflow()) return;
 
         const workflowData = collectWorkflowData();
-        console.log(' Saving workflow:', workflowData);
+        console.log('💾 Saving workflow:', workflowData);
         console.log('📋 Steps data:', JSON.stringify(workflowData.steps, null, 2));
 
         try {
@@ -904,7 +1080,7 @@
 
             if (response.ok) {
                 const result = await response.json();
-                console.log(' Save successful:', result);
+                console.log('✅ Save successful:', result);
                 showNotification('Master workflow saved successfully', 'success');
 
                 // Reload the workflow data to show what was saved
@@ -913,17 +1089,22 @@
                 }, 500);
             } else {
                 const error = await response.json();
-                console.error(' Server error response:', error);
+                console.error('❌ Server error response:', error);
                 showNotification('Error: ' + (error.detail || 'Failed to save workflow'), 'error');
             }
         } catch (error) {
-            console.error(' Error:', error);
+            console.error('❌ Error:', error);
             showNotification('Error saving workflow. Please try again.', 'error');
         }
     }
 
     // Submit workflow
     async function submitWorkflow() {
+        if (!canEdit) {
+            showNotification('You do not have permission to submit the workflow', 'warning');
+            return;
+        }
+
         if (!validateWorkflow()) return;
 
         if (confirm('Are you sure you want to submit this master workflow? It will be applied to all new contracts.')) {

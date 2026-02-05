@@ -1772,7 +1772,7 @@ async function getCurrentUserRole() {
             document.getElementById('timezone').value = user.timezone || 'Asia/Qatar';
             document.getElementById('isActive').checked = user.is_active !== false;
 
-            console.log('✅ All form fields populated');
+            console.log(' All form fields populated');
 
             // Load expert profile if user is an expert
             if (user.user_type === 'expert') {
@@ -1821,7 +1821,7 @@ async function getCurrentUserRole() {
                 document.getElementById('qidVerified').checked = profile.qid_verified || false;
                 document.getElementById('isAvailable').checked = profile.is_available !== false;
 
-                console.log('✅ Expert profile fields populated');
+                console.log(' Expert profile fields populated');
             } else {
                 console.log('ℹ️ No expert profile found');
             }

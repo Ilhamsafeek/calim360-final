@@ -2960,7 +2960,8 @@
 
 <!-- UPDATED BLOCKCHAIN SECTION WITH CSS CLASSES -->
 <div class="card blockchain-card mb-3">
-    <div class="blockchain-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+    <div class="blockchain-header"
+        style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
         <div style="flex: 1; min-width: 250px;">
             <h5 style="margin-bottom: 5px;">
                 <i data-lucide="shield" class="blockchain-icon-shield"></i>
@@ -2971,7 +2972,7 @@
                 This contract is secured on Hyperledger Fabric blockchain for tamper-proof verification.
             </small>
         </div>
-        
+
         <!-- Action Buttons in Header -->
         <div class="blockchain-buttons" style="margin: 0; flex-wrap: wrap;">
             <button type="button" class="blockchain-btn blockchain-btn-primary" onclick="showBlockchainCertificate()">
@@ -2993,7 +2994,7 @@
             </button>
         </div>
     </div>
-    
+
     <div class="card-body blockchain-body">
         <!-- Verification Status -->
         <div id="blockchain-indicator" class="mb-3" data-contract-id="">
@@ -3738,16 +3739,15 @@
                     </label>
                     <select id="regenContractType" class="form-control" required
                         style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
-                        <option value="">Select Contract Type</option>
-                        <option value="construction">Construction Contract</option>
+                         <option value="employment">Employment Contract</option>
                         <option value="service">Service Agreement</option>
-                        <option value="supply">Supply Agreement</option>
-                        <option value="consultancy">Consultancy Agreement</option>
+                        <option value="purchase">Purchase Agreement</option>
+                        <option value="lease">Lease Agreement</option>
                         <option value="nda">Non-Disclosure Agreement</option>
-                        <option value="mou">Memorandum of Understanding</option>
-                        <option value="loi">Letter of Intent</option>
-                        <option value="purchase_order">Purchase Order</option>
-                        <option value="subcontract">Subcontract Agreement</option>
+                        <option value="consulting">Consulting Agreement</option>
+                        <option value="construction">Construction Contract</option>
+                        <option value="supply">Supply Agreement</option>
+                        <option value="other">Other</option>
                     </select>
                 </div>
 
@@ -4935,7 +4935,7 @@
                     <input type="email" id="counterPartyEmail" placeholder="Search or enter counter-party email address"
                         style="width: 100%; padding: 0.75rem; padding-right: 2.5rem; border: 2px solid var(--border-color); border-radius: 8px; font-size: 0.95rem;"
                         autocomplete="off" oninput="searchCounterPartyUsers(this.value)"
-                        onfocus="searchCounterPartyUsers(this.value)" required>
+                        onfocus="searchCounterPartyUsers(this.value); selectedCounterPartyEmail = null;"  required>
                     <i class="ti ti-search"
                         style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;"></i>
 
@@ -5611,13 +5611,13 @@
                 // Set currentContractId
                 if (data.contract && data.contract.id) {
                     currentContractId = data.contract.id;
-                    console.log('✅ currentContractId set to:', currentContractId);
+                    console.log(' currentContractId set to:', currentContractId);
 
                     // ⭐ FIX: Update blockchain indicator with contract ID
                     const blockchainIndicator = document.getElementById('blockchain-indicator');
                     if (blockchainIndicator) {
                         blockchainIndicator.setAttribute('data-contract-id', currentContractId);
-                        console.log('✅ Blockchain indicator updated with contract ID:', currentContractId);
+                        console.log(' Blockchain indicator updated with contract ID:', currentContractId);
                     }
                 }
 
@@ -5640,14 +5640,14 @@
                 // Initialize AI AFTER contract is rendered
                 await initializeAIGeneration();
 
-                // ✅ INTERNAL USER BYPASS: Check if user is internal and contract is locked
+                //  INTERNAL USER BYPASS: Check if user is internal and contract is locked
                 const isInternalUser = data.is_internal_user || false;
                 const contractStatus = data.contract.status;
 
                 console.log('👤 Internal user:', isInternalUser);
                 console.log('📋 Contract status:', contractStatus);
 
-                // ✅ ONLY LOCK FOR NON-INTERNAL USERS
+                //  ONLY LOCK FOR NON-INTERNAL USERS
                 if (contractStatus === 'executed' || contractStatus === 'signed') {
                     if (!isInternalUser) {
                         // EXTERNAL USER - Apply locks
@@ -5683,8 +5683,8 @@
                             editorDiv.insertBefore(banner, editorDiv.firstChild);
                         }
                     } else {
-                        // ✅ INTERNAL USER - Allow editing
-                        console.log('✅ INTERNAL USER: Editing enabled despite contract status:', contractStatus);
+                        //  INTERNAL USER - Allow editing
+                        console.log(' INTERNAL USER: Editing enabled despite contract status:', contractStatus);
 
                         // Optional: Show badge to inform internal user
                         const internalBadge = document.createElement('div');
@@ -5761,7 +5761,7 @@
             has_signed: false,
             signed_at: null,
             signature_data: null,
-            signature_method: 'draw'  // ✅ ADD THIS
+            signature_method: 'draw'
         };
 
         let companySignatory = {
@@ -5771,7 +5771,7 @@
             has_signed: false,
             signed_at: null,
             signature_data: null,
-            signature_method: 'draw'  // ✅ ADD THIS
+            signature_method: 'draw'
         };
 
         if (certificate && certificate.signatories) {
@@ -5809,7 +5809,7 @@
             }
         }
 
-        // ✅ ADD HELPER FUNCTION to render actual signature
+        //  ADD HELPER FUNCTION to render actual signature
         function renderSignature(signatory) {
             if (!signatory.signature_data) {
                 return '<div style="font-family: \'Brush Script MT\', cursive; font-size: 1.5rem; color: #000;">Digitally Signed</div>';
@@ -5832,7 +5832,7 @@
         const clientSignatureHTML = clientSignatory.has_signed
             ? `<div class="signature-field signed" id="clientSignature" 
             style="border: 2px solid #28a745; border-radius: 8px; padding: 1.5rem; background: #f0fff4; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-           <!-- ✅ ACTUAL SIGNATURE DISPLAY -->
+           <!--  ACTUAL SIGNATURE DISPLAY -->
            <div style="margin-bottom: 0.75rem;">
                ${renderSignature(clientSignatory)}
            </div>
@@ -5854,7 +5854,7 @@
         const companySignatureHTML = companySignatory.has_signed
             ? `<div class="signature-field signed" id="companySignature" 
             style="border: 2px solid #28a745; border-radius: 8px; padding: 1.5rem; background: #f0fff4; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-           <!-- ✅ ACTUAL SIGNATURE DISPLAY -->
+           <!--  ACTUAL SIGNATURE DISPLAY -->
            <div style="margin-bottom: 0.75rem;">
                ${renderSignature(companySignatory)}
            </div>
@@ -5922,7 +5922,7 @@
     </div>
 </div>`;
 
-        console.log('✅ Signature block rendered with actual signatures and auto-filled names/titles');
+        console.log(' Signature block rendered with actual signatures and auto-filled names/titles');
 
 
 
@@ -6317,7 +6317,7 @@ ${contract.content && contract.content.trim() !== '' ?
             }
         }
 
-        console.log('✅ Signature fields and names updated');
+        console.log(' Signature fields and names updated');
     }
 
     function renderWorkflowStepper(contract) {
@@ -6502,7 +6502,7 @@ ${contract.content && contract.content.trim() !== '' ?
             </button>
 
 
-            <!-- MAXIMIZE BUTTON - ADD THIS -->
+            <!-- MAXIMIZE BUTTON  -->
         <div class="toolbar-group" style="margin-left: auto; border-right: none;">
 
             <button class="toolbar-btn" id="maximizeToggleBtn" onclick="toggleMaximizeEditor()" title="Fullscreen">
@@ -6623,7 +6623,7 @@ ${contract.content && contract.content.trim() !== '' ?
     }
 
     // =====================================================
-    // SAVE DRAFT FUNCTION - FIXED
+    // SAVE DRAFT FUNCTION
     // =====================================================
     async function saveAsDraft() {
         // GET BUTTON AND SHOW LOADING
@@ -6679,7 +6679,7 @@ ${contract.content && contract.content.trim() !== '' ?
             }
 
             const result = await response.json();
-            console.log('✅ Save response:', result);
+            console.log(' Save response:', result);
 
             if (result.success) {
                 // SHOW SUCCESS STATE
@@ -6693,12 +6693,11 @@ ${contract.content && contract.content.trim() !== '' ?
                     }
                 }
 
-                // ✅ FIXED: Only show tampered warning if actually tampered
                 // Check both status_updated flag AND current_status from backend
                 if (result.status_updated === true && result.current_status === 'tampered') {
                     console.warn('⚠️ Contract status changed to TAMPERED - Refreshing data...');
 
-                    // ✅ REFRESH CONTRACT DATA TO GET UPDATED STATUS
+                    //  REFRESH CONTRACT DATA TO GET UPDATED STATUS
                     await refreshContractData();
 
                     showNotification('Warning: Contract marked as modified due to changes after finalization', 'warning');
@@ -6920,7 +6919,6 @@ ${contract.content && contract.content.trim() !== '' ?
     }
 
 
-    // FIXED Chat Functions - Direct and Simple
     function sendMessage() {
         console.log('sendMessage called - direct function');
 
@@ -7708,8 +7706,8 @@ ${contract.content && contract.content.trim() !== '' ?
     </div>
 
     <div style="margin-top: 0.75rem; font-size: 0.75rem; color: #6c757d; text-align: right;">
-        <i class="ti ti-clock"></i> Suggested: ${new Date().toLocaleString()}
-    </div>
+    <i class="ti ti-calendar"></i> Suggested: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+</div>
 </div>`;
         }
     }
@@ -8245,7 +8243,7 @@ ${contract.content && contract.content.trim() !== '' ?
         }
     }
 
-    // Add this CSS for the fade animation
+
     const style = document.createElement('style');
     style.textContent = `
     @keyframes fadeOut {
@@ -8398,7 +8396,7 @@ ${contract.content && contract.content.trim() !== '' ?
             closeModal('exportModal');
             hideLoader();
             showNotification(`Document exported successfully as ${format.toUpperCase()}`, 'success');
-            console.log('✅ Export completed successfully');
+            console.log(' Export completed successfully');
 
         } catch (error) {
             console.error('❌ Export error:', error);
@@ -8786,16 +8784,16 @@ ${contract.content && contract.content.trim() !== '' ?
 
             console.log('📡 Response status:', response.status, response.statusText);
 
-            // ✅ FIX: Check response.ok FIRST before parsing JSON
+            //  FIX: Check response.ok FIRST before parsing JSON
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.detail || errorData.message || 'Failed to apply signature');
             }
 
             const data = await response.json();
-            console.log('✅ Response data:', data);
+            console.log(' Response data:', data);
 
-            // ✅ FIX: Now check data.success
+            //  FIX: Now check data.success
             if (data.success) {
                 // Close modal first
                 closeModal('signatureModal');
@@ -9953,7 +9951,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
     }
 
 
-    // STEP 3: ADD this NEW function (resetWorkflowModal)
+    // STEP 3:  (resetWorkflowModal)
     function resetWorkflowModal() {
         console.log('🔄 Resetting workflow modal to default state');
 
@@ -9979,7 +9977,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
         }
     }
 
-    // STEP 4: ADD this NEW function (updateMasterWorkflowPreview)
+    // STEP 4: (updateMasterWorkflowPreview)
     function updateMasterWorkflowPreview(steps) {
         console.log('🎨 Updating master workflow preview with', steps.length, 'steps');
 
@@ -10117,7 +10115,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
     }
 
 
-    // STEP 7: ADD this NEW function (removeWorkflowStepRow)
+    // STEP 7: (removeWorkflowStepRow)
     function removeWorkflowStepRow(button) {
         const tbody = document.getElementById('contractWorkflowSteps');
         if (tbody.children.length > 1) {
@@ -10128,7 +10126,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
         }
     }
 
-    // STEP 8: ADD this NEW function (updateWorkflowStepNumbers)
+    // STEP 8: (updateWorkflowStepNumbers)
     function updateWorkflowStepNumbers() {
         const rows = document.querySelectorAll('#contractWorkflowSteps tr');
         rows.forEach((row, index) => {
@@ -10453,7 +10451,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
                 break;
         }
 
-        console.log('✅ Modal opened. Stack:', openModals);
+        console.log(' Modal opened. Stack:', openModals);
     }
 
 
@@ -10499,10 +10497,10 @@ ${(riskAnalysisData.risk_items || []).map(item => `
                 backdrop.remove();
             });
 
-            console.log('✅ Body scroll RESTORED');
+            console.log(' Body scroll RESTORED');
         }
 
-        console.log('✅ Modal closed. Remaining modals:', openModals);
+        console.log(' Modal closed. Remaining modals:', openModals);
     }
 
 
@@ -10627,6 +10625,12 @@ ${(riskAnalysisData.risk_items || []).map(item => `
             return;
         }
 
+        // NEW: Must select from dropdown list
+        if (!selectedCounterPartyEmail) {
+            showNotification('Please select a registered user from the dropdown list', 'error');
+            return;
+        }
+
         showLoader();
         try {
             const response = await fetch('/api/contracts/send-to-counterparty', {
@@ -10635,9 +10639,9 @@ ${(riskAnalysisData.risk_items || []).map(item => `
                 body: JSON.stringify({
                     contract_id: contractId,
                     counterparty_email: email,
-                    counterparty_user_id: selectedCounterPartyEmail ? selectedCounterPartyEmail.userId : null,
-                    counterparty_company_id: selectedCounterPartyEmail ? selectedCounterPartyEmail.companyId : null,
-                    counterparty_company_name: selectedCounterPartyEmail ? selectedCounterPartyEmail.companyName : null,
+                    counterparty_user_id: selectedCounterPartyEmail.userId,
+                    counterparty_company_id: selectedCounterPartyEmail.companyId,
+                    counterparty_company_name: selectedCounterPartyEmail.companyName,
                     message: message
                 })
             });
@@ -10661,6 +10665,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
             hideLoader();
         }
     }
+
     // =====================================================
     // COUNTER-PARTY ACTION FUNCTIONS (for negotiation stage)
     // =====================================================
@@ -11198,7 +11203,7 @@ ${(riskAnalysisData.risk_items || []).map(item => `
             const fileName = `Certificate_of_Completion_${certificateData.contract_number || certificateData.contract_id}.pdf`;
             pdf.save(fileName);
 
-            console.log('✅ Single-page PDF generated successfully:', fileName);
+            console.log(' Single-page PDF generated successfully:', fileName);
 
         } catch (error) {
             console.error('❌ Error generating PDF:', error);
@@ -12403,11 +12408,8 @@ Generated by CALIM 360 Smart CLM
         setInterval(loadBlockchainNetworkStatus, 30000);
     });
 
-    // Example: Hook into contract save function
-    // Replace your existing save function call with this:
+
     async function saveContractWithBlockchain() {
-        // Your existing save logic here
-        // ...
 
         // After successful save, store on blockchain
         const contractId = getContractIdFromURL(); // Your function to get contract ID
@@ -13136,7 +13138,7 @@ Generated by CALIM 360 Smart CLM
             }
 
             const result = await response.json();
-            console.log('✅ Negotiation initiated:', result);
+            console.log(' Negotiation initiated:', result);
 
             // Hide loader
             hideLoader();
@@ -13502,39 +13504,43 @@ Generated by CALIM 360 Smart CLM
     }
 
     // Helper function to format timestamp
-    function formatTimestamp(timestamp) {
-        if (!timestamp) return 'Unknown time';
+function formatTimestamp(timestamp) {
+    if (!timestamp) return 'Unknown date';
 
-        // Parse the timestamp - handle both ISO format and MySQL datetime format
-        let date;
-        if (timestamp.includes('T')) {
-            // ISO format: 2025-01-15T10:30:00
-            date = new Date(timestamp);
-        } else {
-            // MySQL datetime format: 2025-01-15 10:30:00
-            // Add 'T' to make it ISO-compatible, then parse
-            date = new Date(timestamp.replace(' ', 'T'));
-        }
-
-        const now = new Date();
-        const diff = now - date;
-
-        // If timestamp seems to be in the future or more than 1 day in past due to timezone issues,
-        // try to adjust by assuming server is in UTC
-        if (diff < -3600000 || diff > 86400000) {
-            // Get timezone offset in milliseconds
-            const timezoneOffset = now.getTimezoneOffset() * 60000;
-            date = new Date(date.getTime() - timezoneOffset);
-            const adjustedDiff = now - date;
-
-            // Use adjusted diff if it makes more sense
-            if (adjustedDiff >= 0 && adjustedDiff < diff) {
-                return formatRelativeTime(adjustedDiff, date);
-            }
-        }
-
-        return formatRelativeTime(diff, date);
+    // Parse the timestamp
+    let date;
+    if (timestamp.includes('T')) {
+        date = new Date(timestamp);
+    } else {
+        date = new Date(timestamp.replace(' ', 'T'));
     }
+
+    const now = new Date();
+    const diff = now - date;
+
+    // Less than 24 hours - show "Today"
+    if (diff < 86400000 && diff >= 0) {
+        return 'Today';
+    }
+
+    // Yesterday
+    if (diff >= 86400000 && diff < 172800000) {
+        return 'Yesterday';
+    }
+
+    // Within last 7 days
+    if (diff < 604800000 && diff >= 0) {
+        const days = Math.floor(diff / 86400000);
+        return `${days} day${days > 1 ? 's' : ''} ago`;
+    }
+
+    // Older - show date only
+    return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+    });
+}
 
     // Helper function to format relative time
     function formatRelativeTime(diff, date) {
@@ -13796,10 +13802,8 @@ Generated by CALIM 360 Smart CLM
         // Close the internal review modal
         closeModal('internalReviewModal');
 
-        // Open your existing contract workflow modal
         openModal('contractWorkflowModal');
 
-        // If your existing modal has any initialization function, call it here
         // For example: initializeContractWorkflow();
     }
 
@@ -14238,7 +14242,7 @@ Generated by CALIM 360 Smart CLM
             autoScrollEnabled = false;
         }, { passive: true });
 
-        console.log('✅ Scroll detection setup complete');
+        console.log(' Scroll detection setup complete');
     }
 
     /**
@@ -14251,7 +14255,7 @@ Generated by CALIM 360 Smart CLM
     }
 
 
-    let aiStreamingInProgress = false;  // ADD THIS LINE
+    let aiStreamingInProgress = false;
 
 
 
@@ -14273,7 +14277,7 @@ Generated by CALIM 360 Smart CLM
         const language = generationParams?.language || 'en';
         if (language === 'ar') editor.setAttribute('dir', 'rtl');
 
-        console.log('✅ Editor found, starting stream...');
+        console.log(' Editor found, starting stream...');
 
         // Reset auto-scroll state
         autoScrollEnabled = true;
@@ -14317,7 +14321,7 @@ Generated by CALIM 360 Smart CLM
             const decoder = new TextDecoder();
             let accumulatedContent = '';
 
-            // ✅ FIX: Create streaming container and verify it exists
+            //  FIX: Create streaming container and verify it exists
             function ensureStreamingContainer() {
                 let contentDiv = document.getElementById('streamingContent');
                 if (!contentDiv) {
@@ -14344,8 +14348,8 @@ Generated by CALIM 360 Smart CLM
                 const { done, value } = await reader.read();
 
                 if (done) {
-                    console.log('✅ Streaming complete');
-                    aiStreamingInProgress = false;  // ✅ Clear flag
+                    console.log(' Streaming complete');
+                    aiStreamingInProgress = false;  //  Clear flag
 
                     // Final scroll if at bottom and auto-scroll enabled
                     if (autoScrollEnabled && !userIsScrolling) {
@@ -14370,13 +14374,13 @@ Generated by CALIM 360 Smart CLM
 
                             if (jsonData.type === 'start') {
                                 updateProgress('📝 Generating contract content...');
-                                // ✅ FIX: Ensure container exists when streaming starts
+                                //  FIX: Ensure container exists when streaming starts
                                 ensureStreamingContainer();
 
                             } else if (jsonData.type === 'content') {
                                 accumulatedContent += jsonData.text;
 
-                                // ✅ FIX: Always ensure container exists before updating
+                                //  FIX: Always ensure container exists before updating
                                 const contentDiv = ensureStreamingContainer();
                                 if (contentDiv) {
                                     contentDiv.innerHTML = accumulatedContent;
@@ -14395,8 +14399,8 @@ Generated by CALIM 360 Smart CLM
                                 }
 
                             } else if (jsonData.type === 'done') {
-                                updateProgress(`✅ Complete! (${jsonData.word_count} words)`);
-                                aiStreamingInProgress = false;  // ✅ Clear flag
+                                updateProgress(` Complete! (${jsonData.word_count} words)`);
+                                aiStreamingInProgress = false;  //  Clear flag
 
                                 setTimeout(() => {
                                     const progress = document.getElementById('streamProgress');
@@ -14421,7 +14425,7 @@ Generated by CALIM 360 Smart CLM
                                 setTimeout(async () => await refreshContractData(), 1500);
 
                             } else if (jsonData.type === 'error') {
-                                aiStreamingInProgress = false;  // ✅ Clear flag
+                                aiStreamingInProgress = false;  //  Clear flag
                                 cleanupScrollDetection();
                                 throw new Error(jsonData.message);
                             }
@@ -14437,7 +14441,7 @@ Generated by CALIM 360 Smart CLM
 
         } catch (error) {
             console.error('❌ Streaming error:', error);
-            aiStreamingInProgress = false;  // ✅ Clear flag on error
+            aiStreamingInProgress = false;  //  Clear flag on error
 
             // Hide banner on error
             hideAIBanner();
@@ -14485,7 +14489,7 @@ Generated by CALIM 360 Smart CLM
             const profileType = generationParams.profile_type || '';
             document.getElementById('regenProfileType').value = profileType;
 
-            // ADD THIS: Set jurisdiction
+            // Set jurisdiction
             const jurisdiction = generationParams.jurisdiction || 'Qatar';
             document.getElementById('regenJurisdiction').value = jurisdiction;
 
@@ -14529,7 +14533,7 @@ Generated by CALIM 360 Smart CLM
         const modal = document.getElementById('regenerateContractModal');
         modal.style.display = 'flex';
 
-        console.log('✅ Regenerate modal opened');
+        console.log(' Regenerate modal opened');
     }
 
 
@@ -14584,7 +14588,7 @@ Generated by CALIM 360 Smart CLM
             // Validate required fields
             const contractType = document.getElementById('regenContractType').value;
             const profileType = document.getElementById('regenProfileType').value;
-            const jurisdiction = document.getElementById('regenJurisdiction').value; // ADD THIS
+            const jurisdiction = document.getElementById('regenJurisdiction').value;
             const language = document.getElementById('regenLanguage').value;
 
             if (!contractType) {
@@ -14597,7 +14601,7 @@ Generated by CALIM 360 Smart CLM
                 return;
             }
 
-            // ADD THIS VALIDATION
+
             if (!jurisdiction) {
                 showNotification('Please select a jurisdiction', 'warning');
                 return;
@@ -14662,7 +14666,7 @@ Generated by CALIM 360 Smart CLM
             }
 
             const updateResult = await updateResponse.json();
-            console.log('✅ Metadata updated successfully:', updateResult);
+            console.log(' Metadata updated successfully:', updateResult);
 
             // Update local generationParams
             generationParams = updatedParams;
@@ -14702,7 +14706,7 @@ Generated by CALIM 360 Smart CLM
             // Call streaming endpoint
             await startAIStreaming();
 
-            console.log('✅ Contract regeneration initiated');
+            console.log(' Contract regeneration initiated');
 
         } catch (error) {
             hideLoader();
@@ -14772,16 +14776,16 @@ Generated by CALIM 360 Smart CLM
                     currentContractId = data.contract.id;
                 }
 
-                console.log('✅ Contract content length:', data.contract.content?.length);
-                console.log('✅ Contract status:', data.contract.status);
-                console.log('✅ Certificate data:', data.certificate);
+                console.log(' Contract content length:', data.contract.content?.length);
+                console.log(' Contract status:', data.contract.status);
+                console.log(' Certificate data:', data.certificate);
 
-                // ✅ CRITICAL: RE-RENDER THE ENTIRE EDITOR
+                //  CRITICAL: RE-RENDER THE ENTIRE EDITOR
                 renderContractEditor(data);
                 await checkWorkflowAvailability();
                 await checkIfAIGenerated();
 
-                // ✅ UPDATE SIGNATURE FIELDS AFTER RENDERING
+                //  UPDATE SIGNATURE FIELDS AFTER RENDERING
                 if (data.certificate) {
                     console.log('🖊️ Updating signature displays with certificate data...');
                     setTimeout(() => {
@@ -14798,13 +14802,13 @@ Generated by CALIM 360 Smart CLM
                     }
                 }
 
-                // ✅ ADD THIS: UPDATE BLOCKCHAIN VERIFICATION BADGE
+                // UPDATE BLOCKCHAIN VERIFICATION BADGE
                 if (data.contract && data.contract.id) {
                     console.log('🔐 Updating blockchain verification badge with status:', data.contract.status);
                     showVerifiedIndicator(data.contract.id, data.contract.status);
                 }
 
-                console.log('✅ Contract data refreshed and re-rendered successfully');
+                console.log(' Contract data refreshed and re-rendered successfully');
 
             } else {
                 console.error('❌ Failed to refresh contract:', data.message);
@@ -15546,7 +15550,7 @@ Generated by CALIM 360 Smart CLM
             const data = await response.json();
             companyUsers = data.users || [];
 
-            console.log('✅ Loaded', companyUsers.length, 'users for review');
+            console.log(' Loaded', companyUsers.length, 'users for review');
 
             if (companyUsers.length === 0) {
                 showNotification('No users found in your company', 'warning');
@@ -15683,7 +15687,7 @@ Generated by CALIM 360 Smart CLM
             }
         };
 
-        console.log('✅ Modal hook installed for internal review');
+        console.log(' Modal hook installed for internal review');
     })();
 
 
@@ -15723,11 +15727,6 @@ Generated by CALIM 360 Smart CLM
 
 
 
-    // =====================================================
-    // PERMANENT FIX FOR TRACK CHANGES
-    // Add this to SCR_016_contract_editor.html
-    // Place this AFTER all other script code, near the end of <script> section
-    // =====================================================
 
     // =====================================================
     // WORKING TRACK CHANGES - BEFOREINPUT LISTENER
@@ -15744,7 +15743,7 @@ Generated by CALIM 360 Smart CLM
     //             return;
     //         }
 
-    //         console.log("✅ Attaching track changes beforeinput listener...");
+    //         console.log(" Attaching track changes beforeinput listener...");
 
     //         // Remove any existing listener by cloning (clean slate)
     //         const newContent = contractContent.cloneNode(true);
@@ -15779,7 +15778,7 @@ Generated by CALIM 360 Smart CLM
     //                         e.preventDefault();
     //                         e.stopPropagation();
 
-    //                         console.log("✅ Deletion prevented:", selectedText.substring(0, 50));
+    //                         console.log(" Deletion prevented:", selectedText.substring(0, 50));
 
     //                         const range = selection.getRangeAt(0);
 
@@ -15820,12 +15819,12 @@ Generated by CALIM 360 Smart CLM
 
     //                             if (action) {
     //                                 // Accept - remove the element
-    //                                 console.log("✅ Deletion accepted");
+    //                                 console.log(" Deletion accepted");
     //                                 this.remove();
     //                                 saveAsDraft();
     //                             } else {
     //                                 // Reject - restore text
-    //                                 console.log("✅ Deletion rejected - restoring text");
+    //                                 console.log(" Deletion rejected - restoring text");
     //                                 const text = this.textContent;
     //                                 this.replaceWith(document.createTextNode(text));
     //                                 saveAsDraft();
@@ -15850,7 +15849,7 @@ Generated by CALIM 360 Smart CLM
     //                             });
     //                         }
 
-    //                         console.log("✅ RED STRIKETHROUGH CREATED!");
+    //                         console.log(" RED STRIKETHROUGH CREATED!");
 
     //                         // Show notification
     //                         if (typeof showNotification === 'function') {
@@ -15871,7 +15870,7 @@ Generated by CALIM 360 Smart CLM
     //             }
     //         }, true); // Use capture phase
 
-    //         console.log("✅ Track changes listener attached successfully!");
+    //         console.log(" Track changes listener attached successfully!");
     //     }
 
     //     // Initialize when DOM is ready
@@ -15885,7 +15884,6 @@ Generated by CALIM 360 Smart CLM
     // =====================================================
     // ENHANCED TOGGLE FUNCTION (replaces existing one)
     // =====================================================
-    // Find your existing toggleTrackChanges() function and replace it with this:
 
     // async function toggleTrackChanges() {
     //     trackChangesEnabled = !trackChangesEnabled;
@@ -15902,7 +15900,7 @@ Generated by CALIM 360 Smart CLM
     //         // Show track changes panel
     //         showTrackChangesPanel();
 
-    //         console.log("✅ Track changes ENABLED");
+    //         console.log(" Track changes ENABLED");
     //         console.log("   Now delete text - it should show RED STRIKETHROUGH");
 
     //         // Enable track changes on backend
@@ -15963,7 +15961,7 @@ Generated by CALIM 360 Smart CLM
     //     if (!contractContent) {
     //         console.error("❌ Contract content not found!");
     //     } else {
-    //         console.log("✅ Found contract content element");
+    //         console.log(" Found contract content element");
 
     //         // Remove ALL existing beforeinput listeners by replacing the element
     //         console.log("🧹 Removing any existing listeners...");
@@ -15974,7 +15972,7 @@ Generated by CALIM 360 Smart CLM
     //         newContent.id = 'contractContent';
     //         newContent.contentEditable = 'true';
 
-    //         console.log("✅ Element refreshed");
+    //         console.log(" Element refreshed");
 
     //         // Now attach our listener to the NEW element
     //         console.log("📎 Attaching working beforeinput listener...");
@@ -15988,7 +15986,7 @@ Generated by CALIM 360 Smart CLM
     //                 return;
     //             }
 
-    //             console.log("✅ Track changes is ON - processing deletion...");
+    //             console.log(" Track changes is ON - processing deletion...");
 
     //             const inputType = e.inputType;
 
@@ -16052,7 +16050,7 @@ Generated by CALIM 360 Smart CLM
     //                         // Clear selection
     //                         selection.removeAllRanges();
 
-    //                         console.log("✅ RED STRIKETHROUGH CREATED!");
+    //                         console.log(" RED STRIKETHROUGH CREATED!");
     //                         console.log("   Look at the text - you should see it!");
 
     //                     } else {
@@ -16066,7 +16064,7 @@ Generated by CALIM 360 Smart CLM
     //             }
     //         }, true); // Use capture phase!
 
-    //         console.log("\n✅ LISTENER ATTACHED!\n");
+    //         console.log("\n LISTENER ATTACHED!\n");
     //         console.log("🎯 NOW TEST:");
     //         console.log("1. Make sure track changes is ON (green button)");
     //         console.log("2. Select some text");
@@ -16080,7 +16078,7 @@ Generated by CALIM 360 Smart CLM
     //         console.log("⚠️  Track changes is currently OFF");
     //         console.log("   Click the Track Changes button to enable it");
     //     } else if (typeof trackChangesEnabled !== 'undefined' && trackChangesEnabled) {
-    //         console.log("✅ Track changes is ON - you're ready to test!");
+    //         console.log(" Track changes is ON - you're ready to test!");
     //     }
     // }
 
@@ -16139,7 +16137,7 @@ Generated by CALIM 360 Smart CLM
     //             }
     //         }, true);
 
-    //         console.log("✅ Track changes listener ready!");
+    //         console.log(" Track changes listener ready!");
     //     }
 
     //     if (document.readyState === 'loading') {
@@ -16162,7 +16160,7 @@ Generated by CALIM 360 Smart CLM
                 return;
             }
 
-            // ✅ ADD THIS CHECK - Don't attach if AI streaming is in progress
+            // CHECK - Don't attach if AI streaming is in progress
             if (typeof aiStreamingInProgress !== 'undefined' && aiStreamingInProgress) {
                 console.log("⏳ AI streaming in progress, delaying track changes setup...");
                 // Retry after streaming might be done
@@ -16170,7 +16168,7 @@ Generated by CALIM 360 Smart CLM
                 return;
             }
 
-            console.log("✅ Contract content found, attaching listener...");
+            console.log(" Contract content found, attaching listener...");
 
             // Remove existing listeners by cloning
             const newContent = contractContent.cloneNode(true);
@@ -16239,11 +16237,11 @@ Generated by CALIM 360 Smart CLM
                                 );
 
                                 if (accept) {
-                                    console.log("✅ Deletion accepted");
+                                    console.log(" Deletion accepted");
                                     this.remove();
                                     if (typeof saveAsDraft === 'function') saveAsDraft();
                                 } else {
-                                    console.log("✅ Deletion rejected - restoring text");
+                                    console.log(" Deletion rejected - restoring text");
                                     const text = this.textContent;
                                     this.replaceWith(document.createTextNode(text));
                                     if (typeof saveAsDraft === 'function') saveAsDraft();
@@ -16257,7 +16255,7 @@ Generated by CALIM 360 Smart CLM
                             // Clear selection
                             selection.removeAllRanges();
 
-                            console.log("✅ RED STRIKETHROUGH CREATED!");
+                            console.log(" RED STRIKETHROUGH CREATED!");
 
                             // Track the change
                             if (typeof trackedChanges !== 'undefined') {
@@ -16274,7 +16272,7 @@ Generated by CALIM 360 Smart CLM
                 }
             }, true); // Use capture phase
 
-            console.log("✅ PERMANENT track changes listener attached!");
+            console.log(" PERMANENT track changes listener attached!");
             console.log("   Track changes will work after refresh!");
 
         }, 1000); // Wait 1 second for everything to load
@@ -16282,8 +16280,7 @@ Generated by CALIM 360 Smart CLM
 
 
     // =====================================================
-    // BULLETPROOF COMMENT BUTTON FIX
-    // Add this to SCR_016_contract_editor.html AFTER bubble-comments.js
+
     // This will FORCE the button to work no matter what
     // =====================================================
 
@@ -16313,7 +16310,7 @@ Generated by CALIM 360 Smart CLM
                 return;
             }
 
-            console.log('✅ Found button:', addBtn);
+            console.log(' Found button:', addBtn);
 
             // METHOD 1: Remove ALL event listeners by replacing element
             const newBtn = addBtn.cloneNode(true);
@@ -16347,7 +16344,7 @@ Generated by CALIM 360 Smart CLM
                 }
             });
 
-            console.log('✅ Button fixed with multiple methods!');
+            console.log(' Button fixed with multiple methods!');
             buttonFixed = true;
 
             // Also fix toggle button
@@ -16372,7 +16369,7 @@ Generated by CALIM 360 Smart CLM
                     }
                 };
 
-                console.log('✅ Toggle button fixed');
+                console.log(' Toggle button fixed');
             }
         }
 
@@ -16384,7 +16381,7 @@ Generated by CALIM 360 Smart CLM
 
             // Check if openAddCommentModal exists
             if (typeof openAddCommentModal === 'function') {
-                console.log('✅ Using openAddCommentModal()');
+                console.log(' Using openAddCommentModal()');
                 openAddCommentModal();
                 return;
             }
@@ -16406,7 +16403,7 @@ Generated by CALIM 360 Smart CLM
             }
 
             const selectedText = selection.toString().trim();
-            console.log('✅ Selected text:', selectedText);
+            console.log(' Selected text:', selectedText);
 
             // Store selection
             window.commentSelection = {
@@ -16436,7 +16433,7 @@ Generated by CALIM 360 Smart CLM
                 preview.textContent = selectedText;
             }
 
-            console.log('✅ Modal opened manually');
+            console.log(' Modal opened manually');
         }
 
         // =====================================================
@@ -16658,7 +16655,7 @@ Generated by CALIM 360 Smart CLM
                 })
             }).then(r => r.json()).then(data => {
                 if (data.success) {
-                    alert('✅ Change tracked!');
+                    alert(' Change tracked!');
                     loadComments();
                 }
             });
@@ -16693,7 +16690,7 @@ Generated by CALIM 360 Smart CLM
 <script src="/app/static/js/contract-edit.js?v=1"></script>
 <script src="/app/static/js/position-tracker.js"></script>
 <script src="/app/static/js/bubble-comments.js?v=6"></script>
-<script src="/app/static/js/blockchain-verification.js?v=6"></script>
+<script src="/app/static/js/blockchain-verification.js?v=7"></script>
 
 
 {% endblock %}

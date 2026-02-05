@@ -1,9 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Smart CLM{% endblock %}</title>
+    <meta name="description"
+        content="SaaS Intelligent & blockchain secured bilingual Contract Management and Administration platform">
+
+    <link rel="icon" type="image/x-icon" href="/app/static/img/c360.png">
+
     <!-- Tabler Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.34.0/tabler-icons.min.css">
     <style>
@@ -29,9 +35,9 @@
             --danger-color: #dc3545;
             --danger-bg: #f8d7da;
             --white: #ffffff;
-            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-            --shadow-lg: 0 10px 20px rgba(0,0,0,0.15);
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.15);
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -56,14 +62,19 @@
             height: 100%;
             opacity: 0.1;
             z-index: 0;
-            background-image: 
-                repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,.1) 35px, rgba(255,255,255,.1) 70px);
+            background-image:
+                repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255, 255, 255, .1) 35px, rgba(255, 255, 255, .1) 70px);
             animation: backgroundShift 20s ease infinite;
         }
 
         @keyframes backgroundShift {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(70px); }
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(70px);
+            }
         }
 
         /* Header - Updated to be sticky */
@@ -87,15 +98,15 @@
         }
 
         .logo img {
-           
+
             text-decoration: none;
-            
+
             width: 120px;
             /* height: 100px; */
         }
 
 
-      
+
 
 
         .header-actions {
@@ -163,6 +174,7 @@
                 opacity: 0;
                 transform: translateY(30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -262,7 +274,8 @@
             color: var(--danger-color);
         }
 
-        .form-input, .form-select {
+        .form-input,
+        .form-select {
             width: 100%;
             padding: 0.75rem 1rem;
             padding-left: 2.5rem;
@@ -273,13 +286,15 @@
             background: var(--white);
         }
 
-        .form-input:focus, .form-select:focus {
+        .form-input:focus,
+        .form-select:focus {
             outline: none;
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(39, 98, 203, 0.1);
         }
 
-        .form-input.error, .form-select.error {
+        .form-input.error,
+        .form-select.error {
             border-color: var(--danger-color);
         }
 
@@ -317,8 +332,8 @@
             font-size: 14px;
         }
 
-        .form-input.error ~ .error-message,
-        .form-select.error ~ .error-message {
+        .form-input.error~.error-message,
+        .form-select.error~.error-message {
             display: flex;
         }
 
@@ -357,14 +372,16 @@
         }
 
         /* Checkbox & Radio */
-        .checkbox-group, .radio-group {
+        .checkbox-group,
+        .radio-group {
             display: flex;
             align-items: flex-start;
             gap: 0.75rem;
             margin: 1rem 0;
         }
 
-        .checkbox-input, .radio-input {
+        .checkbox-input,
+        .radio-input {
             width: 20px;
             height: 20px;
             margin-top: 2px;
@@ -372,14 +389,16 @@
             accent-color: var(--primary-color);
         }
 
-        .checkbox-label, .radio-label {
+        .checkbox-label,
+        .radio-label {
             font-size: 0.875rem;
             color: var(--text-muted);
             line-height: 1.5;
             cursor: pointer;
         }
 
-        .checkbox-label a, .radio-label a {
+        .checkbox-label a,
+        .radio-label a {
             color: var(--primary-color);
             text-decoration: none;
         }
@@ -452,7 +471,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         .btn.loading .spinner {
@@ -482,18 +503,19 @@
             }
         }
     </style>
-    
+
     {% block extra_css %}{% endblock %}
 </head>
+
 <body>
     <div class="bg-pattern"></div>
-    
+
     <!-- Header -->
     <header class="header">
         <div class="header-container">
             <a href="/" class="logo">
-                    <img src="/app/static/img/logo/contriq-logo.png" alt="Smart CLM Logo" />
-              
+                <img src="/app/static/img/logo/contriq-logo.png" alt="Smart CLM Logo" />
+
             </a>
             <div class="header-actions">
                 <button class="lang-btn active" data-lang="en">
@@ -504,14 +526,14 @@
                     <i class="ti ti-language"></i>
                     العربية
                 </button>
-                
+
                 {% block header_nav %}
                 {% if current_page == 'register' %}
                 <a href="/login" class="login-link">
                     <i class="ti ti-login"></i>
                     Already have an account?
                 </a>
-               
+
                 {% endif %}
                 {% endblock %}
             </div>
@@ -525,10 +547,10 @@
     <script>
         // Language toggle functionality
         document.querySelectorAll('.lang-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function () {
                 document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
-                
+
                 const lang = this.dataset.lang;
                 console.log('Switching to language:', lang);
             });
@@ -540,12 +562,12 @@
         }
 
         // Remove error styling on input
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('.form-input, .form-select').forEach(input => {
-                input.addEventListener('input', function() {
+                input.addEventListener('input', function () {
                     this.classList.remove('error');
                 });
-                input.addEventListener('change', function() {
+                input.addEventListener('change', function () {
                     this.classList.remove('error');
                 });
             });
@@ -568,7 +590,7 @@
                     <i class="ti ti-${type === 'error' ? 'alert-circle' : type === 'success' ? 'circle-check' : 'info-circle'}"></i>
                     <span>${message}</span>
                 `;
-                
+
                 // Insert after form header
                 const formHeader = document.querySelector('.form-header');
                 if (formHeader) {
@@ -591,7 +613,7 @@
         function togglePassword(input) {
             const type = input.type === 'password' ? 'text' : 'password';
             input.type = type;
-            
+
             // Update icon if there's a toggle button
             const toggleBtn = input.parentNode.querySelector('.password-toggle');
             if (toggleBtn) {
@@ -600,7 +622,8 @@
             }
         }
     </script>
-    
+
     {% block scripts %}{% endblock %}
 </body>
+
 </html>

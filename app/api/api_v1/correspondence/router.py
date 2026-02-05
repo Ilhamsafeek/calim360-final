@@ -1539,10 +1539,6 @@ async def bulk_correspondence_action(
 # =====================================================
 # AI ANALYZE DOCUMENTS ENDPOINT
 # =====================================================
-# =====================================================
-# FIXED /analyze ENDPOINT
-# Replace your existing /analyze endpoint with this
-# =====================================================
 
 @router.post("/analyze")
 async def analyze_correspondence(
@@ -1992,6 +1988,3 @@ async def get_available_documents(
             detail=f"Failed to fetch documents: {str(e)}"
         )
     
-
-
-# Add this endpoint after the export_correspondence_document function

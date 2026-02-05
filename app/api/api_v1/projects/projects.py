@@ -986,12 +986,6 @@ async def delete_project(
 
 
 
-
-# =====================================================
-# FILE: app/api/api_v1/projects/projects.py
-# Add this endpoint for direct project-level document uploads
-# =====================================================
-
 @router.post("/{project_id}/documents/upload")
 async def upload_project_documents(
     project_id: int,

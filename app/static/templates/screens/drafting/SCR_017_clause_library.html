@@ -556,10 +556,7 @@
         accent-color: var(--primary-color);
     }
 
-    /* ============================================================================
-   SOLID FIX FOR CLAUSES MODAL SCROLLING ISSUE
-   Add this to the END of: app/static/css/contract-creation.css
-   ============================================================================ */
+ 
 
     /* Fix for addClauseModal - Allow scrolling */
     #addClauseModal .modal-content {
@@ -886,10 +883,10 @@
                     <!-- Clause Code -->
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.875rem;">
-                            Clause Code <span style="color: var(--danger-color);">*</span>
+                            Clause Code
                         </label>
                         <input type="text" id="clauseCode" name="clauseCode" placeholder="e.g., PAY-001, CONF-001"
-                            required pattern="[A-Z0-9-]+" title="Use uppercase letters, numbers, and hyphens only"
+                             pattern="[A-Z0-9-]+" title="Use uppercase letters, numbers, and hyphens only"
                             style="width: 100%; padding: 0.625rem; border: 1px solid var(--border-color); border-radius: 8px;">
                         <small style="color: var(--text-muted); font-size: 0.75rem;">Unique identifier for this
                             clause</small>

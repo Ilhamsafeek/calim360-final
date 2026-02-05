@@ -24,7 +24,7 @@ class ChatbotClaudeService:
             else:
                 self.client = Anthropic(api_key=api_key)
                 self.model = getattr(settings, 'CLAUDE_MODEL', 'claude-sonnet-4-20250514')
-                logger.info(f"✅ Chatbot Claude AI initialized with model: {self.model}")
+                logger.info(f" Chatbot Claude AI initialized with model: {self.model}")
         except Exception as e:
             logger.error(f"❌ Failed to initialize chatbot Claude client: {str(e)}")
             self.client = None
@@ -68,7 +68,7 @@ class ChatbotClaudeService:
             processing_time = int((time.time() - start_time) * 1000)
             word_count = len(full_response.split())
             
-            logger.info(f"✅ Response generated: {word_count} words in {processing_time}ms")
+            logger.info(f" Response generated: {word_count} words in {processing_time}ms")
             
             variants = await self._generate_response_variants(full_response, user_message, tone)
             clause_refs = self._extract_clause_references(full_response, contract_context)

@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadAvailableExperts();
     initializeFormHandlers();
     loadDraft();
-    initializeFileUpload(); // Add this line
+    initializeFileUpload();
     
     // Character counter
     const queryDetails = document.getElementById('queryDetails');
@@ -23,9 +23,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // =====================================================
-    // File Upload Functionality - ADD THIS FUNCTION
-    // =====================================================
     function initializeFileUpload() {
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
