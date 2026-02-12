@@ -17,6 +17,7 @@ let uploadedFile = null;
 let selectedClauses = [];
 let selectedContractType = '';
 let aiAssistantOpen = false;
+let allLoadedTemplates = [];
 
 // =====================================================
 // Initialization
@@ -301,22 +302,99 @@ function buildAIPrompt() {
     return fullPrompt;
 }
 
+
+// =====================================================
+// NEW FUNCTION: Filter stored templates and render
+// =====================================================
+function filterAndRenderTemplates(language) {
+    const templateGrid = document.getElementById('templateGrid');
+    const noTemplates = document.getElementById('noTemplates');
+
+    // Clear existing cards (keep loading/noTemplates divs)
+    const existingCards = templateGrid.querySelectorAll('.template-card');
+    existingCards.forEach(card => card.remove());
+
+    // Reset selection
+    selectedTemplate = null;
+    const previewBtn = document.getElementById('previewBtn');
+    if (previewBtn) previewBtn.style.display = 'none';
+
+    // Filter templates by language
+    let filtered = [];
+
+    if (language === 'mirror') {
+        // Mirror: show ALL templates (both en and ar)
+        filtered = allLoadedTemplates;
+    } else if (language === 'ar') {
+        // Arabic: show only templates with language = 'ar'
+        filtered = allLoadedTemplates.filter(t => t.language === 'ar');
+    } else {
+        // English (default): show templates with language = 'en', null, undefined, or empty
+        filtered = allLoadedTemplates.filter(t => !t.language || t.language === 'en' || t.language === '');
+    }
+
+    console.log(`🌐 Filtering by "${language}": ${filtered.length} of ${allLoadedTemplates.length} templates`);
+
+    if (filtered.length > 0) {
+        if (noTemplates) noTemplates.style.display = 'none';
+
+        filtered.forEach(template => {
+            const templateCard = createTemplateCard(template);
+            templateGrid.appendChild(templateCard);
+        });
+
+        console.log(`✅ Rendered ${filtered.length} templates for language: ${language}`);
+    } else {
+        // Show no templates message
+        if (noTemplates) {
+            noTemplates.style.display = 'flex';
+            const noTemplatesText = noTemplates.querySelector('p');
+            if (noTemplatesText) {
+                if (language === 'ar') {
+                    noTemplatesText.textContent = 'لا توجد قوالب متاحة باللغة العربية لهذا الملف الشخصي';
+                } else if (language === 'mirror') {
+                    noTemplatesText.textContent = 'No templates available for this profile';
+                } else {
+                    noTemplatesText.textContent = 'No English templates available for this profile';
+                }
+            }
+        }
+        console.log('⚠️ No templates found for language:', language);
+    }
+}
+
 // =====================================================
 // Template Management
 // =====================================================
 
-async function loadTemplates() {
+async function loadTemplates(language) {
     try {
-        console.log('📋 Loading templates for profile:', selectedProfile);
+        // Get current language from tab (default 'en')
+        if (!language) {
+            const templateLangInput = document.getElementById('templateLanguage');
+            language = templateLangInput ? templateLangInput.value : 'en';
+        }
+
+        console.log('📋 Loading templates for profile:', selectedProfile, '| language:', language);
 
         const templateGrid = document.getElementById('templateGrid');
         const loadingTemplates = document.getElementById('loadingTemplates');
         const noTemplates = document.getElementById('noTemplates');
 
-        // Show loading state
+        // Show loading
         if (loadingTemplates) loadingTemplates.style.display = 'flex';
         if (noTemplates) noTemplates.style.display = 'none';
 
+        // Clear existing cards
+        const existingCards = templateGrid.querySelectorAll('.template-card');
+        existingCards.forEach(card => card.remove());
+
+        // Reset selection
+        selectedTemplate = null;
+        const previewBtn = document.getElementById('previewBtn');
+        if (previewBtn) previewBtn.style.display = 'none';
+
+        // Fetch ALL templates from API (no language filter on backend)
         const response = await authenticatedFetch(`${API_BASE}/templates/list?category=${selectedProfile}`);
 
         if (!response.ok) {
@@ -324,37 +402,25 @@ async function loadTemplates() {
         }
 
         const data = await response.json();
-        console.log(' Templates loaded:', data);
+        console.log('✅ Total templates fetched:', data.templates?.length);
 
-        // Hide loading state
+        // Store ALL templates
+        allLoadedTemplates = data.templates || [];
+
+        // Hide loading
         if (loadingTemplates) loadingTemplates.style.display = 'none';
 
-        // Clear existing templates except loading/no-templates divs
-        const existingCards = templateGrid.querySelectorAll('.template-card');
-        existingCards.forEach(card => card.remove());
-
-        if (data.templates && data.templates.length > 0) {
-            // Render templates
-            data.templates.forEach(template => {
-                const templateCard = createTemplateCard(template);
-                templateGrid.appendChild(templateCard);
-            });
-            console.log(` Rendered ${data.templates.length} templates`);
-        } else {
-            // Show no templates message
-            if (noTemplates) noTemplates.style.display = 'flex';
-            console.log(' No templates available');
-        }
+        // Filter and render by language
+        filterAndRenderTemplates(language);
 
     } catch (error) {
-        console.error(' Error loading templates:', error);
-
+        console.error('❌ Error loading templates:', error);
         const loadingTemplates = document.getElementById('loadingTemplates');
         if (loadingTemplates) loadingTemplates.style.display = 'none';
-
         showNotification('Failed to load templates', 'error');
     }
 }
+
 
 
 function createTemplateCard(template) {
@@ -537,8 +603,10 @@ function handleProfileChange(event) {
 
     console.log('👤 Profile changed to:', selectedProfile);
 
-    // Reload templates for selected profile
-    loadTemplates();
+    // Reload ALL templates for new profile, then filter by current language
+    const templateLangInput = document.getElementById('templateLanguage');
+    const currentLang = templateLangInput ? templateLangInput.value : 'en';
+    loadTemplates(currentLang);
 }
 
 function switchTab(tabName) {

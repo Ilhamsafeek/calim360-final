@@ -393,16 +393,18 @@ async def get_my_contracts(
 @router.get("/templates/list")
 async def list_contract_templates(
     category: Optional[str] = Query(None),
+    language: Optional[str] = Query(None, description="Filter by language: en, ar, or mirror"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get list of available contract templates"""
+    """Get list of available contract templates, optionally filtered by category and language"""
     try:
-        logger.info(f"📋 Fetching templates for category: {category}")
+        logger.info(f"📋 Fetching templates for category: {category}, language: {language}")
         
+        # Use COALESCE to treat NULL language as 'en'
         query = """
             SELECT id, template_name, template_type, template_category,
-                   description, is_active, language
+                   description, is_active, COALESCE(language, 'en') as language
             FROM contract_templates
             WHERE is_active = 1
         """
@@ -410,11 +412,19 @@ async def list_contract_templates(
         params = {}
         
         if category:
-            # Include generic templates marked as 'all' in addition to the requested category
             query += " AND (template_category = :category OR template_category = 'all')"
             params["category"] = category
         
-        query += " ORDER BY language DESC, template_name"
+        if language and language != 'all':
+            if language == 'mirror':
+                # Mirror mode: show both English and Arabic templates
+                query += " AND COALESCE(language, 'en') IN ('en', 'ar')"
+            else:
+                # Filter by specific language (treat NULL as 'en')
+                query += " AND COALESCE(language, 'en') = :language"
+                params["language"] = language
+        
+        query += " ORDER BY COALESCE(language, 'en') DESC, template_name"
         
         result = db.execute(text(query), params)
         rows = result.fetchall()
@@ -428,10 +438,10 @@ async def list_contract_templates(
                 "category": row[3],
                 "description": row[4],
                 "is_active": row[5],
-                "language": row[6]
+                "language": row[6] or "en"  # Extra safety: default to 'en'
             })
         
-        logger.info(f" Found {len(templates)} templates")
+        logger.info(f"✅ Found {len(templates)} templates (category={category}, language={language})")
         
         return {
             "success": True,
@@ -440,7 +450,7 @@ async def list_contract_templates(
         }
         
     except Exception as e:
-        logger.error(f" Error fetching templates: {str(e)}")
+        logger.error(f"❌ Error fetching templates: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch templates: {str(e)}"

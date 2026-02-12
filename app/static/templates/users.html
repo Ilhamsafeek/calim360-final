@@ -834,6 +834,35 @@
             max-height: 95vh;
         }
     }
+
+    /* Subscription Status Styling */
+    #companySubscriptionStatus {
+        font-weight: 600;
+    }
+
+    #companySubscriptionStatus[value*="Active"] {
+        color: #28a745;
+    }
+
+    #companySubscriptionStatus[value*="Expired"],
+    #companySubscriptionStatus[value*="Cancelled"] {
+        color: #dc3545;
+    }
+
+    #companySubscriptionStatus[value*="Trial"],
+    #companySubscriptionStatus[value*="Pending"] {
+        color: #ffc107;
+    }
+
+    #companySubscriptionStatus[value*="Suspended"] {
+        color: #6c757d;
+    }
+
+    /* License Type Styling */
+    #companyLicenseType {
+        font-weight: 600;
+        color: #2762cb;
+    }
 </style>
 {% endblock %}
 
@@ -928,6 +957,8 @@
     </div>
 
     <!-- Users Table -->
+    <!-- Users Table -->
+    <!-- Users Table -->
     <div class="card">
         <div class="card-body">
             <div class="table-container">
@@ -939,6 +970,7 @@
                             </th>
                             <th>User</th>
                             <th>Email</th>
+                            <th id="companyHeader">Company</th> <!-- ✅ ADDED ID for hiding -->
                             <th>Role</th>
                             <th>Type</th>
                             <th>Department</th>
@@ -948,7 +980,7 @@
                     </thead>
                     <tbody id="usersTableBody">
                         <tr class="loading-row">
-                            <td colspan="8">
+                            <td colspan="9">
                                 <div class="loading-spinner">
                                     <i class="ti ti-loader-2"></i>
                                     Loading users...
@@ -1030,6 +1062,48 @@
                             <input type="text" id="jobTitle" class="form-input">
                         </div>
                     </div>
+                </div>
+
+
+                <!-- ✅ ADD THIS COMPANY SECTION HERE -->
+                <div class="form-section hidden" id="companyInfoSection">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="ti ti-building-skyscraper"></i>
+                        </div>
+                        <div class="section-title">Company Information</div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Company Name</label>
+                            <input type="text" id="companyName" class="form-input" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Company Type</label>
+                            <input type="text" id="companyType" class="form-input" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">CR Number</label>
+                            <input type="text" id="companyCrNumber" class="form-input" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">License Type</label>
+                            <input type="text" id="companyLicenseType" class="form-input" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Maximum Users</label>
+                            <input type="text" id="companyMaxUsers" class="form-input" readonly>
+                        </div>
+                    </div>
+
+
                 </div>
 
                 <!-- Account Information -->
@@ -1308,12 +1382,13 @@
 {% block extra_js %}
 <script>
     /* =====================================================
-       USER MANAGEMENT - INLINE JAVASCRIPT
+       USER MANAGEMENT - COMPLETE INLINE JAVASCRIPT
        ===================================================== */
 
     let allUsers = [];
     let currentUserId = null;
-    let currentUserRole = null; // Store current user's role
+    let currentUserRole = null;
+    let isInternalUser = false; // ✅ Track if user is internal
 
     document.addEventListener('DOMContentLoaded', function () {
         console.log('🚀 User Management initialized');
@@ -1322,65 +1397,77 @@
 
     async function initializeUserManagement() {
         await getCurrentUserRole(); // Get current user's role first
+
+        // // ✅ NEW: Load companies if internal user
+        // if (isInternalUser) {
+        //     await loadCompanies();
+        // }
+
         loadUsers();
         setupEventListeners();
         updateUIBasedOnRole(); // Update UI based on role
     }
 
-// Temporary fallback if /api/auth/me fails
-async function getCurrentUserRole() {
-    try {
-        // Try primary endpoint first
-        let response = await fetch('/api/auth/me', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include'
-        });
-
-        // If 422, try alternative endpoint
-        if (response.status === 422) {
-            console.log('⚠️ /api/auth/me returned 422, trying /api/users/debug/current-user');
-            response = await fetch('/api/users/debug/current-user', {
+    // ✅ UPDATED: Get current user role AND check if internal
+    async function getCurrentUserRole() {
+        try {
+            // Try primary endpoint first
+            let response = await fetch('/api/auth/me', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 credentials: 'include'
             });
-        }
 
-        if (response.ok) {
-            const data = await response.json();
-            console.log('📦 User data:', data);
-            
-            // Extract role from various possible structures
-            const user = data.user || data;
-            currentUserRole = user.user_role || user.role || 'viewer';
-            console.log('👤 Current user role:', currentUserRole);
-        } else {
-            console.error('❌ Auth check failed, status:', response.status);
+            // If 422, try alternative endpoint
+            if (response.status === 422) {
+                console.log('⚠️ /api/auth/me returned 422, trying /api/users/debug/current-user');
+                response = await fetch('/api/users/debug/current-user', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+            }
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📦 User data:', data);
+
+                // Extract role and type from various possible structures
+                const user = data.user || data;
+                currentUserRole = user.user_role || user.role || 'viewer';
+                isInternalUser = user.user_type === 'internal'; // ✅ Check if internal
+
+                console.log('👤 Current user role:', currentUserRole);
+                console.log('🏢 Is internal user:', isInternalUser);
+            } else {
+                console.error('❌ Auth check failed, status:', response.status);
+                currentUserRole = 'viewer';
+                isInternalUser = false;
+            }
+        } catch (error) {
+            console.error('❌ Error getting current user role:', error);
             currentUserRole = 'viewer';
+            isInternalUser = false;
         }
-    } catch (error) {
-        console.error('❌ Error getting current user role:', error);
-        currentUserRole = 'viewer';
     }
-}
-    
+
     // Check if user has permission to manage users
     function canManageUsers() {
         return currentUserRole === 'admin' || currentUserRole === 'manager';
     }
 
-    // Update UI elements based on user role
+    // ✅ UPDATED: Hide company column for non-internal users
     function updateUIBasedOnRole() {
         const addUserBtn = document.getElementById('addUserBtn');
         const statusHeader = document.getElementById('statusHeader');
         const selectAllHeader = document.getElementById('selectAllHeader');
         const filterStatus = document.getElementById('filterStatus');
         const pendingUsersCard = document.getElementById('pendingUsersCard');
+        const companyHeader = document.getElementById('companyHeader');
 
         if (!canManageUsers()) {
             // Hide add user button for non-admin/manager
@@ -1407,6 +1494,166 @@ async function getCurrentUserRole() {
             if (pendingUsersCard) {
                 pendingUsersCard.style.display = 'none';
             }
+        }
+
+        // ✅ NEW: Hide company column for non-internal users
+        if (!isInternalUser && companyHeader) {
+            companyHeader.classList.add('hidden-for-users');
+        }
+    }
+
+    // ✅ NEW: Load all companies for internal users with license info
+    async function loadCompanies() {
+        try {
+            const response = await fetch('/api/companies/', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const companies = data.companies || data.data || [];
+
+                const companySelect = document.getElementById('companyId');
+                companySelect.innerHTML = '<option value="">Select Company</option>';
+
+                companies.forEach(company => {
+                    const option = document.createElement('option');
+                    option.value = company.id;
+                    option.textContent = company.company_name;
+
+                    // Store all company data as data attributes
+                    option.dataset.type = company.company_type || '';
+                    option.dataset.crNumber = company.cr_number || '';
+                    option.dataset.taxNumber = company.tax_number || '';
+                    option.dataset.address = company.address || '';
+
+                    // ✅ License and subscription data
+                    option.dataset.licenseType = company.license_type || '';
+                    option.dataset.maxUsers = company.max_users || company.number_of_users || '';
+                    option.dataset.subscriptionStatus = company.subscription_status || '';
+                    option.dataset.subscriptionEnd = company.subscription_end_date || '';
+
+                    companySelect.appendChild(option);
+                });
+
+                console.log(`✅ Loaded ${companies.length} companies`);
+            }
+        } catch (error) {
+            console.error('❌ Error loading companies:', error);
+        }
+    }
+
+    // ✅ NEW: Helper function to format license type
+    function formatLicenseType(licenseType) {
+        const typeMap = {
+            'basic': 'Basic Plan',
+            'professional': 'Professional Plan',
+            'enterprise': 'Enterprise Plan',
+            'trial': 'Trial',
+            'starter': 'Starter Plan',
+            'premium': 'Premium Plan'
+        };
+        return typeMap[licenseType?.toLowerCase()] || licenseType || 'N/A';
+    }
+
+    // ✅ NEW: Helper function to format subscription status
+    function formatSubscriptionStatus(status) {
+        const statusMap = {
+            'active': '✓ Active',
+            'expired': '✗ Expired',
+            'trial': '⏱ Trial',
+            'suspended': '⏸ Suspended',
+            'cancelled': '✗ Cancelled',
+            'pending': '⏳ Pending'
+        };
+        return statusMap[status?.toLowerCase()] || status || 'N/A';
+    }
+
+    // ✅ NEW: Helper function to format date
+    function formatDate(dateString) {
+        if (!dateString) return 'N/A';
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+        } catch (e) {
+            return dateString;
+        }
+    }
+
+    // ✅ NEW: Load complete company data for selected user
+    async function loadCompanyData(companyId) {
+        try {
+            console.log('🏢 Loading company data for ID:', companyId);
+
+            const response = await fetch(`/api/companies/${companyId}`, {
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const company = await response.json();
+
+                // ✅ SHOW ME ALL FIELD NAMES
+                console.log('=== ALL COMPANY FIELDS ===');
+                console.log(JSON.stringify(company, null, 2));
+                console.log('=== FIELD NAMES ===');
+                console.log(Object.keys(company));
+
+                // ✅ Helper function to safely set value
+                function safeSetValue(elementId, value) {
+                    const element = document.getElementById(elementId);
+                    if (element) {
+                        element.value = value || '';
+                    } else {
+                        console.warn(`⚠️ Element not found: ${elementId}`);
+                    }
+                }
+
+                // ✅ Set company name (no dropdown, just readonly field)
+                safeSetValue('companyName', company.company_name);
+
+                // Basic fields
+                safeSetValue('companyType', company.company_type);
+                safeSetValue('companyCrNumber', company.cr_number);
+                safeSetValue('companyTaxNumber', company.tax_number);
+                safeSetValue('companyAddress', company.address);
+
+                // ✅ Try all possible field names
+                const licenseType = company.license_type || company.licence_type ||
+                    company.subscription_type || company.plan_type ||
+                    company.subscription_plan || company.plan || '';
+
+                const maxUsers = company.max_users || company.number_of_users ||
+                    company.user_limit || company.allowed_users ||
+                    company.total_users || '';
+
+                const subStatus = company.subscription_status || company.status ||
+                    company.account_status || company.plan_status || '';
+
+                const subEnd = company.subscription_end_date || company.expiry_date ||
+                    company.subscription_expiry || company.valid_until ||
+                    company.end_date || company.expires_at || '';
+
+                safeSetValue('companyLicenseType', formatLicenseType(licenseType));
+                safeSetValue('companyMaxUsers', maxUsers || 'N/A');
+                safeSetValue('companySubscriptionStatus', formatSubscriptionStatus(subStatus));
+                safeSetValue('companySubscriptionEnd', subEnd ? formatDate(subEnd) : 'N/A');
+
+                console.log('✅ License Type:', licenseType);
+                console.log('✅ Max Users:', maxUsers);
+                console.log('✅ Status:', subStatus);
+                console.log('✅ End Date:', subEnd);
+            }
+        } catch (error) {
+            console.error('❌ Error:', error);
         }
     }
 
@@ -1450,6 +1697,8 @@ async function getCurrentUserRole() {
                 setExpertFieldsRequired(false);
             }
         });
+
+
 
         // Auto-generate username from email
         document.getElementById('email').addEventListener('input', function () {
@@ -1538,6 +1787,7 @@ async function getCurrentUserRole() {
         document.getElementById('expertUsers').textContent = expertUsers;
     }
 
+    // ✅ UPDATED: Conditionally show company column for internal users only
     function renderUsers(users) {
         const tbody = document.getElementById('usersTableBody');
 
@@ -1549,8 +1799,11 @@ async function getCurrentUserRole() {
         // Check if user can manage users
         const hasManagePermission = canManageUsers();
 
-        // Calculate colspan based on role
-        const totalColumns = hasManagePermission ? 8 : 7;
+        // ✅ Calculate colspan based on role AND internal status
+        let totalColumns = 7; // Base columns (User, Email, Role, Type, Department, Actions)
+        if (hasManagePermission) totalColumns++; // Add checkbox column
+        if (hasManagePermission) totalColumns++; // Add status column
+        if (isInternalUser) totalColumns++; // Add company column for internal users
 
         tbody.innerHTML = users.map(user => `
         <tr>
@@ -1571,6 +1824,14 @@ async function getCurrentUserRole() {
                 </div>
             </td>
             <td>${user.email}</td>
+            ${isInternalUser ? `
+            <!-- ✅ CONDITIONAL: Only show company for internal users -->
+            <td>
+                <span class="badge badge-secondary" style="font-size: 0.8rem;">
+                    ${user.company_name || 'N/A'}
+                </span>
+            </td>
+            ` : ''}
             <td>
                 <span class="badge badge-${getRoleBadgeColor(user.user_role)}">
                     ${formatRole(user.user_role)}
@@ -1605,10 +1866,16 @@ async function getCurrentUserRole() {
     `).join('');
     }
 
+    // ✅ UPDATED: Dynamic colspan calculation
     function renderEmptyState() {
         const tbody = document.getElementById('usersTableBody');
         const hasManagePermission = canManageUsers();
-        const totalColumns = hasManagePermission ? 8 : 7;
+
+        // ✅ Calculate total columns dynamically
+        let totalColumns = 7; // Base columns
+        if (hasManagePermission) totalColumns++; // Add checkbox column
+        if (hasManagePermission) totalColumns++; // Add status column
+        if (isInternalUser) totalColumns++; // Add company column for internal users
 
         tbody.innerHTML = `
         <tr>
@@ -1678,7 +1945,6 @@ async function getCurrentUserRole() {
     }
 
     function openUserModal(userId = null) {
-        // Check permission
         if (!canManageUsers()) {
             showNotification('You do not have permission to manage users', 'error');
             return;
@@ -1688,10 +1954,24 @@ async function getCurrentUserRole() {
         const modal = document.getElementById('userModal');
         const modalTitle = document.getElementById('modalTitle');
         const expertSection = document.getElementById('expertProfileSection');
+        const companySection = document.getElementById('companyInfoSection');
         const passwordField = document.getElementById('password');
         const confirmPasswordField = document.getElementById('confirmPassword');
         const passwordRequired = document.getElementById('passwordRequired');
         const confirmPasswordRequired = document.getElementById('confirmPasswordRequired');
+
+        // ✅ Show/hide company section for internal users
+        if (companySection) {
+            if (isInternalUser) {
+                companySection.classList.remove('hidden');
+                const companyIdField = document.getElementById('companyId');
+                if (companyIdField) companyIdField.required = true;
+            } else {
+                companySection.classList.add('hidden');
+                const companyIdField = document.getElementById('companyId');
+                if (companyIdField) companyIdField.required = false;
+            }
+        }
 
         if (userId) {
             modalTitle.innerHTML = '<i class="ti ti-user-edit"></i> Edit User';
@@ -1707,7 +1987,7 @@ async function getCurrentUserRole() {
             document.getElementById('userForm').reset();
             document.getElementById('userId').value = '';
             expertSection.classList.add('hidden');
-            setExpertFieldsRequired(false); // Reset expert fields
+            setExpertFieldsRequired(false);
             passwordField.required = true;
             confirmPasswordField.required = true;
             passwordRequired.style.display = 'inline';
@@ -1726,7 +2006,7 @@ async function getCurrentUserRole() {
         document.body.style.overflow = '';
         document.getElementById('userForm').reset();
         document.getElementById('expertProfileSection').classList.add('hidden');
-        setExpertFieldsRequired(false); // Reset expert fields
+        setExpertFieldsRequired(false);
         currentUserId = null;
     }
 
@@ -1772,7 +2052,12 @@ async function getCurrentUserRole() {
             document.getElementById('timezone').value = user.timezone || 'Asia/Qatar';
             document.getElementById('isActive').checked = user.is_active !== false;
 
-            console.log(' All form fields populated');
+            // ✅ NEW: Load company data for internal users
+            if (isInternalUser && user.company_id) {
+                await loadCompanyData(user.company_id);
+            }
+
+            console.log('✅ All form fields populated');
 
             // Load expert profile if user is an expert
             if (user.user_type === 'expert') {
@@ -1821,7 +2106,7 @@ async function getCurrentUserRole() {
                 document.getElementById('qidVerified').checked = profile.qid_verified || false;
                 document.getElementById('isAvailable').checked = profile.is_available !== false;
 
-                console.log(' Expert profile fields populated');
+                console.log('✅ Expert profile fields populated');
             } else {
                 console.log('ℹ️ No expert profile found');
             }
@@ -1859,6 +2144,16 @@ async function getCurrentUserRole() {
             is_active: document.getElementById('isActive').checked,
             send_welcome_email: document.getElementById('sendWelcomeEmail').checked
         };
+
+        // ✅ NEW: Add company_id for internal users
+        if (isInternalUser) {
+            const companyId = document.getElementById('companyId').value;
+            if (!companyId) {
+                showNotification('Please select a company', 'error');
+                return;
+            }
+            formData.company_id = parseInt(companyId);
+        }
 
         // Add password if provided
         const password = document.getElementById('password').value;

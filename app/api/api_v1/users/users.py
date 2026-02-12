@@ -141,21 +141,24 @@ async def get_company_users(
     role_filter: Optional[str] = None,
     user_type_filter: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)  #  Added authentication
+    current_user: User = Depends(get_current_user)
 ):
     """
-    Get all users in the current user's company with filtering and pagination.
+    Get users with filtering and pagination.
+    - Internal users: see ALL users across all companies.
+    - External users: see only users within their own company.
     Includes expert profile information for consultants.
     """
     
     try:
-        logger.info(f"Fetching users for company: {current_user.company_id}")
+        is_internal = (current_user.user_type == "internal")
         
-        #  Use current user's company_id
-        company_id = current_user.company_id
-        
-        # Build base query
-        query = db.query(User).filter(User.company_id == company_id)
+        if is_internal:
+            logger.info(f"Internal user {current_user.id} fetching all users across companies")
+            query = db.query(User)
+        else:
+            logger.info(f"External user {current_user.id} fetching users for company: {current_user.company_id}")
+            query = db.query(User).filter(User.company_id == current_user.company_id)
         
         # Apply search filter
         if search:
@@ -222,22 +225,6 @@ async def get_company_users(
                 "company_name": company_name or "N/A"
             }
             
-            # Add expert profile if user is a consultant
-            # if user.user_type == "consultant":
-            #     expert_profile = db.query(ExpertProfile).filter(
-            #         ExpertProfile.user_id == user.id
-            #     ).first()
-                
-            #     if expert_profile:
-            #         user_data["expert_profile"] = {
-            #             "specialization": expert_profile.specialization,
-            #             "experience_years": expert_profile.experience_years,
-            #             "hourly_rate": float(expert_profile.hourly_rate) if expert_profile.hourly_rate else None,
-            #             "availability_status": expert_profile.availability_status,
-            #             "certifications": expert_profile.certifications,
-            #             "languages": expert_profile.languages
-            #         }
-            
             user_list.append(user_data)
         
         logger.info(f"Successfully returning {len(user_list)} users (total: {total_users})")
@@ -255,7 +242,6 @@ async def get_company_users(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch users: {str(e)}"
         )
-
 # =====================================================
 # CREATE USER ENDPOINT (Enhanced with Expert Profile Support)
 # =====================================================
@@ -822,20 +808,18 @@ async def get_company_users(
 # =====================================================
 # EXISTING: GET SINGLE USER ENDPOINT 
 # =====================================================
+from sqlalchemy import text
+
 @router.get("/{user_id}")
 async def get_user(
     user_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get specific user by ID (must be in same company)."""
+    """Get specific user by ID with complete company information."""
     
     try:
-        #  Security: Only allow access to users in the same company
-        user = db.query(User).filter(
-            User.id == user_id,
-            User.company_id == current_user.company_id
-        ).first()
+        user = db.query(User).filter(User.id == user_id).first()
         
         if not user:
             raise HTTPException(
@@ -843,9 +827,20 @@ async def get_user(
                 detail="User not found"
             )
         
+        # ✅ QUICK FIX: Get ALL company fields using raw SQL
+        company_data = None
+        if user.company_id:
+            query = text("SELECT * FROM companies WHERE id = :company_id")
+            result = db.execute(query, {"company_id": user.company_id}).fetchone()
+            
+            if result:
+                # Convert ALL fields to dictionary
+                company_data = dict(result._mapping)
+        
         response = {
             "id": user.id,
             "company_id": user.company_id,
+            "company": company_data,  # ✅ ALL company fields included
             "first_name": user.first_name,
             "last_name": user.last_name,
             "email": user.email,
@@ -864,22 +859,24 @@ async def get_user(
             "created_at": user.created_at.isoformat() if user.created_at else None
         }
         
-        # Add expert profile if consultant
-        if user.user_type == "consultant":
+        # Add expert profile if consultant or expert
+        if user.user_type in ["consultant", "expert"]:
             expert_profile = db.query(ExpertProfile).filter(
                 ExpertProfile.user_id == user.id
             ).first()
             
             if expert_profile:
                 response["expert_profile"] = {
-                    "specialization": expert_profile.specialization,
-                    "expertise_areas": expert_profile.expertise_areas,
-                    "experience_years": expert_profile.experience_years,
-                    "hourly_rate": float(expert_profile.hourly_rate) if expert_profile.hourly_rate else None,
-                    "availability_status": expert_profile.availability_status,
-                    "certifications": expert_profile.certifications,
-                    "languages": expert_profile.languages,
-                    "bio": expert_profile.bio
+                    "specialization": getattr(expert_profile, 'specialization', None),
+                    "expertise_areas": getattr(expert_profile, 'expertise_areas', None),
+                    "years_of_experience": getattr(expert_profile, 'years_of_experience', None),
+                    "hourly_rate": float(expert_profile.hourly_rate) if getattr(expert_profile, 'hourly_rate', None) else None,
+                    "is_available": getattr(expert_profile, 'is_available', True),
+                    "bio": getattr(expert_profile, 'bio', None),
+                    "license_number": getattr(expert_profile, 'license_number', None),
+                    "license_authority": getattr(expert_profile, 'license_authority', None),
+                    "qfcra_certified": getattr(expert_profile, 'qfcra_certified', False),
+                    "qid_verified": getattr(expert_profile, 'qid_verified', False)
                 }
         
         return response
@@ -887,7 +884,7 @@ async def get_user(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error in get_user: {str(e)}")
+        logger.error(f"Error in get_user: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve user: {str(e)}"

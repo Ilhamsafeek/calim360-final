@@ -107,58 +107,25 @@ async def get_companies(
 # =====================================================
 # GET SINGLE COMPANY ENDPOINT
 # =====================================================
+from sqlalchemy import text
+
 @router.get("/{company_id}")
 async def get_company(
     company_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Get detailed information about a specific company
-    """
+    """Get detailed information about a specific company"""
     try:
-        logger.info(f"Fetching company: {company_id}")
+        query = text("SELECT * FROM companies WHERE id = :company_id")
+        result = db.execute(query, {"company_id": company_id}).fetchone()
         
-        company = db.query(Company).filter(Company.id == company_id).first()
+        if not result:
+            raise HTTPException(status_code=404, detail="Company not found")
         
-        if not company:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Company not found with ID: {company_id}"
-            )
+        # Return EVERYTHING as-is
+        return dict(result._mapping)
         
-        return {
-            "success": True,
-            "data": {
-                "id": company.id,
-                "company_name": company.company_name,
-                "company_name_ar": company.company_name_ar,
-                "cr_number": company.cr_number,
-                "qid": company.qid,
-                "company_type": company.company_type,
-                "industry": company.industry,
-                "company_size": company.company_size,
-                "address": company.address,
-                "city": company.city,
-                "country": company.country,
-                "postal_code": company.postal_code,
-                "phone": company.phone,
-                "email": company.email,
-                "website": company.website,
-                "logo_url": company.logo_url,
-                "subscription_plan": company.subscription_plan,
-                "subscription_status": company.subscription_status,
-                "is_active": company.is_active,
-                "created_at": company.created_at.isoformat() if company.created_at else None,
-                "updated_at": company.updated_at.isoformat() if company.updated_at else None
-            }
-        }
-        
-    except HTTPException:
-        raise
     except Exception as e:
-        logger.error(f"Error fetching company: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch company: {str(e)}"
-        )
+        logger.error(f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

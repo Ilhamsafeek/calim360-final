@@ -74,7 +74,6 @@
                             <span>Coming Soon</span>
                         </div>
                     </div>
-
                 </label>
             </div>
 
@@ -92,11 +91,9 @@
                             <span>Coming Soon</span>
                         </div>
                     </div>
-
                 </label>
             </div>
         </div>
-
     </div>
 
     <!-- Step 2: Contract Creation Method -->
@@ -113,27 +110,22 @@
             <!-- Tab Navigation -->
             <div class="tab-nav">
                 <button class="tab-btn active" onclick="switchTab('template')">
-
                     <div class="profile-icon">
                         <i class="ti ti-template"></i>
                     </div>
                     <h2>Use Template</h2>
                 </button>
                 <button class="tab-btn" onclick="switchTab('ai')">
-
                     <div class="profile-icon">
                         <i class="ti ti-sparkles"></i>
                     </div>
                     <h2>Generate with AI</h2>
-
                 </button>
                 <button class="tab-btn" onclick="switchTab('upload')">
-
                     <div class="profile-icon">
                         <i class="ti ti-upload"></i>
                     </div>
                     <h2>Upload Existing</h2>
-
                 </button>
             </div>
 
@@ -143,15 +135,74 @@
                     Select from our pre-built contract templates tailored to your profile and needs
                 </p>
 
-                <!-- Templates will be loaded here dynamically -->
+                <!-- Template Language Selection Tabs -->
+                <div class="template-language-section">
+                    <label class="template-lang-label">
+                        <i class="ti ti-language"></i>
+                        Contract Language <span style="color: var(--danger-color);">*</span>
+                    </label>
+
+                    <!-- Hidden input for template language value -->
+                    <input type="hidden" id="templateLanguage" value="en">
+
+                    <div class="language-tabs-wrapper">
+                        <div class="language-tabs">
+                            <button type="button" class="language-tab active" data-lang="en"
+                                onclick="selectTemplateLanguageTab(this, 'en')">
+                                <div class="language-tab-icon">
+                                    <i class="ti ti-language"></i>
+                                </div>
+                                <div class="language-tab-content">
+                                    <span class="language-tab-name">English</span>
+                                    <span class="language-tab-desc">Use English template</span>
+                                </div>
+                                <div class="language-tab-check">
+                                    <i class="ti ti-circle-check-filled"></i>
+                                </div>
+                            </button>
+
+                            <button type="button" class="language-tab" data-lang="ar"
+                                onclick="selectTemplateLanguageTab(this, 'ar')">
+                                <div class="language-tab-icon arabic-icon">
+                                    <i class="ti ti-writing"></i>
+                                </div>
+                                <div class="language-tab-content">
+                                    <span class="language-tab-name">العربية</span>
+                                    <span class="language-tab-desc">استخدام قالب عربي</span>
+                                </div>
+                                <div class="language-tab-check">
+                                    <i class="ti ti-circle-check-filled"></i>
+                                </div>
+                            </button>
+
+                            <!-- <button type="button" class="language-tab" data-lang="mirror"
+                                onclick="selectTemplateLanguageTab(this, 'mirror')">
+                                <div class="language-tab-icon mirror-icon">
+                                    <i class="ti ti-columns"></i>
+                                </div>
+                                <div class="language-tab-content">
+                                    <span class="language-tab-name">Mirror</span>
+                                    <span class="language-tab-desc">Side-by-side EN / AR</span>
+                                </div>
+                                <div class="language-tab-check">
+                                    <i class="ti ti-circle-check-filled"></i>
+                                </div>
+                            </button> -->
+                        </div>
+
+                        <!-- Template Language Info Banner -->
+                        <div class="language-info-banner info-en" id="templateLanguageInfoBanner">
+                            <i class="ti ti-info-circle"></i>
+                            <span id="templateLanguageInfoText">Template will be loaded in English</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="template-grid" id="templateGrid">
-                    <!-- Loading state -->
                     <div class="loading-templates" id="loadingTemplates">
                         <i class="ti ti-loader"></i>
                         <p>Loading templates...</p>
                     </div>
-
-                    <!-- No templates state -->
                     <div class="no-templates" id="noTemplates" style="display: none;">
                         <i class="ti ti-file-x"></i>
                         <p>No templates available for this profile</p>
@@ -165,7 +216,7 @@
                     Describe your contract requirements and let AI generate a custom contract
                 </p>
 
-                <!-- Contract Type Selection (Required before AI Assistant) -->
+                <!-- Contract Type Selection -->
                 <div class="contract-type-section" style="margin-bottom: 1.5rem;">
                     <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
                         Type of Contract <span style="color: var(--danger-color);">*</span>
@@ -222,7 +273,6 @@
                                     </select>
                                 </div>
 
-
                                 <!-- Jurisdiction Field -->
                                 <div class="ai-question-item">
                                     <label>
@@ -236,21 +286,73 @@
                                         <option value="Oman">Oman</option>
                                         <option value="Kuwait">Kuwait</option>
                                     </select>
-                                    
                                 </div>
 
+                                <!-- ============================================== -->
+                                <!-- Contract Language - Inner Tabs (EN / AR / Mirror) -->
+                                <!-- ============================================== -->
+                                <div class="ai-question-item full-width">
+                                    <label>
+                                        Contract Language <span style="color: var(--danger-color);">*</span>
+                                    </label>
 
-                                <div class="ai-question-item">
-        <label>
-            Contract Language <span style="color: var(--danger-color);">*</span>
-        </label>
-        <select id="contractLanguage" class="form-control">
-            <option value="en" selected>English</option>
-            <option value="ar">Arabic (العربية)</option>
-            <option value="mirror">Mirror</option>
-        </select>
-    </div>
+                                    <!-- Hidden input to store selected value (keeps existing JS compatibility) -->
+                                    <input type="hidden" id="contractLanguage" value="en">
 
+                                    <!-- Language Inner Tabs -->
+                                    <div class="language-tabs-wrapper">
+                                        <div class="language-tabs">
+                                            <button type="button" class="language-tab active" data-lang="en"
+                                                onclick="selectLanguageTab(this, 'en')">
+                                                <div class="language-tab-icon">
+                                                    <i class="ti ti-language"></i>
+                                                </div>
+                                                <div class="language-tab-content">
+                                                    <span class="language-tab-name">English</span>
+                                                    <span class="language-tab-desc">Generate in English</span>
+                                                </div>
+                                                <div class="language-tab-check">
+                                                    <i class="ti ti-circle-check-filled"></i>
+                                                </div>
+                                            </button>
+
+                                            <button type="button" class="language-tab" data-lang="ar"
+                                                onclick="selectLanguageTab(this, 'ar')">
+                                                <div class="language-tab-icon arabic-icon">
+                                                    <i class="ti ti-writing"></i>
+                                                </div>
+                                                <div class="language-tab-content">
+                                                    <span class="language-tab-name">العربية</span>
+                                                    <span class="language-tab-desc">إنشاء باللغة العربية</span>
+                                                </div>
+                                                <div class="language-tab-check">
+                                                    <i class="ti ti-circle-check-filled"></i>
+                                                </div>
+                                            </button>
+
+                                            <button type="button" class="language-tab" data-lang="mirror"
+                                                onclick="selectLanguageTab(this, 'mirror')">
+                                                <div class="language-tab-icon mirror-icon">
+                                                    <i class="ti ti-columns"></i>
+                                                </div>
+                                                <div class="language-tab-content">
+                                                    <span class="language-tab-name">Mirror</span>
+                                                    <span class="language-tab-desc">Side-by-side EN / AR</span>
+                                                </div>
+                                                <div class="language-tab-check">
+                                                    <i class="ti ti-circle-check-filled"></i>
+                                                </div>
+                                            </button>
+                                        </div>
+
+                                        <!-- Language Info Banner -->
+                                        <div class="language-info-banner info-en" id="languageInfoBanner">
+                                            <i class="ti ti-info-circle"></i>
+                                            <span id="languageInfoText">Contract will be generated in English with Qatar jurisdiction legal terminology</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End Language Inner Tabs -->
 
                                 <div class="ai-question-item full-width">
                                     <label>Special Requirements</label>
@@ -273,7 +375,6 @@
                     </div>
                 </div>
             </div>
-
 
             <!-- Upload Tab Content -->
             <div id="upload-tab" class="tab-content">
@@ -331,7 +432,9 @@
     </div>
 </div>
 
-<!-- MODALS -->
+<!-- ============================================== -->
+<!-- MODALS                                          -->
+<!-- ============================================== -->
 
 <!-- MOD-013: Profile Confirmation Modal -->
 <div class="modal" id="profileModal">
@@ -436,7 +539,6 @@
 </div>
 
 <!-- MOD-016: Add/Remove Clauses Modal -->
-
 <div class="modal" id="clausesModal">
     <div class="modal-content modal-lg">
         <div class="modal-header">
@@ -553,7 +655,7 @@
     </div>
 </div>
 
-<!-- MOD-017: Save Contract Modal - UPDATED -->
+<!-- MOD-017: Save Contract Modal -->
 <div class="modal" id="saveContractModal">
     <div class="modal-content">
         <div class="modal-header">
@@ -572,7 +674,7 @@
                     required>
             </div>
 
-            <!-- Project Assignment - NOW OPTIONAL -->
+            <!-- Project Assignment - OPTIONAL -->
             <div style="margin-bottom: 1rem;">
                 <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
                     Project Assignment <span style="color: var(--text-muted); font-weight: 400;">(Optional)</span>
@@ -580,32 +682,31 @@
                 <select id="projectSelect" class="form-control"
                     style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
                     <option value="">Select Project (Optional)</option>
-                    <!-- Projects will be loaded dynamically -->
                 </select>
             </div>
 
             <div>
-    <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
-        Tag <span style="color: var(--text-muted); font-weight: 400;">(Optional)</span>
-    </label>
-    <select id="tagsSelect" class="form-control"
-        style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
-        <option value="">Select Tag (Optional)</option>
-        <option value="urgent">Urgent</option>
-        <option value="high-priority">High Priority</option>
-        <option value="standard">Standard</option>
-        <option value="high-value">High Value</option>
-        <option value="construction">Construction</option>
-        <option value="oil-gas">Oil & Gas</option>
-        <option value="infrastructure">Infrastructure</option>
-        <option value="confidential">Confidential</option>
-        <option value="qfcra-regulated">QFCRA Regulated</option>
-        <option value="government">Government Contract</option>
-    </select>
-    <small style="color: var(--text-muted); font-size: 0.875rem;">
-        <i class="ti ti-info-circle"></i> Select one tag to categorize your contract
-    </small>
-</div>
+                <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                    Tag <span style="color: var(--text-muted); font-weight: 400;">(Optional)</span>
+                </label>
+                <select id="tagsSelect" class="form-control"
+                    style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                    <option value="">Select Tag (Optional)</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="high-priority">High Priority</option>
+                    <option value="standard">Standard</option>
+                    <option value="high-value">High Value</option>
+                    <option value="construction">Construction</option>
+                    <option value="oil-gas">Oil & Gas</option>
+                    <option value="infrastructure">Infrastructure</option>
+                    <option value="confidential">Confidential</option>
+                    <option value="qfcra-regulated">QFCRA Regulated</option>
+                    <option value="government">Government Contract</option>
+                </select>
+                <small style="color: var(--text-muted); font-size: 0.875rem;">
+                    <i class="ti ti-info-circle"></i> Select one tag to categorize your contract
+                </small>
+            </div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-outline-secondary" onclick="closeSaveContractModal()">Cancel</button>
@@ -616,7 +717,7 @@
     </div>
 </div>
 
-
+<!-- Create Project Modal -->
 <div class="modal" id="createProjectModal" style="display: none;">
     <div class="modal-content" style="max-width: 600px;">
         <div class="modal-header">
@@ -664,7 +765,6 @@
     </div>
 </div>
 
-
 <!-- MOD-018: Import Document Modal -->
 <div class="modal" id="importModal">
     <div class="modal-content">
@@ -695,7 +795,11 @@
     </div>
 </div>
 
-<!-- Simple Upload Click Fix Script -->
+<!-- ============================================== -->
+<!-- SCRIPTS                                         -->
+<!-- ============================================== -->
+
+<!-- Upload Click Fix Script -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         setTimeout(function () {
@@ -710,14 +814,143 @@
                     document.getElementById('fileInput').click();
                 });
 
-                console.log(' Upload click enabled');
+                console.log('✅ Upload click enabled');
             }
         }, 1000);
     });
 </script>
 
+<!-- Language Tab Selection Script -->
+<script>
+    /**
+     * Language Inner Tab Selection Handler
+     * Updates hidden input value and info banner
+     */
+    function selectLanguageTab(tabElement, langValue) {
+        // Remove active from all language tabs
+        document.querySelectorAll('.language-tab').forEach(function(tab) {
+            tab.classList.remove('active');
+        });
+
+        // Set clicked tab as active
+        tabElement.classList.add('active');
+
+        // Update hidden input value (maintains compatibility with buildAIPrompt)
+        var hiddenInput = document.getElementById('contractLanguage');
+        if (hiddenInput) {
+            hiddenInput.value = langValue;
+        }
+
+        // Update info banner
+        updateLanguageInfoBanner(langValue);
+
+        console.log('🌐 Language selected:', langValue);
+    }
+
+    function updateLanguageInfoBanner(lang) {
+        var banner = document.getElementById('languageInfoBanner');
+        var text = document.getElementById('languageInfoText');
+        var icon = banner.querySelector('i');
+
+        // Remove all state classes
+        banner.classList.remove('info-en', 'info-ar', 'info-mirror');
+
+        switch (lang) {
+            case 'en':
+                banner.classList.add('info-en');
+                icon.className = 'ti ti-info-circle';
+                text.textContent = 'Contract will be generated in English with Qatar jurisdiction legal terminology';
+                text.dir = 'ltr';
+                break;
+            case 'ar':
+                banner.classList.add('info-ar');
+                icon.className = 'ti ti-info-circle';
+                text.textContent = 'سيتم إنشاء العقد باللغة العربية وفقاً للمصطلحات القانونية القطرية';
+                text.dir = 'rtl';
+                break;
+            case 'mirror':
+                banner.classList.add('info-mirror');
+                icon.className = 'ti ti-arrows-horizontal';
+                text.textContent = 'Contract will be generated side-by-side in English and Arabic (العربية)';
+                text.dir = 'ltr';
+                break;
+        }
+    }
+
+    /**
+     * Template Language Tab Selection Handler
+     * Triggers actual template reload filtered by language
+     */
+    function selectTemplateLanguageTab(tabElement, langValue) {
+        // Only target tabs inside the template-tab section
+        var templateTab = document.getElementById('template-tab');
+        templateTab.querySelectorAll('.language-tab').forEach(function(tab) {
+            tab.classList.remove('active');
+        });
+
+        tabElement.classList.add('active');
+
+        // Update hidden input
+        var hiddenInput = document.getElementById('templateLanguage');
+        if (hiddenInput) {
+            hiddenInput.value = langValue;
+        }
+
+        // Also sync to contractLanguage so saveContract picks it up
+        var contractLangInput = document.getElementById('contractLanguage');
+        if (contractLangInput) {
+            contractLangInput.value = langValue;
+        }
+
+        // Update template info banner
+        updateTemplateLanguageInfoBanner(langValue);
+
+        // ✅ FILTER already-loaded templates by selected language (no API call)
+        if (typeof filterAndRenderTemplates === 'function') {
+            filterAndRenderTemplates(langValue);
+        }
+
+        console.log('🌐 Template language selected:', langValue, '→ filtering templates...');
+    }
+
+    function updateTemplateLanguageInfoBanner(lang) {
+        var banner = document.getElementById('templateLanguageInfoBanner');
+        var text = document.getElementById('templateLanguageInfoText');
+        var icon = banner.querySelector('i');
+
+        banner.classList.remove('info-en', 'info-ar', 'info-mirror');
+
+        switch (lang) {
+            case 'en':
+                banner.classList.add('info-en');
+                icon.className = 'ti ti-info-circle';
+                text.textContent = 'Showing English templates';
+                text.dir = 'ltr';
+                break;
+            case 'ar':
+                banner.classList.add('info-ar');
+                icon.className = 'ti ti-info-circle';
+                text.textContent = 'عرض القوالب باللغة العربية';
+                text.dir = 'rtl';
+                break;
+            case 'mirror':
+                banner.classList.add('info-mirror');
+                icon.className = 'ti ti-arrows-horizontal';
+                text.textContent = 'Showing all templates — English and Arabic side-by-side';
+                text.dir = 'ltr';
+                break;
+        }
+    }
+
+    // Expose globally
+    window.selectLanguageTab = selectLanguageTab;
+    window.updateLanguageInfoBanner = updateLanguageInfoBanner;
+    window.selectTemplateLanguageTab = selectTemplateLanguageTab;
+    window.updateTemplateLanguageInfoBanner = updateTemplateLanguageInfoBanner;
+</script>
+
 {% endblock %}
 
 {% block extra_js %}
-<script src="/app/static/js/contract-creation.js?v=10"></script>
+<script src="/app/static/js/contract-creation.js?v=11"></script>
 {% endblock %}
