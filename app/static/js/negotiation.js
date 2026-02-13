@@ -483,127 +483,65 @@ function addMessageToChat(message) {
 // =====================================================
 // SEND MESSAGE (FIXED)
 // =====================================================
-// =====================================================
-// REPLACE sendMessage function in base.html
-// Around line 1450
-// =====================================================
+async function sendNegotiationMessage() {
+    const input = document.getElementById('messageInput');
+    const sendBtn = document.querySelector('.send-btn');
 
-async function sendMessage() {
-    const input = document.getElementById('chatbotInput');
+    if (!input || !currentNegotiationSession || isSendingMessage) {
+        return;
+    }
+
     const message = input.value.trim();
-
     if (!message) return;
 
-    // Add user message to UI
-    addMessage(message, 'user');
-    input.value = '';
-    document.getElementById('quickActions').style.display = 'none';
-
-    // Show typing indicator
-    showTypingIndicator();
-
     try {
-        // Create a placeholder for streaming response
-        const messagesContainer = document.getElementById('chatbotMessages');
-        const aiMessageDiv = document.createElement('div');
-        aiMessageDiv.className = 'message';
-        aiMessageDiv.id = 'streaming-message';
-        
-        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-        aiMessageDiv.innerHTML = `
-            <div class="message-avatar">AI</div>
-            <div class="message-content">
-                <div class="message-text" id="streaming-text"></div>
-                <div class="message-time">${time}</div>
-            </div>
-        `;
-        
-        removeTypingIndicator();
-        messagesContainer.appendChild(aiMessageDiv);
-        
-        const streamingTextDiv = document.getElementById('streaming-text');
-        let fullText = '';
+        // Set loading state
+        isSendingMessage = true;
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<i class="ti ti-loader" style="animation: spin 1s linear infinite;"></i>';
 
-        // Call streaming endpoint
-        const response = await fetch('/api/v1/chatbot/query/stream', {
+        // Clear input immediately for better UX
+        const messageCopy = message;
+        input.value = '';
+
+        // Send to server (NO optimistic UI - wait for confirmation)
+        const response = await fetch('/api/negotiation/messages/send', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getAuthToken()}`
+                'Content-Type': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify({
-                query: message,
-                tone: 'formal',
-                language: currentLanguage || 'en',
-                session_id: currentSessionId
+                session_id: currentNegotiationSession.session_id,
+                message_content: messageCopy,
+                message_type: 'text'
             })
         });
 
-        if (!response.ok) {
-            throw new Error('Streaming request failed');
-        }
+        const data = await response.json();
 
-        // Read the stream
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-
-        while (true) {
-            const { done, value } = await reader.read();
-            
-            if (done) break;
-
-            // Decode the chunk
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
-
-            for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                    const data = line.slice(6);
-                    
-                    if (data === '[DONE]') {
-                        // Format the complete response
-                        streamingTextDiv.innerHTML = formatDraftingResponse(fullText);
-                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                        
-                        // Store in conversation history
-                        conversationHistory.push({
-                            role: 'user',
-                            content: message
-                        });
-                        conversationHistory.push({
-                            role: 'assistant',
-                            content: fullText
-                        });
-                        
-                        break;
-                    }
-                    
-                    // Append chunk to full text
-                    fullText += data;
-                    
-                    // Update display with formatted text
-                    streamingTextDiv.innerHTML = formatDraftingResponse(fullText);
-                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                }
-            }
+        if (data.success) {
+            // Add message immediately (server confirmed, correct sender_type)
+            console.log(' Message sent:', data.message.id, data.message.message_content);
+            addMessageToChat(data.message);
+        } else {
+            // Restore input on failure
+            input.value = messageCopy;
+            showNotification('Failed to send message', 'error');
         }
 
     } catch (error) {
-        console.error('❌ Streaming error:', error);
-        removeTypingIndicator();
-        
-        // Remove streaming message if exists
-        const streamingMsg = document.getElementById('streaming-message');
-        if (streamingMsg) {
-            streamingMsg.remove();
-        }
-        
-        // Show error message
-        addMessage('Connection error. Please check your internet connection and try again.', 'ai', { error: true });
+        console.error('Error sending message:', error);
+        input.value = message; // Restore on error
+        showNotification('Failed to send message', 'error');
+    } finally {
+        // Reset button state
+        isSendingMessage = false;
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<i class="ti ti-send"></i>';
+        input.focus();
     }
 }
-
 // Keep the existing addMessage function for error messages
 // The streaming response uses inline HTML creation instead
 
@@ -614,7 +552,7 @@ async function sendMessage() {
 function handleMessageKeyPress(event) {
     if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
-        sendMessage();
+        sendNegotiationMessage();
     }
 }
 

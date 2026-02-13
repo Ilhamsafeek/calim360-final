@@ -2247,7 +2247,7 @@
             }
         }
 
-        async function sendMessage() {
+        async function sendMessages() {
             const input = document.getElementById('chatbotInput');
             const message = input.value.trim();
 
@@ -3063,6 +3063,123 @@
             });
         });
 
+
+
+        async function sendMessage() {
+    const input = document.getElementById('chatbotInput');
+    const message = input.value.trim();
+
+    if (!message) return;
+
+    // Add user message to UI
+    addMessage(message, 'user');
+    input.value = '';
+    document.getElementById('quickActions').style.display = 'none';
+
+    // Show typing indicator
+    showTypingIndicator();
+
+    try {
+        // Create a placeholder for streaming response
+        const messagesContainer = document.getElementById('chatbotMessages');
+        const aiMessageDiv = document.createElement('div');
+        aiMessageDiv.className = 'message';
+        aiMessageDiv.id = 'streaming-message';
+        
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        aiMessageDiv.innerHTML = `
+            <div class="message-avatar">AI</div>
+            <div class="message-content">
+                <div class="message-text" id="streaming-text"></div>
+                <div class="message-time">${time}</div>
+            </div>
+        `;
+        
+        removeTypingIndicator();
+        messagesContainer.appendChild(aiMessageDiv);
+        
+        const streamingTextDiv = document.getElementById('streaming-text');
+        let fullText = '';
+
+        // Call streaming endpoint
+        const response = await fetch('/api/v1/chatbot/query/stream', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getAuthToken()}`
+            },
+            body: JSON.stringify({
+                query: message,
+                tone: 'formal',
+                language: currentLanguage || 'en',
+                session_id: currentSessionId
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Streaming request failed');
+        }
+
+        // Read the stream
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+            const { done, value } = await reader.read();
+            
+            if (done) break;
+
+            // Decode the chunk
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const data = line.slice(6);
+                    
+                    if (data === '[DONE]') {
+                        // Format the complete response
+                        streamingTextDiv.innerHTML = formatDraftingResponse(fullText);
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                        
+                        // Store in conversation history
+                        conversationHistory.push({
+                            role: 'user',
+                            content: message
+                        });
+                        conversationHistory.push({
+                            role: 'assistant',
+                            content: fullText
+                        });
+                        
+                        break;
+                    }
+                    
+                    // Append chunk to full text
+                    fullText += data;
+                    
+                    // Update display with formatted text
+                    streamingTextDiv.innerHTML = formatDraftingResponse(fullText);
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
+            }
+        }
+
+    } catch (error) {
+        console.error('❌ Streaming error:', error);
+        removeTypingIndicator();
+        
+        // Remove streaming message if exists
+        const streamingMsg = document.getElementById('streaming-message');
+        if (streamingMsg) {
+            streamingMsg.remove();
+        }
+        
+        // Show error message
+        addMessage('Connection error. Please check your internet connection and try again.', 'ai', { error: true });
+    }
+}
 
     </script>
 

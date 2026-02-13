@@ -525,7 +525,6 @@ def _get_contract_context(db: Session, contract_id: str) -> dict:
     }
 
 
-
 @router.post("/query/stream")
 async def process_chatbot_query_stream(
     request: ChatQueryRequest,
@@ -539,10 +538,23 @@ async def process_chatbot_query_stream(
     try:
         logger.info(f"Processing streaming query from user {current_user.id}: {request.query[:50]}...")
         
-        # Build conversation history
+        # Build conversation history from session (FIXED)
         conversation_history = []
-        if request.conversation_history:
-            conversation_history = request.conversation_history
+        if request.session_id:
+            history_messages = db.query(ExpertSessionMessage).filter(
+                ExpertSessionMessage.session_id == request.session_id
+            ).order_by(ExpertSessionMessage.created_at.desc()).limit(10).all()
+            
+            # Build conversation history in correct format
+            for msg in reversed(history_messages):
+                conversation_history.append({
+                    "role": "assistant" if msg.sender_type == "system" else "user",
+                    "content": msg.message_content,
+                    "sender_type": msg.sender_type,
+                    "message_content": msg.message_content
+                })
+            
+            logger.info(f"Loaded {len(conversation_history)} previous messages for streaming context")
         
         # Get contract context if provided
         contract_context = None
@@ -586,21 +598,21 @@ async def process_chatbot_query_stream(
                         ai_msg = ExpertSessionMessage(
                             session_id=request.session_id,
                             sender_id=current_user.id,
-                            sender_type="assistant",
+                            sender_type="system",
                             message_type="text",
                             message_content=full_response,
                             is_ai_generated=True
                         )
                         db.add(ai_msg)
                         db.commit()
-                        
-                    except Exception as e:
-                        logger.error(f"Failed to save streaming messages: {e}")
+                        logger.info(f"✅ Saved streaming conversation to session {request.session_id}")
+                    except Exception as db_error:
+                        logger.error(f"Failed to save streaming conversation: {str(db_error)}")
                         db.rollback()
                         
             except Exception as e:
                 logger.error(f"Streaming generation error: {str(e)}")
-                yield f"data: ❌ Error: {str(e)}\n\n"
+                yield f"data: Error: {str(e)}\n\n"
                 yield "data: [DONE]\n\n"
         
         return StreamingResponse(
@@ -609,14 +621,9 @@ async def process_chatbot_query_stream(
             headers={
                 "Cache-Control": "no-cache",
                 "Connection": "keep-alive",
-                "X-Accel-Buffering": "no"  # Disable nginx buffering
             }
         )
         
     except Exception as e:
         logger.error(f"Streaming endpoint error: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
-
+        raise HTTPException(status_code=500, detail=str(e))
